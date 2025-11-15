@@ -5,9 +5,10 @@ Users create reusable recipient profiles (a “Gift CRM”), build their own wis
 
 GiftPerch is built for people who want thoughtful, personal gifts without the stress of remembering details, preferences, occasions, budgets, or past purchases.
 
-Live site (Coming Soon): https://giftperch.com
+Live site (Coming Soon Page): https://giftperch.com
 
 🌟 Key Features
+
 🎯 1. Recipient Profiles (Gift CRM)
 
 Users build rich profiles for friends, partners, family, coworkers, and anyone they shop for:
