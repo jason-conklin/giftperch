@@ -10,6 +10,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-gp-cream: #f8f5e0;
+  --color-gp-evergreen: #0f3d3e;
+  --color-gp-gold: #d9c189;
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
     "Helvetica Neue", sans-serif;
 }
@@ -19,4 +22,34 @@ body {
   color: var(--foreground);
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
     "Helvetica Neue", sans-serif;
+}
+
+@layer components {
+  .gp-card {
+    @apply rounded-3xl border border-gp-evergreen/15 bg-white/95 p-6 shadow-sm;
+  }
+
+  .gp-card-soft {
+    @apply rounded-3xl border border-gp-evergreen/10 bg-gp-cream/70 p-6 shadow-sm;
+  }
+
+  .gp-pill {
+    @apply inline-flex items-center rounded-full border border-gp-evergreen/20 bg-gp-cream/70 px-3 py-1 text-xs font-semibold text-gp-evergreen;
+  }
+
+  .gp-primary-button {
+    @apply inline-flex items-center justify-center rounded-full bg-gp-evergreen px-4 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60;
+  }
+
+  .gp-secondary-button {
+    @apply inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 bg-gp-cream px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-cream/70;
+  }
+
+  .gp-input {
+    @apply w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen placeholder:text-gp-evergreen/40 focus:border-gp-evergreen focus:outline-none;
+  }
+
+  .gp-skip-link {
+    @apply absolute left-1/2 top-4 z-50 -translate-x-1/2 -translate-y-10 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream opacity-0 shadow-lg transition focus:translate-y-0 focus:opacity-100 focus:outline-none;
+  }
 }

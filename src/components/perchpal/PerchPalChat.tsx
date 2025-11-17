@@ -14,7 +14,7 @@ export type AiInteraction = {
   recipient_id: string | null;
   role: ChatRole | string;
   message: string;
-  metadata: any | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 };
 
@@ -24,6 +24,15 @@ type ChatMessage = {
   content: string;
   created_at: string;
 };
+
+const CHAT_AVATAR_FRAMES = [
+  "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation2.PNG",
+  "/giftperch_retrieve_animation_1.png",
+  "/giftperch_retrieve_animation_2.png",
+] as const;
+
+const CHAT_AVATAR_FRAME_DURATION = 180;
 
 export function PerchPalChat() {
   const { user, status } = useSupabaseSession();
@@ -162,15 +171,7 @@ export function PerchPalChat() {
     if (message.role === "assistant") {
       return (
         <div key={message.id} className="flex items-start gap-3">
-          <div className="relative h-8 w-8">
-            <Image
-              src="/perchpal_bird.png"
-              alt="PerchPal"
-              fill
-              className="rounded-full border border-gp-evergreen/10 object-cover"
-            />
-            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white" />
-          </div>
+          <PerchPalAnimatedAvatar size={36} />
           <div>
             <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-gp-evergreen shadow-sm">
               {message.content.split("\n").map((line, idx) => (
@@ -210,24 +211,18 @@ export function PerchPalChat() {
   };
 
   return (
-    <section className="flex flex-col gap-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm">
+    <section className="gp-card flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative h-12 w-12">
-            <Image
-              src="/perchpal_bird.png"
-              alt="PerchPal mascot"
-              fill
-              className="rounded-full border border-gp-evergreen/10 object-cover"
-            />
-            <span className="absolute -right-0.5 bottom-0 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white animate-pulse" />
-          </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <PerchPalLoader
+            variant="inline"
+            size="sm"
+            message={null}
+          />
           <div>
-            <p className="text-sm font-semibold text-gp-evergreen">
-              PerchPal
-            </p>
+            <p className="text-sm font-semibold text-gp-evergreen">PerchPal</p>
             <p className="text-xs text-gp-evergreen/70">
-              Your AI gifting guide
+              Always on, always delivering thoughtful ideas.
             </p>
           </div>
         </div>
@@ -237,7 +232,7 @@ export function PerchPalChat() {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto rounded-2xl border border-gp-evergreen/10 bg-gp-cream/40 p-3 sm:p-4 max-h-[480px] space-y-4">
+      <div className="gp-card-soft max-h-[480px] space-y-4 overflow-y-auto p-4 sm:p-5">
         {isLoadingHistory ? (
           <div className="flex justify-center">
             <PerchPalLoader
@@ -247,8 +242,8 @@ export function PerchPalChat() {
             />
           </div>
         ) : messages.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-white/90 p-4 text-sm text-gp-evergreen/70">
-            Start by telling PerchPal about a person you’re shopping for, the
+          <div className="rounded-2xl border border-gp-evergreen/10 bg-white/95 p-5 text-center text-sm text-gp-evergreen/70">
+            Start by telling PerchPal about a person you are shopping for, the
             occasion, and your budget.
           </div>
         ) : (
@@ -257,14 +252,7 @@ export function PerchPalChat() {
 
         {isSending && (
           <div className="flex items-end gap-2">
-            <div className="relative h-8 w-8">
-              <Image
-                src="/perchpal_bird.png"
-                alt="PerchPal"
-                fill
-                className="rounded-full border border-gp-evergreen/10 object-cover"
-              />
-            </div>
+            <PerchPalAnimatedAvatar size={36} showStatusDot={false} />
             <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3 py-2">
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce [animation-delay:-0.2s]" />
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce" />
@@ -290,13 +278,13 @@ export function PerchPalChat() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder='Ask PerchPal for gift ideas (e.g. "Birthday gift for my mom who loves gardening, budget $100")'
-            className="w-full resize-none rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+            className="gp-input min-h-[52px] resize-none"
           />
         </div>
         <button
           type="submit"
           disabled={isSending || !input.trim()}
-          className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60"
+          className="gp-primary-button w-full sm:w-auto"
         >
           Send
         </button>
@@ -308,5 +296,44 @@ export function PerchPalChat() {
         </p>
       )}
     </section>
+  );
+}
+
+type AnimatedAvatarProps = {
+  size?: number;
+  showStatusDot?: boolean;
+};
+
+function PerchPalAnimatedAvatar({
+  size = 48,
+  showStatusDot = true,
+}: AnimatedAvatarProps) {
+  const [frameIndex, setFrameIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrameIndex((prev) => (prev + 1) % CHAT_AVATAR_FRAMES.length);
+    }, CHAT_AVATAR_FRAME_DURATION);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentFrame = useMemo(
+    () => CHAT_AVATAR_FRAMES[frameIndex] ?? CHAT_AVATAR_FRAMES[0],
+    [frameIndex],
+  );
+
+  return (
+    <div className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm">
+      <Image
+        src={currentFrame}
+        alt="PerchPal mascot animation frame"
+        width={size}
+        height={size}
+        priority
+      />
+      {showStatusDot ? (
+        <span className="absolute -right-0.5 bottom-0 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white animate-pulse" />
+      ) : null}
+    </div>
   );
 }

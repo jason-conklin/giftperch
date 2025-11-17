@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
@@ -122,7 +123,7 @@ export function GiftSuggestionsPanel() {
     return () => {
       isMounted = false;
     };
-  }, [status, user, supabase]);
+  }, [status, user, supabase, selectedRecipientId]);
 
   useEffect(() => {
     if (!selectedRecipientId) {
@@ -769,9 +770,12 @@ export function GiftSuggestionsPanel() {
                                         }`}
                                       >
                                         {product.imageUrl ? (
-                                          <img
+                                          <Image
                                             src={product.imageUrl}
                                             alt={product.title}
+                                            width={56}
+                                            height={56}
+                                            unoptimized
                                             className="h-14 w-14 flex-none rounded-lg object-cover"
                                           />
                                         ) : (

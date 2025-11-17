@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 type PerchPalLoaderProps = {
   variant?: "inline" | "block" | "overlay";
   size?: "sm" | "md" | "lg";
-  message?: string;
+  message?: string | null;
   ariaLabel?: string;
 };
 
@@ -46,7 +46,7 @@ export function PerchPalLoader({
   const label =
     ariaLabel ?? "PerchPal is fetching gift suggestions...";
   const helperMessage =
-    message ?? "PerchPal is fetching thoughtful gift ideas...";
+    message === undefined ? "PerchPal is fetching thoughtful gift ideas..." : message;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -76,11 +76,12 @@ export function PerchPalLoader({
     </div>
   );
 
-  const text = (
-    <p className={`${sizeStyles.text} text-gp-evergreen/80`}>
-      {helperMessage}
-    </p>
-  );
+  const text =
+    helperMessage === null ? null : (
+      <p className={`${sizeStyles.text} text-gp-evergreen/80`}>
+        {helperMessage}
+      </p>
+    );
 
   if (variant === "inline") {
     return (

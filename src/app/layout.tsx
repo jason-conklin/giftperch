@@ -44,11 +44,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-gp-cream text-gp-evergreen font-sans antialiased">
-        <div className="min-h-screen">
-          <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-            <SupabaseProvider>{children}</SupabaseProvider>
-          </div>
-        </div>
+        <SupabaseProvider>
+          <a href="#gp-main-content" className="gp-skip-link">
+            Skip to main content
+          </a>
+          {children}
+        </SupabaseProvider>
       </body>
     </html>
   );

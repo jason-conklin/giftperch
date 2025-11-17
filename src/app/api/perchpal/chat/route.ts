@@ -29,7 +29,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const message =
       typeof body.message === "string" ? body.message.trim() : "";
-    const history = Array.isArray(body.history) ? body.history : [];
+    type HistoryEntry = { role: string; content: string };
+    const rawHistory: unknown[] = Array.isArray(body.history)
+      ? body.history
+      : [];
+    const history: HistoryEntry[] = rawHistory.filter(
+      (entry): entry is HistoryEntry =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof (entry as HistoryEntry).role === "string" &&
+        typeof (entry as HistoryEntry).content === "string"
+    );
 
     if (!message) {
       return NextResponse.json(
@@ -44,21 +54,13 @@ export async function POST(request: NextRequest) {
         "You are PerchPal, a warm but efficient AI gifting assistant inside the GiftPerch app. Focus on concrete, thoughtful gift suggestions based on the user's description, budgets, interests, and occasions. Prefer 2-4 suggestions per reply, each with a short name, rough price range, and 1-2 sentence rationale. Be concise and avoid emoji.",
     };
 
-    const trimmedHistory = history
-      .slice(-15)
-      .filter(
-        (entry: any) =>
-          entry &&
-          typeof entry.role === "string" &&
-          typeof entry.content === "string"
-      )
-      .map((entry: any) => ({
-        role:
-          entry.role === "assistant" || entry.role === "system"
-            ? entry.role
-            : "user",
-        content: entry.content,
-      }));
+    const trimmedHistory = history.slice(-15).map((entry) => ({
+      role:
+        entry.role === "assistant" || entry.role === "system"
+          ? entry.role
+          : "user",
+      content: entry.content,
+    }));
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5.1",
