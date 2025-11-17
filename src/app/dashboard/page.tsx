@@ -55,7 +55,7 @@ export default function DashboardHome() {
           <div className="mt-4">
             <PerchPalLoader
               variant="inline"
-              size="sm"
+              size="md"
               message="PerchPal is syncing upcoming gifting moments..."
             />
             {/* TODO: Show while fetching upcoming events or reminders. */}
