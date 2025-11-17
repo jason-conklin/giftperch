@@ -65,14 +65,20 @@ export function AppLayout({ children }: AppLayoutProps) {
       <div className="flex min-h-screen">
         <aside className="hidden w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
           <div className="flex items-center gap-3 border-b border-white/10 px-6 py-6">
-            <Image
-              src="/giftperch_logo_background.png"
-              alt="GiftPerch logo"
-              width={44}
-              height={44}
-              className="h-11 w-11 rounded-full border border-white/20 object-cover"
-              priority
-            />
+            <Link
+              href="/dashboard"
+              aria-label="Go to dashboard"
+              className="inline-flex"
+            >
+              <Image
+                src="/giftperch_logo_background.png"
+                alt="GiftPerch logo"
+                width={44}
+                height={44}
+                className="h-11 w-11 rounded-full border border-white/20 object-cover transition hover:scale-[1.02]"
+                priority
+              />
+            </Link>
             <div>
               <p className="text-sm font-semibold leading-tight">GiftPerch</p>
               <p className="text-xs uppercase tracking-wide text-gp-cream/70">
@@ -91,14 +97,20 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-gp-evergreen/10 bg-white/90 px-4 py-3 text-gp-evergreen shadow-sm md:hidden">
             <div className="flex items-center gap-3">
-              <Image
-                src="/giftperch_logo_background.png"
-                alt="GiftPerch logo"
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full border border-gp-evergreen/20 object-cover"
-                priority
-              />
+              <Link
+                href="/dashboard"
+                aria-label="Go to dashboard"
+                className="inline-flex"
+              >
+                <Image
+                  src="/giftperch_logo_background.png"
+                  alt="GiftPerch logo"
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full border border-gp-evergreen/20 object-cover transition hover:scale-[1.02]"
+                  priority
+                />
+              </Link>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
                   PerchPal HQ
