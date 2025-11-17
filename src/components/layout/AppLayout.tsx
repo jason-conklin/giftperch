@@ -64,7 +64,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-gp-cream/80 text-gp-evergreen">
       <div className="flex min-h-screen">
         <aside className="hidden w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
-          <div className="flex items-center gap-3 border-b border-white/10 px-6 py-6">
+          <div className="flex items-center gap-4 border-b border-white/10 px-6 py-7">
             <Link
               href="/dashboard"
               aria-label="Go to dashboard"
@@ -73,15 +73,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Image
                 src="/giftperch_logo_background.png"
                 alt="GiftPerch logo"
-                width={44}
-                height={44}
-                className="h-11 w-11 rounded-full border border-white/20 object-cover transition hover:scale-[1.02]"
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full border border-white/20 object-cover transition hover:scale-[1.02]"
                 priority
               />
             </Link>
             <div>
-              <p className="text-sm font-semibold leading-tight">GiftPerch</p>
-              <p className="text-xs uppercase tracking-wide text-gp-cream/70">
+              <p className="text-base font-semibold leading-tight">GiftPerch</p>
+              <p className="text-[13px] uppercase tracking-wide text-gp-cream/70">
                 PerchPal HQ
               </p>
             </div>
