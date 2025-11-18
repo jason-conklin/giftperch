@@ -1,13 +1,18 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { useEffect, useMemo, useState } from "react";
+import {
+  OccasionsCalendar,
+  type OccasionEvent,
+} from "@/components/occasions/OccasionsCalendar";
 
 type RecipientOption = {
   id: string;
   name: string;
   relationship: string | null;
+  birthday: string | null;
 };
 
 type Occasion = {
@@ -56,7 +61,7 @@ export function OccasionsManager() {
       setLoadingRecipients(true);
       const { data, error } = await supabase
         .from("recipient_profiles")
-        .select("id, name, relationship")
+        .select("id, name, relationship, birthday")
         .eq("user_id", user.id)
         .eq("is_self", false)
         .order("name", { ascending: true });
@@ -142,8 +147,79 @@ export function OccasionsManager() {
 
   const hasRecipients = recipients.length > 0;
 
+  const calendarEvents = useMemo<OccasionEvent[]>(() => {
+    const currentYear = new Date().getFullYear();
+    const mapped: OccasionEvent[] = [];
+
+    recipients.forEach((recipient) => {
+      if (!recipient.birthday) return;
+      const parsed = new Date(recipient.birthday);
+      if (Number.isNaN(parsed.getTime())) return;
+      const nextBirthday = new Date(
+        currentYear,
+        parsed.getMonth(),
+        parsed.getDate()
+      );
+      mapped.push({
+        id: `birthday-${recipient.id}-${currentYear}`,
+        date: nextBirthday.toISOString(),
+        title: `${recipient.name}'s birthday`,
+        type: "birthday",
+        recipientName: recipient.name,
+      });
+    });
+
+    occasions.forEach((occasion) => {
+      if (!occasion.event_date) return;
+      const normalizedType: OccasionEvent["type"] =
+        occasion.event_type === "anniversary"
+          ? "anniversary"
+          : occasion.event_type === "holiday"
+          ? "holiday"
+          : occasion.event_type === "birthday"
+          ? "birthday"
+          : "custom";
+
+      mapped.push({
+        id: `occasion-${occasion.id}`,
+        date: occasion.event_date,
+        title: occasion.label ?? "Upcoming occasion",
+        type: normalizedType,
+        recipientName: occasion.recipient?.name ?? undefined,
+      });
+    });
+
+    return mapped.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  }, [occasions, recipients]);
+
+  const calendarEmptyMessage = calendarEvents.length
+    ? undefined
+    : hasRecipients
+    ? "No occasions on the calendar yet. Add birthdays or special dates to see them here."
+    : "You'll see birthdays and occasions here once you add your first recipient profile.";
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[3fr,2fr]">
+    <div className="space-y-6">
+      <OccasionsCalendar
+        events={calendarEvents}
+        emptyMessage={calendarEmptyMessage}
+        isLoading={loading || loadingRecipients}
+      />
+
+      <section className="gp-card-soft flex flex-col gap-2 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
+        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+          PerchPal tip
+        </p>
+        <p className="text-sm text-gp-evergreen/80">
+          PerchPal uses these dates to prioritize reminders, queue fresh gift
+          ideas, and surface budgets for the next few weeks. The more birthdays
+          and milestones you log, the sharper your gifting radar becomes.
+        </p>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-[3fr,2fr]">
       <section className="gp-card flex flex-col gap-5">
         <header className="flex flex-col gap-2">
           <div className="gp-pill">Upcoming moments</div>
@@ -154,7 +230,7 @@ export function OccasionsManager() {
         </header>
 
         {loading ? (
-          <p className="text-sm text-gp-evergreen/70">Loading occasions…</p>
+          <p className="text-sm text-gp-evergreen/70">Loading occasions...</p>
         ) : occasions.length === 0 ? (
           <div className="gp-card-soft text-center text-sm text-gp-evergreen/70">
             No occasions yet. Add one using the form to the right once you have
@@ -220,7 +296,7 @@ export function OccasionsManager() {
 
         {loadingRecipients ? (
           <p className="text-sm text-gp-evergreen/70">
-            Loading recipients…
+            Loading recipients...
           </p>
         ) : hasRecipients ? (
           <form className="space-y-4" onSubmit={handleAddOccasion}>
@@ -258,7 +334,7 @@ export function OccasionsManager() {
                 className="gp-input"
                 value={newEventType}
                 onChange={(event) => setNewEventType(event.target.value)}
-                placeholder="birthday, anniversary, milestone…"
+                placeholder="birthday, anniversary, milestone..."
               />
             </label>
 
@@ -288,7 +364,7 @@ export function OccasionsManager() {
               className="gp-primary-button w-full"
               disabled={saving}
             >
-              {saving ? "Saving…" : "Save occasion"}
+              {saving ? "Saving..." : "Save occasion"}
             </button>
           </form>
         ) : (
@@ -299,5 +375,6 @@ export function OccasionsManager() {
         )}
       </section>
     </div>
+  </div>
   );
 }

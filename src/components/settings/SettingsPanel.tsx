@@ -85,6 +85,7 @@ export function SettingsPanel() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPreferences, setSavingPreferences] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [profileFeedback, setProfileFeedback] = useState("");
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [selfProfile, setSelfProfile] = useState<SelfProfile | null>(null);
@@ -258,6 +259,7 @@ export function SettingsPanel() {
     if (!user?.id) return;
     setSavingProfile(true);
     setFeedback("");
+    setProfileFeedback("");
 
     const { error } = await supabase.from("profiles").upsert(
       {
@@ -270,9 +272,10 @@ export function SettingsPanel() {
     );
 
     if (error) {
+      setProfileFeedback(error.message);
       setFeedback(error.message);
     } else {
-      setFeedback("Profile saved");
+      setProfileFeedback("Profile updated");
     }
 
     setSavingProfile(false);
@@ -553,6 +556,11 @@ export function SettingsPanel() {
         >
           {savingProfile ? "Saving..." : "Save profile"}
         </button>
+        {profileFeedback ? (
+          <p className="text-sm font-semibold text-gp-evergreen/70">
+            {profileFeedback}
+          </p>
+        ) : null}
         </form>
       </section>
 

@@ -1,230 +1,143 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { useMemo, useState } from "react";
 
-type Recipient = {
-  id: string;
-  name: string;
-  relationship: string | null;
-  avatar_url: string | null;
-  birthday: string | null;
-};
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-type RecipientEventRow = {
+export type OccasionEvent = {
   id: string;
-  label: string | null;
-  event_type: string | null;
-  event_date: string | null;
-  notes: string | null;
-  recipient_id: string | null;
-};
-
-type CalendarEvent = {
-  id: string;
-  date: Date;
+  date: string;
   title: string;
-  type: "birthday" | "event" | "seasonal";
-  repeat?: "yearly";
-  recipientId?: string | null;
-  recipientName?: string | null;
-  notes?: string | null;
+  type: "birthday" | "anniversary" | "holiday" | "custom";
+  recipientName?: string;
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+type CalendarDay = {
+  key: string;
+  date: Date;
+  isCurrentMonth: boolean;
+  events: OccasionEvent[];
+};
 
-const seasonalTemplates = [
-  { id: "valentines", month: 1, day: 14, title: "Valentine's Day" },
-  { id: "mothers-day", month: 4, day: 12, title: "Mother's Day" },
-  { id: "christmas", month: 11, day: 25, title: "Christmas Day" },
-] as const;
+export type OccasionsCalendarProps = {
+  events: OccasionEvent[];
+  emptyMessage?: string;
+  isLoading?: boolean;
+};
 
-export function OccasionsCalendar() {
-  const { user } = useSupabaseSession();
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
-  const [events, setEvents] = useState<RecipientEventRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [currentMonth, setCurrentMonth] = useState(() => new Date());
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+const getDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
-  useEffect(() => {
-    if (!user?.id) return;
-    let active = true;
-    const load = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const { data: recipientRows, error: recipientError } = await supabase
-          .from("recipient_profiles")
-          .select("id, name, relationship, avatar_url, birthday")
-          .eq("user_id", user.id)
-          .eq("is_self", false)
-          .order("name", { ascending: true });
-        if (recipientError) throw recipientError;
-        const recipientList = (recipientRows ?? []) as Recipient[];
-        if (!active) return;
-        setRecipients(recipientList);
+const eventTypeStyles: Record<
+  OccasionEvent["type"],
+  { chip: string; label: string }
+> = {
+  birthday: {
+    chip: "bg-gp-gold/25 text-gp-evergreen",
+    label: "Birthday",
+  },
+  anniversary: {
+    chip: "bg-gp-evergreen/10 text-gp-evergreen",
+    label: "Anniversary",
+  },
+  holiday: {
+    chip: "bg-gp-evergreen text-gp-cream",
+    label: "Holiday",
+  },
+  custom: {
+    chip: "bg-white text-gp-evergreen border border-gp-evergreen/20",
+    label: "Occasion",
+  },
+};
 
-        if (recipientList.length) {
-          const ids = recipientList.map((recipient) => recipient.id);
-          const { data: eventRows, error: eventError } = await supabase
-            .from("recipient_events")
-            .select("id, label, event_type, event_date, notes, recipient_id")
-            .in("recipient_id", ids);
-          if (eventError) throw eventError;
-          if (active) {
-            setEvents((eventRows ?? []) as RecipientEventRow[]);
-          }
-        } else {
-          setEvents([]);
-        }
-      } catch (err) {
-        if (!active) return;
-        const message =
-          err instanceof Error ? err.message : "Unable to load occasions.";
-        setError(message);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
+export function OccasionsCalendar({
+  events,
+  emptyMessage,
+  isLoading = false,
+}: OccasionsCalendarProps) {
+  const today = new Date();
+  const [currentMonth, setCurrentMonth] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
-    load();
-    return () => {
-      active = false;
-    };
-  }, [supabase, user?.id]);
-
-  const calendarEvents = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const eventsForMonth: CalendarEvent[] = [];
-
-    recipients.forEach((recipient) => {
-      if (!recipient.birthday) return;
-      const birthdayDate = new Date(recipient.birthday);
-      const displayDate = new Date(
-        year,
-        birthdayDate.getMonth(),
-        birthdayDate.getDate()
-      );
-      eventsForMonth.push({
-        id: `birthday-${recipient.id}-${year}`,
-        date: displayDate,
-        title: `${recipient.name}'s birthday`,
-        type: "birthday",
-        repeat: "yearly",
-        recipientId: recipient.id,
-        recipientName: recipient.name,
-        notes: `Celebrate ${recipient.relationship ?? "this friend"}`,
-      });
-    });
-
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, OccasionEvent[]>();
     events.forEach((event) => {
-      if (!event.event_date) return;
-      const eventDate = new Date(event.event_date);
-      eventsForMonth.push({
-        id: event.id,
-        date: eventDate,
-        title: event.label ?? "Upcoming occasion",
-        type: "event",
-        recipientId: event.recipient_id,
-        recipientName:
-          recipients.find((recipient) => recipient.id === event.recipient_id)
-            ?.name ?? undefined,
-        notes: event.notes ?? undefined,
-      });
+      const eventDate = new Date(event.date);
+      if (Number.isNaN(eventDate.getTime())) return;
+      const normalized = new Date(
+        eventDate.getFullYear(),
+        eventDate.getMonth(),
+        eventDate.getDate()
+      );
+      const key = getDateKey(normalized);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(event);
     });
+    return map;
+  }, [events]);
 
-    seasonalTemplates.forEach((season) => {
-      const date = new Date(year, season.month, season.day);
-      eventsForMonth.push({
-        id: `season-${season.id}-${year}`,
+  const calendarDays = useMemo(() => {
+    const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+    const startOffset = start.getDay();
+    const firstVisible = new Date(start);
+    firstVisible.setDate(firstVisible.getDate() - startOffset);
+
+    const days: CalendarDay[] = [];
+    for (let index = 0; index < 42; index += 1) {
+      const date = new Date(firstVisible);
+      date.setDate(firstVisible.getDate() + index);
+      const key = getDateKey(date);
+      days.push({
+        key,
         date,
-        title: season.title,
-        type: "seasonal",
-        repeat: "yearly",
+        isCurrentMonth: date.getMonth() === currentMonth.getMonth(),
+        events: [...(eventsByDay.get(key) ?? [])].sort((a, b) => {
+          const aDate = new Date(a.date).getTime();
+          const bDate = new Date(b.date).getTime();
+          return aDate - bDate;
+        }),
       });
-    });
-
-    return eventsForMonth;
-  }, [currentMonth, recipients, events]);
-
-  const days = useMemo(() => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startWeekday = firstDay.getDay();
-    const totalDays = new Date(year, month + 1, 0).getDate();
-    const grid: { date: Date | null; events: CalendarEvent[] }[] = [];
-
-    for (let i = 0; i < startWeekday; i += 1) {
-      grid.push({ date: null, events: [] });
     }
+    return days;
+  }, [currentMonth, eventsByDay]);
 
-    for (let day = 1; day <= totalDays; day += 1) {
-      const date = new Date(year, month, day);
-      const eventsForDay = calendarEvents.filter((event) => {
-        if (event.type === "birthday" || event.repeat === "yearly") {
-          return (
-            event.date.getMonth() === date.getMonth() &&
-            event.date.getDate() === date.getDate()
-          );
-        }
-        return (
-          event.date.getFullYear() === date.getFullYear() &&
-          event.date.getMonth() === date.getMonth() &&
-          event.date.getDate() === date.getDate()
-        );
-      });
-      grid.push({ date, events: eventsForDay });
-    }
+  const selectedEvents =
+    selectedDayKey && eventsByDay.has(selectedDayKey)
+      ? eventsByDay.get(selectedDayKey) ?? []
+      : [];
 
-    while (grid.length % 7 !== 0) {
-      grid.push({ date: null, events: [] });
-    }
-
-    return grid;
-  }, [calendarEvents, currentMonth]);
+  const hasEvents = events.length > 0;
+  const appliedEmptyMessage =
+    emptyMessage ??
+    "No occasions on the calendar yet. Add birthdays or special dates to see them here.";
 
   const changeMonth = (direction: "prev" | "next") => {
+    setSelectedDayKey(null);
     setCurrentMonth((prev) => {
-      const year = prev.getFullYear();
-      const month = prev.getMonth();
-      return new Date(year, month + (direction === "next" ? 1 : -1), 1);
+      const next = new Date(prev);
+      next.setMonth(prev.getMonth() + (direction === "next" ? 1 : -1));
+      return next;
     });
-    setSelectedEvent(null);
   };
 
-  if (loading) {
-    return (
-      <div className="gp-card-soft">
-        <PerchPalLoader
-          variant="inline"
-          size="sm"
-          message="Loading your occasions calendar..."
-        />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="gp-card-soft text-sm text-red-700">
-        {error}
-      </div>
-    );
-  }
-
   return (
-    <section className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+    <section
+      aria-label="Occasions calendar"
+      className="gp-card space-y-5"
+      role="region"
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-            Occasions calendar
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            Gifting calendar
           </p>
           <h2 className="text-2xl font-semibold text-gp-evergreen">
             {currentMonth.toLocaleDateString(undefined, {
@@ -233,17 +146,17 @@ export function OccasionsCalendar() {
             })}
           </h2>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            className="gp-secondary-button px-3"
+            className="gp-secondary-button px-3 py-2 text-sm"
             onClick={() => changeMonth("prev")}
           >
             Previous
           </button>
           <button
             type="button"
-            className="gp-secondary-button px-3"
+            className="gp-secondary-button px-3 py-2 text-sm"
             onClick={() => changeMonth("next")}
           >
             Next
@@ -251,86 +164,117 @@ export function OccasionsCalendar() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm">
-        <div className="grid grid-cols-7 text-xs font-semibold uppercase text-gp-evergreen/60">
-          {weekdays.map((day) => (
-            <div key={day} className="px-2 py-1 text-center">
+      <div className="overflow-hidden rounded-3xl border border-gp-evergreen/10 bg-white/95 shadow-sm">
+        <div className="grid grid-cols-7 border-b border-gp-evergreen/10 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+          {WEEKDAYS.map((day) => (
+            <div key={day} className="px-3 py-2 text-center">
               {day}
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1 text-sm">
-          {days.map((day, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() =>
-                day.events.length ? setSelectedEvent(day.events[0]) : undefined
-              }
-              className={`min-h-[90px] rounded-xl border border-gp-evergreen/10 bg-gp-cream/50 p-2 text-left ${
-                !day.date ? "opacity-30" : ""
-              }`}
-            >
-              {day.date ? (
-                <>
-                  <p className="text-xs font-semibold text-gp-evergreen">
-                    {day.date.getDate()}
-                  </p>
-                  <div className="mt-1 space-y-1">
-                    {day.events.map((event) => (
-                      <span
-                        key={event.id}
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          event.type === "birthday"
-                            ? "bg-pink-50 text-pink-700"
-                            : event.type === "seasonal"
-                            ? "bg-gp-gold/20 text-gp-evergreen"
-                            : "bg-gp-evergreen/10 text-gp-evergreen"
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedEvent(event);
-                        }}
-                      >
-                        {event.title}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </button>
-          ))}
+        <div className="grid grid-cols-7 gap-1" role="grid">
+          {calendarDays.map((day) => {
+            const isToday =
+              day.date.getFullYear() === today.getFullYear() &&
+              day.date.getMonth() === today.getMonth() &&
+              day.date.getDate() === today.getDate();
+            const eventsToShow = day.events.slice(0, 3);
+            const extraCount = day.events.length - eventsToShow.length;
+
+            return (
+              <button
+                key={day.key}
+                type="button"
+                role="gridcell"
+                aria-label={`${
+                  day.date.toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                  }) ?? ""
+                } with ${day.events.length} events`}
+                className={`relative min-h-[110px] rounded-2xl border p-3 text-left transition ${
+                  day.isCurrentMonth
+                    ? "bg-gp-cream/60 text-gp-evergreen"
+                    : "bg-gp-cream/40 text-gp-evergreen/50"
+                } ${
+                  isToday
+                    ? "border-gp-gold/70 ring-2 ring-gp-gold/30"
+                    : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
+                }`}
+                onClick={() =>
+                  day.events.length ? setSelectedDayKey(day.key) : undefined
+                }
+              >
+                <p className="text-sm font-semibold">{day.date.getDate()}</p>
+                <div className="mt-2 flex flex-col gap-1">
+                  {eventsToShow.map((event) => (
+                    <span
+                      key={event.id}
+                      className={`truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ${eventTypeStyles[event.type].chip}`}
+                    >
+                      {event.title}
+                    </span>
+                  ))}
+                  {extraCount > 0 ? (
+                    <span className="text-xs font-semibold text-gp-evergreen/70">
+                      +{extraCount} more
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {selectedEvent ? (
-        <div className="gp-card-soft space-y-2">
-          <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-            Selected occasion
-          </p>
-          <h3 className="text-xl font-semibold text-gp-evergreen">
-            {selectedEvent.title}
-          </h3>
-          <p className="text-sm text-gp-evergreen/70">
-            {selectedEvent.date.toLocaleDateString(undefined, {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-          {selectedEvent.notes ? (
-            <p className="text-sm text-gp-evergreen/80">{selectedEvent.notes}</p>
-          ) : null}
-          {selectedEvent.recipientId ? (
-            <Link
-              href="/recipients"
-              className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-            >
-              View {selectedEvent.recipientName}'s profile
-            </Link>
-          ) : null}
-        </div>
+      {isLoading ? (
+        <p className="text-sm text-gp-evergreen/70">Loading occasions...</p>
       ) : null}
+
+      {!hasEvents ? (
+        <p className="rounded-2xl border border-dashed border-gp-evergreen/20 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/70">
+          {appliedEmptyMessage}
+        </p>
+      ) : null}
+
+      <div className="rounded-3xl border border-gp-evergreen/10 bg-gp-cream/70 p-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+          {selectedEvents.length ? "Day details" : "Browse dates"}
+        </p>
+        {selectedEvents.length ? (
+          <div className="mt-3 space-y-3">
+            {selectedEvents.map((event) => (
+              <div key={event.id} className="rounded-2xl bg-white/80 p-3 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gp-evergreen">
+                    {event.title}
+                  </p>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${eventTypeStyles[event.type].chip}`}>
+                    {eventTypeStyles[event.type].label}
+                  </span>
+                </div>
+                {event.recipientName ? (
+                  <p className="text-xs text-gp-evergreen/70">
+                    {event.recipientName}
+                  </p>
+                ) : null}
+                <p className="text-xs text-gp-evergreen/60">
+                  {new Date(event.date).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-gp-evergreen/70">
+            Tap any day with highlights to see birthdays and reminders planned
+            for that date.
+          </p>
+        )}
+      </div>
     </section>
   );
 }
