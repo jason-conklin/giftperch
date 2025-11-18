@@ -4,6 +4,8 @@ type PageShellProps = {
   title?: string;
   subtitle?: string;
   actions?: ReactNode;
+  eyebrow?: string;
+  hero?: ReactNode;
   children: ReactNode;
 };
 
@@ -11,13 +13,21 @@ export function PageShell({
   title,
   subtitle,
   actions,
+  eyebrow,
+  hero,
   children,
 }: PageShellProps) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-6xl space-y-6 rounded-3xl bg-gp-cream/80 px-4 py-8 text-gp-evergreen shadow-sm sm:px-6 lg:px-8">
+      {hero}
       {(title || subtitle || actions) && (
         <section className="gp-card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="space-y-1">
+            {eyebrow ? (
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/60">
+                {eyebrow}
+              </p>
+            ) : null}
             <h1 className="text-2xl font-semibold text-gp-evergreen">
               {title ?? "GiftPerch"}
             </h1>

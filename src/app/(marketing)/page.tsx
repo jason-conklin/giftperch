@@ -28,9 +28,9 @@ const sampleIdeas = [
 
 export default function MarketingHome() {
   return (
-    <section className="mx-auto max-w-5xl space-y-16 px-4 py-6 sm:px-6 sm:py-10 lg:px-0 lg:py-12">
-      <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-        <div className="space-y-5">
+    <div className="mx-auto max-w-5xl space-y-16 px-4 py-12 sm:px-6 sm:py-16 lg:px-0 lg:py-20">
+      <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
             <span>PerchPal ready</span>
             <span>AI gifting</span>
@@ -71,7 +71,7 @@ export default function MarketingHome() {
             </Link>
           </div>
         </div>
-        <div className="rounded-3xl border border-gp-gold/40 bg-white/85 p-6 shadow-md sm:p-8">
+        <div className="gp-card p-6 sm:p-8">
           <div className="space-y-5">
             <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
               <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
@@ -110,33 +110,35 @@ export default function MarketingHome() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="space-y-6 pt-4 lg:pt-6">
-        <h2 className="text-2xl font-semibold text-gp-evergreen">
-          How GiftPerch works
-        </h2>
+      <section className="space-y-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+            How GiftPerch works
+          </p>
+          <h2 className="text-2xl font-semibold text-gp-evergreen">
+            From profiles to personalized ideas
+          </h2>
+        </div>
         <div className="grid gap-6 md:grid-cols-3">
           {steps.map((step) => (
-            <div
-              key={step.title}
-              className="rounded-2xl border border-gp-evergreen/15 bg-white/80 p-6 shadow-sm"
-            >
-              <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+            <div key={step.title} className="gp-card h-full space-y-2">
+              <p className="text-sm font-semibold uppercase tracking-wide text-gp-evergreen/60">
                 Step
               </p>
-              <h3 className="mt-1 text-lg font-semibold text-gp-evergreen">
+              <h3 className="text-lg font-semibold text-gp-evergreen">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm text-gp-evergreen/80">
+              <p className="text-sm text-gp-evergreen/80">
                 {step.description}
               </p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-3xl border border-dashed border-gp-gold/50 bg-gp-cream/70 p-6 text-center text-sm text-gp-evergreen/80">
+      <section className="gp-card border-dashed border-gp-gold/50 bg-gp-cream/70 text-center text-sm text-gp-evergreen/80">
         Coming soon: success stories and favorite gift combinations from real
         GiftPerch families, couples, and teams. Want updates?{" "}
         <Link
@@ -146,7 +148,7 @@ export default function MarketingHome() {
           Visit the GiftPerch Journal
         </Link>
         .
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

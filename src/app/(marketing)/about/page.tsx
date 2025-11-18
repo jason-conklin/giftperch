@@ -1,41 +1,27 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const features = [
   {
-    title: "Recipient profiles",
+    title: "Capture recipient profiles",
     description:
-      "Log interests, budgets, occasions, and preferences so every person has a living profile.",
+      "Log interests, budgets, anti-gifts, and occasions so every person has a living gift CRM.",
   },
   {
-    title: "PerchPal AI copilot",
+    title: "Ask PerchPal",
     description:
-      "Ask for tailored gift ideas that include rationale grounded in your profile notes.",
+      "Give PerchPal a vibe, budget, or occasion and receive AI-curated ideas with rationale.",
   },
   {
-    title: "Gift history & notes",
+    title: "Track every gift",
     description:
-      "Track what you have already given, how it landed, and what to avoid next time.",
-  },
-  {
-    title: "Gift guides & articles",
-    description:
-      "Browse curated guides and inspiration when you need a jump-start on gifting.",
-  },
-  {
-    title: "Email reminders",
-    description:
-      "Enable notifications so PerchPal nudges you before birthdays, anniversaries, and milestones.",
-  },
-  {
-    title: "Wishlist identity",
-    description:
-      "Optionally maintain your own shareable profile so others always know what you love.",
+      "Record past gifts, notes, and affiliate-ready links so you never scramble last minute.",
   },
 ] as const;
 
 export default function AboutPage() {
   return (
-    <div className="space-y-10 py-6 sm:py-10 lg:py-12">
+    <div className="mx-auto max-w-4xl space-y-10 px-4 pt-2 pb-6 sm:px-5 sm:pt-4 sm:pb-10 lg:px-8 lg:pt-1 lg:pb-12">
       <section className="gp-card overflow-hidden">
         <Image
           src="/giftperch_banner.png"
@@ -47,45 +33,42 @@ export default function AboutPage() {
         />
       </section>
 
-      <section className="gp-card-soft space-y-4">
-        <div>
-          <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+      <section className="space-y-4">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
             About GiftPerch
           </p>
-          <h1 className="text-3xl font-semibold text-gp-evergreen">
+          <h2 className="text-3xl font-semibold text-gp-evergreen">
             Gifting that stays thoughtful, even when life gets busy
-          </h1>
+          </h2>
         </div>
-        <p className="text-base text-gp-evergreen/80">
-          GiftPerch helps you build living recipient profiles, so you are never
-          scrambling to remember sizes, favorite brands, or budgets. Layer in
-          PerchPal—the AI gifting copilot—and you can ask for ideas with
-          context, rationale, and affiliate-ready links that feel genuinely
-          personal. Everything is saved in one place: wishlists, past gifts, and
-          the gentle nudges that keep you ahead of every occasion.
-        </p>
-        <p className="text-base text-gp-evergreen/80">
-          The goal is simple: avoid last-minute stress, dodge awkward repeat
-          gifts, and make gifting feel fun again—for you and the people you care
-          about.
-        </p>
+        <div className="gp-card space-y-4 text-base text-gp-evergreen/80">
+          <p>
+            GiftPerch keeps recipient profiles, PerchPal AI, wishlists, and gift
+            history in a single workspace. Add the people you shop for, log
+            budgets, anti-gifts, and what makes them smile, then ask PerchPal for
+            context-rich recommendations.
+          </p>
+          <p>
+            Every idea comes with rationale, so you can see how it maps back to
+            the profile you crafted. Save confirmed winners, note reactions, and
+            stay ahead of each birthday, anniversary, or “just because” surprise.
+          </p>
+        </div>
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
             Features
           </p>
           <h2 className="text-2xl font-semibold text-gp-evergreen">
-            What GiftPerch includes
+            From profiles to PerchPal ideas
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="gp-card flex flex-col gap-2"
-            >
+            <div key={feature.title} className="gp-card space-y-2">
               <h3 className="text-lg font-semibold text-gp-evergreen">
                 {feature.title}
               </h3>
@@ -101,7 +84,7 @@ export default function AboutPage() {
         href="https://jasonconklin.dev"
         target="_blank"
         rel="noopener noreferrer"
-        className="gp-card flex flex-col gap-4 transition hover:border-gp-evergreen/40 hover:bg-white sm:flex-row sm:items-center sm:gap-6"
+        className="gp-card flex flex-col gap-4 transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center sm:gap-6"
       >
         <Image
           src="/jasonconklin.png"
@@ -117,15 +100,33 @@ export default function AboutPage() {
           <h3 className="text-xl font-semibold text-gp-evergreen">
             Jason Conklin
           </h3>
+          <p className="text-sm text-gp-evergreen/70">
+            Creator of GiftPerch · B.S. Computer Science, NJIT
+          </p>
           <p className="text-sm text-gp-evergreen/80">
-            GiftPerch was created by Jason Conklin, a Bachelor of Science in
-            Computer Science graduate from NJIT who loves building AI-powered
-            tools that feel personal and genuinely helpful. PerchPal is his way
-            of making thoughtful gifting effortless for families, couples, and
-            teams.
+            Jason believes thoughtful gifting should feel personal, not chaotic.
+            He built PerchPal to blend recipient history with AI so families,
+            couples, and teams can keep traditions alive and surprises special.
           </p>
         </div>
       </a>
+
+      <section className="gp-card border-dashed border-gp-gold/50 text-center text-sm text-gp-evergreen/80">
+        Ready to keep gifting personal?{" "}
+        <Link
+          href="/auth/signup"
+          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+        >
+          Create your account
+        </Link>{" "}
+        or explore the latest stories on the{" "}
+        <Link
+          href="/blog"
+          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+        >
+          GiftPerch Journal.
+        </Link>
+      </section>
     </div>
   );
 }

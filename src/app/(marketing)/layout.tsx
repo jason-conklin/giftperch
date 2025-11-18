@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const navItems = [
@@ -16,23 +17,31 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const renderNavLink = (item: (typeof navItems)[number]) => {
+  const renderNavLink = (
+    item: (typeof navItems)[number],
+    variant: "desktop" | "mobile" = "desktop",
+  ) => {
     const active =
       pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-    const baseClasses =
-      "rounded-full px-3 py-1 text-sm font-semibold transition";
-    const activeClasses = active
-      ? "bg-white/90 text-gp-evergreen shadow-sm"
-      : "text-gp-cream/80 hover:text-gp-cream";
+    const desktopClasses = active
+      ? "text-gp-cream font-semibold underline underline-offset-4"
+      : "text-gp-cream/90 hover:text-gp-cream hover:underline underline-offset-4";
+    const mobileClasses = active
+      ? "text-gp-cream font-semibold"
+      : "text-gp-cream/80";
 
     return (
       <Link
         key={item.href}
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={`${baseClasses} ${activeClasses}`}
+        className={`rounded-full px-3 py-1 text-base font-semibold transition ${
+          variant === "desktop" ? desktopClasses : mobileClasses
+        }`}
+        onClick={() => setMobileNavOpen(false)}
       >
         {item.label}
       </Link>
@@ -41,37 +50,74 @@ export default function MarketingLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-gp-cream/80 text-gp-evergreen">
-      <header className="bg-gp-evergreen text-gp-cream shadow-sm">
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-0">
+      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5 sm:px-6 lg:px-0">
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/giftperch_logo_background.png"
               alt="GiftPerch logo"
-              width={44}
-              height={44}
-              className="h-11 w-11 rounded-full border border-white/30 object-cover"
+              width={52}
+              height={52}
+              className="h-13 w-13 rounded-full border border-gp-cream/30 object-cover"
               priority
             />
             <div>
-              <p className="text-lg font-semibold text-gp-cream">GiftPerch</p>
-              <p className="text-xs uppercase tracking-wide text-gp-cream/70">
+              <p className="text-xl font-semibold text-gp-cream">
+                GiftPerch
+              </p>
+              <p className="text-xs uppercase tracking-[0.4em] text-gp-cream/70">
                 Thoughtful gifting, reimagined
               </p>
             </div>
           </Link>
-          <nav className="flex flex-wrap items-center gap-3">
-            {navItems.map(renderNavLink)}
+          <div className="hidden items-center gap-3 sm:flex">
+            <nav className="flex items-center gap-5">
+              {navItems.map((item) => renderNavLink(item, "desktop"))}
+            </nav>
             <Link
               href="/auth/login"
-              className="gp-secondary-button border border-white/40 text-gp-evergreen hover:bg-white/15"
+              className="rounded-full border border-gp-cream/40 bg-white/90 px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
             >
               Sign in
             </Link>
-            <Link href="/auth/signup" className="gp-primary-button">
+            <Link
+              href="/auth/signup"
+              className="rounded-full bg-gp-gold px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
+            >
               Get started
             </Link>
-          </nav>
+          </div>
+          <button
+            type="button"
+            className="rounded-full border border-gp-cream/40 px-4 py-2 text-base font-semibold text-gp-cream transition hover:bg-gp-cream/20 sm:hidden"
+            aria-expanded={mobileNavOpen}
+            aria-label="Toggle navigation"
+            onClick={() => setMobileNavOpen((prev) => !prev)}
+          >
+            {mobileNavOpen ? "Close" : "Menu"}
+          </button>
         </div>
+        {mobileNavOpen ? (
+          <div className="border-t border-gp-cream/20 bg-gp-evergreen px-4 py-4 text-sm text-gp-cream sm:hidden">
+            <div className="flex flex-col gap-3">
+              {navItems.map((item) => renderNavLink(item, "mobile"))}
+              <Link
+                href="/auth/login"
+                className="rounded-full border border-gp-cream/40 px-3 py-2 text-center font-semibold text-gp-cream"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="rounded-full bg-gp-gold px-4 py-2 text-center font-semibold text-gp-evergreen hover:bg-gp-gold/90"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                Get started
+              </Link>
+            </div>
+          </div>
+        ) : null}
       </header>
       <main
         id="gp-main-content"

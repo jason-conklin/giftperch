@@ -1,8 +1,9 @@
+import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
+import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
 
 const actions = [
@@ -27,43 +28,61 @@ const actions = [
 ];
 
 export default function DashboardHome() {
+  const heroBanner = (
+    <div className="overflow-hidden rounded-3xl">
+      <Image
+        src="/giftperch_banner.png"
+        alt="GiftPerch dashboard banner"
+        width={1200}
+        height={260}
+        className="h-auto w-full rounded-3xl object-cover"
+        priority
+      />
+    </div>
+  );
+
   return (
     <AuthGuard>
       <AppLayout>
         <PageShell
+          hero={heroBanner}
+          eyebrow="PerchPal HQ"
           title="Your gifting command center"
           subtitle="Track every recipient, wishlist, and AI suggestion from one warm, PerchPal-guided workspace."
         >
-          <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-            Welcome to GiftPerch
-          </p>
-          <div className="mt-4">
+          <section className="space-y-8">
             <DashboardHighlights />
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {actions.map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="flex flex-col rounded-2xl border border-gp-gold/40 bg-gp-cream/70 p-5 transition hover:-translate-y-0.5 hover:border-gp-gold hover:bg-white"
-              >
-                <h2 className="text-lg font-semibold text-gp-evergreen">
-                  {action.title}
-                </h2>
-                <p className="mt-2 text-sm text-gp-evergreen/80">
-                  {action.description}
+            <div className="grid gap-4 md:grid-cols-3">
+              {actions.map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="gp-card flex h-full flex-col gap-2 transition hover:-translate-y-0.5 hover:shadow-lg"
+                >
+                  <h2 className="text-lg font-semibold text-gp-evergreen">
+                    {action.title}
+                  </h2>
+                  <p className="text-sm text-gp-evergreen/80">
+                    {action.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+            <div className="gp-card-soft flex w-full items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center">
+                <PerchPalLoader variant="inline" size="sm" message={null} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gp-evergreen">
+                  PerchPal is syncing upcoming gifting moments...
                 </p>
-              </Link>
-            ))}
-          </div>
-          <div className="mt-4">
-            <PerchPalLoader
-              variant="inline"
-              size="md"
-              message="PerchPal is syncing upcoming gifting moments..."
-            />
-            {/* TODO: Show while fetching upcoming events or reminders. */}
-          </div>
+                <p className="text-xs text-gp-evergreen/70">
+                  We will surface reminders, budgets, and fresh ideas the moment
+                  something special is around the corner.
+                </p>
+              </div>
+            </div>
+          </section>
         </PageShell>
       </AppLayout>
     </AuthGuard>

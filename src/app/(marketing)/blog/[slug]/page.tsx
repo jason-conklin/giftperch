@@ -88,13 +88,14 @@ const posts = {
 } as const;
 
 type BlogPostPageProps = {
-  params: {
+  params: Promise<{
     slug: keyof typeof posts | string;
-  };
+  }>;
 };
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const post = posts[params.slug as keyof typeof posts];
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const post = posts[slug as keyof typeof posts];
 
   if (!post) {
     return (
@@ -165,4 +166,3 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     </section>
   );
 }
-

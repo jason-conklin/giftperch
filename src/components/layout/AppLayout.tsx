@@ -80,9 +80,9 @@ export function AppLayout({ children }: AppLayoutProps) {
     const active =
       pathname === item.href || pathname.startsWith(`${item.href}/`);
     const baseClasses =
-      "flex items-center rounded-2xl px-3 py-2 text-sm font-semibold transition";
+      "flex items-center rounded-full px-4 py-2 text-sm font-semibold transition";
     const desktopStates = active
-      ? "bg-gp-cream text-gp-evergreen"
+      ? "bg-gp-cream text-gp-evergreen shadow-sm"
       : "text-gp-cream/80 hover:bg-white/10 hover:text-gp-cream";
     const mobileStates = active
       ? "bg-gp-evergreen text-gp-cream"
@@ -108,7 +108,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-gp-cream/80 text-gp-evergreen">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
+        <aside className="hidden h-screen w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
           <div className="flex items-center gap-4 border-b border-white/10 px-6 py-7">
             <Link
               href="/dashboard"
