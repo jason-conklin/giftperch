@@ -89,9 +89,11 @@ export default function AboutPage() {
         <Image
           src="/jasonconklin.png"
           alt="Jason Conklin"
-          width={80}
-          height={80}
-          className="h-20 w-20 rounded-full border border-gp-evergreen/15 object-cover"
+          width={256}
+          height={256}
+          quality={100}
+          unoptimized
+          className="h-36 w-36 rounded-full border border-gp-evergreen/15 object-cover"
         />
         <div className="space-y-2 text-left">
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
@@ -104,9 +106,14 @@ export default function AboutPage() {
             Creator of GiftPerch · B.S. Computer Science, NJIT
           </p>
           <p className="text-sm text-gp-evergreen/80">
-            Jason believes thoughtful gifting should feel personal, not chaotic.
-            He built PerchPal to blend recipient history with AI so families,
-            couples, and teams can keep traditions alive and surprises special.
+            I created GiftPerch because thoughtful gifting should feel
+            personal, not chaotic. I wanted a simple way to capture the details
+            that matter — interests, budgets, past wins, and subtle hints —
+            and pair them with AI to make gifting easier and more meaningful. My
+          </p>
+          <p className="text-sm text-gp-evergreen/80">
+            My goal is to help families, couples, and teams avoid last-minute
+            stress and keep traditions special.
           </p>
         </div>
       </a>
