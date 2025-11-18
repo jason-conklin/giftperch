@@ -108,7 +108,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-gp-cream/80 text-gp-evergreen">
       <div className="flex min-h-screen">
-        <aside className="hidden h-screen w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
+        <aside className="hidden min-h-screen w-72 flex-col border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream md:flex">
           <div className="flex items-center gap-4 border-b border-white/10 px-6 py-7">
             <Link
               href="/dashboard"
