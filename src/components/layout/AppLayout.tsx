@@ -72,6 +72,32 @@ export function AppLayout({ children }: AppLayoutProps) {
     };
   }, [supabase, user?.id]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`profile-updates-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          setProfileSummary({
+            display_name: (payload.new as { display_name: string | null })?.display_name ?? null,
+            avatar_url: (payload.new as { avatar_url: string | null })?.avatar_url ?? null,
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, user?.id]);
+
   const accountInitials = initialsFromText(
     profileSummary.display_name || user?.email || "GP"
   );
