@@ -5,54 +5,55 @@ const blogPosts = [
     slug: "ai-gift-generator-for-hard-to-shop-for-people",
     title: "AI gift generator for hard-to-shop-for people",
     description:
-      "How PerchPal analyzes recipient profiles to surface ideas that feel personal, not random.",
+      "How GiftPerch helps with people who are impossible to shop for, using AI and profiles.",
   },
   {
     slug: "gift-ideas-for-busy-professionals",
     title: "Gift ideas for busy professionals",
     description:
-      "What to buy for the friend or partner whose calendar is always packed--without defaulting to another mug.",
+      "What to buy for the friend or partner whose calendar is always packed -- without defaulting to another mug.",
   },
   {
     slug: "how-to-use-recipient-profiles-to-avoid-bad-gifts",
     title: "How to use recipient profiles to avoid bad gifts",
     description:
-      "Make GiftPerch your Gift CRM by logging budgets, misfires, and hints so you never repeat mistakes.",
+      "Make GiftPerch your gift CRM by logging budgets, misfires, and hints so you never repeat mistakes.",
   },
 ] as const;
 
 export default function BlogIndexPage() {
   return (
-    <section className="space-y-10">
+    <section className="space-y-8 py-6 sm:py-10 lg:py-12">
       <div className="space-y-3">
         <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-          Blog
+          GiftPerch Journal
         </p>
-        <h1 className="text-4xl font-semibold text-gp-evergreen">
-          GiftPerch Journal -- AI, gifting & thoughtful ideas
+        <h1 className="text-3xl font-semibold text-gp-evergreen">
+          Stories about thoughtful gifting
         </h1>
         <p className="text-base text-gp-evergreen/80">
-          Guides for him, her, friends, coworkers, teacher appreciation--and deep
-          dives on how to use AI and recipient profiles without losing the human
-          heart of gifting.
+          Practical ideas, PerchPal workflows, and the habits that keep gifting
+          personal—even when life gets busy.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         {blogPosts.map((post) => (
           <article
             key={post.slug}
-            className="rounded-3xl border border-gp-evergreen/15 bg-white/90 p-6 shadow-sm"
+            className="gp-card flex h-full flex-col justify-between gap-3"
           >
-            <h2 className="text-xl font-semibold text-gp-evergreen">
-              {post.title}
-            </h2>
-            <p className="mt-2 text-sm text-gp-evergreen/80">
-              {post.description}
-            </p>
+            <div>
+              <h2 className="text-xl font-semibold text-gp-evergreen">
+                {post.title}
+              </h2>
+              <p className="mt-2 text-sm text-gp-evergreen/80">
+                {post.description}
+              </p>
+            </div>
             <Link
               href={`/blog/${post.slug}`}
-              className="mt-4 inline-flex items-center text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+              className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
             >
               Read more
             </Link>
@@ -62,3 +63,4 @@ export default function BlogIndexPage() {
     </section>
   );
 }
+

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 
 export type Wishlist = {
   id: string;
@@ -62,6 +63,7 @@ type PriorityFilter = "all" | "high" | "medium" | "low";
 
 export function WishlistManager() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const { user } = useSupabaseSession();
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [activeWishlistId, setActiveWishlistId] = useState<string | null>(
     null
@@ -94,6 +96,12 @@ export function WishlistManager() {
     useState<PriorityFilter>("all");
 
   useEffect(() => {
+    if (!user?.id) {
+      setWishlists([]);
+      setActiveWishlistId(null);
+      setIsLoading(false);
+      return;
+    }
     let isMounted = true;
     const fetchWishlists = async () => {
       setIsLoading(true);
@@ -101,14 +109,22 @@ export function WishlistManager() {
       const { data, error } = await supabase
         .from("wishlists")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: true });
       if (!isMounted) return;
       if (error) {
         setError(error.message);
+        setWishlists([]);
+        setActiveWishlistId(null);
       } else {
         setWishlists(data ?? []);
-        if (!activeWishlistId && data && data.length > 0) {
-          setActiveWishlistId(data[0].id);
+        if (data && data.length > 0) {
+          const stillValid = data.some((wishlist) => wishlist.id === activeWishlistId);
+          if (!stillValid) {
+            setActiveWishlistId(data[0].id);
+          }
+        } else {
+          setActiveWishlistId(null);
         }
       }
       setIsLoading(false);
@@ -118,7 +134,7 @@ export function WishlistManager() {
     return () => {
       isMounted = false;
     };
-  }, [supabase, activeWishlistId]);
+  }, [supabase, user?.id, activeWishlistId]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -206,6 +222,12 @@ export function WishlistManager() {
     setWishlistFormError("");
     setWishlistFormMessage("");
 
+    if (!user?.id) {
+      setWishlistFormError("Sign in to manage wishlists.");
+      setWishlistFormSaving(false);
+      return;
+    }
+
     const payload = {
       title: wishlistFormState.title.trim(),
       description: wishlistFormState.description.trim() || null,
@@ -218,7 +240,10 @@ export function WishlistManager() {
       if (wishlistFormMode === "create") {
         const { data, error } = await supabase
           .from("wishlists")
-          .insert(payload)
+          .insert({
+            ...payload,
+            user_id: user.id,
+          })
           .select()
           .single();
         if (error) throw error;
@@ -230,6 +255,7 @@ export function WishlistManager() {
           .from("wishlists")
           .update(payload)
           .eq("id", activeWishlist.id)
+          .eq("user_id", user.id)
           .select()
           .single();
         if (error) throw error;
@@ -250,7 +276,7 @@ export function WishlistManager() {
   };
 
   const handleDeleteWishlist = async () => {
-    if (!activeWishlist) return;
+    if (!activeWishlist || !user?.id) return;
     const confirmDelete = window.confirm(
       `Delete wishlist "${activeWishlist.title}"?`
     );
@@ -259,7 +285,8 @@ export function WishlistManager() {
       const { error } = await supabase
         .from("wishlists")
         .delete()
-        .eq("id", activeWishlist.id);
+        .eq("id", activeWishlist.id)
+        .eq("user_id", user.id);
       if (error) throw error;
       setWishlists((prev) =>
         prev.filter((wishlist) => wishlist.id !== activeWishlist.id)
@@ -441,8 +468,8 @@ export function WishlistManager() {
           No wishlists yet
         </p>
         <p className="mt-2 text-sm text-gp-evergreen/80">
-          Create a wishlist to share your favorite finds and make it easy for
-          others to surprise you.
+          Wishlists are totally optional. Use them if you want a personal
+          running list of things you love so friends can swoop in when needed.
         </p>
         <button
           type="button"

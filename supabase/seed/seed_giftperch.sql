@@ -14,11 +14,48 @@ select demo_user_id, 'Demo User', null, 'Loves thoughtful gifting and testing Pe
 from const
 on conflict (id) do update set display_name = excluded.display_name;
 
-insert into public.recipient_profiles (id, user_id, name, relationship, age_hint, gender_hint, notes, budget_per_gift)
-select mom_id, demo_user_id, 'Mom', 'mother', 'early 60s', 'female', 'Spa days, gardening, cozy nights in.', 150
+insert into public.recipient_profiles (
+  id,
+  user_id,
+  name,
+  relationship,
+  age_hint,
+  gender,
+  notes,
+  annual_budget,
+  gift_budget_min,
+  gift_budget_max,
+  birthday,
+  pet_type
+)
+select
+  mom_id,
+  demo_user_id,
+  'Mom',
+  'mother',
+  'early 60s',
+  'female',
+  'Spa days, gardening, cozy nights in.',
+  500,
+  75,
+  150,
+  '1965-05-12',
+  null
 from const
 union all
-select friend_id, demo_user_id, 'Best Friend', 'friend', 'late 20s', 'female', 'Indie bookstore owner, hikes on weekends.', 100
+select
+  friend_id,
+  demo_user_id,
+  'Best Friend',
+  'friend',
+  'late 20s',
+  'female',
+  'Indie bookstore owner, hikes on weekends.',
+  300,
+  40,
+  120,
+  '1996-09-03',
+  null
 from const
 on conflict (id) do nothing;
 

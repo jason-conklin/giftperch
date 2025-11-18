@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -17,19 +19,62 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Recipients", href: "/recipients" },
-  { label: "Wishlist", href: "/wishlist" },
   { label: "Gift Ideas", href: "/gifts" },
   { label: "History", href: "/history" },
   { label: "Occasions", href: "/occasions" },
   { label: "Gift Guides", href: "/gift-guides" },
-  { label: "Blog", href: "/blog" },
   { label: "Settings", href: "/settings" },
 ];
+
+const initialsFromText = (value: string) =>
+  value
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const currentYear = new Date().getFullYear();
+  const { user, status } = useSupabaseSession();
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [profileSummary, setProfileSummary] = useState<{
+    display_name: string | null;
+    avatar_url: string | null;
+  }>({ display_name: null, avatar_url: null });
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfileSummary({ display_name: null, avatar_url: null });
+      return;
+    }
+    let active = true;
+    supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        if (data) {
+          setProfileSummary({
+            display_name: data.display_name,
+            avatar_url: data.avatar_url,
+          });
+        } else {
+          setProfileSummary({ display_name: null, avatar_url: null });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [supabase, user?.id]);
+
+  const accountInitials = initialsFromText(
+    profileSummary.display_name || user?.email || "GP"
+  );
 
   const renderLink = (item: NavItem, variant: "desktop" | "mobile") => {
     const active =
@@ -89,6 +134,37 @@ export function AppLayout({ children }: AppLayoutProps) {
           <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-6 text-sm">
             {navItems.map((item) => renderLink(item, "desktop"))}
           </nav>
+          {status === "authenticated" ? (
+            <div className="border-t border-white/10 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gp-cream/80 text-sm font-semibold text-gp-evergreen">
+                  {profileSummary.avatar_url ? (
+                    <Image
+                      src={profileSummary.avatar_url}
+                      alt="Account avatar"
+                      width={40}
+                      height={40}
+                      className="h-full w-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    accountInitials
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {profileSummary.display_name || user?.email || "Signed in"}
+                  </p>
+                  <Link
+                    href="/settings"
+                    className="text-xs text-gp-cream/70 underline-offset-4 hover:underline"
+                  >
+                    Manage account
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="border-t border-white/10 px-6 py-4 text-xs text-gp-cream/70">
             &copy; {currentYear} GiftPerch
           </div>

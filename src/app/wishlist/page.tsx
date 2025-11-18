@@ -8,8 +8,8 @@ export default function WishlistPage() {
     <AuthGuard>
       <AppLayout>
         <PageShell
-          title="Your Wishlist"
-          subtitle="This becomes your gifting identity - the place friends and family can shop from when they want to surprise you."
+          title="My wishlists (optional)"
+          subtitle="Keep a personal list of things you love for when friends ask. Skip it entirely if it’s not your style."
         >
           <WishlistManager />
         </PageShell>

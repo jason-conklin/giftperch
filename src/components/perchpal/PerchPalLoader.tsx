@@ -12,28 +12,41 @@ type PerchPalLoaderProps = {
 
 const AWAY_FRAMES = [
   "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation3.PNG",
   "/giftperch_flying_animation2.PNG",
 ] as const;
 
 const RETURN_FRAMES = [
   "/giftperch_retrieve_animation_1.png",
+  "/giftperch_retrieve_animation_3.png",
   "/giftperch_retrieve_animation_2.png",
 ] as const;
 
-const FRAME_SEQUENCE = [
-  ...AWAY_FRAMES,
-  ...AWAY_FRAMES,
-  ...AWAY_FRAMES,
-  ...AWAY_FRAMES,
-  ...AWAY_FRAMES,
-  ...RETURN_FRAMES,
-  ...RETURN_FRAMES,
-  ...RETURN_FRAMES,
-  ...RETURN_FRAMES,
-  ...RETURN_FRAMES,
+const FLYING_SEQUENCE = [
+  "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation2.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation2.PNG",
+  "/giftperch_flying_animation3.PNG",
 ] as const;
 
-const FRAME_DURATION_MS = 180;
+const RETURN_SEQUENCE = [
+  "/giftperch_retrieve_animation_1.png",
+  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_2.png",
+  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_1.png",
+  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_2.png",
+  "/giftperch_retrieve_animation_3.png",
+] as const;
+
+const FRAME_SEQUENCE = [...FLYING_SEQUENCE, ...RETURN_SEQUENCE] as const;
+
+const FRAME_DURATION_MS = 200;
 
 const sizeMap = {
   sm: { width: 40, height: 40, text: "text-xs", circle: "p-2" },

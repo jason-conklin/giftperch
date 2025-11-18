@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -20,6 +20,24 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusOrder = ["draft", "review", "published"] as const;
+
+const exampleGuides = [
+  {
+    title: "Cozy homebody gifts",
+    description:
+      "Weighted throws, slow-coffee rituals, and analog hobbies you can duplicate and personalize.",
+  },
+  {
+    title: "Gifts for busy professionals",
+    description:
+      "Rejuvenating experiences, smart travel staples, and restorative tech for hectic calendars.",
+  },
+  {
+    title: "Adventurous host essentials",
+    description:
+      "Design-forward serveware, mixology kits, and memory keepers for the friend who loves gathering people.",
+  },
+] as const;
 
 export function GiftGuidesManager() {
   const { status, user } = useSupabaseSession();
@@ -121,13 +139,33 @@ export function GiftGuidesManager() {
 
   return (
     <div className="space-y-6">
-      <section className="gp-card-soft text-sm text-gp-evergreen/80">
-        <p className="font-semibold">Guides sync to Supabase</p>
-        <p className="mt-1">
-          Draft cards in PerchPal, enrich them with wishlist items or affiliate
-          finds, and publish when ready. This view now reflects the data stored
-          in your Supabase project.
-        </p>
+      <section className="space-y-4">
+        <div className="gp-card-soft text-sm text-gp-evergreen/80">
+          <p className="font-semibold">Curate, duplicate, and share</p>
+          <p className="mt-1 text-base text-gp-evergreen/80">
+            Gift Guides bundle themed ideas you can duplicate, tweak, and send to
+            the people you shop forâ€”seasonal collections, team gifts, wedding
+            parties, and more.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {exampleGuides.map((guide) => (
+            <article key={guide.title} className="gp-card-soft flex flex-col gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
+                  Example guide
+                </p>
+                <h3 className="text-lg font-semibold text-gp-evergreen">
+                  {guide.title}
+                </h3>
+              </div>
+              <p className="text-sm text-gp-evergreen/80">{guide.description}</p>
+              <button className="gp-secondary-button text-sm" disabled>
+                View guide (coming soon)
+              </button>
+            </article>
+          ))}
+        </div>
       </section>
 
       <form className="gp-card space-y-4" onSubmit={handleCreateGuide}>
@@ -166,7 +204,7 @@ export function GiftGuidesManager() {
           />
         </label>
         <button type="submit" className="gp-primary-button w-full" disabled={saving}>
-          {saving ? "Creating…" : "Create guide"}
+          {saving ? "Creating..." : "Create guide"}
         </button>
         {error ? (
           <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
@@ -177,7 +215,7 @@ export function GiftGuidesManager() {
 
       <section className="grid gap-5 md:grid-cols-2">
         {loading ? (
-          <p className="text-sm text-gp-evergreen/70">Loading guides…</p>
+          <p className="text-sm text-gp-evergreen/70">Loading guides...</p>
         ) : guides.length === 0 ? (
           <div className="gp-card-soft text-sm text-gp-evergreen/70">
             No guides yet. Create one above to start planning.
@@ -235,3 +273,7 @@ export function GiftGuidesManager() {
     </div>
   );
 }
+
+
+
+

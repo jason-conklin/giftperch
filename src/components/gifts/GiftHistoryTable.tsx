@@ -23,6 +23,7 @@ export type RecipientSummary = {
   id: string;
   name: string;
   relationship: string | null;
+  is_self?: boolean;
 };
 
 type GiftFormState = {
@@ -74,7 +75,7 @@ export function GiftHistoryTable() {
       const [recipientsRes, giftsRes] = await Promise.all([
         supabase
           .from("recipient_profiles")
-          .select("id, name, relationship")
+          .select("id, name, relationship, is_self")
           .order("name", { ascending: true }),
         supabase
           .from("gift_history")
@@ -88,7 +89,8 @@ export function GiftHistoryTable() {
       if (recipientsRes.error) {
         setError(recipientsRes.error.message);
       } else {
-        setRecipients((recipientsRes.data ?? []) as RecipientSummary[]);
+        const recipientRows = (recipientsRes.data ?? []) as RecipientSummary[];
+        setRecipients(recipientRows.filter((recipient) => !recipient.is_self));
       }
 
       if (giftsRes.error) {

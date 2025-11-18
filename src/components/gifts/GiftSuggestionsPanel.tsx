@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -100,7 +100,9 @@ export function GiftSuggestionsPanel() {
       setError("");
       const { data, error } = await supabase
         .from("recipient_profiles")
-        .select("id, name, relationship")
+        .select("id, name, relationship, is_self")
+        .eq("user_id", user.id)
+        .eq("is_self", false)
         .order("name", { ascending: true });
 
       if (!isMounted) return;
@@ -250,12 +252,28 @@ export function GiftSuggestionsPanel() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const json = await response.json().catch(() => null);
-        throw new Error(json?.error || "Unable to generate suggestions.");
+      let json:
+        | {
+            suggestionRunId?: string;
+            createdAt?: string;
+            suggestions?: GiftSuggestion[];
+            promptContext?: GiftPromptContext;
+            error?: string;
+          }
+        | null = null;
+
+      try {
+        json = await response.json();
+      } catch {
+        json = null;
       }
 
-      const json = await response.json();
+      if (!response.ok || !json) {
+        throw new Error(
+          json?.error ||
+            `Unable to generate suggestions (status ${response.status}).`
+        );
+      }
       const newRun: SuggestionRun = {
         id: json.suggestionRunId,
         created_at: json.createdAt,
@@ -399,7 +417,7 @@ export function GiftSuggestionsPanel() {
 
       {recipients.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-6 text-sm text-gp-evergreen">
-          Add a recipient profile first so PerchPal knows who you’re gifting
+          Add a recipient profile first so PerchPal knows who youâ€™re gifting
           for.
         </div>
       ) : (
@@ -879,3 +897,4 @@ function buildAffiliateRedirectUrl(params: {
   search.set("url", params.finalUrl);
   return `/api/affiliate/redirect?${search.toString()}`;
 }
+

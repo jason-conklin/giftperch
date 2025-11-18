@@ -28,9 +28,9 @@ const sampleIdeas = [
 
 export default function MarketingHome() {
   return (
-    <section className="space-y-14">
-      <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
-        <div className="flex-1 space-y-5">
+    <section className="mx-auto max-w-5xl space-y-16 px-4 py-6 sm:px-6 sm:py-10 lg:px-0 lg:py-12">
+      <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
+        <div className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
             <span>PerchPal ready</span>
             <span>AI gifting</span>
@@ -41,7 +41,7 @@ export default function MarketingHome() {
               alt="GiftPerch"
               width={56}
               height={56}
-              className="h-14 w-14"
+              className="h-24 w-24"
               priority
             />
             <h1 className="text-4xl font-semibold leading-tight text-gp-evergreen">
@@ -56,7 +56,7 @@ export default function MarketingHome() {
             and lean on PerchPal--the AI gifting copilot that surfaces
             Amazon/affiliate-ready suggestions with genuine context.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/auth/signup"
               className="rounded-full bg-gp-gold px-6 py-3 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
@@ -64,16 +64,16 @@ export default function MarketingHome() {
               Get Started
             </Link>
             <Link
-              href="/features"
+              href="/about"
               className="rounded-full border border-gp-evergreen px-6 py-3 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-gp-evergreen hover:text-gp-cream"
             >
               See how it works
             </Link>
           </div>
         </div>
-        <div className="flex-1 rounded-3xl border border-gp-gold/40 bg-white/80 p-6 shadow-md">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
+        <div className="rounded-3xl border border-gp-gold/40 bg-white/85 p-6 shadow-md sm:p-8">
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
               <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
                 Sample profile
               </p>
@@ -85,14 +85,14 @@ export default function MarketingHome() {
                 under $150.
               </p>
             </div>
-            <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-4">
+            <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
               <PerchPalLoader
                 variant="inline"
                 size="sm"
                 message="PerchPal is fetching sample gift ideas..."
               />
             </div>
-            <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-4">
+            <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-5">
               <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
                 Gift ideas
               </p>
@@ -112,15 +112,15 @@ export default function MarketingHome() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 pt-4 lg:pt-6">
         <h2 className="text-2xl font-semibold text-gp-evergreen">
           How GiftPerch works
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-3">
           {steps.map((step) => (
             <div
               key={step.title}
-              className="rounded-2xl border border-gp-evergreen/15 bg-white/80 p-5 shadow-sm"
+              className="rounded-2xl border border-gp-evergreen/15 bg-white/80 p-6 shadow-sm"
             >
               <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
                 Step

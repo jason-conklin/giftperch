@@ -29,6 +29,7 @@ type GiftPromptContext = {
   occasion?: string | null;
   budget_min?: number | null;
   budget_max?: number | null;
+  annual_budget?: number | null;
   notes_summary?: string | null;
   interests_summary?: string | null;
   last_gifts_summary?: string | null;
@@ -39,11 +40,13 @@ type RecipientRecord = {
   user_id: string;
   name: string;
   relationship: string | null;
-  age_hint: string | null;
-  gender_hint: string | null;
+  pet_type: string | null;
+  gender: "male" | "female" | "other" | null;
   notes: string | null;
-  budget_per_gift: number | null;
-  budget_annual: number | null;
+  annual_budget: number | null;
+  gift_budget_min: number | null;
+  gift_budget_max: number | null;
+  birthday: string | null;
 };
 
 type RecipientInterest = {
@@ -121,11 +124,11 @@ export async function POST(request: NextRequest) {
     Math.max(MIN_SUGGESTIONS, numSuggestions),
   );
 
-  const budgetMin =
+  const requestedBudgetMin =
     typeof body.budgetMin === "number" && !Number.isNaN(body.budgetMin)
       ? body.budgetMin
       : null;
-  const budgetMax =
+  const requestedBudgetMax =
     typeof body.budgetMax === "number" && !Number.isNaN(body.budgetMax)
       ? body.budgetMax
       : null;
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
     const { data: recipient, error: recipientError } = await supabase
       .from("recipient_profiles")
       .select(
-        "id, user_id, name, relationship, age_hint, gender_hint, notes, budget_per_gift, budget_annual",
+        "id, user_id, name, relationship, pet_type, gender, notes, annual_budget, gift_budget_min, gift_budget_max, birthday",
       )
       .eq("id", recipientId)
       .eq("user_id", user.id)
@@ -167,14 +170,20 @@ export async function POST(request: NextRequest) {
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
     const last_gifts_summary = summarizeGifts(gifts);
+    const resolvedBudgetMin =
+      requestedBudgetMin ?? recipient.gift_budget_min ?? null;
+    const resolvedBudgetMax =
+      requestedBudgetMax ?? recipient.gift_budget_max ?? null;
+    const resolvedAnnualBudget = recipient.annual_budget ?? null;
 
     const promptContext: GiftPromptContext = {
       recipient_id: recipient.id,
       recipient_name: recipient.name,
       relationship: recipient.relationship,
       occasion,
-      budget_min: budgetMin,
-      budget_max: budgetMax,
+      budget_min: resolvedBudgetMin,
+      budget_max: resolvedBudgetMax,
+      annual_budget: resolvedAnnualBudget,
       notes_summary,
       interests_summary,
       last_gifts_summary,
@@ -183,8 +192,9 @@ export async function POST(request: NextRequest) {
     const userMessageContent = {
       recipient,
       occasion,
-      budget_min: budgetMin,
-      budget_max: budgetMax,
+      budget_min: resolvedBudgetMin,
+      budget_max: resolvedBudgetMax,
+      annual_budget: resolvedAnnualBudget,
       interests,
       recent_gifts: gifts,
       num_suggestions: numSuggestions,

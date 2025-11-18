@@ -2,6 +2,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
 import Link from "next/link";
 
 const actions = [
@@ -36,6 +37,9 @@ export default function DashboardHome() {
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
             Welcome to GiftPerch
           </p>
+          <div className="mt-4">
+            <DashboardHighlights />
+          </div>
           <div className="grid gap-4 md:grid-cols-3">
             {actions.map((action) => (
               <Link

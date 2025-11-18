@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 type AuthMode = "password" | "magic";
 
@@ -172,6 +173,19 @@ export default function LoginPage() {
           </p>
         )}
       </form>
+
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gp-evergreen/15" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-white px-3 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/50">
+            or
+          </span>
+        </div>
+      </div>
+
+      <GoogleSignInButton />
 
       <p className="text-center text-sm text-gp-evergreen/80">
         Need an account?{" "}

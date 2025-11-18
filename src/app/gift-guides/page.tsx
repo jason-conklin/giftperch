@@ -9,7 +9,7 @@ export default function GiftGuidesPage() {
       <AppLayout>
         <PageShell
           title="Gift Guides Library"
-          subtitle="Curated collections you can duplicate, personalize, and share with your recipients."
+          subtitle="Guides bundle curated ideas so you can duplicate, tweak, and share them with the people you shop for."
         >
           <GiftGuidesManager />
         </PageShell>

@@ -58,6 +58,7 @@ export function OccasionsManager() {
         .from("recipient_profiles")
         .select("id, name, relationship")
         .eq("user_id", user.id)
+        .eq("is_self", false)
         .order("name", { ascending: true });
 
       if (!isMounted) return;
@@ -79,6 +80,7 @@ export function OccasionsManager() {
           "id, label, event_type, event_date, notes, recipient:recipient_profiles(name, relationship)"
         )
         .eq("recipient_profiles.user_id", user.id)
+        .eq("recipient_profiles.is_self", false)
         .order("event_date", { ascending: true })
         .limit(30);
 
@@ -130,6 +132,7 @@ export function OccasionsManager() {
           "id, label, event_type, event_date, notes, recipient:recipient_profiles(name, relationship)"
         )
         .eq("recipient_profiles.user_id", user.id)
+        .eq("recipient_profiles.is_self", false)
         .order("event_date", { ascending: true })
         .limit(30);
       setOccasions((data ?? []) as Occasion[]);

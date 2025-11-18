@@ -379,15 +379,17 @@ name
 
 relationship
 
-age
+pet_type
 
 gender
 
 birthday
 
-budget_annual
+annual_budget
 
-budget_per_gift
+gift_budget_min
+
+gift_budget_max
 
 favorite_brands
 

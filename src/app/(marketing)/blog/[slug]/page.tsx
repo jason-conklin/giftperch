@@ -1,61 +1,87 @@
-import { PageShell } from "@/components/layout/PageShell";
 import Link from "next/link";
 
 const posts = {
   "ai-gift-generator-for-hard-to-shop-for-people": {
     title: "AI gift generator for hard-to-shop-for people",
     intro:
-      "PerchPal turns a handful of profile notes into a curated list of ideas. Here is how the AI engine keeps things personal.",
+      'When someone shrugs and says "I do not need anything," GiftPerch pairs your profile data with PerchPal so the search still feels thoughtful.',
     sections: [
       {
-        heading: "Start with real recipient profiles",
-        body: "GiftPerch encourages you to log personality traits, interests, and past gift wins or misses. PerchPal reads that context to avoid generic ideas.",
+        heading: "Capture the clues hiding in conversations",
+        paragraphs: [
+          "Log the things your recipient casually mentions -- travel plans, materials they dislike, boutiques they follow, or the classic \"please do not get me another scarf\" warning.",
+          "Profiles hold more than demographics. Add context like recent life changes, budget comfort zones, and any past wins or misses so PerchPal keeps suggestions grounded in reality.",
+        ],
       },
       {
-        heading: "Let PerchPal explain why",
-        body: "Each suggestion comes with a rationale so you can see the thread between the profile and the gift. It's an assist, not a black box.",
+        heading: "Let PerchPal remix context with AI",
+        paragraphs: [
+          "When you request ideas, PerchPal blends those notes with seasonal cues and gift history to avoid the copy-and-paste lists you might get from a generic chatbot.",
+          "Each recommendation includes a short rationale so you can instantly see why a book bundle, workshop, or experience matches that \"impossible\" person.",
+        ],
       },
       {
-        heading: "Turn insights into your plan",
-        body: "Save favorites to a wishlist, log which items you actually purchased, and keep the relationship context updated for future occasions.",
+        heading: "Close the loop with gift history",
+        paragraphs: [
+          "Log what you actually purchased and how it landed. That feedback feeds directly into future PerchPal prompts so it never suggests the same dud twice.",
+          "Move any standout idea into your wishlist to resurface or share when someone asks what to buy them.",
+        ],
       },
     ],
   },
   "gift-ideas-for-busy-professionals": {
     title: "Gift ideas for busy professionals",
     intro:
-      "Whether it is a partner with a hectic travel schedule or a colleague who lives in back-to-back meetings, these ideas keep thoughtfulness front and center.",
+      "Your most overbooked friends crave gifts that feel restorative or that upgrade their daily systems. These themes keep utility and delight balanced.",
     sections: [
       {
-        heading: "Prioritize rejuvenation",
-        body: "PerchPal often recommends gifts that create intentional downtime: curated tea kits, guided journaling sets, or pre-planned dining experiences.",
+        heading: "Design gifts that create breathing room",
+        paragraphs: [
+          "PerchPal loves recommending cozy rituals: curated tea flights, guided journaling kits, or memberships that pre-plan dinner for hectic weeks.",
+          "Think experiences that force them to pause -- sound bath passes, float therapy, or even a housekeeping credit bundled with a personal note.",
+        ],
       },
       {
-        heading: "Make utility beautiful",
-        body: "Rechargeable desk accessories, smart travel organizers, and wellness subscriptions balance practicality with a personal touch.",
+        heading: "Upgrade their everyday tools",
+        paragraphs: [
+          "Smart travel organizers, weighted pens, or premium laptop stands give utilitarian items a glow-up without feeling generic.",
+          "Pair each idea with personal context (\"he is on red-eyes twice a month\") inside GiftPerch so PerchPal understands why that recommendation mattered.",
+        ],
       },
       {
-        heading: "Document what lands",
-        body: "Use GiftPerch to log which gifts brought the biggest smiles so your future suggestions get smarter every occasion.",
+        heading: "Document reactions for the next crunch season",
+        paragraphs: [
+          "After gifting, record what sparked joy and what missed. Busy people rarely have time to elaborate, so jot down even the smallest \"this was perfect\" DM.",
+          "The next time you ask PerchPal for ideas, it will lean on that feedback to keep the streak going.",
+        ],
       },
     ],
   },
   "how-to-use-recipient-profiles-to-avoid-bad-gifts": {
     title: "How to use recipient profiles to avoid bad gifts",
     intro:
-      "Recipient profiles turn fuzzy memories into a clear snapshot. Here is a simple framework to keep them useful.",
+      "Recipient profiles are your mini gift CRM. The more details you capture, the easier it becomes to dodge repeat misfires.",
     sections: [
       {
-        heading: "Log preferences right after conversations",
-        body: "When a friend mentions a new hobby or favorite shop, add it to their profile before it disappears from your brain.",
+        heading: "Log intel right after conversations",
+        paragraphs: [
+          "When someone mentions a new brand or trip, open GiftPerch and add it immediately before the memory fades.",
+          "Over time you will build a searchable log of likes, dislikes, and hints so you never rely on guesswork.",
+        ],
       },
       {
-        heading: "Track budgets and anti-gifts",
-        body: "Not every idea is a winner. Record misses, price sensitivity, and brands to avoid so you never double up.",
+        heading: "Track budgets, sizes, and anti-gifts",
+        paragraphs: [
+          "Budgets are not just dollar signs -- they tell PerchPal how bold or safe it should go. Record min and max ranges plus annual spend so the AI respects financial comfort.",
+          "Add shoe sizes, allergies, or \"never again\" items. Future you (or a partner logging in) will be grateful.",
+        ],
       },
       {
-        heading: "Pair profiles with PerchPal",
-        body: "Profiles are powerful on their own. Feed them into PerchPal to unlock AI-driven suggestions rooted in what makes each person unique.",
+        heading: "Share context with collaborators",
+        paragraphs: [
+          "Use the self-profile link or export notes so siblings, partners, or teammates all see the same source of truth.",
+          "When everyone works from the same profile, the chances of duplicate or awkward gifts drop dramatically.",
+        ],
       },
     ],
   },
@@ -72,34 +98,60 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   if (!post) {
     return (
-      <PageShell title="Post not found" subtitle="Check back soon for new stories.">
+      <section className="space-y-4 py-10">
+        <h1 className="text-3xl font-semibold text-gp-evergreen">
+          Post not found
+        </h1>
+        <p className="text-gp-evergreen/80">
+          Check back soon for more GiftPerch stories and ideas.
+        </p>
         <Link
           href="/blog"
           className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
         >
           Return to the GiftPerch Journal
         </Link>
-      </PageShell>
+      </section>
     );
   }
 
   return (
-    <PageShell title={post.title} subtitle={post.intro}>
-      {post.sections.map((section) => (
-        <article key={section.heading} className="space-y-2">
-          <h2 className="text-xl font-semibold text-gp-evergreen">
-            {section.heading}
-          </h2>
-          <p className="text-base text-gp-evergreen/80">{section.body}</p>
-        </article>
-      ))}
-      <div className="rounded-3xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen/80">
+    <section className="space-y-6 py-6 sm:py-10 lg:py-12">
+      <header className="space-y-3">
+        <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+          GiftPerch Journal
+        </p>
+        <h1 className="text-3xl font-semibold text-gp-evergreen">
+          {post.title}
+        </h1>
+        <p className="text-base text-gp-evergreen/80">{post.intro}</p>
+      </header>
+
+      <div className="space-y-5">
+        {post.sections.map((section) => (
+          <article key={section.heading} className="space-y-2">
+            <h2 className="text-xl font-semibold text-gp-evergreen">
+              {section.heading}
+            </h2>
+            {section.paragraphs.map((paragraph, index) => (
+              <p
+                key={`${section.heading}-${index}`}
+                className="text-base text-gp-evergreen/80"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </article>
+        ))}
+      </div>
+
+      <div className="gp-card-soft text-sm text-gp-evergreen/80">
         Want more thoughtful gifting frameworks?{" "}
         <Link
-          href="/features"
+          href="/about"
           className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
         >
-          Explore GiftPerch features
+          Learn about GiftPerch
         </Link>{" "}
         or{" "}
         <Link
@@ -110,6 +162,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         </Link>
         .
       </div>
-    </PageShell>
+    </section>
   );
 }
+
