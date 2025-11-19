@@ -566,6 +566,32 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
+  if (recipient.avatar_url) {
+    return {
+      kind: "image" as const,
+      src: recipient.avatar_url,
+      alt: `${recipient.name} avatar`,
+    };
+  }
+  if (recipient.avatar_icon) {
+    const preset = PRESET_AVATAR_OPTIONS.find(
+      (option) => option.key === recipient.avatar_icon
+    );
+    if (preset) {
+      return {
+        kind: "preset" as const,
+        src: preset.image,
+        alt: preset.label,
+      };
+    }
+  }
+  return {
+    kind: "initials" as const,
+    text: getInitials(recipient.name),
+  };
+};
+
 export function RecipientsManager() {
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
@@ -1209,20 +1235,34 @@ export function RecipientsManager() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-sm font-semibold text-gp-evergreen">
-                    {recipient.avatar_url ? (
-                      <Image
-                        src={recipient.avatar_url}
-                        alt={`${recipient.name} avatar`}
-                        width={48}
-                        height={48}
-                        className="h-full w-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      getInitials(recipient.name)
-                    )}
-                  </div>
+                  {(() => {
+                    const avatar = getRecipientAvatarVisual(recipient);
+                    return (
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-sm font-semibold text-gp-evergreen">
+                        {avatar.kind === "image" ? (
+                          <Image
+                            src={avatar.src}
+                            alt={avatar.alt}
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                            unoptimized
+                          />
+                        ) : avatar.kind === "preset" ? (
+                          <Image
+                            src={avatar.src}
+                            alt={avatar.alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-contain"
+                            unoptimized
+                          />
+                        ) : (
+                          avatar.text
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div>
                     <p className="text-lg font-semibold text-gp-evergreen">
                       {recipient.name}
@@ -1346,20 +1386,34 @@ export function RecipientsManager() {
           >
             <div className="flex items-center justify-between gap-4 border-b border-gp-evergreen/10 bg-gp-evergreen px-6 py-4 text-gp-cream">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-cream/30 bg-gp-cream/90 text-base font-semibold text-gp-evergreen">
-                  {selectedRecipient.avatar_url ? (
-                    <Image
-                      src={selectedRecipient.avatar_url}
-                      alt={`${selectedRecipient.name} avatar`}
-                      width={56}
-                      height={56}
-                      className="h-full w-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    getInitials(selectedRecipient.name)
-                  )}
-                </div>
+                {(() => {
+                  const avatar = getRecipientAvatarVisual(selectedRecipient);
+                  return (
+                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-cream/30 bg-gp-cream/90 text-base font-semibold text-gp-evergreen">
+                      {avatar.kind === "image" ? (
+                        <Image
+                          src={avatar.src}
+                          alt={avatar.alt}
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-cover"
+                          unoptimized
+                        />
+                      ) : avatar.kind === "preset" ? (
+                        <Image
+                          src={avatar.src}
+                          alt={avatar.alt}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        avatar.text
+                      )}
+                    </div>
+                  );
+                })()}
                 <div>
                   <p
                     id={`recipient-details-${selectedRecipient.id}`}
