@@ -567,6 +567,29 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+const MONTH_ABBREVIATIONS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+const formatRecipientBirthday = (value: string | null) => {
+  if (!value) return null;
+  const parsed = parseBirthdayParts(value);
+  if (!parsed) return null;
+  const monthLabel = MONTH_ABBREVIATIONS[parsed.month] ?? "";
+  return `${monthLabel} ${parsed.day}`;
+};
+
 const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
   if (recipient.avatar_url) {
     return {
@@ -1318,15 +1341,7 @@ export function RecipientsManager() {
                 {recipient.birthday && (
                   <div className="flex justify-between">
                     <dt className="font-semibold">Birthday</dt>
-                    <dd>
-                      {new Date(recipient.birthday).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "short",
-                          day: "numeric",
-                        }
-                      )}
-                    </dd>
+                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "—"}</dd>
                   </div>
                 )}
               </dl>

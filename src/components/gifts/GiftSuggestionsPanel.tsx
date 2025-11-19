@@ -174,6 +174,9 @@ export function GiftSuggestionsPanel() {
   const [prefilledRecipientId, setPrefilledRecipientId] = useState<string | null>(
     null,
   );
+  const [recipientMenuOpen, setRecipientMenuOpen] = useState(false);
+  const summaryButtonRef = useRef<HTMLButtonElement | null>(null);
+  const recipientMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated" || !user) return;
@@ -248,6 +251,22 @@ export function GiftSuggestionsPanel() {
       setPrefilledRecipientId(null);
     }
   }, [selectedRecipientId, prefilledRecipientId]);
+
+  useEffect(() => {
+    if (!recipientMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const inButton = summaryButtonRef.current?.contains(target);
+      const inMenu = recipientMenuRef.current?.contains(target);
+      if (!inButton && !inMenu) {
+        setRecipientMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, [recipientMenuOpen]);
 
   useEffect(() => {
     if (!selectedRecipientId) {
@@ -519,12 +538,6 @@ export function GiftSuggestionsPanel() {
     return null;
   }
 
-  const recipientOptions = recipients.map((recipient) => ({
-    value: recipient.id,
-    label: recipient.relationship
-      ? `${recipient.name} (${recipient.relationship})`
-      : recipient.name,
-  }));
   const showPrefilledHint =
     !!selectedRecipient && prefilledRecipientId === selectedRecipient.id;
   const selectedRelationshipLabel = selectedRecipient
@@ -562,45 +575,136 @@ export function GiftSuggestionsPanel() {
           <form className="mt-2 space-y-4" onSubmit={handleRequestSuggestions}>
             {selectedRecipient ? (
               <>
-                <div className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3">
-                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-sm font-semibold text-gp-evergreen">
-                    {(() => {
-                      const avatar = getRecipientAvatarVisual(selectedRecipient);
-                      if (avatar.kind === "image") {
-                        return (
-                          <Image
-                            src={avatar.src}
-                            alt={avatar.alt}
-                            width={48}
-                            height={48}
-                            className="h-full w-full object-cover"
-                            unoptimized
-                          />
-                        );
-                      }
-                      if (avatar.kind === "preset") {
-                        return (
-                          <Image
-                            src={avatar.src}
-                            alt={avatar.alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-contain"
-                            unoptimized
-                          />
-                        );
-                      }
-                      return avatar.text;
-                    })()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gp-evergreen">
-                      {selectedRecipient.name}
-                    </p>
-                    <p className="text-xs text-gp-evergreen/70">
-                      {selectedRelationshipLabel}
-                    </p>
-                  </div>
+                <label
+                  htmlFor="recipient-summary"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Recipient
+                </label>
+                <div className="relative" id="recipient-summary">
+                  <button
+                    type="button"
+                    ref={summaryButtonRef}
+                    onClick={() =>
+                      setRecipientMenuOpen((previous) => !previous)
+                    }
+                    className="flex w-full items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-sm font-semibold text-gp-evergreen">
+                      {(() => {
+                        const avatar = getRecipientAvatarVisual(selectedRecipient);
+                        if (avatar.kind === "image") {
+                          return (
+                            <Image
+                              src={avatar.src}
+                              alt={avatar.alt}
+                              width={48}
+                              height={48}
+                              className="h-full w-full object-cover"
+                              unoptimized
+                            />
+                          );
+                        }
+                        if (avatar.kind === "preset") {
+                          return (
+                            <Image
+                              src={avatar.src}
+                              alt={avatar.alt}
+                              width={40}
+                              height={40}
+                              className="h-10 w-10 object-contain"
+                              unoptimized
+                            />
+                          );
+                        }
+                        return avatar.text;
+                      })()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gp-evergreen">
+                        {selectedRecipient.name}
+                      </p>
+                      <p className="text-xs text-gp-evergreen/70">
+                        {selectedRelationshipLabel}
+                      </p>
+                    </div>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className={`h-5 w-5 text-gp-evergreen/70 transition-transform ${
+                        recipientMenuOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+
+                  {recipientMenuOpen ? (
+                    <div
+                      ref={recipientMenuRef}
+                      className="absolute left-0 right-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-gp-evergreen/15 bg-white shadow-lg"
+                    >
+                      <ul className="divide-y divide-gp-evergreen/10">
+                        {recipients.map((recipient) => {
+                          const avatar = getRecipientAvatarVisual(recipient);
+                          const isActive = recipient.id === selectedRecipientId;
+                          return (
+                            <li key={recipient.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRecipientId(recipient.id);
+                                  setRecipientMenuOpen(false);
+                                }}
+                                className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition ${
+                                  isActive
+                                    ? "bg-gp-cream/70 text-gp-evergreen font-semibold"
+                                    : "text-gp-evergreen hover:bg-gp-cream/60"
+                                }`}
+                              >
+                                <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold">
+                                  {avatar.kind === "image" ? (
+                                    <Image
+                                      src={avatar.src}
+                                      alt={avatar.alt}
+                                      width={40}
+                                      height={40}
+                                      className="h-full w-full object-cover"
+                                      unoptimized
+                                    />
+                                  ) : avatar.kind === "preset" ? (
+                                    <Image
+                                      src={avatar.src}
+                                      alt={avatar.alt}
+                                      width={32}
+                                      height={32}
+                                      className="h-8 w-8 object-contain"
+                                      unoptimized
+                                    />
+                                  ) : (
+                                    avatar.text
+                                  )}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block truncate">
+                                    {recipient.name}
+                                  </span>
+                                  <span className="text-xs text-gp-evergreen/70">
+                                    {describeRecipientRelationship(recipient)}
+                                  </span>
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
                 {showPrefilledHint ? (
                   <p className="text-xs text-gp-evergreen/70">
@@ -612,28 +716,7 @@ export function GiftSuggestionsPanel() {
               </>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label
-                  htmlFor="recipient-select"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Recipient
-                </label>
-                <select
-                  id="recipient-select"
-                  value={selectedRecipientId}
-                  onChange={(event) => setSelectedRecipientId(event.target.value)}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  {recipientOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="occasion-select"
@@ -723,11 +806,11 @@ export function GiftSuggestionsPanel() {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <button
                 type="submit"
                 disabled={isRequesting || !selectedRecipientId}
-                className="inline-flex w-full items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60 md:w-auto"
+                className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60"
               >
                 {isRequesting
                   ? "Asking PerchPal..."
@@ -837,7 +920,7 @@ export function GiftSuggestionsPanel() {
               />
             ) : !activeRun ? (
               <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-6 text-center text-sm text-gp-evergreen">
-                Ask PerchPal for suggestions to see curated ideas here.
+                Ask PerchPal for suggestions to see curated gift ideas here.
               </div>
             ) : visibleSuggestions.length === 0 ? (
               <div className="rounded-2xl border border-gp-evergreen/20 bg-white/90 p-6 text-sm text-gp-evergreen">
@@ -1110,4 +1193,3 @@ function buildAffiliateRedirectUrl(params: {
   search.set("url", params.finalUrl);
   return `/api/affiliate/redirect?${search.toString()}`;
 }
-
