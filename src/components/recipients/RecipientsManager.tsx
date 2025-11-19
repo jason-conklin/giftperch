@@ -35,164 +35,29 @@ export type RecipientProfile = {
   updated_at: string;
 };
 
-type IconProps = { className?: string };
-
-const avatarIconClass =
-  "h-10 w-10 stroke-[1.8] transition-colors duration-150";
-
-const BoyIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <path d="M16 20s2-6 8-6 8 6 8 6" />
-    <circle cx="24" cy="18" r="9" />
-    <path d="M12 42c0-6.627 5.373-12 12-12s12 5.373 12 12" />
-  </svg>
-);
-
-const GirlIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <path d="M16 20c0-6 2-11 8-11s8 5 8 11" />
-    <circle cx="24" cy="18" r="9" />
-    <path d="M14 42c0-5 4.477-9 10-9s10 4 10 9" />
-    <path d="M18 30v4" />
-    <path d="M30 30v4" />
-  </svg>
-);
-
-const ManIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <circle cx="24" cy="16" r="8" />
-    <path d="M16 42v-6a8 8 0 0 1 16 0v6" />
-    <path d="M18 26s3 2 6 2 6-2 6-2" />
-  </svg>
-);
-
-const WomanIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <circle cx="24" cy="16" r="8" />
-    <path d="M18 42v-8a6 6 0 1 1 12 0v8" />
-    <path d="M16 26s3 2 8 2 8-2 8-2" />
-  </svg>
-);
-
-const RingIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <circle cx="24" cy="30" r="13" />
-    <path d="M18 12h12l-4 5h-4z" />
-  </svg>
-);
-
-const DogIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <path d="M12 34v-6a10 10 0 0 1 10-10h4l8-8 2 6h6" />
-    <path d="M34 26v8a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-4" />
-    <circle cx="20" cy="22" r="1" fill="currentColor" />
-  </svg>
-);
-
-const CatIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <path d="M12 42v-9a12 12 0 0 1 24 0v9" />
-    <path d="M14 20V8l6 4 4-4 4 4 6-4v12" />
-    <circle cx="20" cy="24" r="1.5" fill="currentColor" />
-    <circle cx="28" cy="24" r="1.5" fill="currentColor" />
-    <path d="M20 30s2 2 4 2 4-2 4-2" />
-  </svg>
-);
-
-const BirdIcon = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 48 48"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${avatarIconClass} ${className ?? ""}`}
-  >
-    <path d="M10 24c8-2 12-8 12-12 4 6 8 8 12 8 2 0 4-1 6-3-1 10-5 20-18 20h-2l-6 5v-7c-2-1-4-4-4-11Z" />
-    <path d="M28 34s2 2 5 2" />
-  </svg>
-);
-
 type AvatarIconKey =
+  | "babyboy"
+  | "babygirl"
   | "boy"
   | "girl"
   | "man"
   | "woman"
-  | "ring"
   | "dog"
-  | "cat"
-  | "bird";
+  | "cat";
 
 const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
   key: AvatarIconKey;
   label: string;
-  icon: (props: IconProps) => JSX.Element;
+  image: string;
 }> = [
-  { key: "boy", label: "Boy", icon: BoyIcon },
-  { key: "girl", label: "Girl", icon: GirlIcon },
-  { key: "man", label: "Man", icon: ManIcon },
-  { key: "woman", label: "Woman", icon: WomanIcon },
-  { key: "ring", label: "Ring", icon: RingIcon },
-  { key: "dog", label: "Dog", icon: DogIcon },
-  { key: "cat", label: "Cat", icon: CatIcon },
-  { key: "bird", label: "Bird", icon: BirdIcon },
+  { key: "babyboy", label: "Baby boy", image: "/babyboy_icon.png" },
+  { key: "babygirl", label: "Baby girl", image: "/babygirl_icon.png" },
+  { key: "boy", label: "Boy", image: "/boy_icon.png" },
+  { key: "girl", label: "Girl", image: "/girl_icon.png" },
+  { key: "man", label: "Man", image: "/man_icon.png" },
+  { key: "woman", label: "Woman", image: "/woman_icon.png" },
+  { key: "dog", label: "Dog", image: "/dog_icon.png" },
+  { key: "cat", label: "Cat", image: "/cat_icon.png" },
 ];
 
 type FormState = {
@@ -358,6 +223,7 @@ export function RecipientsManager() {
   const [deleteError, setDeleteError] = useState("");
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarOptionsVisible, setAvatarOptionsVisible] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
@@ -478,7 +344,11 @@ export function RecipientsManager() {
       const {
         data: { publicUrl },
       } = supabase.storage.from(RECIPIENT_AVATAR_BUCKET).getPublicUrl(fileName);
-      setFormState((prev) => ({ ...prev, avatar_url: publicUrl }));
+      setFormState((prev) => ({
+        ...prev,
+        avatar_url: publicUrl,
+        avatar_icon: "",
+      }));
       setFormMessage("Photo uploaded. Save to keep changes.");
     } catch (err) {
       const message =
@@ -529,6 +399,7 @@ export function RecipientsManager() {
     });
     setFormError("");
     setFormMessage("");
+    setAvatarOptionsVisible(false);
     setIsFormOpen(true);
   };
 
@@ -539,6 +410,7 @@ export function RecipientsManager() {
     setFormMessage("");
     setFormError("");
     setFormSaving(false);
+    setAvatarOptionsVisible(false);
   };
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1144,7 +1016,14 @@ export function RecipientsManager() {
                         unoptimized
                       />
                     ) : selectedPresetIcon ? (
-                      <selectedPresetIcon.icon className="text-gp-evergreen" />
+                      <Image
+                        src={selectedPresetIcon.image}
+                        alt={selectedPresetIcon.label}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-contain"
+                        unoptimized
+                      />
                     ) : (
                       getInitials(formState.name || "Recipient")
                     )}
@@ -1156,81 +1035,120 @@ export function RecipientsManager() {
                     <p className="text-xs text-gp-evergreen/60">
                       Optional. Helps PerchPal feel more personal.
                     </p>
-                    <p className="text-xs text-gp-evergreen/60">
-                      Or choose a preset icon below.
-                    </p>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <input
-                    ref={recipientAvatarInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleRecipientAvatarUpload}
-                  />
-                  <button
-                    type="button"
-                    className="gp-secondary-button"
-                    onClick={() => recipientAvatarInputRef.current?.click()}
-                    disabled={avatarUploading}
-                  >
-                    {avatarUploading ? "Uploading..." : "Upload photo"}
-                  </button>
-                  {formState.avatar_url ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                    {(formState.avatar_url || formState.avatar_icon) && (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-red-600"
+                        onClick={() =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            avatar_url: "",
+                            avatar_icon: "",
+                          }))
+                        }
+                      >
+                        Remove
+                      </button>
+                    )}
                     <button
                       type="button"
-                      className="text-xs font-semibold text-red-600"
+                      className="gp-secondary-button"
                       onClick={() =>
-                        setFormState((prev) => ({ ...prev, avatar_url: "" }))
+                        setAvatarOptionsVisible((visible) => !visible)
                       }
                     >
-                      Remove
+                      {avatarOptionsVisible ? "Hide avatar options" : "Change avatar"}
                     </button>
+                  </div>
+                  {!avatarOptionsVisible ? (
+                    <p className="text-xs text-gp-evergreen/60">
+                      Upload a photo or choose from preset icons.
+                    </p>
                   ) : null}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {PRESET_AVATAR_OPTIONS.map((option) => {
-                  const selected = formState.avatar_icon === option.key;
-                  return (
+              {avatarOptionsVisible ? (
+                <div className="space-y-4 border-t border-gp-evergreen/20 pt-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <input
+                      ref={recipientAvatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleRecipientAvatarUpload}
+                    />
                     <button
-                      key={option.key}
                       type="button"
-                      aria-pressed={selected}
-                      title={option.label}
-                      onClick={() =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          avatar_icon: option.key,
-                        }))
-                      }
-                      className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
-                        selected
-                          ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
-                          : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
-                      }`}
+                      className="gp-secondary-button"
+                      onClick={() => recipientAvatarInputRef.current?.click()}
+                      disabled={avatarUploading}
                     >
-                      <span
-                        className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                          selected
-                            ? "bg-white/10 text-gp-cream"
-                            : "bg-gp-cream text-gp-evergreen"
-                        }`}
-                      >
-                        <option.icon
-                          className={
-                            selected ? "text-gp-cream" : "text-gp-evergreen"
-                          }
-                        />
-                      </span>
-                      <span className="mt-2 text-[11px] uppercase tracking-wide">
-                        {option.label}
-                      </span>
+                      {avatarUploading ? "Uploading..." : "Upload photo"}
                     </button>
-                  );
-                })}
-              </div>
+                    {formState.avatar_url ? (
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-red-600"
+                        onClick={() =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            avatar_url: "",
+                          }))
+                        }
+                      >
+                        Remove photo
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {PRESET_AVATAR_OPTIONS.map((option) => {
+                      const selected = formState.avatar_icon === option.key;
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          aria-pressed={selected}
+                          title={option.label}
+                          onClick={() =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              avatar_icon: option.key,
+                              avatar_url: "",
+                            }))
+                          }
+                          className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
+                            selected
+                              ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
+                              : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                              selected ? "bg-white/10" : "bg-gp-cream"
+                            }`}
+                          >
+                            <Image
+                              src={option.image}
+                              alt={option.label}
+                              width={48}
+                              height={48}
+                              className="h-10 w-10 object-contain"
+                              unoptimized
+                            />
+                          </span>
+                          <span className="mt-2 text-[11px] uppercase tracking-wide">
+                            {option.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-2">
