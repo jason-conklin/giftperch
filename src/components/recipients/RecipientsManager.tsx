@@ -28,11 +28,172 @@ export type RecipientProfile = {
   gift_budget_max: number | null;
   birthday: string | null;
   avatar_url: string | null;
+  avatar_icon: string | null;
   is_self: boolean;
   self_slug: string | null;
   created_at: string;
   updated_at: string;
 };
+
+type IconProps = { className?: string };
+
+const avatarIconClass =
+  "h-10 w-10 stroke-[1.8] transition-colors duration-150";
+
+const BoyIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <path d="M16 20s2-6 8-6 8 6 8 6" />
+    <circle cx="24" cy="18" r="9" />
+    <path d="M12 42c0-6.627 5.373-12 12-12s12 5.373 12 12" />
+  </svg>
+);
+
+const GirlIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <path d="M16 20c0-6 2-11 8-11s8 5 8 11" />
+    <circle cx="24" cy="18" r="9" />
+    <path d="M14 42c0-5 4.477-9 10-9s10 4 10 9" />
+    <path d="M18 30v4" />
+    <path d="M30 30v4" />
+  </svg>
+);
+
+const ManIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <circle cx="24" cy="16" r="8" />
+    <path d="M16 42v-6a8 8 0 0 1 16 0v6" />
+    <path d="M18 26s3 2 6 2 6-2 6-2" />
+  </svg>
+);
+
+const WomanIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <circle cx="24" cy="16" r="8" />
+    <path d="M18 42v-8a6 6 0 1 1 12 0v8" />
+    <path d="M16 26s3 2 8 2 8-2 8-2" />
+  </svg>
+);
+
+const RingIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <circle cx="24" cy="30" r="13" />
+    <path d="M18 12h12l-4 5h-4z" />
+  </svg>
+);
+
+const DogIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <path d="M12 34v-6a10 10 0 0 1 10-10h4l8-8 2 6h6" />
+    <path d="M34 26v8a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-4" />
+    <circle cx="20" cy="22" r="1" fill="currentColor" />
+  </svg>
+);
+
+const CatIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <path d="M12 42v-9a12 12 0 0 1 24 0v9" />
+    <path d="M14 20V8l6 4 4-4 4 4 6-4v12" />
+    <circle cx="20" cy="24" r="1.5" fill="currentColor" />
+    <circle cx="28" cy="24" r="1.5" fill="currentColor" />
+    <path d="M20 30s2 2 4 2 4-2 4-2" />
+  </svg>
+);
+
+const BirdIcon = ({ className }: IconProps) => (
+  <svg
+    viewBox="0 0 48 48"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.8}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={`${avatarIconClass} ${className ?? ""}`}
+  >
+    <path d="M10 24c8-2 12-8 12-12 4 6 8 8 12 8 2 0 4-1 6-3-1 10-5 20-18 20h-2l-6 5v-7c-2-1-4-4-4-11Z" />
+    <path d="M28 34s2 2 5 2" />
+  </svg>
+);
+
+type AvatarIconKey =
+  | "boy"
+  | "girl"
+  | "man"
+  | "woman"
+  | "ring"
+  | "dog"
+  | "cat"
+  | "bird";
+
+const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
+  key: AvatarIconKey;
+  label: string;
+  icon: (props: IconProps) => JSX.Element;
+}> = [
+  { key: "boy", label: "Boy", icon: BoyIcon },
+  { key: "girl", label: "Girl", icon: GirlIcon },
+  { key: "man", label: "Man", icon: ManIcon },
+  { key: "woman", label: "Woman", icon: WomanIcon },
+  { key: "ring", label: "Ring", icon: RingIcon },
+  { key: "dog", label: "Dog", icon: DogIcon },
+  { key: "cat", label: "Cat", icon: CatIcon },
+  { key: "bird", label: "Bird", icon: BirdIcon },
+];
 
 type FormState = {
   name: string;
@@ -46,6 +207,7 @@ type FormState = {
   giftBudgetMax: string;
   birthday: string;
   avatar_url: string;
+  avatar_icon: AvatarIconKey | "";
 };
 
 const emptyFormState: FormState = {
@@ -60,6 +222,7 @@ const emptyFormState: FormState = {
   giftBudgetMax: "",
   birthday: "",
   avatar_url: "",
+  avatar_icon: "",
 };
 
 const RELATIONSHIP_OPTIONS = [
@@ -278,6 +441,13 @@ export function RecipientsManager() {
     () => calculateAge(formState.birthday || null),
     [formState.birthday],
   );
+  const selectedPresetIcon = useMemo(
+    () =>
+      PRESET_AVATAR_OPTIONS.find(
+        (option) => option.key === formState.avatar_icon
+      ),
+    [formState.avatar_icon]
+  );
 
   const openCreateForm = () => {
     setFormMode("create");
@@ -355,6 +525,7 @@ export function RecipientsManager() {
         : "",
       birthday: recipient.birthday ?? "",
       avatar_url: recipient.avatar_url ?? "",
+      avatar_icon: (recipient.avatar_icon as AvatarIconKey | "") ?? "",
     });
     setFormError("");
     setFormMessage("");
@@ -434,6 +605,7 @@ export function RecipientsManager() {
       gift_budget_max: giftMax,
       birthday: formState.birthday || null,
       avatar_url: formState.avatar_url || null,
+      avatar_icon: formState.avatar_icon || null,
     };
 
     try {
@@ -958,58 +1130,106 @@ export function RecipientsManager() {
           </div>
 
           <form className="mt-6 space-y-4" onSubmit={handleFormSubmit}>
-            <div className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-lg font-semibold text-gp-evergreen">
-                  {formState.avatar_url ? (
-                    <Image
-                      src={formState.avatar_url}
-                      alt={`${formState.name || "Recipient"} photo`}
-                      width={64}
-                      height={64}
-                      className="h-full w-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    getInitials(formState.name || "Recipient")
-                  )}
+            <div className="space-y-4 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-lg font-semibold text-gp-evergreen">
+                    {formState.avatar_url ? (
+                      <Image
+                        src={formState.avatar_url}
+                        alt={`${formState.name || "Recipient"} photo`}
+                        width={64}
+                        height={64}
+                        className="h-full w-full object-cover"
+                        unoptimized
+                      />
+                    ) : selectedPresetIcon ? (
+                      <selectedPresetIcon.icon className="text-gp-evergreen" />
+                    ) : (
+                      getInitials(formState.name || "Recipient")
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gp-evergreen">
+                      Recipient photo
+                    </p>
+                    <p className="text-xs text-gp-evergreen/60">
+                      Optional. Helps PerchPal feel more personal.
+                    </p>
+                    <p className="text-xs text-gp-evergreen/60">
+                      Or choose a preset icon below.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gp-evergreen">
-                    Recipient photo
-                  </p>
-                  <p className="text-xs text-gp-evergreen/60">
-                    Optional. Helps PerchPal feel more personal.
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  ref={recipientAvatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleRecipientAvatarUpload}
-                />
-                <button
-                  type="button"
-                  className="gp-secondary-button"
-                  onClick={() => recipientAvatarInputRef.current?.click()}
-                  disabled={avatarUploading}
-                >
-                  {avatarUploading ? "Uploading..." : "Upload photo"}
-                </button>
-                {formState.avatar_url ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    ref={recipientAvatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleRecipientAvatarUpload}
+                  />
                   <button
                     type="button"
-                    className="text-xs font-semibold text-red-600"
-                    onClick={() =>
-                      setFormState((prev) => ({ ...prev, avatar_url: "" }))
-                    }
+                    className="gp-secondary-button"
+                    onClick={() => recipientAvatarInputRef.current?.click()}
+                    disabled={avatarUploading}
                   >
-                    Remove
+                    {avatarUploading ? "Uploading..." : "Upload photo"}
                   </button>
-                ) : null}
+                  {formState.avatar_url ? (
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-red-600"
+                      onClick={() =>
+                        setFormState((prev) => ({ ...prev, avatar_url: "" }))
+                      }
+                    >
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {PRESET_AVATAR_OPTIONS.map((option) => {
+                  const selected = formState.avatar_icon === option.key;
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      aria-pressed={selected}
+                      title={option.label}
+                      onClick={() =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          avatar_icon: option.key,
+                        }))
+                      }
+                      className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
+                        selected
+                          ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
+                          : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                          selected
+                            ? "bg-white/10 text-gp-cream"
+                            : "bg-gp-cream text-gp-evergreen"
+                        }`}
+                      >
+                        <option.icon
+                          className={
+                            selected ? "text-gp-cream" : "text-gp-evergreen"
+                          }
+                        />
+                      </span>
+                      <span className="mt-2 text-[11px] uppercase tracking-wide">
+                        {option.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
