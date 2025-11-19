@@ -127,6 +127,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   const parsedParts = useMemo(() => parseBirthdayParts(value), [value]);
   const today = useMemo(() => new Date(), []);
   const [open, setOpen] = useState(false);
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(
     parsedParts?.month ?? today.getMonth()
   );
@@ -135,6 +136,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   );
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const yearDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (parsedParts) {
@@ -144,20 +146,24 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   }, [parsedParts]);
 
   useEffect(() => {
-    if (!open) return;
     const handlePointer = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (
-        triggerRef.current?.contains(target) ||
-        popoverRef.current?.contains(target)
-      ) {
-        return;
+      const inTrigger = triggerRef.current?.contains(target);
+      const inPopover = popoverRef.current?.contains(target);
+      const inYearDropdown =
+        yearDropdownRef.current?.contains(target) ?? false;
+
+      if (!inTrigger && !inPopover && open) {
+        setOpen(false);
       }
-      setOpen(false);
+      if (!inYearDropdown && yearDropdownOpen) {
+        setYearDropdownOpen(false);
+      }
     };
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        if (open) setOpen(false);
+        if (yearDropdownOpen) setYearDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handlePointer);
@@ -166,7 +172,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
       document.removeEventListener("mousedown", handlePointer);
       document.removeEventListener("keydown", handleKey);
     };
-  }, [open]);
+  }, [open, yearDropdownOpen]);
 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
@@ -267,31 +273,56 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                     </svg>
                   </span>
                 </div>
-                <div className="relative">
-                  <select
-                    className="appearance-none rounded-full border border-gp-evergreen/40 bg-gp-evergreen px-3 py-1.5 pr-8 text-sm text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold focus-visible:ring-offset-1 focus-visible:ring-offset-gp-cream"
-                    value={viewYear}
-                    onChange={(event) => setViewYear(Number(event.target.value))}
+                <div className="relative" ref={yearDropdownRef}>
+                  <button
+                    type="button"
+                    className="flex items-center rounded-full border border-gp-evergreen/40 bg-gp-evergreen px-3 py-1.5 text-sm font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold focus-visible:ring-offset-1 focus-visible:ring-offset-gp-cream"
+                    onClick={() => setYearDropdownOpen((prev) => !prev)}
+                    aria-haspopup="listbox"
+                    aria-expanded={yearDropdownOpen}
                   >
-                    {YEAR_OPTIONS.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gp-cream/90">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </span>
+                    {viewYear}
+                    <span className="ml-2 text-gp-cream/80">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="m6 9 6 6 6-6" />
+                      </svg>
+                    </span>
+                  </button>
+                  {yearDropdownOpen ? (
+                    <div className="absolute right-0 z-30 mt-2 w-28 max-h-56 overflow-y-auto rounded-2xl border border-gp-evergreen/20 bg-gp-evergreen text-gp-cream shadow-lg">
+                      <ul className="py-1 text-sm text-gp-evergreen">
+                        {YEAR_OPTIONS.map((year) => (
+                          <li key={year}>
+                            <button
+                              type="button"
+                              className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-gp-cream transition ${
+                                viewYear === year
+                                  ? "bg-white/20 font-semibold"
+                                  : "hover:bg-white/10"
+                              }`}
+                              onClick={() => {
+                                setViewYear(year);
+                                setYearDropdownOpen(false);
+                              }}
+                            >
+                              {year}
+                              {viewYear === year ? (
+                                <span className="text-gp-gold">•</span>
+                              ) : null}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {value ? (
