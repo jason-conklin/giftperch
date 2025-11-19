@@ -6,6 +6,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL?.trim() || "gpt-4o-mini";
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseServerClient();
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
     }));
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1",
+      model: CHAT_MODEL,
       temperature: 0.6,
       messages: [
         systemMessage,
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
           recipient_id: null,
           role: "user",
           message,
-          metadata: { source: "perchpal-chat", model: "gpt-5.1" },
+          metadata: { source: "perchpal-chat", model: CHAT_MODEL },
           created_at: timestamp,
         },
         {
@@ -93,7 +95,7 @@ export async function POST(request: NextRequest) {
           recipient_id: null,
           role: "assistant",
           message: reply,
-          metadata: { source: "perchpal-chat", model: "gpt-5.1" },
+          metadata: { source: "perchpal-chat", model: CHAT_MODEL },
           created_at: timestamp,
         },
       ]);

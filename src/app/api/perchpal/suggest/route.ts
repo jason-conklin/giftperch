@@ -65,6 +65,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const SUGGESTION_MODEL =
+  process.env.OPENAI_SUGGESTION_MODEL?.trim() || "gpt-4o-mini";
+
 const TIER_FALLBACK: GiftSuggestion["tier"] = "thoughtful";
 const MIN_SUGGESTIONS = 3;
 const MAX_SUGGESTIONS = 10;
@@ -201,7 +204,7 @@ export async function POST(request: NextRequest) {
     };
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.1",
+      model: SUGGESTION_MODEL,
       temperature: 0.6,
       messages: [
         {
@@ -261,7 +264,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         recipient_id: recipient.id,
-        model: "gpt-5.1",
+        model: SUGGESTION_MODEL,
         prompt_context: promptContext,
         suggestions: normalizedSuggestions,
       })
