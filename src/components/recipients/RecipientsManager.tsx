@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
@@ -593,6 +594,7 @@ const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
 };
 
 export function RecipientsManager() {
+  const router = useRouter();
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [recipients, setRecipients] = useState<RecipientProfile[]>([]);
@@ -1329,7 +1331,16 @@ export function RecipientsManager() {
                 )}
               </dl>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(`/gifts?recipientId=${recipient.id}`)
+                  }
+                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/40 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-evergreen/5"
+                >
+                  Get gift ideas
+                </button>
                 <button
                   type="button"
                   onClick={() => setSelectedRecipient(recipient)}

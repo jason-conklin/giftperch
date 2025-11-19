@@ -1,15 +1,92 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+
+type AvatarIconKey =
+  | "babyboy"
+  | "babygirl"
+  | "boy"
+  | "girl"
+  | "man"
+  | "woman"
+  | "dog"
+  | "cat";
 
 type RecipientOption = {
   id: string;
   name: string;
   relationship: string | null;
+  pet_type: string | null;
+  avatar_url: string | null;
+  avatar_icon: AvatarIconKey | null;
+};
+
+const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
+  key: AvatarIconKey;
+  label: string;
+  image: string;
+}> = [
+  { key: "babyboy", label: "Baby boy", image: "/babyboy_icon.png" },
+  { key: "babygirl", label: "Baby girl", image: "/babygirl_icon.png" },
+  { key: "boy", label: "Boy", image: "/boy_icon.png" },
+  { key: "girl", label: "Girl", image: "/girl_icon.png" },
+  { key: "man", label: "Man", image: "/man_icon.png" },
+  { key: "woman", label: "Woman", image: "/woman_icon.png" },
+  { key: "dog", label: "Dog", image: "/dog_icon.png" },
+  { key: "cat", label: "Cat", image: "/cat_icon.png" },
+];
+
+type RecipientAvatarVisual =
+  | { kind: "image"; src: string; alt: string }
+  | { kind: "preset"; src: string; alt: string }
+  | { kind: "initials"; text: string };
+
+const getInitials = (name: string) => {
+  const safe = name.trim();
+  if (!safe) return "GP";
+  return safe
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+};
+
+const describeRecipientRelationship = (recipient: RecipientOption) => {
+  if (!recipient.relationship) return "Relationship TBD";
+  if (
+    recipient.relationship.toLowerCase() === "pet" &&
+    recipient.pet_type?.trim()
+  ) {
+    return `Pet (${recipient.pet_type})`;
+  }
+  return recipient.relationship;
+};
+
+const getRecipientAvatarVisual = (
+  recipient: RecipientOption,
+): RecipientAvatarVisual => {
+  if (recipient.avatar_url) {
+    return {
+      kind: "image",
+      src: recipient.avatar_url,
+      alt: `${recipient.name} avatar`,
+    };
+  }
+  if (recipient.avatar_icon) {
+    const preset = PRESET_AVATAR_OPTIONS.find(
+      (option) => option.key === recipient.avatar_icon,
+    );
+    if (preset) {
+      return { kind: "preset", src: preset.image, alt: preset.label };
+    }
+  }
+  return { kind: "initials", text: getInitials(recipient.name) };
 };
 
 export type GiftSuggestion = {
@@ -90,6 +167,13 @@ export function GiftSuggestionsPanel() {
   const [amazonBySuggestion, setAmazonBySuggestion] = useState<
     Record<string, AmazonSuggestionState>
   >({});
+  const searchParams = useSearchParams();
+  const recipientIdFromQuery = searchParams?.get("recipientId") ?? "";
+  const suggestionsCardRef = useRef<HTMLDivElement | null>(null);
+  const appliedQueryRecipientRef = useRef<string | null>(null);
+  const [prefilledRecipientId, setPrefilledRecipientId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (status !== "authenticated" || !user) return;
@@ -100,7 +184,9 @@ export function GiftSuggestionsPanel() {
       setError("");
       const { data, error } = await supabase
         .from("recipient_profiles")
-        .select("id, name, relationship, is_self")
+        .select(
+          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self",
+        )
         .eq("user_id", user.id)
         .eq("is_self", false)
         .order("name", { ascending: true });
@@ -113,9 +199,6 @@ export function GiftSuggestionsPanel() {
       } else {
         const options = (data ?? []) as RecipientOption[];
         setRecipients(options);
-        if (!selectedRecipientId && options.length > 0) {
-          setSelectedRecipientId(options[0].id);
-        }
       }
 
       setIsLoadingRecipients(false);
@@ -125,7 +208,46 @@ export function GiftSuggestionsPanel() {
     return () => {
       isMounted = false;
     };
-  }, [status, user, supabase, selectedRecipientId]);
+  }, [status, user, supabase]);
+
+  useEffect(() => {
+    if (!recipients.length) return;
+    const fromQuery = recipientIdFromQuery;
+    if (
+      fromQuery &&
+      recipients.some((recipient) => recipient.id === fromQuery) &&
+      appliedQueryRecipientRef.current !== fromQuery
+    ) {
+      appliedQueryRecipientRef.current = fromQuery;
+      setSelectedRecipientId(fromQuery);
+      setPrefilledRecipientId(fromQuery);
+      requestAnimationFrame(() => {
+        suggestionsCardRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+      return;
+    }
+    setSelectedRecipientId((prev) => {
+      if (prev && recipients.some((recipient) => recipient.id === prev)) {
+        return prev;
+      }
+      return recipients[0]?.id ?? "";
+    });
+  }, [recipients, recipientIdFromQuery]);
+
+  useEffect(() => {
+    if (!recipientIdFromQuery) {
+      appliedQueryRecipientRef.current = null;
+    }
+  }, [recipientIdFromQuery]);
+
+  useEffect(() => {
+    if (prefilledRecipientId && selectedRecipientId !== prefilledRecipientId) {
+      setPrefilledRecipientId(null);
+    }
+  }, [selectedRecipientId, prefilledRecipientId]);
 
   useEffect(() => {
     if (!selectedRecipientId) {
@@ -165,6 +287,13 @@ export function GiftSuggestionsPanel() {
       isMounted = false;
     };
   }, [selectedRecipientId, supabase]);
+
+  const selectedRecipient = useMemo(
+    () =>
+      recipients.find((recipient) => recipient.id === selectedRecipientId) ??
+      null,
+    [recipients, selectedRecipientId],
+  );
 
   const activeRun = useMemo(
     () => runs.find((run) => run.id === activeRunId) ?? null,
@@ -396,9 +525,17 @@ export function GiftSuggestionsPanel() {
       ? `${recipient.name} (${recipient.relationship})`
       : recipient.name,
   }));
+  const showPrefilledHint =
+    !!selectedRecipient && prefilledRecipientId === selectedRecipient.id;
+  const selectedRelationshipLabel = selectedRecipient
+    ? describeRecipientRelationship(selectedRecipient)
+    : "";
 
   return (
-    <section className="space-y-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm">
+    <section
+      ref={suggestionsCardRef}
+      className="space-y-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm"
+    >
       <header className="space-y-1">
         <h2 className="text-lg font-semibold text-gp-evergreen">
           AI Gift Suggestions
@@ -422,74 +559,141 @@ export function GiftSuggestionsPanel() {
         </div>
       ) : (
         <>
-          <form
-            className="mt-2 grid gap-3 md:grid-cols-4 md:items-end"
-            onSubmit={handleRequestSuggestions}
-          >
-            <div className="md:col-span-2">
-              <label
-                htmlFor="recipient-select"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Recipient
-              </label>
-              <select
-                id="recipient-select"
-                value={selectedRecipientId}
-                onChange={(event) => setSelectedRecipientId(event.target.value)}
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              >
-                {recipientOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+          <form className="mt-2 space-y-4" onSubmit={handleRequestSuggestions}>
+            {selectedRecipient ? (
+              <>
+                <div className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-sm font-semibold text-gp-evergreen">
+                    {(() => {
+                      const avatar = getRecipientAvatarVisual(selectedRecipient);
+                      if (avatar.kind === "image") {
+                        return (
+                          <Image
+                            src={avatar.src}
+                            alt={avatar.alt}
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                            unoptimized
+                          />
+                        );
+                      }
+                      if (avatar.kind === "preset") {
+                        return (
+                          <Image
+                            src={avatar.src}
+                            alt={avatar.alt}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 object-contain"
+                            unoptimized
+                          />
+                        );
+                      }
+                      return avatar.text;
+                    })()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gp-evergreen">
+                      {selectedRecipient.name}
+                    </p>
+                    <p className="text-xs text-gp-evergreen/70">
+                      {selectedRelationshipLabel}
+                    </p>
+                  </div>
+                </div>
+                {showPrefilledHint ? (
+                  <p className="text-xs text-gp-evergreen/70">
+                    Ready to generate ideas for {selectedRecipient.name}. Adjust
+                    budget or occasion, then click "Ask PerchPal for
+                    suggestions".
+                  </p>
+                ) : null}
+              </>
+            ) : null}
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label
+                  htmlFor="recipient-select"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Recipient
+                </label>
+                <select
+                  id="recipient-select"
+                  value={selectedRecipientId}
+                  onChange={(event) => setSelectedRecipientId(event.target.value)}
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                >
+                  {recipientOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="occasion-select"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Occasion (optional)
+                </label>
+                <select
+                  id="occasion-select"
+                  value={occasion}
+                  onChange={(event) => setOccasion(event.target.value)}
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                >
+                  <option value="">Choose an occasion</option>
+                  <option value="birthday">Birthday</option>
+                  <option value="christmas_holidays">Christmas / Holidays</option>
+                  <option value="anniversary">Anniversary</option>
+                  <option value="graduation">Graduation</option>
+                  <option value="wedding">Wedding</option>
+                  <option value="baby">Baby shower / New baby</option>
+                  <option value="housewarming">Housewarming</option>
+                  <option value="promotion">Promotion / New job</option>
+                  <option value="thank_you">Thank you / Appreciation</option>
+                  <option value="get_well">Get well soon</option>
+                  <option value="valentines">Valentine’s Day</option>
+                  <option value="mothers_day">Mother’s Day</option>
+                  <option value="fathers_day">Father’s Day</option>
+                  <option value="just_because">
+                    Just because / No special occasion
                   </option>
-                ))}
-              </select>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="num-suggestions-input"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  # of ideas (3-10)
+                </label>
+                <input
+                  id="num-suggestions-input"
+                  type="number"
+                  min={3}
+                  max={10}
+                  value={numSuggestions}
+                  onChange={(event) => setNumSuggestions(event.target.value)}
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                />
+              </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="occasion-input"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Occasion (optional)
-              </label>
-              <input
-                id="occasion-input"
-                type="text"
-                value={occasion}
-                onChange={(event) => setOccasion(event.target.value)}
-                placeholder="Birthday, anniversary..."
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="num-suggestions-input"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                # of ideas (3-10)
-              </label>
-              <input
-                id="num-suggestions-input"
-                type="number"
-                min={3}
-                max={10}
-                value={numSuggestions}
-                onChange={(event) => setNumSuggestions(event.target.value)}
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label
-                htmlFor="budget-min-input"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Budget range
-              </label>
-              <div className="flex gap-2">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="budget-min-input"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Min budget (optional)
+                </label>
                 <input
                   id="budget-min-input"
                   type="number"
@@ -499,7 +703,16 @@ export function GiftSuggestionsPanel() {
                   onChange={(event) => setBudgetMin(event.target.value)}
                   className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                 />
+              </div>
+              <div>
+                <label
+                  htmlFor="budget-max-input"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Max budget (optional)
+                </label>
                 <input
+                  id="budget-max-input"
                   type="number"
                   min={0}
                   placeholder="Max"
@@ -510,11 +723,11 @@ export function GiftSuggestionsPanel() {
               </div>
             </div>
 
-            <div className="md:col-span-2 md:text-right">
+            <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={isRequesting || !selectedRecipientId}
-                className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60 md:w-auto"
+                className="inline-flex w-full items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60 md:w-auto"
               >
                 {isRequesting
                   ? "Asking PerchPal..."
