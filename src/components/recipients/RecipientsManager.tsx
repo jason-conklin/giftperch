@@ -318,7 +318,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                             >
                               {year}
                               {viewYear === year ? (
-                                <span className="text-gp-gold">â¢</span>
+                                <span className="text-gp-gold">⦿</span>
                               ) : null}
                             </button>
                           </li>
@@ -1307,14 +1307,14 @@ export function RecipientsManager() {
                   <button
                     type="button"
                     onClick={() => openEditForm(recipient)}
-                    className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+                    className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => requestDelete(recipient.id)}
-                    className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                    className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 cursor-pointer"
                   >
                     Delete
                   </button>
@@ -1352,14 +1352,14 @@ export function RecipientsManager() {
                   onClick={() =>
                     router.push(`/gifts?recipientId=${recipient.id}`)
                   }
-                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/40 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-evergreen/5"
+                  className="inline-flex items-center justify-center rounded-full bg-gp-gold px-4 py-1.5 text-xs font-semibold text-gp-evergreen animate-gp-gift-glow transition hover:scale-[1.04] hover:bg-[#d9c585] hover:shadow-[0_0_24px_rgba(217,193,137,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
                 >
                   Get gift ideas
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedRecipient(recipient)}
-                  className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+                  className="rounded-full bg-gp-evergreen px-3 py-1 text-xs font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
                 >
                   Show details
                 </button>
