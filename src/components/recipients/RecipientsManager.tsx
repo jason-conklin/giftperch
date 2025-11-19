@@ -16,6 +16,8 @@ export type RecipientInterest = {
   created_at: string;
 };
 
+type InterestCategory = "interest" | "vibe" | "personality" | "brand";
+
 export type RecipientProfile = {
   id: string;
   user_id: string;
@@ -315,7 +317,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                             >
                               {year}
                               {viewYear === year ? (
-                                <span className="text-gp-gold">•</span>
+                                <span className="text-gp-gold">â¢</span>
                               ) : null}
                             </button>
                           </li>
@@ -511,7 +513,7 @@ const formatGiftBudgetRange = (
   min: number | null,
   max: number | null,
 ): string | null => {
-  if (min && max) return `${formatCurrency(min)}ÃÂÃÂ¢ÃÂ¢Ã¢ÂÂÃÂ¬ÃÂ¢Ã¢ÂÂ¬ÃÂ${formatCurrency(max)}`;
+  if (min && max) return `${formatCurrency(min)}ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¢ÃÂ¢ÃÂÃÂÃÂÃÂ¬ÃÂÃÂ¢ÃÂ¢ÃÂÃÂ¬ÃÂÃÂ${formatCurrency(max)}`;
   if (min) return `From ${formatCurrency(min)}`;
   if (max) return `Up to ${formatCurrency(max)}`;
   return null;
@@ -569,7 +571,8 @@ export function RecipientsManager() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [recipients, setRecipients] = useState<RecipientProfile[]>([]);
   const [interests, setInterests] = useState<RecipientInterest[]>([]);
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const [selectedRecipient, setSelectedRecipient] =
+    useState<RecipientProfile | null>(null);
   const [interestInputs, setInterestInputs] = useState<
     Record<string, Record<InterestCategory, string>>
   >({});
@@ -592,6 +595,63 @@ export function RecipientsManager() {
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarOptionsVisible, setAvatarOptionsVisible] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedRecipient) {
+      document.body.style.overflow = "";
+      return undefined;
+    }
+
+    const previousActiveElement = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+    const focusableSelectors =
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
+    const focusDialog = () => {
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        focusableSelectors
+      );
+      if (closeButtonRef.current) {
+        closeButtonRef.current.focus();
+      } else if (focusable && focusable.length > 0) {
+        focusable[0].focus();
+      }
+    };
+    focusDialog();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedRecipient(null);
+        return;
+      }
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusableElements =
+          dialogRef.current.querySelectorAll<HTMLElement>(focusableSelectors);
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0];
+        const lastElement =
+          focusableElements[focusableElements.length - 1];
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else if (document.activeElement === lastElement) {
+          event.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", handleKeyDown);
+      previousActiveElement?.focus();
+    };
+  }, [selectedRecipient]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -920,10 +980,6 @@ export function RecipientsManager() {
     }
   };
 
-  const toggleDetails = (id: string) => {
-    setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
   const handleInterestInputChange = (
     recipientId: string,
     category: InterestCategory,
@@ -1051,7 +1107,7 @@ export function RecipientsManager() {
                 className="text-[10px] font-semibold uppercase tracking-wide text-gp-evergreen/70 transition hover:text-gp-evergreen"
                 aria-label={`Remove ${interest.label}`}
               >
-                ÃÂÃÂÃÂ¢Ã¢ÂÂ¬Ã¢ÂÂ
+                ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂ¢ÃÂÃÂ¬ÃÂ¢ÃÂÃÂ
               </button>
             </span>
           ))}
@@ -1236,85 +1292,12 @@ export function RecipientsManager() {
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => toggleDetails(recipient.id)}
+                  onClick={() => setSelectedRecipient(recipient)}
                   className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
                 >
-                  {expandedIds[recipient.id] ? "Hide details" : "Show details"}
+                  Show details
                 </button>
               </div>
-
-              {expandedIds[recipient.id] && (
-                <div className="mt-4 space-y-4 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/60 p-4">
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    {renderTags(recipient.id, "interest", "Interests & hobbies")}
-                    {renderTags(recipient.id, "vibe", "Vibes & aesthetics")}
-                    {renderTags(
-                      recipient.id,
-                      "personality",
-                      "Personality traits"
-                    )}
-                    {renderTags(recipient.id, "brand", "Favorite brands")}
-                  </div>
-
-                  <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                      Budgets overview
-                    </p>
-                    {recipient.gift_budget_min ||
-                    recipient.gift_budget_max ||
-                    recipient.annual_budget ? (
-                      <p className="mt-1">
-                        {formatGiftBudgetRange(
-                          recipient.gift_budget_min,
-                          recipient.gift_budget_max,
-                        ) ? (
-                          <>
-                            Typical gift range:{" "}
-                            <span className="font-semibold">
-                              {formatGiftBudgetRange(
-                                recipient.gift_budget_min,
-                                recipient.gift_budget_max,
-                              )}
-                            </span>
-                          </>
-                        ) : (
-                          <>Per-gift range not set</>
-                        )}
-                        {recipient.annual_budget && (
-                          <>
-                            {" "}
-                            (annual target{" "}
-                            <span className="font-semibold">
-                              {formatCurrency(recipient.annual_budget)}
-                            </span>
-                            )
-                          </>
-                        )}
-                        .
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-gp-evergreen/70">
-                        Budget not set yet.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                      Notes
-                    </p>
-                    {recipient.notes ? (
-                      <p className="mt-2 whitespace-pre-line text-gp-evergreen/80">
-                        {recipient.notes}
-                      </p>
-                    ) : (
-                      <p className="mt-2 text-gp-evergreen/60">
-                        No notes yet. Add insight via the edit form.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {confirmDeleteId === recipient.id && (
                 <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
@@ -1347,6 +1330,176 @@ export function RecipientsManager() {
           ))}
         </div>
       )}
+
+      {selectedRecipient ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setSelectedRecipient(null)}
+          />
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`recipient-details-${selectedRecipient.id}`}
+            className="relative z-10 flex max-h-[80vh] w-full max-w-3xl flex-col rounded-3xl bg-gp-cream shadow-xl"
+          >
+            <div className="flex items-center justify-between gap-4 border-b border-gp-evergreen/10 px-6 py-4">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-base font-semibold text-gp-evergreen">
+                  {selectedRecipient.avatar_url ? (
+                    <Image
+                      src={selectedRecipient.avatar_url}
+                      alt={`${selectedRecipient.name} avatar`}
+                      width={56}
+                      height={56}
+                      className="h-full w-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    getInitials(selectedRecipient.name)
+                  )}
+                </div>
+                <div>
+                  <p
+                    id={`recipient-details-${selectedRecipient.id}`}
+                    className="text-lg font-semibold text-gp-evergreen"
+                  >
+                    {selectedRecipient.name}
+                  </p>
+                  <p className="text-sm text-gp-evergreen/70">
+                    {describeRelationship(selectedRecipient)}
+                  </p>
+                  <Link
+                    href={`/history?recipient=${selectedRecipient.id}`}
+                    className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                  >
+                    View gift history
+                  </Link>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    openEditForm(selectedRecipient);
+                    setSelectedRecipient(null);
+                  }}
+                  className="rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+                >
+                  Edit recipient
+                </button>
+                <button
+                  type="button"
+                  ref={closeButtonRef}
+                  onClick={() => setSelectedRecipient(null)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-evergreen/30 text-gp-evergreen transition hover:bg-gp-cream/80"
+                  aria-label="Close recipient details"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                {(
+                  [
+                    { category: "interest", label: "Interests & hobbies" },
+                    { category: "vibe", label: "Vibes & aesthetics" },
+                    { category: "personality", label: "Personality traits" },
+                    { category: "brand", label: "Favorite brands" },
+                  ] as Array<{ category: InterestCategory; label: string }>
+                ).map(({ category, label }) => (
+                  <div
+                    key={category}
+                    className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4"
+                  >
+                    {renderTags(selectedRecipient.id, category, label)}
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                    Budgets overview
+                  </p>
+                  {selectedRecipient.gift_budget_min ||
+                  selectedRecipient.gift_budget_max ||
+                  selectedRecipient.annual_budget ? (
+                    <p className="mt-1">
+                      {formatGiftBudgetRange(
+                        selectedRecipient.gift_budget_min,
+                        selectedRecipient.gift_budget_max,
+                      ) ? (
+                        <>
+                          Typical gift range:{" "}
+                          <span className="font-semibold">
+                            {formatGiftBudgetRange(
+                              selectedRecipient.gift_budget_min,
+                              selectedRecipient.gift_budget_max,
+                            )}
+                          </span>
+                        </>
+                      ) : (
+                        <>Per-gift range not set</>
+                      )}
+                      {selectedRecipient.annual_budget && (
+                        <>
+                          {" "}
+                          (annual target{" "}
+                          <span className="font-semibold">
+                            {formatCurrency(selectedRecipient.annual_budget)}
+                          </span>
+                          )
+                        </>
+                      )}
+                      .
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-gp-evergreen/70">
+                      Budget not set yet.
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                    Notes
+                  </p>
+                  {selectedRecipient.notes ? (
+                    <p className="mt-2 whitespace-pre-line text-gp-evergreen/80">
+                      {selectedRecipient.notes}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-gp-evergreen/60">
+                      No notes yet. Add insight via the edit form.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end border-t border-gp-evergreen/10 px-6 py-3">
+              <button
+                type="button"
+                className="gp-secondary-button"
+                onClick={() => setSelectedRecipient(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isFormOpen && (
         <div className="rounded-3xl border border-gp-evergreen/20 bg-white/95 p-6 shadow-lg">
