@@ -20,6 +20,8 @@ type GiftSuggestion = {
   price_hint?: string | null;
   why_it_fits: string;
   suggested_url?: string | null;
+  image_url?: string | null;
+  imageUrl?: string | null;
 };
 
 type GiftPromptContext = {
@@ -224,7 +226,13 @@ export async function POST(request: NextRequest) {
             "  price_hint?: string | null;",
             "  why_it_fits: string;",
             "  suggested_url?: string | null;",
+            "  image_url?: string | null; // REQUIRED: real, publicly accessible HTTPS product/inspiration image (never example.com)",
             "};",
+            "",
+            "Expectations:",
+            "- Every suggestion should include image_url whenever possible.",
+            "- Use reputable sources (brand CDN, Amazon images, Unsplash, etc.).",
+            "- Never invent unreachable URLs or placeholders.",
             "",
             "Return an object: { suggestions: GiftSuggestion[] }.",
             "Do not include code fences or any text outside JSON.",
@@ -391,6 +399,15 @@ function normalizeSuggestion(
       ? suggestion.price_hint.trim()
       : null;
 
+  const image_url =
+    typeof suggestion.image_url === "string" &&
+    suggestion.image_url.trim().length > 0
+      ? suggestion.image_url.trim()
+      : typeof suggestion.imageUrl === "string" &&
+          suggestion.imageUrl.trim().length > 0
+        ? suggestion.imageUrl.trim()
+        : null;
+
   return {
     id,
     title: suggestion.title?.trim() || `Idea ${index + 1}`,
@@ -408,5 +425,6 @@ function normalizeSuggestion(
       suggestion.suggested_url.trim().length > 0
         ? suggestion.suggested_url.trim()
         : null,
+    image_url,
   };
 }

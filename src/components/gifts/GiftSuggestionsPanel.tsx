@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { AmazonProduct } from "@/lib/amazonPaapi";
 
 type AvatarIconKey =
   | "babyboy"
@@ -99,6 +100,7 @@ export type GiftSuggestion = {
   price_hint?: string | null;
   why_it_fits: string;
   suggested_url?: string | null;
+  image_url?: string | null;
 };
 
 type GiftPromptContext = {
@@ -123,21 +125,187 @@ type SuggestionRun = {
 type TierFilter = "all" | GiftSuggestion["tier"];
 type SortOption = "relevance" | "price-asc" | "price-desc" | "tier";
 
-type AmazonProduct = {
-  asin: string;
-  title: string;
-  imageUrl: string | null;
-  detailPageUrl: string | null;
-  priceDisplay: string | null;
-  currency?: string | null;
-  primeEligible?: boolean | null;
-};
-
 type AmazonSuggestionState = {
   loading: boolean;
   error: string;
   products: AmazonProduct[];
 };
+
+const DEFAULT_GIFT_IMAGE = "/gift-thumbnails/default-gift.svg";
+
+type SuggestionCardProps = {
+  suggestion: GiftSuggestion;
+  amazonState: AmazonSuggestionState | undefined;
+  copiedSuggestionId: string | null;
+  onCopy: (suggestion: GiftSuggestion) => void;
+  onFetchAmazon: (suggestion: GiftSuggestion) => void;
+};
+
+function GiftSuggestionCard({
+  suggestion,
+  amazonState,
+  copiedSuggestionId,
+  onCopy,
+  onFetchAmazon,
+}: SuggestionCardProps) {
+  const initialImage =
+    suggestion.image_url && suggestion.image_url.startsWith("http")
+      ? suggestion.image_url
+      : DEFAULT_GIFT_IMAGE;
+  const [imageSrc, setImageSrc] = useState(initialImage);
+
+  const handleImageError = () => {
+    if (imageSrc !== DEFAULT_GIFT_IMAGE) {
+      setImageSrc(DEFAULT_GIFT_IMAGE);
+    }
+  };
+
+  return (
+    <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
+      <div className="relative h-40 w-full overflow-hidden bg-gp-cream/70">
+        <Image
+          src={imageSrc}
+          alt={suggestion.title || "Gift idea preview"}
+          fill
+          unoptimized
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          onError={handleImageError}
+        />
+      </div>
+
+      <div className="flex h-full flex-col gap-3 px-4 pb-4 pt-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold text-gp-evergreen">
+              {suggestion.title}
+            </h3>
+            <p className="text-sm text-gp-evergreen/80">
+              {suggestion.short_description}
+            </p>
+          </div>
+          <span
+            className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+              tierBadgeClasses[suggestion.tier]
+            }`}
+          >
+            {tierLabels[suggestion.tier]}
+          </span>
+        </div>
+
+        <div className="text-sm text-gp-evergreen/80">
+          <p className="font-semibold text-gp-evergreen">Price guidance</p>
+          <p className="text-sm">
+            {buildPriceDisplay(
+              suggestion.price_min,
+              suggestion.price_max,
+              suggestion.price_hint,
+            )}
+          </p>
+          {suggestion.suggested_url ? (
+            <a
+              href={suggestion.suggested_url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+            >
+              View link
+            </a>
+          ) : null}
+        </div>
+
+        <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+            Why this fits
+          </p>
+          <p>{suggestion.why_it_fits}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onCopy(suggestion)}
+            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+          >
+            {copiedSuggestionId === suggestion.id ? "Copied!" : "Copy idea"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onFetchAmazon(suggestion)}
+            className="flex-1 rounded-full border border-gp-gold/50 bg-gp-gold/20 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-gold/30"
+          >
+            {amazonState?.loading ? "Searching Amazon..." : "Find on Amazon"}
+          </button>
+          <button
+            type="button"
+            disabled
+            className="flex-1 rounded-full border border-gp-evergreen/15 px-3 py-1 text-xs font-semibold text-gp-evergreen/50"
+          >
+            Save to wishlist (soon)
+          </button>
+        </div>
+
+        {amazonState && (
+          <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/40 p-3 text-sm text-gp-evergreen">
+            {amazonState.loading ? (
+              <div className="flex justify-center">
+                <PerchPalLoader
+                  variant="inline"
+                  size="sm"
+                  message="Searching Amazon for matches..."
+                />
+              </div>
+            ) : amazonState.error ? (
+              <p className="text-xs text-red-700">{amazonState.error}</p>
+            ) : amazonState.products.length === 0 ? (
+              <p className="text-xs text-gp-evergreen/70">
+                No Amazon matches found yet.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                  Amazon finds
+                </p>
+                <div className="space-y-3">
+                  {amazonState.products.map((product) => (
+                    <a
+                      key={product.asin}
+                      href={product.detailPageUrl ?? undefined}
+                      target={product.detailPageUrl ? "_blank" : undefined}
+                      rel={product.detailPageUrl ? "noreferrer" : undefined}
+                      className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
+                    >
+                      {product.imageUrl ? (
+                        <Image
+                          src={product.imageUrl}
+                          alt={product.title}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 rounded-xl object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
+                          No image
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold">{product.title}</p>
+                        <p className="text-gp-evergreen/70">
+                          {product.priceDisplay ?? "Price unavailable"}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
 
 export function GiftSuggestionsPanel() {
   const { user, status } = useSupabaseSession();
@@ -959,182 +1127,16 @@ export function GiftSuggestionsPanel() {
                   ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {visibleSuggestions.map((suggestion) => {
-                    const amazonState = amazonBySuggestion[suggestion.id];
-                    return (
-                      <article
-                        key={suggestion.id}
-                        className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 shadow-sm"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-base font-semibold text-gp-evergreen">
-                              {suggestion.title}
-                            </h3>
-                            <p className="text-sm text-gp-evergreen/80">
-                              {suggestion.short_description}
-                            </p>
-                          </div>
-                          <span
-                            className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                              tierBadgeClasses[suggestion.tier]
-                            }`}
-                          >
-                            {tierLabels[suggestion.tier]}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-gp-evergreen">
-                          <span className="rounded-full border border-gp-evergreen/30 bg-gp-cream/70 px-3 py-1">
-                            {suggestion.price_hint ||
-                              buildPriceDisplay(
-                                suggestion.price_min,
-                                suggestion.price_max,
-                              ) ||
-                              "Price TBD"}
-                          </span>
-                          {suggestion.suggested_url && (
-                            <a
-                              href={suggestion.suggested_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
-                            >
-                              View link
-                            </a>
-                          )}
-                        </div>
-
-                        <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
-                          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                            Why this fits
-                          </p>
-                          <p>{suggestion.why_it_fits}</p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleCopySuggestion(suggestion)}
-                            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
-                          >
-                            {copiedSuggestionId === suggestion.id
-                              ? "Copied!"
-                              : "Copy idea"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleFetchAmazonProducts(suggestion)}
-                            className="flex-1 rounded-full border border-gp-gold/50 bg-gp-gold/20 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-gold/30"
-                          >
-                            Find on Amazon
-                          </button>
-                          <button
-                            type="button"
-                            disabled
-                            className="flex-1 rounded-full border border-gp-evergreen/15 px-3 py-1 text-xs font-semibold text-gp-evergreen/50"
-                          >
-                            Save to wishlist (soon)
-                          </button>
-                        </div>
-
-                        {amazonState && (
-                          <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/40 p-3 text-sm text-gp-evergreen">
-                            {amazonState.loading ? (
-                              <div className="flex justify-center">
-                                <PerchPalLoader
-                                  variant="inline"
-                                  size="sm"
-                                  message="Searching Amazon for matches..."
-                                />
-                              </div>
-                            ) : amazonState.error ? (
-                              <p className="text-xs text-red-700">
-                                {amazonState.error}
-                              </p>
-                            ) : amazonState.products.length === 0 ? (
-                              <p className="text-xs text-gp-evergreen/70">
-                                No Amazon matches found yet.
-                              </p>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                                  Amazon matches
-                                </p>
-                                <div className="grid gap-2 sm:grid-cols-2">
-                                  {amazonState.products.map((product) => {
-                                    const redirectUrl = product.detailPageUrl
-                                      ? buildAffiliateRedirectUrl({
-                                          provider: "amazon",
-                                          asin: product.asin,
-                                          title: product.title,
-                                          recipientId:
-                                            activeRun?.prompt_context
-                                              .recipient_id ?? null,
-                                          suggestionRunId: activeRun?.id ?? null,
-                                          suggestionId: suggestion.id,
-                                          finalUrl: product.detailPageUrl,
-                                        })
-                                      : null;
-
-                                    return (
-                                      <a
-                                        key={product.asin}
-                                        href={redirectUrl ?? "#"}
-                                        target={
-                                          redirectUrl ? "_blank" : undefined
-                                        }
-                                        rel={
-                                          redirectUrl ? "noreferrer" : undefined
-                                        }
-                                        className={`flex gap-2 rounded-xl border border-gp-evergreen/15 bg-white/90 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70 ${
-                                          redirectUrl
-                                            ? ""
-                                            : "pointer-events-none opacity-60"
-                                        }`}
-                                      >
-                                        {product.imageUrl ? (
-                                          <Image
-                                            src={product.imageUrl}
-                                            alt={product.title}
-                                            width={56}
-                                            height={56}
-                                            unoptimized
-                                            className="h-14 w-14 flex-none rounded-lg object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-14 w-14 flex-none items-center justify-center rounded-lg border border-dashed border-gp-evergreen/30 text-[10px] text-gp-evergreen/60">
-                                            No image
-                                          </div>
-                                        )}
-                                        <div className="flex min-w-0 flex-col gap-1">
-                                          <p className="line-clamp-2 font-semibold">
-                                            {product.title}
-                                          </p>
-                                          <div className="flex flex-wrap items-center gap-1">
-                                            {product.priceDisplay && (
-                                              <span className="rounded-full bg-gp-cream/80 px-2 py-0.5 text-[10px] font-semibold">
-                                                {product.priceDisplay}
-                                              </span>
-                                            )}
-                                            {product.primeEligible && (
-                                              <span className="rounded-full border border-gp-evergreen/30 px-2 py-0.5 text-[10px] font-semibold text-gp-evergreen">
-                                                Prime
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </a>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </article>
-                    );
-                  })}
+                  {visibleSuggestions.map((suggestion) => (
+                    <GiftSuggestionCard
+                      key={suggestion.id}
+                      suggestion={suggestion}
+                      amazonState={amazonBySuggestion[suggestion.id]}
+                      copiedSuggestionId={copiedSuggestionId}
+                      onCopy={handleCopySuggestion}
+                      onFetchAmazon={handleFetchAmazonProducts}
+                    />
+                  ))}
                 </div>
               </>
             )}

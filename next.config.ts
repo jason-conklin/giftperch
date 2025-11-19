@@ -9,19 +9,26 @@ const supabaseHostname = (() => {
   }
 })();
 
+const remotePatterns = [
+  {
+    protocol: "https",
+    hostname: "**",
+  } as const,
+];
+
+if (supabaseHostname) {
+  remotePatterns.push({
+    protocol: "https",
+    hostname: supabaseHostname,
+    pathname: "/storage/v1/object/public/**",
+  } as const);
+}
+
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  images: supabaseHostname
-    ? {
-        remotePatterns: [
-          {
-            protocol: "https",
-            hostname: supabaseHostname,
-            pathname: "/storage/v1/object/public/**",
-          },
-        ],
-      }
-    : undefined,
+  images: {
+    remotePatterns,
+  },
 };
 
 export default nextConfig;

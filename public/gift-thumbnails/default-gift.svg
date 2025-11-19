@@ -1,0 +1,17 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="giftGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8F5E0" />
+      <stop offset="100%" stop-color="#D9C189" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#giftGlow)" rx="24" />
+  <circle cx="320" cy="60" r="26" fill="#0F3D3E" opacity="0.12" />
+  <circle cx="70" cy="240" r="32" fill="#0F3D3E" opacity="0.15" />
+  <rect x="110" y="90" width="180" height="120" rx="18" fill="#0F3D3E" opacity="0.12" />
+  <path d="M180 130h40v-24a12 12 0 00-12-12h-16a12 12 0 00-12 12v24z" fill="#0F3D3E" opacity="0.2"/>
+  <path d="M160 180h80a10 10 0 0010-10v-60H150v60a10 10 0 0010 10z" fill="#0F3D3E" opacity="0.35"/>
+  <text x="200" y="215" font-family="Inter, 'Segoe UI', sans-serif" font-size="20" text-anchor="middle" fill="#0F3D3E" opacity="0.65">
+    GiftPerch Preview
+  </text>
+</svg>
