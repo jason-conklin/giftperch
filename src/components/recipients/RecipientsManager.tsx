@@ -467,7 +467,7 @@ const RELATIONSHIP_OPTIONS = [
   "Daughter",
   "Son",
   "Partner / Significant Other",
-  "FiancÃÂÃÂÃÂÃÂ©(e)",
+  "Fiance",
   "Spouse",
   "Friend",
   "Coworker",
@@ -717,6 +717,7 @@ export function RecipientsManager() {
         avatar_url: publicUrl,
         avatar_icon: "",
       }));
+      setAvatarOptionsVisible(false);
       setFormMessage("Photo uploaded. Save to keep changes.");
     } catch (err) {
       const message =
@@ -1481,13 +1482,14 @@ export function RecipientsManager() {
                           type="button"
                           aria-pressed={selected}
                           title={option.label}
-                          onClick={() =>
-                            setFormState((prev) => ({
-                              ...prev,
-                              avatar_icon: option.key,
-                              avatar_url: "",
-                            }))
-                          }
+                      onClick={() => {
+                        setFormState((prev) => ({
+                          ...prev,
+                          avatar_icon: option.key,
+                          avatar_url: "",
+                        }));
+                        setAvatarOptionsVisible(false);
+                      }}
                           className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
                             selected
                               ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
