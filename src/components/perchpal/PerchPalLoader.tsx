@@ -49,9 +49,9 @@ const FRAME_SEQUENCE = [...FLYING_SEQUENCE, ...RETURN_SEQUENCE] as const;
 const FRAME_DURATION_MS = 200;
 
 const sizeMap = {
-  sm: { width: 40, height: 40, text: "text-xs", circle: "p-2" },
+  sm: { width: 50, height: 50, text: "text-xs", circle: "p-2" },
   md: { width: 64, height: 64, text: "text-sm", circle: "p-3" },
-  lg: { width: 96, height: 96, text: "text-base", circle: "p-4" },
+  lg: { width: 50, height: 50, text: "text-base", circle: "p-4" },
 } as const;
 
 export function PerchPalLoader({

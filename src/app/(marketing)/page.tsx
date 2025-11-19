@@ -32,8 +32,8 @@ export default function MarketingHome() {
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
-            <span>PerchPal ready</span>
-            <span>AI gifting</span>
+            <span>Introducing PerchPal,</span>
+            <span>Your AI gifting assistant</span>
           </div>
           <div className="flex items-center gap-3">
             <Image
@@ -65,7 +65,7 @@ export default function MarketingHome() {
             </Link>
             <Link
               href="/about"
-              className="rounded-full border border-gp-evergreen px-6 py-3 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-gp-evergreen hover:text-gp-cream"
+              className="rounded-full bg-gp-evergreen px-6 py-3 text-center text-sm font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
             >
               See how it works
             </Link>
@@ -88,7 +88,7 @@ export default function MarketingHome() {
             <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
               <PerchPalLoader
                 variant="inline"
-                size="sm"
+                size="lg"
                 message="PerchPal is fetching sample gift ideas..."
               />
             </div>
