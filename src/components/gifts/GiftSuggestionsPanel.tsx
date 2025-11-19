@@ -567,7 +567,7 @@ export function GiftSuggestionsPanel() {
 
       {recipients.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-6 text-sm text-gp-evergreen">
-          Add a recipient profile first so PerchPal knows who youâ€™re gifting
+          Add a recipient profile first so PerchPal knows who you are gifting
           for.
         </div>
       ) : (
@@ -807,15 +807,25 @@ export function GiftSuggestionsPanel() {
             </div>
 
             <div className="flex justify-center">
-              <button
-                type="submit"
-                disabled={isRequesting || !selectedRecipientId}
-                className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60"
-              >
-                {isRequesting
-                  ? "Asking PerchPal..."
-                  : "Ask PerchPal for suggestions"}
-              </button>
+              {isRequesting ? (
+                <div className="flex w-full max-w-sm flex-col items-center justify-center gap-2 text-sm text-gp-evergreen/80">
+                  <PerchPalLoader
+                    variant="inline"
+                    size="md"
+                    message={null}
+                    ariaLabel="Asking PerchPal for suggestions"
+                  />
+                  <span>Retrieving gifts...</span>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!selectedRecipientId}
+                  className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60"
+                >
+                  Ask PerchPal for suggestions
+                </button>
+              )}
             </div>
           </form>
 

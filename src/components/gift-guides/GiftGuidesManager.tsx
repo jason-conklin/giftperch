@@ -144,7 +144,7 @@ export function GiftGuidesManager() {
           <p className="font-semibold">Curate, duplicate, and share</p>
           <p className="mt-1 text-base text-gp-evergreen/80">
             Gift Guides bundle themed ideas you can duplicate, tweak, and send to
-            the people you shop forâ€”seasonal collections, team gifts, wedding
+            the people you shop for seasonal collections, team gifts, wedding
             parties, and more.
           </p>
         </div>
