@@ -1342,11 +1342,11 @@ export function RecipientsManager() {
             role="dialog"
             aria-modal="true"
             aria-labelledby={`recipient-details-${selectedRecipient.id}`}
-            className="relative z-10 flex max-h-[80vh] w-full max-w-3xl flex-col rounded-3xl bg-gp-cream shadow-xl"
+            className="relative z-10 flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-xl"
           >
-            <div className="flex items-center justify-between gap-4 border-b border-gp-evergreen/10 px-6 py-4">
+            <div className="flex items-center justify-between gap-4 border-b border-gp-evergreen/10 bg-gp-evergreen px-6 py-4 text-gp-cream">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-base font-semibold text-gp-evergreen">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-cream/30 bg-gp-cream/90 text-base font-semibold text-gp-evergreen">
                   {selectedRecipient.avatar_url ? (
                     <Image
                       src={selectedRecipient.avatar_url}
@@ -1363,16 +1363,16 @@ export function RecipientsManager() {
                 <div>
                   <p
                     id={`recipient-details-${selectedRecipient.id}`}
-                    className="text-lg font-semibold text-gp-evergreen"
+                    className="text-lg font-semibold"
                   >
                     {selectedRecipient.name}
                   </p>
-                  <p className="text-sm text-gp-evergreen/70">
+                  <p className="text-sm text-gp-cream/80">
                     {describeRelationship(selectedRecipient)}
                   </p>
                   <Link
                     href={`/history?recipient=${selectedRecipient.id}`}
-                    className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                    className="mt-1 inline-flex text-xs font-semibold text-gp-cream underline-offset-4 hover:text-gp-gold"
                   >
                     View gift history
                   </Link>
@@ -1385,7 +1385,7 @@ export function RecipientsManager() {
                     openEditForm(selectedRecipient);
                     setSelectedRecipient(null);
                   }}
-                  className="rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+                  className="rounded-full border border-gp-cream/30 px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-white/15"
                 >
                   Edit recipient
                 </button>
@@ -1393,7 +1393,7 @@ export function RecipientsManager() {
                   type="button"
                   ref={closeButtonRef}
                   onClick={() => setSelectedRecipient(null)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-evergreen/30 text-gp-evergreen transition hover:bg-gp-cream/80"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/30 text-gp-cream transition hover:bg-white/15"
                   aria-label="Close recipient details"
                 >
                   <svg
