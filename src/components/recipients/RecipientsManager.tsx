@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { useCallback } from "react";
 
 export type RecipientInterest = {
   id: string;
@@ -60,6 +61,342 @@ const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
   { key: "cat", label: "Cat", image: "/cat_icon.png" },
 ];
 
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+const YEAR_OPTIONS = (() => {
+  const currentYear = new Date().getFullYear();
+  const years: number[] = [];
+  for (let year = currentYear; year >= 1900; year -= 1) {
+    years.push(year);
+  }
+  return years;
+})();
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+const padNumber = (value: number) => value.toString().padStart(2, "0");
+const parseBirthdayParts = (value: string) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-");
+  const y = Number(year);
+  const m = Number(month);
+  const d = Number(day);
+  if (
+    !Number.isFinite(y) ||
+    !Number.isFinite(m) ||
+    !Number.isFinite(d) ||
+    m < 1 ||
+    m > 12 ||
+    d < 1 ||
+    d > 31
+  ) {
+    return null;
+  }
+  return { year: y, month: m - 1, day: d };
+};
+
+const formatBirthdayDisplay = (value: string) => {
+  const parsed = parseBirthdayParts(value);
+  if (!parsed) return "mm/dd/yyyy";
+  return `${padNumber(parsed.month + 1)}/${padNumber(parsed.day)}/${parsed.year}`;
+};
+
+const isoFromParts = (year: number, month: number, day: number) =>
+  `${year}-${padNumber(month + 1)}-${padNumber(day)}`;
+
+type BirthdayFieldProps = {
+  value: string;
+  onChange: (value: string) => void;
+  approxAge: number | null;
+};
+
+function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
+  const parsedParts = useMemo(() => parseBirthdayParts(value), [value]);
+  const today = useMemo(() => new Date(), []);
+  const [open, setOpen] = useState(false);
+  const [viewMonth, setViewMonth] = useState(
+    parsedParts?.month ?? today.getMonth()
+  );
+  const [viewYear, setViewYear] = useState(
+    parsedParts?.year ?? today.getFullYear()
+  );
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (parsedParts) {
+      setViewMonth(parsedParts.month);
+      setViewYear(parsedParts.year);
+    }
+  }, [parsedParts]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointer = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        popoverRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
+  const calendarCells: Array<number | null> = [];
+  for (let i = 0; i < firstDayOfMonth; i += 1) {
+    calendarCells.push(null);
+  }
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    calendarCells.push(day);
+  }
+  while (calendarCells.length % 7 !== 0) {
+    calendarCells.push(null);
+  }
+
+  const handleSelectDay = (day: number) => {
+    const iso = isoFromParts(viewYear, viewMonth, day);
+    onChange(iso);
+    setOpen(false);
+  };
+
+  const isSameDay = (day: number) => {
+    if (!parsedParts) return false;
+    return (
+      parsedParts.year === viewYear &&
+      parsedParts.month === viewMonth &&
+      parsedParts.day === day
+    );
+  };
+
+  const isToday = (day: number) =>
+    today.getFullYear() === viewYear &&
+    today.getMonth() === viewMonth &&
+    today.getDate() === day;
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gp-evergreen">Birthday</label>
+      <div className="relative">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="Open birthday picker"
+          ref={triggerRef}
+        >
+          <span>{formatBirthdayDisplay(value)}</span>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4 text-gp-evergreen/70"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4" />
+            <path d="M8 2v4" />
+            <path d="M3 10h18" />
+          </svg>
+        </button>
+        {open ? (
+          <div
+            ref={popoverRef}
+            className="absolute z-30 mt-2 w-full max-w-md rounded-2xl border border-gp-evergreen/10 bg-gp-cream p-4 shadow-lg"
+          >
+            <div className="mb-3 border-b border-gp-evergreen/10 pb-2">
+              <p className="text-xs font-medium text-gp-evergreen/70">
+                Choose a birthday
+              </p>
+            </div>
+
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <select
+                    className="appearance-none rounded-full border border-gp-evergreen/40 bg-gp-evergreen px-3 py-1.5 pr-8 text-sm text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold focus-visible:ring-offset-1 focus-visible:ring-offset-gp-cream"
+                    value={viewMonth}
+                    onChange={(event) => setViewMonth(Number(event.target.value))}
+                  >
+                    {MONTHS.map((month, index) => (
+                      <option key={month} value={index}>
+                        {month}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gp-cream/90">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </span>
+                </div>
+                <div className="relative">
+                  <select
+                    className="appearance-none rounded-full border border-gp-evergreen/40 bg-gp-evergreen px-3 py-1.5 pr-8 text-sm text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold focus-visible:ring-offset-1 focus-visible:ring-offset-gp-cream"
+                    value={viewYear}
+                    onChange={(event) => setViewYear(Number(event.target.value))}
+                  >
+                    {YEAR_OPTIONS.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gp-cream/90">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+              {value ? (
+                <button
+                  type="button"
+                  className="ml-auto text-xs font-semibold text-gp-evergreen/70 underline-offset-2 hover:text-gp-evergreen"
+                  onClick={() => onChange("")}
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+              {WEEKDAYS.map((weekday) => (
+                <span key={weekday} className="text-center">
+                  {weekday}
+                </span>
+              ))}
+            </div>
+            <div className="mt-1 grid grid-cols-7 gap-px rounded-xl bg-gp-evergreen/5 text-sm">
+              {calendarCells.map((day, index) =>
+                day ? (
+                  <div
+                    key={`${viewMonth}-${viewYear}-${day}-${index}`}
+                    className="flex"
+                  >
+                    <button
+                      type="button"
+                      className={`flex h-full w-full items-center justify-center border border-gp-evergreen/10 bg-gp-cream py-2 text-sm text-gp-evergreen transition hover:bg-gp-evergreen/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 ${
+                        isSameDay(day)
+                          ? "relative text-gp-cream"
+                          : isToday(day)
+                          ? "bg-white"
+                          : ""
+                      }`}
+                      aria-selected={isSameDay(day)}
+                      tabIndex={0}
+                      onClick={() => handleSelectDay(day)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleSelectDay(day);
+                        }
+                      }}
+                    >
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                          isSameDay(day)
+                            ? "bg-gp-evergreen text-gp-cream"
+                            : isToday(day)
+                            ? "border border-gp-evergreen/40 text-gp-evergreen"
+                            : ""
+                        }`}
+                      >
+                        {day}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    key={`empty-${index}`}
+                    className="h-11 border border-gp-evergreen/10 bg-gp-cream"
+                  />
+                )
+              )}
+            </div>
+            <div className="mt-3 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                className="text-xs font-semibold text-gp-evergreen/70 underline-offset-2 hover:text-gp-evergreen"
+                onClick={() => {
+                  const todayIso = isoFromParts(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    today.getDate()
+                  );
+                  onChange(todayIso);
+                  setOpen(false);
+                }}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                className="text-xs font-semibold text-gp-evergreen/70 underline-offset-2 hover:text-gp-evergreen"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      {value ? (
+        <p className="text-xs text-gp-evergreen/70">
+          Approx. age: {approxAge ?? "--"}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 type FormState = {
   name: string;
   relationshipOption: string;
@@ -99,7 +436,7 @@ const RELATIONSHIP_OPTIONS = [
   "Daughter",
   "Son",
   "Partner / Significant Other",
-  "Fiancé(e)",
+  "FiancÃÂÃÂÃÂÃÂ©(e)",
   "Spouse",
   "Friend",
   "Coworker",
@@ -121,12 +458,12 @@ const PET_RELATIONSHIP = "Pet";
 const OTHER_RELATIONSHIP = "Other";
 
 const NOTES_PLACEHOLDER = `Example:
-– Likes: cozy reading, coffee, candles
-– Dislikes: clutter, gag gifts
-– Sizes: M tops, 8 shoe
-– Wishlist hints: prefers experiences over stuff
+- Likes: cozy reading, coffee, candles
+- Dislikes: clutter, gag gifts
+- Sizes: M tops, 8 shoe
+- Wishlist hints: prefers experiences over stuff
 
-The more notes you add, the better PerchPal’s recommendations will be.`;
+The more notes you add, the better PerchPal's recommendations will be.`;
 
 const toNumberOrNull = (value: string): number | null => {
   if (!value.trim()) return null;
@@ -143,7 +480,7 @@ const formatGiftBudgetRange = (
   min: number | null,
   max: number | null,
 ): string | null => {
-  if (min && max) return `${formatCurrency(min)}–${formatCurrency(max)}`;
+  if (min && max) return `${formatCurrency(min)}ÃÂÃÂ¢ÃÂ¢Ã¢ÂÂÃÂ¬ÃÂ¢Ã¢ÂÂ¬ÃÂ${formatCurrency(max)}`;
   if (min) return `From ${formatCurrency(min)}`;
   if (max) return `Up to ${formatCurrency(max)}`;
   return null;
@@ -682,7 +1019,7 @@ export function RecipientsManager() {
                 className="text-[10px] font-semibold uppercase tracking-wide text-gp-evergreen/70 transition hover:text-gp-evergreen"
                 aria-label={`Remove ${interest.label}`}
               >
-                ×
+                ÃÂÃÂÃÂ¢Ã¢ÂÂ¬Ã¢ÂÂ
               </button>
             </span>
           ))}
@@ -1283,91 +1620,90 @@ export function RecipientsManager() {
               </div>
             </div>
 
+            <BirthdayField
+              value={formState.birthday}
+              onChange={(nextValue) =>
+                setFormState((prev) => ({ ...prev, birthday: nextValue }))
+              }
+              approxAge={approxAge}
+            />
+
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label
                   htmlFor="annual-budget"
                   className="text-sm font-medium text-gp-evergreen"
                 >
-                  Approx. yearly budget (optional)
+                  Yearly budget (optional)
                 </label>
-                <input
-                  id="annual-budget"
-                  type="number"
-                  min="0"
-                  inputMode="numeric"
-                  placeholder="250"
-                  value={formState.annualBudget}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      annualBudget: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
+                <div className="mt-1.5 space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                    Approximately
+                  </p>
+                  <input
+                    id="annual-budget"
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="250"
+                    value={formState.annualBudget}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        annualBudget: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                  />
+                </div>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium text-gp-evergreen">
                   Typical per-gift range (optional)
                 </label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    placeholder="25"
-                    value={formState.giftBudgetMin}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        giftBudgetMin: event.target.value,
-                      }))
-                    }
-                    className="rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    placeholder="75"
-                    value={formState.giftBudgetMax}
-                    onChange={(event) =>
-                      setFormState((prev) => ({
-                        ...prev,
-                        giftBudgetMax: event.target.value,
-                      }))
-                    }
-                    className="rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                  />
+                <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-white/40 p-3">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                        Minimum
+                      </p>
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        placeholder="25"
+                        value={formState.giftBudgetMin}
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            giftBudgetMin: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                        Maximum
+                      </p>
+                      <input
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        placeholder="75"
+                        value={formState.giftBudgetMax}
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            giftBudgetMax: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="birthday"
-                className="text-sm font-medium text-gp-evergreen"
-              >
-                Birthday
-              </label>
-              <input
-                id="birthday"
-                type="date"
-                value={formState.birthday}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    birthday: event.target.value,
-                  }))
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-              {formState.birthday && (
-                <p className="text-xs text-gp-evergreen/70">
-                  Approx. age: {approxAge ?? "—"}
-                </p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -1379,7 +1715,7 @@ export function RecipientsManager() {
               </label>
               <textarea
                 id="notes"
-                rows={4}
+                rows={8}
                 value={formState.notes}
                 placeholder={NOTES_PLACEHOLDER}
                 onChange={(event) =>
