@@ -635,7 +635,6 @@ export function RecipientsManager() {
   const [formError, setFormError] = useState("");
   const [formSaving, setFormSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [isDeletingRecipient, setIsDeletingRecipient] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -1007,7 +1006,6 @@ export function RecipientsManager() {
   const requestDelete = (id: string) => {
     setConfirmDeleteId(id);
     setDeleteError("");
-    setDeleteConfirmInput("");
   };
 
   const cancelDelete = () => {
@@ -1030,7 +1028,6 @@ export function RecipientsManager() {
         prev.filter((recipient) => recipient.id !== confirmDeleteId)
       );
       setConfirmDeleteId(null);
-      setDeleteConfirmInput("");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to delete recipient.";
@@ -1629,7 +1626,7 @@ export function RecipientsManager() {
             </div>
             <button
               type="button"
-              onClick={closeForm}
+              onClick={() => closeForm()}
               className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
             >
               Close

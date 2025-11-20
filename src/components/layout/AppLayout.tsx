@@ -127,22 +127,6 @@ const CalendarIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const BookIcon = ({ className }: { className?: string }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.8}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={`${iconClasses} ${className ?? ""}`}
-  >
-    <path d="M4 19.5a2.5 2.5 0 0 1 2.5-2.5H20" />
-    <path d="M6.5 4.5H20v14H6.5A2.5 2.5 0 0 0 4 21" />
-    <path d="M6.5 4.5a2.5 2.5 0 0 0-2.5 2.5V21" />
-  </svg>
-);
-
 const SettingsIcon = ({ className }: { className?: string }) => (
   <svg
     viewBox="0 0 24 24"
