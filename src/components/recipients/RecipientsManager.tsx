@@ -461,7 +461,8 @@ const RELATIONSHIP_OPTIONS = [
   "Brother",
   "Daughter",
   "Son",
-  "Partner / Significant Other",
+  "Boyfriend",
+  "Girlfriend",
   "Fiance",
   "Spouse",
   "Friend",
@@ -976,9 +977,7 @@ export function RecipientsManager() {
         if (error) throw error;
         setRecipients((prev) => [data, ...prev]);
         setFormMessage("Recipient added successfully.");
-        setFormState(emptyFormState);
-        setIsFormOpen(false);
-        setActiveRecipient(null);
+        closeForm({ preserveMessage: true });
       } else if (formMode === "edit" && activeRecipient) {
         const { data, error } = await supabase
           .from("recipient_profiles")
@@ -994,6 +993,7 @@ export function RecipientsManager() {
           ),
         );
         setFormMessage("Recipient updated successfully.");
+        closeForm({ preserveMessage: true });
       }
     } catch (err) {
       const message =
@@ -1013,7 +1013,6 @@ export function RecipientsManager() {
   const cancelDelete = () => {
     setConfirmDeleteId(null);
     setDeleteError("");
-    setDeleteConfirmInput("");
   };
 
   const handleDelete = async () => {
@@ -1387,10 +1386,6 @@ export function RecipientsManager() {
 
       {confirmDeleteId ? (() => {
         const target = recipients.find((r) => r.id === confirmDeleteId);
-        const nameToMatch = target?.name?.trim() ?? "";
-        const matches =
-          nameToMatch.length > 0 &&
-          deleteConfirmInput.trim().toLowerCase() === nameToMatch.toLowerCase();
         const titleId = `delete-recipient-${confirmDeleteId}`;
         return (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby={titleId}>
@@ -1404,27 +1399,11 @@ export function RecipientsManager() {
                   suggestions associated with them from GiftPerch.
                 </p>
                 <p className="font-semibold text-red-700">This action cannot be undone.</p>
-                {nameToMatch ? (
+                {target?.name ? (
                   <p className="font-semibold text-gp-evergreen">
-                    Recipient: {nameToMatch}
+                    Recipient: {target.name}
                   </p>
                 ) : null}
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="recipient-delete-confirm"
-                  className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  To confirm, type this recipient&apos;s name exactly:
-                </label>
-                <input
-                  id="recipient-delete-confirm"
-                  type="text"
-                  value={deleteConfirmInput}
-                  onChange={(event) => setDeleteConfirmInput(event.target.value)}
-                  placeholder={nameToMatch || "Recipient name"}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
               </div>
               {deleteError ? (
                 <p className="text-sm font-semibold text-red-700">{deleteError}</p>
@@ -1439,7 +1418,7 @@ export function RecipientsManager() {
                 </button>
                 <button
                   type="button"
-                  disabled={!matches || isDeletingRecipient}
+                  disabled={isDeletingRecipient}
                   onClick={handleDelete}
                   className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 disabled:opacity-60"
                 >

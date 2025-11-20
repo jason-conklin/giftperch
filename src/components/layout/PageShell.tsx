@@ -25,18 +25,18 @@ export function PageShell({
     >
       {hero}
       {(title || subtitle || actions) && (
-        <section className="gp-card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <section className="flex flex-col gap-3 rounded-2xl border border-white/70 bg-gp-gold px-5 py-4 text-black shadow-sm md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             {eyebrow ? (
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/60">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/70">
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="text-2xl font-semibold text-gp-evergreen">
+            <h1 className="text-2xl font-semibold text-black">
               {title ?? "GiftPerch"}
             </h1>
             {subtitle ? (
-              <p className="mt-1 text-sm text-gp-evergreen/70">{subtitle}</p>
+              <p className="mt-1 text-sm text-black/70">{subtitle}</p>
             ) : null}
           </div>
           {actions ? (
