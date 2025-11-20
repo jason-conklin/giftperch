@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI, { type ChatCompletionMessageParam } from "openai";
+import OpenAI from "openai";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+
+type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
 
 const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL?.trim() || "gpt-4o-mini";
 const openai = new OpenAI({
@@ -61,16 +66,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemMessage: ChatCompletionMessageParam = {
+    const systemMessage: ChatMessage = {
       role: "system",
       content:
         "You are PerchPal, a warm but efficient AI gifting assistant inside the GiftPerch app. Focus on concrete, thoughtful gift suggestions based on the user's description, budgets, interests, and occasions. Prefer 2-4 suggestions per reply, each with a short name, rough price range, and 1-2 sentence rationale. Be concise and avoid emoji.",
     };
 
-    const trimmedHistory: ChatCompletionMessageParam[] = history
+    const trimmedHistory: ChatMessage[] = history
       .slice(-15)
       .map((entry) => {
-        const role: ChatCompletionMessageParam["role"] =
+        const role: ChatMessage["role"] =
           entry.role === "assistant" || entry.role === "system"
             ? entry.role
             : "user";

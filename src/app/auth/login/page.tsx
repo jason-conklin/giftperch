@@ -1,16 +1,16 @@
 "use client";
 
-import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
 type AuthMode = "password" | "magic";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSupabaseSession();
@@ -197,5 +197,19 @@ export default function LoginPage() {
         </Link>
       </p>
     </section>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-gp-evergreen/70">
+          Loading sign in...
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

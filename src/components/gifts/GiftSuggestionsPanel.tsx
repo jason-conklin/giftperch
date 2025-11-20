@@ -595,11 +595,28 @@ export function GiftSuggestionsPanel() {
             : PERCHPAL_ERROR_MESSAGE,
         );
       }
+      const suggestionRunId =
+        json.suggestionRunId ?? `run-${Date.now()}`;
+      const createdAt = json.createdAt ?? new Date().toISOString();
+      const promptContext: GiftPromptContext =
+        json.promptContext ?? {
+          recipient_id: selectedRecipientId,
+          recipient_name: selectedRecipient?.name ?? "Recipient",
+          relationship: selectedRecipient?.relationship ?? null,
+          occasion: occasion || null,
+          budget_min: budgetMin ? Number(budgetMin) : null,
+          budget_max: budgetMax ? Number(budgetMax) : null,
+          notes_summary: null,
+          interests_summary: null,
+          last_gifts_summary: null,
+        };
+      const suggestions = json.suggestions ?? [];
+
       const newRun: SuggestionRun = {
-        id: json.suggestionRunId,
-        created_at: json.createdAt,
-        prompt_context: json.promptContext,
-        suggestions: json.suggestions,
+        id: suggestionRunId,
+        created_at: createdAt,
+        prompt_context: promptContext,
+        suggestions,
       };
 
       setRuns((prev) => [newRun, ...prev]);
@@ -1178,7 +1195,12 @@ const tierBadgeClasses: Record<GiftSuggestion["tier"], string> = {
 function buildPriceDisplay(
   min: number | null | undefined,
   max: number | null | undefined,
+  hint?: string | null | undefined,
 ) {
+  const priceHint = typeof hint === "string" ? hint.trim() : "";
+  if (priceHint) {
+    return priceHint;
+  }
   if (typeof min === "number" && typeof max === "number") {
     return `$${Math.round(min)}-$${Math.round(max)}`;
   }

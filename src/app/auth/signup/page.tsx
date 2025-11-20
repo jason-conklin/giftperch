@@ -1,14 +1,14 @@
 "use client";
 
-import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSupabaseSession();
@@ -200,5 +200,19 @@ export default function SignupPage() {
         </Link>
       </p>
     </section>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center text-sm text-gp-evergreen/70">
+          Loading sign up...
+        </div>
+      }
+    >
+      <SignupContent />
+    </Suspense>
   );
 }

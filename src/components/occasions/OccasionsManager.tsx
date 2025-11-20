@@ -95,7 +95,37 @@ export function OccasionsManager() {
         setError(error.message);
         setOccasions([]);
       } else {
-        setOccasions((data ?? []) as Occasion[]);
+        const normalized =
+          data?.map((occasion) => {
+            const recipientValue = (occasion as { recipient?: unknown }).recipient;
+            const resolvedRecipient =
+              recipientValue && !Array.isArray(recipientValue)
+                ? {
+                    name: (recipientValue as { name?: string }).name ?? "",
+                    relationship:
+                      (recipientValue as { relationship?: string | null })
+                        .relationship ?? null,
+                  }
+                : Array.isArray(recipientValue) && recipientValue[0]
+                ? {
+                    name: (recipientValue[0] as { name?: string }).name ?? "",
+                    relationship:
+                      (recipientValue[0] as {
+                        relationship?: string | null;
+                      }).relationship ?? null,
+                  }
+                : null;
+
+            return {
+              id: occasion.id as string,
+              label: (occasion as { label?: string }).label ?? null,
+              event_type: (occasion as { event_type?: string }).event_type ?? null,
+              event_date: (occasion as { event_date?: string }).event_date ?? null,
+              notes: (occasion as { notes?: string }).notes ?? null,
+              recipient: resolvedRecipient,
+            } as Occasion;
+          }) ?? [];
+        setOccasions(normalized);
       }
       setLoading(false);
     };
@@ -140,7 +170,37 @@ export function OccasionsManager() {
         .eq("recipient_profiles.is_self", false)
         .order("event_date", { ascending: true })
         .limit(30);
-      setOccasions((data ?? []) as Occasion[]);
+      const normalized =
+        data?.map((occasion) => {
+          const recipientValue = (occasion as { recipient?: unknown }).recipient;
+          const resolvedRecipient =
+            recipientValue && !Array.isArray(recipientValue)
+              ? {
+                  name: (recipientValue as { name?: string }).name ?? "",
+                  relationship:
+                    (recipientValue as { relationship?: string | null }).relationship ??
+                    null,
+                }
+              : Array.isArray(recipientValue) && recipientValue[0]
+              ? {
+                  name: (recipientValue[0] as { name?: string }).name ?? "",
+                  relationship:
+                    (recipientValue[0] as {
+                      relationship?: string | null;
+                    }).relationship ?? null,
+                }
+              : null;
+
+          return {
+            id: occasion.id as string,
+            label: (occasion as { label?: string }).label ?? null,
+            event_type: (occasion as { event_type?: string }).event_type ?? null,
+            event_date: (occasion as { event_date?: string }).event_date ?? null,
+            notes: (occasion as { notes?: string }).notes ?? null,
+            recipient: resolvedRecipient,
+          } as Occasion;
+        }) ?? [];
+      setOccasions(normalized);
     }
     setSaving(false);
   };

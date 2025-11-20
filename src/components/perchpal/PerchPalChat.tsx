@@ -79,14 +79,14 @@ export function PerchPalChat() {
       if (error) {
         setError(error.message);
       } else {
-        const mapped =
+        const mapped: ChatMessage[] =
           data
             ?.filter((interaction): interaction is AiInteraction =>
               Boolean(interaction.message)
             )
             .map((interaction) => ({
               id: interaction.id,
-              role: interaction.role === "user" ? "user" : "assistant",
+              role: interaction.role === "user" ? ("user" as ChatRole) : "assistant",
               content: interaction.message,
               created_at: interaction.created_at,
             })) ?? [];

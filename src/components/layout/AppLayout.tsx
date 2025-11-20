@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type FocusEvent,
+  type ReactElement,
   type ReactNode,
 } from "react";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
@@ -26,7 +27,7 @@ type AppLayoutProps = {
 type NavItem = {
   label: string;
   href: string;
-  icon: (props: { className?: string }) => JSX.Element;
+  icon: (props: { className?: string }) => ReactElement;
 };
 
 const iconClasses = "h-4 w-4";

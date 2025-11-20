@@ -146,7 +146,7 @@ export function WishlistManager() {
         .from("wishlist_items")
         .select("*")
         .eq("wishlist_id", activeWishlistId)
-        .order("priority", { ascending: true, nullsLast: true })
+        .order("priority", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) {
         setError(error.message);
