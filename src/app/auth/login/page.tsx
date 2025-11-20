@@ -87,7 +87,7 @@ function LoginContent() {
         <button
           type="button"
           onClick={() => setMode("password")}
-          className={`flex-1 rounded-full px-4 py-2 transition ${
+          className={`flex-1 rounded-full px-4 py-2 transition cursor-pointer ${
             mode === "password" ? "bg-gp-evergreen text-gp-cream" : ""
           }`}
         >
@@ -96,7 +96,7 @@ function LoginContent() {
         <button
           type="button"
           onClick={() => setMode("magic")}
-          className={`flex-1 rounded-full px-4 py-2 transition ${
+          className={`flex-1 rounded-full px-4 py-2 transition cursor-pointer ${
             mode === "magic" ? "bg-gp-evergreen text-gp-cream" : ""
           }`}
         >
@@ -145,7 +145,7 @@ function LoginContent() {
 
         <button
           type="submit"
-          className="w-full rounded-2xl bg-gp-evergreen px-4 py-3 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60"
+          className="w-full rounded-2xl bg-gp-evergreen px-4 py-3 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           disabled={isLoading}
         >
           {mode === "password" ? "Log In" : "Send Magic Link"}

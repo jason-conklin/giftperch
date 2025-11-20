@@ -37,7 +37,7 @@ export function GoogleSignInButton() {
         disabled={isSigningIn}
         aria-busy={isSigningIn}
         aria-label="Continue with Google"
-        className="gp-secondary-button inline-flex w-full items-center justify-center gap-2"
+        className="gp-secondary-button inline-flex w-full items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
       >
         <span className="h-4 w-4">
           <svg
