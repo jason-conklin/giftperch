@@ -31,9 +31,6 @@ export const metadata: Metadata = {
     description,
     images: ["/giftperch_banner.png"],
   },
-  icons: {
-    icon: "/giftperch_logo_only.png",
-  },
 };
 
 export default function RootLayout({
