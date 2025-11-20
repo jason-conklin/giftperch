@@ -73,6 +73,9 @@ export default function MarketingHome() {
         </div>
         <div className="gp-card p-6 sm:p-8">
           <div className="space-y-5">
+            <p className="text-lg font-semibold text-gp-evergreen">
+              Make Recipient Profiles
+            </p>
             <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
               <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
                 Sample profile

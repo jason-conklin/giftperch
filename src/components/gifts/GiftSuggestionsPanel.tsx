@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { AmazonProduct, ensureAmazonAffiliateTag } from "@/lib/amazonPaapi";
+import { AmazonProduct } from "@/lib/amazonPaapi";
+import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 
 type AvatarIconKey =
   | "babyboy"
@@ -274,21 +275,16 @@ function GiftSuggestionCard({
                 </p>
                 <div className="space-y-3">
                   {amazonState.products.map((product) => {
-                    const affiliateUrl = ensureAmazonAffiliateTag(
-                      product.detailPageUrl,
-                    );
-                    const linkProps =
-                      affiliateUrl != null
-                        ? {
-                            href: affiliateUrl,
-                            target: "_blank",
-                            rel: "noreferrer",
-                          }
-                        : {};
+                    const href = buildAmazonAffiliateUrl({
+                      productUrl: product.detailPageUrl,
+                      title: product.title,
+                    });
                     return (
                       <a
                         key={product.asin}
-                        {...linkProps}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
                       >
                         {product.imageUrl ? (
