@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -85,6 +86,7 @@ const USER_AVATAR_BUCKET = "avatars";
 export function SettingsPanel() {
   const { status, user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const router = useRouter();
 
   const [profile, setProfile] = useState<Profile>({
     display_name: "",
@@ -108,6 +110,8 @@ export function SettingsPanel() {
   const [selfFeedback, setSelfFeedback] = useState("");
   const [shareOrigin, setShareOrigin] = useState("");
   const [regeneratingSlug, setRegeneratingSlug] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -451,6 +455,32 @@ export function SettingsPanel() {
   const resolvedOrigin =
     shareOrigin || (typeof window !== "undefined" ? window.location.origin : "");
   const shareUrl = selfProfile?.self_slug ? `${resolvedOrigin}/profile/${selfProfile.self_slug}` : "";
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch("/api/user/delete", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error("Failed to delete account");
+      await supabase.auth.signOut();
+      router.push("/auth/signup");
+    } catch (err) {
+      console.error("Delete account failed", err);
+      alert("Something went wrong deleting your account.");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -853,6 +883,55 @@ export function SettingsPanel() {
         <p className="rounded-2xl bg-gp-cream/80 px-4 py-2 text-sm text-gp-evergreen/80">
           {feedback}
         </p>
+      ) : null}
+
+      <div className="mt-12 border-t border-gp-evergreen/10 pt-8 space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            className="rounded-full bg-gp-gold px-5 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] w-full sm:w-auto"
+            onClick={handleLogout}
+          >
+            Log Out
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 w-full sm:w-auto"
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      {showDeleteConfirm ? (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-4 rounded-2xl bg-gp-cream p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-gp-evergreen">Delete account?</h2>
+            <p className="text-sm text-gp-evergreen/80">
+              This will permanently remove your GiftPerch account, all recipient profiles,
+              wishlists, occasions, gift history, and settings. This action cannot be
+              undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="gp-secondary-button"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteAccount}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 disabled:opacity-60"
+              >
+                {isDeleting ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
