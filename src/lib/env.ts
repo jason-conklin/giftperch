@@ -73,9 +73,10 @@ const optionalKeys = {
   amazonPaSecretKey: optionalEnv("AMAZON_PA_SECRET_KEY", {
     warnInProd: true,
   }),
-  amazonPaPartnerTag: optionalEnv("AMAZON_PA_PARTNER_TAG", {
-    warnInProd: true,
-  }),
+  amazonPaPartnerTag:
+    optionalEnv("AMAZON_PA_PARTNER_TAG", {
+      warnInProd: true,
+    }) || "giftperch-20",
   amazonPaRegion: optionalEnv("AMAZON_PA_REGION", { warnInProd: true }),
   resendApiKey: optionalEnv("RESEND_API_KEY"),
   occasionAlertsFromEmail: optionalEnv("OCCASION_ALERTS_FROM_EMAIL"),

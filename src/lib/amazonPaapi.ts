@@ -53,7 +53,13 @@ const {
   AMAZON_PA_SECRET_KEY,
   AMAZON_PA_PARTNER_TAG,
   AMAZON_PA_REGION,
+  NEXT_PUBLIC_AMAZON_PARTNER_TAG,
 } = process.env;
+
+const AMAZON_PARTNER_TAG =
+  AMAZON_PA_PARTNER_TAG ||
+  NEXT_PUBLIC_AMAZON_PARTNER_TAG ||
+  "giftperch-20";
 
 const HOST_BY_REGION: Record<string, { host: string; marketplace: string }> = {
   "us-east-1": { host: "webservices.amazon.com", marketplace: "www.amazon.com" },
@@ -80,7 +86,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   {
     asin: "MOCK-COFFEE-BOX",
     title: "Premium Coffee Ritual Gift Box",
-    imageUrl: "/gift-thumbnails/default-gift.svg",
+    imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$42.00",
     currency: "USD",
@@ -89,7 +95,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   {
     asin: "MOCK-CANDLE",
     title: "Evergreen Grove Candle Duo",
-    imageUrl: "/gift-thumbnails/default-gift.svg",
+    imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$28.50",
     currency: "USD",
@@ -98,7 +104,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   {
     asin: "MOCK-TEA-SET",
     title: "Handcrafted Ceramic Tea Service",
-    imageUrl: "/gift-thumbnails/default-gift.svg",
+    imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$65.00",
     currency: "USD",
@@ -113,7 +119,6 @@ const TARGET =
 const shouldMock =
   !AMAZON_PA_ACCESS_KEY ||
   !AMAZON_PA_SECRET_KEY ||
-  !AMAZON_PA_PARTNER_TAG ||
   !AMAZON_PA_REGION ||
   process.env.NODE_ENV !== "production";
 
@@ -184,6 +189,20 @@ export async function searchAmazonProducts(params: {
   }
 }
 
+export function ensureAmazonAffiliateTag(
+  url: string | null,
+  tag: string = AMAZON_PARTNER_TAG,
+): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set("tag", tag);
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 function buildMockProducts(query: string): AmazonProduct[] {
   const prefix = query ? `${query} - ` : "";
   return MOCK_PRODUCTS.map((product, index) => ({
@@ -203,7 +222,7 @@ function buildRequestBody(args: {
   const body: Record<string, unknown> = {
     Keywords: args.query,
     SearchIndex: "All",
-    PartnerTag: AMAZON_PA_PARTNER_TAG,
+    PartnerTag: AMAZON_PARTNER_TAG,
     PartnerType: "Associates",
     Marketplace: args.marketplace,
     ItemCount: Math.min(Math.max(args.maxResults, 1), 10),

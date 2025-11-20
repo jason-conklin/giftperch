@@ -52,20 +52,23 @@ export default function MarketingLayout({
     <div className="flex min-h-screen flex-col bg-gp-cream/80 text-gp-evergreen">
       <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5 sm:px-6 lg:px-0">
-          <Link href="/" className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-4 rounded-full bg-white/90 px-3 py-2 text-gp-evergreen shadow-sm"
+          >
             <Image
               src="/giftperch_logo_background.png"
               alt="GiftPerch logo"
-              width={52}
-              height={52}
-              className="h-13 w-13 rounded-full border border-gp-cream/30 object-cover"
+              width={68}
+              height={68}
+              className="h-16 w-16 rounded-full border border-gp-cream/30 object-cover"
               priority
             />
-            <div>
-              <p className="text-xl font-semibold text-gp-cream">
+            <div className="text-gp-evergreen">
+              <p className="text-3xl font-semibold text-gp-evergreen leading-tight">
                 GiftPerch
               </p>
-              <p className="text-xs uppercase tracking-[0.4em] text-gp-cream/70">
+              <p className="text-xs uppercase tracking-[0.4em] text-gp-evergreen/70">
                 Thoughtful gifting, reimagined
               </p>
             </div>
@@ -121,11 +124,11 @@ export default function MarketingLayout({
       </header>
       <main
         id="gp-main-content"
-        className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-0"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"
       >
         {children}
       </main>
-      <div className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6 lg:px-0">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6 lg:px-6">
         <SiteFooter />
       </div>
     </div>

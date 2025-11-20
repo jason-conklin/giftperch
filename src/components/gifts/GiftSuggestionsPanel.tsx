@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { AmazonProduct } from "@/lib/amazonPaapi";
+import { AmazonProduct, ensureAmazonAffiliateTag } from "@/lib/amazonPaapi";
 
 type AvatarIconKey =
   | "babyboy"
@@ -273,36 +273,47 @@ function GiftSuggestionCard({
                   Amazon finds
                 </p>
                 <div className="space-y-3">
-                  {amazonState.products.map((product) => (
-                    <a
-                      key={product.asin}
-                      href={product.detailPageUrl ?? undefined}
-                      target={product.detailPageUrl ? "_blank" : undefined}
-                      rel={product.detailPageUrl ? "noreferrer" : undefined}
-                      className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
-                    >
-                      {product.imageUrl ? (
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.title}
-                          width={48}
-                          height={48}
-                          className="h-12 w-12 rounded-xl object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
-                          No image
+                  {amazonState.products.map((product) => {
+                    const affiliateUrl = ensureAmazonAffiliateTag(
+                      product.detailPageUrl,
+                    );
+                    const linkProps =
+                      affiliateUrl != null
+                        ? {
+                            href: affiliateUrl,
+                            target: "_blank",
+                            rel: "noreferrer",
+                          }
+                        : {};
+                    return (
+                      <a
+                        key={product.asin}
+                        {...linkProps}
+                        className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
+                      >
+                        {product.imageUrl ? (
+                          <Image
+                            src={product.imageUrl}
+                            alt={product.title}
+                            width={48}
+                            height={48}
+                            className="h-12 w-12 rounded-xl object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
+                            No image
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold">{product.title}</p>
+                          <p className="text-gp-evergreen/70">
+                            {product.priceDisplay ?? "Price unavailable"}
+                          </p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-semibold">{product.title}</p>
-                        <p className="text-gp-evergreen/70">
-                          {product.priceDisplay ?? "Price unavailable"}
-                        </p>
-                      </div>
-                    </a>
-                  ))}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1174,6 +1185,9 @@ export function GiftSuggestionsPanel() {
           </div>
         </>
       )}
+      <p className="mt-6 text-center text-xs text-gp-evergreen/55">
+        As an Amazon Associate, I earn from qualifying purchases.
+      </p>
     </section>
   );
 }

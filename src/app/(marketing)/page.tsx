@@ -28,23 +28,23 @@ const sampleIdeas = [
 
 export default function MarketingHome() {
   return (
-    <div className="space-y-16">
+    <div className="mx-auto w-full max-w-5xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
             <span>Introducing PerchPal,</span>
             <span>Your AI gifting assistant</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Image
               src="/giftperch_logo_only.png"
               alt="GiftPerch"
-              width={56}
-              height={56}
-              className="h-24 w-24"
+              width={96}
+              height={96}
+              className="h-28 w-28"
               priority
             />
-            <p className="text-lg font-semibold uppercase tracking-wide text-gp-evergreen/70">
+            <p className="text-3xl font-bold uppercase tracking-wide text-gp-evergreen">
               GiftPerch
             </p>
           </div>
@@ -77,13 +77,27 @@ export default function MarketingHome() {
               <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
                 Sample profile
               </p>
-              <p className="mt-2 text-lg font-semibold text-gp-evergreen">
-                Maya Thompson
-              </p>
-              <p className="text-sm text-gp-evergreen/80">
-                Loves cozy rituals, hikes, indie bookstores. Prefers gifts
-                under $150.
-              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <Image
+                  src="/woman_icon.png"
+                  alt="Maya avatar"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
+                />
+                <div>
+                  <p className="text-lg font-semibold text-gp-evergreen">
+                    Maya
+                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+                    Sister
+                  </p>
+                  <p className="text-sm text-gp-evergreen/80">
+                    Loves cozy rituals, hikes, indie bookstores. Prefers gifts
+                    under $150.
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
               <PerchPalLoader

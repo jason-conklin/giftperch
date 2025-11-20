@@ -32,6 +32,9 @@ export function SiteFooter() {
           </Link>
         </div>
       </div>
+      <p className="mt-2 text-center text-xs text-gp-evergreen/70">
+        As an Amazon Associate, I earn from qualifying purchases.
+      </p>
       {/* TODO: Replace placeholder links with actual routes/policies. */}
     </footer>
   );
