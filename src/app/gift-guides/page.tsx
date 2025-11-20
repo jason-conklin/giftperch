@@ -19,6 +19,13 @@ export default function GiftGuidesPage() {
             title="Gift Guides Library"
             subtitle="Guides bundle curated ideas so you can duplicate, tweak, and share them with the people you shop for."
           >
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gp-gold/40 bg-gp-cream/80 px-3 py-1 text-xs font-semibold text-gp-evergreen">
+              <span>Experimental · Internal only</span>
+              <span className="text-gp-evergreen/70">
+                This Gift Guides workspace is still in early design and not part
+                of the main GiftPerch experience yet.
+              </span>
+            </div>
             <GiftGuidesManager />
           </PageShell>
         </AppLayout>

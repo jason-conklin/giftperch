@@ -164,7 +164,6 @@ const navItems: NavItem[] = [
   { label: "Gift Ideas", href: "/gifts", icon: SparkIcon },
   { label: "History", href: "/history", icon: ClockIcon },
   { label: "Occasions", href: "/occasions", icon: CalendarIcon },
-  { label: "Gift Guides", href: "/gift-guides", icon: BookIcon },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 

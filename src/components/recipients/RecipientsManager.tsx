@@ -644,6 +644,12 @@ export function RecipientsManager() {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
+    if (selectedRecipient) {
+      setFormMessage("");
+    }
+  }, [selectedRecipient]);
+
+  useEffect(() => {
     if (!selectedRecipient) {
       document.body.style.overflow = "";
       return undefined;
@@ -877,11 +883,13 @@ export function RecipientsManager() {
     setIsFormOpen(true);
   };
 
-  const closeForm = () => {
+  const closeForm = (options?: { preserveMessage?: boolean }) => {
     setIsFormOpen(false);
     setActiveRecipient(null);
     setFormState(emptyFormState);
-    setFormMessage("");
+    if (!options?.preserveMessage) {
+      setFormMessage("");
+    }
     setFormError("");
     setFormSaving(false);
     setAvatarOptionsVisible(false);
@@ -969,6 +977,8 @@ export function RecipientsManager() {
         setRecipients((prev) => [data, ...prev]);
         setFormMessage("Recipient added successfully.");
         setFormState(emptyFormState);
+        setIsFormOpen(false);
+        setActiveRecipient(null);
       } else if (formMode === "edit" && activeRecipient) {
         const { data, error } = await supabase
           .from("recipient_profiles")
@@ -1223,6 +1233,11 @@ export function RecipientsManager() {
       {error && (
         <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+      {formMessage && !isFormOpen && (
+        <div className="rounded-2xl border border-green-200 bg-green-100 px-4 py-2 text-sm text-gp-evergreen">
+          {formMessage}
         </div>
       )}
 
@@ -2054,7 +2069,7 @@ export function RecipientsManager() {
               </p>
             )}
             {formMessage && (
-              <p className="rounded-2xl bg-gp-cream px-4 py-2 text-sm text-gp-evergreen">
+              <p className="rounded-2xl bg-green-100 px-4 py-2 text-sm text-gp-evergreen">
                 {formMessage}
               </p>
             )}
