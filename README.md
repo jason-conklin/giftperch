@@ -329,6 +329,13 @@ Vercel (auto-deploy on push to main)
 
 Supabase (managed backend)
 
+### Deployment to Vercel
+
+1. Create a new Vercel project pointing at this repository (the main `giftperch/` folder). The default build command and output work without customization.
+2. In **Project → Settings → Environment Variables**, copy every key from `.env.example` and paste the matching values (Supabase URLs/keys, OpenAI key, Amazon PAAPI credentials, Resend, cron secret, etc.). Create entries for each environment (Preview/Production) as needed.
+3. Set `NEXT_PUBLIC_SITE_URL=https://www.giftperch.com` in the Production environment so links, metadata, and auth callbacks use the final domain.
+4. Deploy. Amazon PAAPI searches will automatically fall back to the built-in mock products until your Associates account is activated and valid credentials are supplied, so shipping without the live integration is safe.
+
 🗂️ Project Structure (Finalized)
 giftperch/
 ├── supabase/                    # SQL migrations, RLS, seed data

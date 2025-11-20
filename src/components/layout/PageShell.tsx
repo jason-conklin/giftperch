@@ -18,7 +18,11 @@ export function PageShell({
   children,
 }: PageShellProps) {
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 rounded-3xl bg-gp-cream/80 px-4 py-8 text-gp-evergreen shadow-sm sm:px-6 lg:px-8">
+    <main
+      id="gp-main-content"
+      role="main"
+      className="mx-auto flex w-full max-w-6xl flex-col gap-6 rounded-3xl bg-gp-cream/80 px-4 py-8 text-gp-evergreen shadow-sm sm:px-6 lg:px-8"
+    >
       {hero}
       {(title || subtitle || actions) && (
         <section className="gp-card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -43,6 +47,6 @@ export function PageShell({
         </section>
       )}
       {children}
-    </div>
+    </main>
   );
 }

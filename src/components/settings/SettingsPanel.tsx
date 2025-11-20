@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +16,17 @@ type UserSettings = {
   send_weekly_digest: boolean;
   send_occasion_reminders: boolean;
   send_affiliate_reports: boolean;
+};
+
+type SelfProfileRow = {
+  id: string;
+  name: string;
+  relationship: string | null;
+  notes: string | null;
+  annual_budget: number | null;
+  gift_budget_min: number | null;
+  gift_budget_max: number | null;
+  self_slug: string | null;
 };
 
 type SelfProfile = {
@@ -303,7 +314,7 @@ export function SettingsPanel() {
     setSavingPreferences(false);
   };
 
-  const mapSelfProfileRow = (row: any): SelfProfile => ({
+  const mapSelfProfileRow = (row: SelfProfileRow): SelfProfile => ({
     id: row.id,
     name: row.name,
     relationship: row.relationship,
@@ -846,3 +857,7 @@ export function SettingsPanel() {
     </div>
   );
 }
+
+
+
+

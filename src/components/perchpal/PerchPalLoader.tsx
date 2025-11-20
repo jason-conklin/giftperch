@@ -10,18 +10,6 @@ type PerchPalLoaderProps = {
   ariaLabel?: string;
 };
 
-const AWAY_FRAMES = [
-  "/giftperch_flying_animation1.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation2.PNG",
-] as const;
-
-const RETURN_FRAMES = [
-  "/giftperch_retrieve_animation_1.png",
-  "/giftperch_retrieve_animation_3.png",
-  "/giftperch_retrieve_animation_2.png",
-] as const;
-
 const FLYING_SEQUENCE = [
   "/giftperch_flying_animation1.PNG",
   "/giftperch_flying_animation3.PNG",

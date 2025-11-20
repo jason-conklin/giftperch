@@ -9,11 +9,16 @@ const supabaseHostname = (() => {
   }
 })();
 
-const remotePatterns = [
+const remotePatterns: Array<{
+  protocol: "http" | "https";
+  hostname: string;
+  port?: string;
+  pathname?: string;
+}> = [
   {
     protocol: "https",
     hostname: "**",
-  } as const,
+  },
 ];
 
 if (supabaseHostname) {
@@ -21,7 +26,7 @@ if (supabaseHostname) {
     protocol: "https",
     hostname: supabaseHostname,
     pathname: "/storage/v1/object/public/**",
-  } as const);
+  });
 }
 
 const nextConfig: NextConfig = {

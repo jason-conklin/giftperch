@@ -217,7 +217,7 @@ export function DashboardHighlights() {
           </>
         ) : (
           <p className="text-sm text-gp-evergreen/70">
-            Add birthdays or occasions to see what's coming up next.
+            Add birthdays or occasions to see what&apos;s coming up next.
           </p>
         )}
       </article>

@@ -10,6 +10,44 @@ export type AmazonProduct = {
   primeEligible?: boolean | null;
 };
 
+type PaapiListing = {
+  Price?: {
+    DisplayAmount?: string | null;
+    Currency?: string | null;
+  } | null;
+  DeliveryInfo?: {
+    IsPrimeEligible?: boolean | null;
+  } | null;
+};
+
+type PaapiItemResponse = {
+  ASIN?: string;
+  DetailPageURL?: string | null;
+  ItemInfo?: {
+    Title?: {
+      DisplayValue?: string | null;
+      DisplayName?: string | null;
+    } | null;
+  } | null;
+  Images?: {
+    Primary?: {
+      Medium?: { URL?: string | null } | null;
+      Large?: { URL?: string | null } | null;
+      Small?: { URL?: string | null } | null;
+    } | null;
+  } | null;
+  Offers?: {
+    Listings?: PaapiListing[] | null;
+  } | null;
+};
+
+type PaapiResponse = {
+  ItemsResult?: {
+    Items?: PaapiItemResponse[] | null;
+  } | null;
+  Errors?: Array<{ Message?: string }>;
+};
+
 const {
   AMAZON_PA_ACCESS_KEY,
   AMAZON_PA_SECRET_KEY,
@@ -116,29 +154,28 @@ export async function searchAmazonProducts(params: {
     }
 
     const mapped = items
-      .map((item: any): AmazonProduct | null => {
+      .map((item): AmazonProduct | null => {
         if (!item?.ASIN) return null;
-        const listing = item?.Offers?.Listings?.[0];
+        const listing = item.Offers?.Listings?.[0];
         const price = listing?.Price;
         return {
           asin: item.ASIN,
           title:
-            item?.ItemInfo?.Title?.DisplayValue ??
-            item?.ItemInfo?.Title?.DisplayName ??
+            item.ItemInfo?.Title?.DisplayValue ??
+            item.ItemInfo?.Title?.DisplayName ??
             "Amazon gift idea",
           imageUrl:
-            item?.Images?.Primary?.Medium?.URL ??
-            item?.Images?.Primary?.Large?.URL ??
-            item?.Images?.Primary?.Small?.URL ??
+            item.Images?.Primary?.Medium?.URL ??
+            item.Images?.Primary?.Large?.URL ??
+            item.Images?.Primary?.Small?.URL ??
             null,
           detailPageUrl: item.DetailPageURL ?? null,
           priceDisplay: price?.DisplayAmount ?? null,
           currency: price?.Currency ?? null,
-          primeEligible:
-            listing?.DeliveryInfo?.IsPrimeEligible ?? null,
+          primeEligible: listing?.DeliveryInfo?.IsPrimeEligible ?? null,
         };
       })
-      .filter(Boolean) as AmazonProduct[];
+      .filter((item): item is AmazonProduct => Boolean(item));
 
     return mapped.length > 0 ? mapped : buildMockProducts(params.query);
   } catch (error) {
@@ -148,7 +185,7 @@ export async function searchAmazonProducts(params: {
 }
 
 function buildMockProducts(query: string): AmazonProduct[] {
-  const prefix = query ? `${query} · ` : "";
+  const prefix = query ? `${query} - ` : "";
   return MOCK_PRODUCTS.map((product, index) => ({
     ...product,
     title: `${prefix}${product.title}`,
@@ -196,7 +233,7 @@ async function signedPaapiRequest({
   body: Record<string, unknown>;
   host: string;
   region: string;
-}) {
+}): Promise<PaapiResponse> {
   const endpoint = `https://${host}/paapi5/searchitems`;
   const bodyString = JSON.stringify(body);
   const now = new Date();
@@ -260,12 +297,14 @@ async function signedPaapiRequest({
   });
 
   const text = await response.text();
-  let json: any;
+  let parsed: unknown;
   try {
-    json = JSON.parse(text);
+    parsed = JSON.parse(text);
   } catch {
     throw new Error("Unable to parse PAAPI response JSON");
   }
+
+  const json = parsed as PaapiResponse;
 
   if (!response.ok || json.Errors) {
     throw new Error(

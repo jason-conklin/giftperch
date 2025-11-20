@@ -70,15 +70,21 @@ const openai = new OpenAI({
 const SUGGESTION_MODEL =
   process.env.OPENAI_SUGGESTION_MODEL?.trim() || "gpt-4o-mini";
 
+const PERCHPAL_UNAVAILABLE =
+  "PerchPal is temporarily unavailable. Please try again later.";
+
 const TIER_FALLBACK: GiftSuggestion["tier"] = "thoughtful";
 const MIN_SUGGESTIONS = 3;
 const MAX_SUGGESTIONS = 10;
 
 export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
+    console.error(
+      "PerchPal suggestions attempted without OPENAI_API_KEY configured.",
+    );
     return NextResponse.json(
-      { error: "Missing OpenAI configuration" },
-      { status: 500 },
+      { error: PERCHPAL_UNAVAILABLE },
+      { status: 503 },
     );
   }
 
@@ -296,8 +302,8 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("Error generating gift suggestions", err);
     return NextResponse.json(
-      { error: "Failed to generate suggestions" },
-      { status: 500 },
+      { error: PERCHPAL_UNAVAILABLE },
+      { status: 503 },
     );
   }
 }

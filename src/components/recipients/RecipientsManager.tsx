@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { useCallback } from "react";
 
 export type RecipientInterest = {
   id: string;
@@ -132,21 +131,14 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   const [open, setOpen] = useState(false);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState(
-    parsedParts?.month ?? today.getMonth()
+    () => parsedParts?.month ?? today.getMonth(),
   );
   const [viewYear, setViewYear] = useState(
-    parsedParts?.year ?? today.getFullYear()
+    () => parsedParts?.year ?? today.getFullYear(),
   );
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const yearDropdownRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (parsedParts) {
-      setViewMonth(parsedParts.month);
-      setViewYear(parsedParts.year);
-    }
-  }, [parsedParts]);
 
   useEffect(() => {
     const handlePointer = (event: MouseEvent) => {
@@ -318,7 +310,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                             >
                               {year}
                               {viewYear === year ? (
-                                <span className="text-gp-gold">⦿</span>
+                                <span className="text-gp-gold">â¦¿</span>
                               ) : null}
                             </button>
                           </li>
@@ -361,7 +353,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                           ? "bg-white"
                           : ""
                       }`}
-                      aria-selected={isSameDay(day)}
+                      aria-pressed={isSameDay(day)}
                       tabIndex={0}
                       onClick={() => handleSelectDay(day)}
                       onKeyDown={(event) => {
@@ -514,7 +506,7 @@ const formatGiftBudgetRange = (
   min: number | null,
   max: number | null,
 ): string | null => {
-  if (min && max) return `${formatCurrency(min)}ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¢ÃÂ¢ÃÂÃÂÃÂÃÂ¬ÃÂÃÂ¢ÃÂ¢ÃÂÃÂ¬ÃÂÃÂ${formatCurrency(max)}`;
+  if (min && max) return `${formatCurrency(min)}ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚ÂƒÃƒÂƒÃ‚Â‚ÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â€ÃƒÂ‚Ã‚ÂšÃƒÂƒÃ‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚Â…ÃƒÂ‚Ã‚Â“${formatCurrency(max)}`;
   if (min) return `From ${formatCurrency(min)}`;
   if (max) return `Up to ${formatCurrency(max)}`;
   return null;
@@ -1158,7 +1150,7 @@ export function RecipientsManager() {
                 className="text-[10px] font-semibold uppercase tracking-wide text-gp-evergreen/70 transition hover:text-gp-evergreen"
                 aria-label={`Remove ${interest.label}`}
               >
-                ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂ¢ÃÂÃÂ¬ÃÂ¢ÃÂÃÂ
+                ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚ÂƒÃƒÂƒÃ‚Â†ÃƒÂ‚Ã‚Â’ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â€ÃƒÂ‚Ã‚Â
               </button>
             </span>
           ))}
@@ -1341,7 +1333,7 @@ export function RecipientsManager() {
                 {recipient.birthday && (
                   <div className="flex justify-between">
                     <dt className="font-semibold">Birthday</dt>
-                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "—"}</dd>
+                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "â€”"}</dd>
                   </div>
                 )}
               </dl>
@@ -1886,7 +1878,7 @@ export function RecipientsManager() {
               </div>
             </div>
 
-            <BirthdayField
+            <BirthdayField key={formState.birthday || "empty-birthday"}
               value={formState.birthday}
               onChange={(nextValue) =>
                 setFormState((prev) => ({ ...prev, birthday: nextValue }))
@@ -2025,3 +2017,5 @@ export function RecipientsManager() {
     </div>
   );
 }
+
+

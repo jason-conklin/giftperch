@@ -26,17 +26,29 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const redirectTarget = search ? `${pathname}?${search}` : pathname;
 
     router.replace(
-      `/auth/login?redirect=${encodeURIComponent(redirectTarget ?? "/dashboard")}`
+      `/auth/login?redirect=${encodeURIComponent(
+        redirectTarget ?? "/dashboard",
+      )}`,
     );
   }, [pathname, router, searchParams, status]);
 
-  if (status === "loading" || status === "unauthenticated") {
+  if (status === "loading") {
     return (
-      <PerchPalLoader
-        variant="overlay"
-        size="lg"
-        message="PerchPal is securing your gifting workspace..."
-      />
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <PerchPalLoader
+          variant="inline"
+          size="sm"
+          message="Checking your session..."
+        />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-sm text-gp-evergreen/70">
+        Redirecting you to sign in…
+      </div>
     );
   }
 

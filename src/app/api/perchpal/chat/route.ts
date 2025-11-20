@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import OpenAI, { type ChatCompletionMessageParam } from "openai";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL?.trim() || "gpt-4o-mini";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL?.trim() || "gpt-4o-mini";
+const PERCHPAL_UNAVAILABLE =
+  "PerchPal is temporarily unavailable. Please try again later.";
 
 export async function POST(request: NextRequest) {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error(
+      "PerchPal chat attempted without OPENAI_API_KEY configured.",
+    );
+    return NextResponse.json(
+      { error: PERCHPAL_UNAVAILABLE },
+      { status: 503 },
+    );
+  }
+
   try {
     const supabase = getSupabaseServerClient();
 
@@ -50,19 +61,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemMessage = {
-      role: "system" as const,
+    const systemMessage: ChatCompletionMessageParam = {
+      role: "system",
       content:
         "You are PerchPal, a warm but efficient AI gifting assistant inside the GiftPerch app. Focus on concrete, thoughtful gift suggestions based on the user's description, budgets, interests, and occasions. Prefer 2-4 suggestions per reply, each with a short name, rough price range, and 1-2 sentence rationale. Be concise and avoid emoji.",
     };
 
-    const trimmedHistory = history.slice(-15).map((entry) => ({
-      role:
-        entry.role === "assistant" || entry.role === "system"
-          ? entry.role
-          : "user",
-      content: entry.content,
-    }));
+    const trimmedHistory: ChatCompletionMessageParam[] = history
+      .slice(-15)
+      .map((entry) => {
+        const role: ChatCompletionMessageParam["role"] =
+          entry.role === "assistant" || entry.role === "system"
+            ? entry.role
+            : "user";
+        return {
+          role,
+          content: entry.content,
+        };
+      });
 
     const completion = await openai.chat.completions.create({
       model: CHAT_MODEL,
@@ -70,7 +86,7 @@ export async function POST(request: NextRequest) {
       messages: [
         systemMessage,
         ...trimmedHistory,
-        { role: "user", content: message },
+        { role: "user" as const, content: message },
       ],
     });
 
@@ -106,10 +122,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reply });
   } catch (error) {
-    console.error(error);
+    console.error("PerchPal chat failed", error);
     return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
+      { error: PERCHPAL_UNAVAILABLE },
+      { status: 503 },
     );
   }
 }

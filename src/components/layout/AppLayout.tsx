@@ -14,6 +14,11 @@ import {
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
+const EMPTY_PROFILE_SUMMARY = {
+  display_name: null,
+  avatar_url: null,
+};
+
 type AppLayoutProps = {
   children: ReactNode;
 };
@@ -173,17 +178,16 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(false);
   const currentYear = new Date().getFullYear();
-  const { user, status } = useSupabaseSession();
+  const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
   const [profileSummary, setProfileSummary] = useState<{
     display_name: string | null;
     avatar_url: string | null;
-  }>({ display_name: null, avatar_url: null });
+  }>(EMPTY_PROFILE_SUMMARY);
 
   useEffect(() => {
     if (!user?.id) {
-      setProfileSummary({ display_name: null, avatar_url: null });
       return;
     }
     let active = true;
@@ -200,7 +204,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             avatar_url: data.avatar_url,
           });
         } else {
-          setProfileSummary({ display_name: null, avatar_url: null });
+          setProfileSummary(EMPTY_PROFILE_SUMMARY);
         }
       });
     return () => {
@@ -237,8 +241,10 @@ export function AppLayout({ children }: AppLayoutProps) {
     };
   }, [supabase, user?.id]);
 
+  const effectiveProfileSummary = user ? profileSummary : EMPTY_PROFILE_SUMMARY;
+
   const accountInitials = initialsFromText(
-    profileSummary.display_name || user?.email || "GP"
+    effectiveProfileSummary.display_name || user?.email || "GP"
   );
 
   const isActive = (href: string) =>
@@ -313,7 +319,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       <aside
         ref={sidebarRef}
         tabIndex={0}
-        aria-expanded={desktopSidebarExpanded}
         onFocusCapture={() => setDesktopSidebarExpanded(true)}
         onBlurCapture={handleSidebarBlur}
         onMouseEnter={() => setDesktopSidebarExpanded(true)}
@@ -373,9 +378,9 @@ export function AppLayout({ children }: AppLayoutProps) {
               }`}
             >
               <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gp-cream text-xs font-semibold text-gp-evergreen">
-                {profileSummary.avatar_url ? (
+                {effectiveProfileSummary.avatar_url ? (
                   <Image
-                    src={profileSummary.avatar_url}
+                    src={effectiveProfileSummary.avatar_url}
                     alt="Account avatar"
                     width={36}
                     height={36}
@@ -394,7 +399,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 }`}
               >
                 <p className="truncate text-xs font-semibold">
-                  {profileSummary.display_name || user?.email || "Manage account"}
+                  {effectiveProfileSummary.display_name ||
+                    user?.email ||
+                    "Manage account"}
                 </p>
                 <p className="truncate text-[11px] text-gp-cream/70">
                   Manage account
@@ -456,13 +463,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           ) : null}
         </div>
 
-        <main
-          id="gp-main-content"
-          role="main"
-          className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8"
-        >
+        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );

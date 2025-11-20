@@ -28,7 +28,7 @@ const sampleIdeas = [
 
 export default function MarketingHome() {
   return (
-    <div className="mx-auto max-w-5xl space-y-16 px-4 py-12 sm:px-6 sm:py-16 lg:px-0 lg:py-20">
+    <div className="space-y-16">
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
@@ -44,16 +44,16 @@ export default function MarketingHome() {
               className="h-24 w-24"
               priority
             />
-            <h1 className="text-4xl font-semibold leading-tight text-gp-evergreen">
+            <p className="text-lg font-semibold uppercase tracking-wide text-gp-evergreen/70">
               GiftPerch
-            </h1>
+            </p>
           </div>
-          <p className="text-xl text-gp-evergreen">
-            Thoughtful gifting, reimagined with AI.
-          </p>
+          <h1 className="text-4xl font-semibold leading-tight text-gp-evergreen">
+            Thoughtful gifting, reimagined with AI
+          </h1>
           <p className="text-base text-gp-evergreen/80">
             Create living recipient profiles, maintain your wishlist identity,
-            and lean on PerchPal--the AI gifting copilot that surfaces
+            and lean on PerchPal—the AI gifting copilot that surfaces
             Amazon/affiliate-ready suggestions with genuine context.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -115,11 +115,14 @@ export default function MarketingHome() {
       <section className="space-y-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-            How GiftPerch works
+            Product tour
           </p>
           <h2 className="text-2xl font-semibold text-gp-evergreen">
-            From profiles to personalized ideas
+            How GiftPerch works
           </h2>
+          <p className="text-base text-gp-evergreen/80">
+            From profiles to personalized ideas
+          </p>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           {steps.map((step) => (

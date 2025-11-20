@@ -1,7 +1,5 @@
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { AuthGuard } from "@/components/auth/AuthGuard";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
@@ -42,49 +40,45 @@ export default function DashboardHome() {
   );
 
   return (
-    <AuthGuard>
-      <AppLayout>
-        <PageShell
-          hero={heroBanner}
-          eyebrow="PerchPal HQ"
-          title="Your gifting command center"
-          subtitle="Track every recipient, wishlist, and AI suggestion from one warm, PerchPal-guided workspace."
-        >
-          <section className="space-y-8">
-            <DashboardHighlights />
-            <div className="grid gap-4 md:grid-cols-3">
-              {actions.map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="gp-card flex h-full flex-col gap-2 transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <h2 className="text-lg font-semibold text-gp-evergreen">
-                    {action.title}
-                  </h2>
-                  <p className="text-sm text-gp-evergreen/80">
-                    {action.description}
-                  </p>
-                </Link>
-              ))}
-            </div>
-            <div className="gp-card-soft flex w-full items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center">
-                <PerchPalLoader variant="inline" size="sm" message={null} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gp-evergreen">
-                  PerchPal is syncing upcoming gifting moments...
-                </p>
-                <p className="text-xs text-gp-evergreen/70">
-                  We will surface reminders, budgets, and fresh ideas the moment
-                  something special is around the corner.
-                </p>
-              </div>
-            </div>
-          </section>
-        </PageShell>
-      </AppLayout>
-    </AuthGuard>
+    <PageShell
+      hero={heroBanner}
+      eyebrow="PerchPal HQ"
+      title="Your gifting command center"
+      subtitle="Track every recipient, wishlist, and AI suggestion from one warm, PerchPal-guided workspace."
+    >
+      <section className="space-y-8">
+        <DashboardHighlights />
+        <div className="grid gap-4 md:grid-cols-3">
+          {actions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="gp-card flex h-full flex-col gap-2 transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <h2 className="text-lg font-semibold text-gp-evergreen">
+                {action.title}
+              </h2>
+              <p className="text-sm text-gp-evergreen/80">
+                {action.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+        <div className="gp-card-soft flex w-full items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center">
+            <PerchPalLoader variant="inline" size="sm" message={null} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gp-evergreen">
+              PerchPal is syncing upcoming gifting moments...
+            </p>
+            <p className="text-xs text-gp-evergreen/70">
+              We will surface reminders, budgets, and fresh ideas the moment
+              something special is around the corner.
+            </p>
+          </div>
+        </div>
+      </section>
+    </PageShell>
   );
 }

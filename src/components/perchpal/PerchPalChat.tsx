@@ -45,6 +45,8 @@ const CHAT_AVATAR_FRAMES = [
 ] as const;
 
 const CHAT_AVATAR_FRAME_DURATION = 180;
+const PERCHPAL_ERROR_MESSAGE =
+  "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 
 export function PerchPalChat() {
   const { user, status } = useSupabaseSession();
@@ -148,13 +150,16 @@ export function PerchPalChat() {
         }),
       });
 
-      if (!response.ok) {
+      const json = await response.json().catch(() => null);
+      if (!response.ok || (json && typeof json.error === "string")) {
         throw new Error(
-          (await response.json())?.error ?? "Unable to reach PerchPal."
+          json && typeof json.error === "string"
+            ? json.error
+            : PERCHPAL_ERROR_MESSAGE,
         );
       }
 
-      const data = await response.json();
+      const data = json ?? {};
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
@@ -166,11 +171,11 @@ export function PerchPalChat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
-      setError(
-        err instanceof Error
+      const fallbackMessage =
+        err instanceof Error && err.message
           ? err.message
-          : "PerchPal couldn’t respond right now. Please try again."
-      );
+          : PERCHPAL_ERROR_MESSAGE;
+      setError(fallbackMessage);
       setMessages((prev) =>
         prev.filter((message) => message.id !== optimisticMessage.id)
       );
@@ -193,7 +198,7 @@ export function PerchPalChat() {
               ))}
             </div>
             <p className="mt-1 text-[10px] uppercase tracking-wide text-gp-evergreen/50">
-              PerchPal ·{" "}
+              PerchPal -{" "}
               {new Date(message.created_at).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -211,7 +216,7 @@ export function PerchPalChat() {
             {message.content}
           </div>
           <p className="mt-1 text-right text-[10px] uppercase tracking-wide text-gp-evergreen/50">
-            You ·{" "}
+            You -{" "}
             {new Date(message.created_at).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -349,3 +354,4 @@ function PerchPalAnimatedAvatar({
     </div>
   );
 }
+

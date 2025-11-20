@@ -132,6 +132,10 @@ type AmazonSuggestionState = {
 };
 
 const DEFAULT_GIFT_IMAGE = "/gift-thumbnails/default-gift.svg";
+const PERCHPAL_ERROR_MESSAGE =
+  "PerchPal is temporarily unavailable. Please try again in a few minutes.";
+const AMAZON_PLACEHOLDER_MESSAGE =
+  "No product matches found yet. Product previews will appear here when available.";
 
 type SuggestionCardProps = {
   suggestion: GiftSuggestion;
@@ -256,10 +260,12 @@ function GiftSuggestionCard({
                 />
               </div>
             ) : amazonState.error ? (
-              <p className="text-xs text-red-700">{amazonState.error}</p>
+              <p className="text-xs text-gp-evergreen/70">
+                {amazonState.error}
+              </p>
             ) : amazonState.products.length === 0 ? (
               <p className="text-xs text-gp-evergreen/70">
-                No Amazon matches found yet.
+                {AMAZON_PLACEHOLDER_MESSAGE}
               </p>
             ) : (
               <div className="space-y-2">
@@ -568,7 +574,7 @@ export function GiftSuggestionsPanel() {
         body: JSON.stringify(payload),
       });
 
-      let json:
+      const json = (await response.json().catch(() => null)) as
         | {
             suggestionRunId?: string;
             createdAt?: string;
@@ -576,18 +582,17 @@ export function GiftSuggestionsPanel() {
             promptContext?: GiftPromptContext;
             error?: string;
           }
-        | null = null;
+        | null;
 
-      try {
-        json = await response.json();
-      } catch {
-        json = null;
-      }
-
-      if (!response.ok || !json) {
+      if (
+        !response.ok ||
+        !json ||
+        (json && typeof json.error === "string")
+      ) {
         throw new Error(
-          json?.error ||
-            `Unable to generate suggestions (status ${response.status}).`
+          json && typeof json.error === "string"
+            ? json.error
+            : PERCHPAL_ERROR_MESSAGE,
         );
       }
       const newRun: SuggestionRun = {
@@ -601,7 +606,9 @@ export function GiftSuggestionsPanel() {
       setActiveRunId(newRun.id);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Something went wrong.";
+        err instanceof Error && err.message
+          ? err.message
+          : PERCHPAL_ERROR_MESSAGE;
       setError(message);
     } finally {
       setIsRequesting(false);
@@ -639,31 +646,38 @@ export function GiftSuggestionsPanel() {
         }),
       });
 
-      if (!response.ok) {
-        const json = await response.json().catch(() => null);
-        throw new Error(json?.error || "Amazon search failed.");
+      const json = (await response.json().catch(() => null)) as
+        | {
+            products?: AmazonProduct[];
+            error?: string;
+          }
+        | null;
+
+      if (!response.ok || !json) {
+        throw new Error(AMAZON_PLACEHOLDER_MESSAGE);
       }
 
-      const json = await response.json();
-      const products = (json.products ?? []) as AmazonProduct[];
+      const products = Array.isArray(json.products)
+        ? (json.products as AmazonProduct[])
+        : [];
+      const hasProducts = products.length > 0;
 
       setAmazonBySuggestion((prev) => ({
         ...prev,
         [suggestionId]: {
           loading: false,
-          error: "",
+          error: hasProducts ? "" : AMAZON_PLACEHOLDER_MESSAGE,
           products,
         },
       }));
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to search Amazon.";
+      console.warn("Amazon lookup failed", err);
       setAmazonBySuggestion((prev) => ({
         ...prev,
         [suggestionId]: {
           loading: false,
-          error: message,
-          products: prev[suggestionId]?.products ?? [],
+          error: AMAZON_PLACEHOLDER_MESSAGE,
+          products: [],
         },
       }));
     }
@@ -877,8 +891,8 @@ export function GiftSuggestionsPanel() {
                 {showPrefilledHint ? (
                   <p className="text-xs text-gp-evergreen/70">
                     Ready to generate ideas for {selectedRecipient.name}. Adjust
-                    budget or occasion, then click "Ask PerchPal for
-                    suggestions".
+                    budget or occasion, then click &quot;Ask PerchPal for
+                    suggestions&quot;.
                   </p>
                 ) : null}
               </>
@@ -1185,23 +1199,3 @@ function formatBudgetRange(
   return display ? display : "Not specified";
 }
 
-function buildAffiliateRedirectUrl(params: {
-  provider: "amazon";
-  asin: string;
-  title?: string | null;
-  recipientId?: string | null;
-  suggestionRunId?: string | null;
-  suggestionId?: string | null;
-  finalUrl: string;
-}) {
-  const search = new URLSearchParams();
-  search.set("provider", params.provider);
-  search.set("asin", params.asin);
-  if (params.title) search.set("title", params.title);
-  if (params.recipientId) search.set("recipientId", params.recipientId);
-  if (params.suggestionRunId)
-    search.set("suggestionRunId", params.suggestionRunId);
-  if (params.suggestionId) search.set("suggestionId", params.suggestionId);
-  search.set("url", params.finalUrl);
-  return `/api/affiliate/redirect?${search.toString()}`;
-}

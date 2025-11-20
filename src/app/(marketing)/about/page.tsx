@@ -21,7 +21,7 @@ const features = [
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-4xl space-y-10 px-4 pt-2 pb-6 sm:px-5 sm:pt-4 sm:pb-10 lg:px-8 lg:pt-1 lg:pb-12">
+    <div className="space-y-10">
       <section className="gp-card overflow-hidden">
         <Image
           src="/giftperch_banner.png"
@@ -38,21 +38,21 @@ export default function AboutPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
             About GiftPerch
           </p>
-          <h2 className="text-3xl font-semibold text-gp-evergreen">
+          <h1 className="text-3xl font-semibold text-gp-evergreen">
             Gifting that stays thoughtful, even when life gets busy
-          </h2>
+          </h1>
         </div>
         <div className="gp-card space-y-4 text-base text-gp-evergreen/80">
-          <p>
+          <p className="max-w-3xl">
             GiftPerch keeps recipient profiles, PerchPal AI, wishlists, and gift
             history in a single workspace. Add the people you shop for, log
             budgets, anti-gifts, and what makes them smile, then ask PerchPal for
             context-rich recommendations.
           </p>
-          <p>
+          <p className="max-w-3xl">
             Every idea comes with rationale, so you can see how it maps back to
             the profile you crafted. Save confirmed winners, note reactions, and
-            stay ahead of each birthday, anniversary, or “just because” surprise.
+            stay ahead of each birthday, anniversary, or just-because surprise.
           </p>
         </div>
       </section>
@@ -68,24 +68,19 @@ export default function AboutPage() {
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           {features.map((feature) => (
-            <div key={feature.title} className="gp-card space-y-2">
+            <article key={feature.title} className="gp-card space-y-2">
               <h3 className="text-lg font-semibold text-gp-evergreen">
                 {feature.title}
               </h3>
               <p className="text-sm text-gp-evergreen/80">
                 {feature.description}
               </p>
-            </div>
+            </article>
           ))}
         </div>
       </section>
 
-      <a
-        href="https://jasonconklin.dev"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="gp-card flex flex-col gap-4 transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center sm:gap-6"
-      >
+      <section className="gp-card flex flex-col gap-4 transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-row sm:items-center sm:gap-6">
         <Image
           src="/jasonconklin.png"
           alt="Jason Conklin"
@@ -95,28 +90,36 @@ export default function AboutPage() {
           unoptimized
           className="h-36 w-36 rounded-full border border-gp-evergreen/15 object-cover"
         />
-        <div className="space-y-2 text-left">
+        <div className="space-y-2 text-left max-w-3xl">
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
             Built by
           </p>
-          <h3 className="text-xl font-semibold text-gp-evergreen">
+          <h2 className="text-xl font-semibold text-gp-evergreen">
             Jason Conklin
-          </h3>
+          </h2>
           <p className="text-sm text-gp-evergreen/70">
-            Creator of GiftPerch · B.S. Computer Science, NJIT
+            Creator of GiftPerch • B.S. Computer Science, NJIT
           </p>
           <p className="text-sm text-gp-evergreen/80">
-            I created GiftPerch because thoughtful gifting should feel
-            personal, not chaotic. I wanted a simple way to capture the details
-            that matter — interests, budgets, past wins, and subtle hints —
-            and pair them with AI to make gifting easier and more meaningful. My
+            I created GiftPerch because thoughtful gifting should feel personal,
+            not chaotic. Capturing interests, budgets, past wins, and subtle hints
+            in one place—and pairing it with AI—makes gifting easier and more
+            meaningful.
           </p>
           <p className="text-sm text-gp-evergreen/80">
             My goal is to help families, couples, and teams avoid last-minute
             stress and keep traditions special.
           </p>
+          <Link
+            href="https://jasonconklin.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+          >
+            Learn more about Jason
+          </Link>
         </div>
-      </a>
+      </section>
 
       <section className="gp-card border-dashed border-gp-gold/50 text-center text-sm text-gp-evergreen/80">
         Ready to keep gifting personal?{" "}
