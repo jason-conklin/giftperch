@@ -3,6 +3,20 @@
 import { useMemo, useState } from "react";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
 
 export type OccasionEvent = {
   id: string;
@@ -60,6 +74,13 @@ export function OccasionsCalendar({
   isLoading = false,
 }: OccasionsCalendarProps) {
   const today = new Date();
+  const currentYear = today.getFullYear();
+  const yearRange = 5;
+  const yearOptions = useMemo(
+    () =>
+      Array.from({ length: yearRange * 2 + 1 }, (_, index) => currentYear - yearRange + index),
+    [currentYear, yearRange],
+  );
   const [currentMonth, setCurrentMonth] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
@@ -128,14 +149,24 @@ export function OccasionsCalendar({
     });
   };
 
+  const handleSelectMonth = (monthIndex: number) => {
+    setSelectedDayKey(null);
+    setCurrentMonth((prev) => new Date(prev.getFullYear(), monthIndex, 1));
+  };
+
+  const handleSelectYear = (year: number) => {
+    setSelectedDayKey(null);
+    setCurrentMonth((prev) => new Date(year, prev.getMonth(), 1));
+  };
+
   return (
     <section
       aria-label="Occasions calendar"
       className="gp-card space-y-5"
       role="region"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
             Gifting calendar
           </p>
@@ -146,17 +177,41 @@ export function OccasionsCalendar({
             })}
           </h2>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            aria-label="Select month"
+            value={currentMonth.getMonth()}
+            onChange={(event) => handleSelectMonth(Number(event.target.value))}
+            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40"
+          >
+            {MONTH_LABELS.map((label, index) => (
+              <option key={label} value={index}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Select year"
+            value={currentMonth.getFullYear()}
+            onChange={(event) => handleSelectYear(Number(event.target.value))}
+            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40"
+          >
+            {yearOptions.map((yearOption) => (
+              <option key={yearOption} value={yearOption}>
+                {yearOption}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
-            className="gp-secondary-button px-3 py-2 text-sm"
+            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
             onClick={() => changeMonth("prev")}
           >
             Previous
           </button>
           <button
             type="button"
-            className="gp-secondary-button px-3 py-2 text-sm"
+            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
             onClick={() => changeMonth("next")}
           >
             Next
