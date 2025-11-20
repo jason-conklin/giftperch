@@ -12,8 +12,13 @@ export function GoogleSignInButton() {
     setIsSigningIn(true);
     setError("");
     try {
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/auth/login?redirect=/dashboard`
+          : undefined;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
+        options: redirectTo ? { redirectTo } : undefined,
       });
       if (error) throw error;
     } catch (err) {
@@ -71,4 +76,3 @@ export function GoogleSignInButton() {
     </div>
   );
 }
-
