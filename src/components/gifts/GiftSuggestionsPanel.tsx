@@ -131,7 +131,7 @@ type AmazonSuggestionState = {
   products: AmazonProduct[];
 };
 
-const DEFAULT_GIFT_IMAGE = "/gift-thumbnails/default-gift.svg";
+const DEFAULT_GIFT_IMAGE = "/gift_placeholder_img.png";
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 const AMAZON_PLACEHOLDER_MESSAGE =
