@@ -163,6 +163,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </Link>
         .
       </div>
+
+      <div className="mt-12 border-t border-gp-evergreen/10 pt-6 text-sm text-gp-evergreen">
+        Looking for more ideas?{" "}
+        <a
+          href="https://www.amazon.com/?tag=giftperch-20"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
+        >
+          Explore Amazon’s full gift categories »
+        </a>
+      </div>
     </section>
   );
 }

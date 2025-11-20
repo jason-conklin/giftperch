@@ -1184,6 +1184,17 @@ export function GiftSuggestionsPanel() {
       <p className="mt-6 text-center text-xs text-gp-evergreen/55">
         As an Amazon Associate, I earn from qualifying purchases.
       </p>
+      <p className="text-center text-xs text-gp-evergreen/70">
+        Want to browse Amazon directly?{" "}
+        <a
+          href="https://www.amazon.com/?tag=giftperch-20"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
+        >
+          Shop Amazon’s full catalog »
+        </a>
+      </p>
     </section>
   );
 }

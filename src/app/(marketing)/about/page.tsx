@@ -121,22 +121,35 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card border-dashed border-gp-gold/50 text-center text-sm text-gp-evergreen/80">
+      <section className="gp-card border border-white bg-gp-gold text-center text-base text-black">
         Ready to keep gifting personal?{" "}
         <Link
           href="/auth/signup"
-          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+          className="font-semibold text-black underline-offset-4 hover:underline"
         >
           Create your account
         </Link>{" "}
         or explore the latest stories on the{" "}
         <Link
           href="/blog"
-          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+          className="font-semibold text-black underline-offset-4 hover:underline"
         >
           GiftPerch Journal.
         </Link>
       </section>
+
+      <section className="text-sm text-gp-evergreen text-center">
+        Want to browse on your own?{" "}
+        <a
+          href="https://www.amazon.com/?tag=giftperch-20"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
+        >
+          Explore Amazon’s gift categories »
+        </a>
+      </section>
+
     </div>
   );
 }
