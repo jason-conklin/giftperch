@@ -21,13 +21,13 @@ export function SiteFooter() {
           .
         </p>
         <div className="flex flex-wrap justify-center gap-4 text-xs uppercase tracking-wide">
-          <Link href="#" className="hover:text-gp-evergreen">
+          <Link href="/privacy" className="hover:text-gp-evergreen">
             Privacy
           </Link>
-          <Link href="#" className="hover:text-gp-evergreen">
+          <Link href="/terms" className="hover:text-gp-evergreen">
             Terms
           </Link>
-          <Link href="#" className="hover:text-gp-evergreen">
+          <Link href="/contact" className="hover:text-gp-evergreen">
             Contact
           </Link>
         </div>
