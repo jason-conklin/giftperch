@@ -112,6 +112,7 @@ export function SettingsPanel() {
   const [regeneratingSlug, setRegeneratingSlug] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -462,6 +463,7 @@ export function SettingsPanel() {
   };
 
   const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim() !== "DELETE") return;
     setIsDeleting(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -473,12 +475,12 @@ export function SettingsPanel() {
       if (!res.ok) throw new Error("Failed to delete account");
       await supabase.auth.signOut();
       router.push("/auth/signup");
+      setShowDeleteConfirm(false);
     } catch (err) {
       console.error("Delete account failed", err);
       alert("Something went wrong deleting your account.");
     } finally {
       setIsDeleting(false);
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -907,23 +909,48 @@ export function SettingsPanel() {
       {showDeleteConfirm ? (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md space-y-4 rounded-2xl bg-gp-cream p-6 shadow-xl">
-            <h2 className="text-xl font-semibold text-gp-evergreen">Delete account?</h2>
-            <p className="text-sm text-gp-evergreen/80">
-              This will permanently remove your GiftPerch account, all recipient profiles,
-              wishlists, occasions, gift history, and settings. This action cannot be
-              undone.
-            </p>
+            <h2 className="text-xl font-semibold text-gp-evergreen">
+              Delete your GiftPerch account?
+            </h2>
+            <div className="space-y-2 text-sm text-gp-evergreen/80">
+              <p>
+                This will permanently delete your account, recipient profiles, wishlists,
+                occasions, gift history, and settings.
+              </p>
+              <p className="font-semibold text-red-700">
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor="delete-confirm-input"
+                className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+              >
+                To confirm, type DELETE in all caps:
+              </label>
+              <input
+                id="delete-confirm-input"
+                type="text"
+                value={deleteConfirmText}
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+                placeholder="DELETE"
+                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+              />
+            </div>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 className="gp-secondary-button"
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteConfirmText("");
+                }}
               >
                 Cancel
               </button>
               <button
                 type="button"
-                disabled={isDeleting}
+                disabled={isDeleting || deleteConfirmText.trim() !== "DELETE"}
                 onClick={handleDeleteAccount}
                 className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 disabled:opacity-60"
               >

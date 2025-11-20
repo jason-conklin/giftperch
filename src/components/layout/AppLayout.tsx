@@ -30,7 +30,7 @@ type NavItem = {
   icon: (props: { className?: string }) => ReactElement;
 };
 
-const iconClasses = "h-4 w-4";
+const iconClasses = "h-10 w-10";
 
 const DashboardIcon = ({ className }: { className?: string }) => (
   <svg
@@ -261,13 +261,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           href={item.href}
           aria-current={active ? "page" : undefined}
           title={item.label}
-          className={`flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold transition ${
+          className={`flex h-16 w-16 items-center justify-center rounded-2xl text-base font-semibold transition ${
             active
               ? "bg-gp-cream text-gp-evergreen"
               : "bg-white/10 text-gp-cream/70 hover:bg-white/20"
           }`}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-6 w-6" />
         </Link>
       );
     }
@@ -277,13 +277,13 @@ export function AppLayout({ children }: AppLayoutProps) {
         key={item.href}
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={`flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition ${
+        className={`flex items-center gap-3 rounded-2xl px-3 py-2 text-base font-semibold transition ${
           active
             ? "bg-gp-cream text-gp-evergreen shadow-sm"
             : "text-gp-cream/80 hover:bg-white/10 hover:text-gp-cream"
         }`}
       >
-        <Icon className="h-4 w-4 shrink-0" />
+        <Icon className="h-12 w-12 shrink-0" />
         <span className="whitespace-nowrap">{item.label}</span>
       </Link>
     );
@@ -332,7 +332,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           setDesktopSidebarExpanded(false);
         }}
         className={`fixed left-0 top-0 bottom-0 z-40 hidden overflow-hidden border-r border-gp-evergreen/15 bg-gradient-to-b from-gp-evergreen to-[#0b2d2d] text-gp-cream shadow-sm transition-[width] duration-200 ease-out md:flex ${
-          desktopSidebarExpanded ? "w-64" : "w-16"
+          desktopSidebarExpanded ? "w-64" : "w-20"
         }`}
       >
         <div className="flex h-full w-full flex-col">
@@ -349,18 +349,18 @@ export function AppLayout({ children }: AppLayoutProps) {
               <Image
                 src="/giftperch_logo_background.png"
                 alt="GiftPerch logo"
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full border border-white/20 object-cover transition hover:scale-[1.02]"
+                width={72}
+                height={72}
+                className="h-14 w-14 rounded-full border border-white/20 object-cover transition hover:scale-[1.02]"
                 priority
               />
             </Link>
             {desktopSidebarExpanded ? (
               <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-semibold leading-tight">
+                <span className="text-lg font-semibold leading-tight">
                   GiftPerch
                 </span>
-                <span className="text-xs text-gp-cream/70">PerchPal HQ</span>
+                <span className="text-sm text-gp-cream/70">PerchPal HQ</span>
               </div>
             ) : null}
           </div>
@@ -378,13 +378,13 @@ export function AppLayout({ children }: AppLayoutProps) {
                 desktopSidebarExpanded ? "gap-3" : "justify-center"
               }`}
             >
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gp-cream text-xs font-semibold text-gp-evergreen">
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-gp-cream text-sm font-semibold text-gp-evergreen">
                 {effectiveProfileSummary.avatar_url ? (
                   <Image
                     src={effectiveProfileSummary.avatar_url}
                     alt="Account avatar"
-                    width={36}
-                    height={36}
+                    width={44}
+                    height={44}
                     className="h-full w-full object-cover"
                     unoptimized
                   />
@@ -434,9 +434,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <Image
                   src="/giftperch_logo_background.png"
                   alt="GiftPerch logo"
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border border-gp-evergreen/20 object-cover transition hover:scale-[1.02]"
+                  width={72}
+                  height={72}
+                  className="h-18 w-18 rounded-full border border-gp-evergreen/20 object-cover transition hover:scale-[1.02]"
                   priority
                 />
               </Link>
@@ -444,7 +444,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
                   PerchPal HQ
                 </p>
-                <p className="text-sm font-semibold">Your gifting workspace</p>
+                <p className="text-base font-semibold">Your gifting workspace</p>
               </div>
             </div>
             <button

@@ -634,6 +634,8 @@ export function RecipientsManager() {
   const [formError, setFormError] = useState("");
   const [formSaving, setFormSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
+  const [isDeletingRecipient, setIsDeletingRecipient] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -995,16 +997,19 @@ export function RecipientsManager() {
   const requestDelete = (id: string) => {
     setConfirmDeleteId(id);
     setDeleteError("");
+    setDeleteConfirmInput("");
   };
 
   const cancelDelete = () => {
     setConfirmDeleteId(null);
     setDeleteError("");
+    setDeleteConfirmInput("");
   };
 
   const handleDelete = async () => {
     if (!confirmDeleteId || !user?.id) return;
     setDeleteError("");
+    setIsDeletingRecipient(true);
     try {
       const { error } = await supabase
         .from("recipient_profiles")
@@ -1016,10 +1021,13 @@ export function RecipientsManager() {
         prev.filter((recipient) => recipient.id !== confirmDeleteId)
       );
       setConfirmDeleteId(null);
+      setDeleteConfirmInput("");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to delete recipient.";
       setDeleteError(message);
+    } finally {
+      setIsDeletingRecipient(false);
     }
   };
 
@@ -1357,37 +1365,76 @@ export function RecipientsManager() {
                 </button>
               </div>
 
-              {confirmDeleteId === recipient.id && (
-                <div className="mt-4 rounded-2xl border border-red-100 bg-red-50 p-3 text-xs text-red-700">
-                  <p>
-                    This will remove this recipient profile and any associated
-                    details. You can recreate it later if needed.
-                  </p>
-                  {deleteError && (
-                    <p className="mt-2 font-semibold">{deleteError}</p>
-                  )}
-                  <div className="mt-3 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={cancelDelete}
-                      className="rounded-full border border-red-200 px-3 py-1 font-semibold text-red-600"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      className="rounded-full bg-red-600 px-3 py-1 font-semibold text-white"
-                    >
-                      Confirm
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>
       )}
+
+      {confirmDeleteId ? (() => {
+        const target = recipients.find((r) => r.id === confirmDeleteId);
+        const nameToMatch = target?.name?.trim() ?? "";
+        const matches =
+          nameToMatch.length > 0 &&
+          deleteConfirmInput.trim().toLowerCase() === nameToMatch.toLowerCase();
+        const titleId = `delete-recipient-${confirmDeleteId}`;
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+            <div className="w-full max-w-md space-y-4 rounded-2xl bg-gp-cream p-6 shadow-xl">
+              <h2 id={titleId} className="text-xl font-semibold text-gp-evergreen">
+                Delete this recipient?
+              </h2>
+              <div className="space-y-2 text-sm text-gp-evergreen/80">
+                <p>
+                  This will remove this recipient, their occasions, and any gift
+                  suggestions associated with them from GiftPerch.
+                </p>
+                <p className="font-semibold text-red-700">This action cannot be undone.</p>
+                {nameToMatch ? (
+                  <p className="font-semibold text-gp-evergreen">
+                    Recipient: {nameToMatch}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="recipient-delete-confirm"
+                  className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  To confirm, type this recipient&apos;s name exactly:
+                </label>
+                <input
+                  id="recipient-delete-confirm"
+                  type="text"
+                  value={deleteConfirmInput}
+                  onChange={(event) => setDeleteConfirmInput(event.target.value)}
+                  placeholder={nameToMatch || "Recipient name"}
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                />
+              </div>
+              {deleteError ? (
+                <p className="text-sm font-semibold text-red-700">{deleteError}</p>
+              ) : null}
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  className="gp-secondary-button"
+                  onClick={cancelDelete}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!matches || isDeletingRecipient}
+                  onClick={handleDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 disabled:opacity-60"
+                >
+                  {isDeletingRecipient ? "Deleting..." : "Delete recipient"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })() : null}
 
       {selectedRecipient ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
