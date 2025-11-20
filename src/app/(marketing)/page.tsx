@@ -56,16 +56,16 @@ export default function MarketingHome() {
             and lean on PerchPal—the AI gifting copilot that surfaces
             Amazon/affiliate-ready suggestions with genuine context.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/auth/signup"
-              className="rounded-full bg-gp-gold px-6 py-3 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
+              className="rounded-full bg-gp-gold px-14 py-4 text-center text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
             >
               Get Started
             </Link>
             <Link
               href="/about"
-              className="rounded-full bg-gp-evergreen px-6 py-3 text-center text-sm font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
+              className="rounded-full bg-gp-evergreen px-10 py-4 text-center text-base font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
             >
               See how it works
             </Link>
@@ -103,7 +103,7 @@ export default function MarketingHome() {
               <PerchPalLoader
                 variant="inline"
                 size="lg"
-                message="PerchPal is fetching sample gift ideas..."
+                message="PerchPal is fetching gift ideas..."
               />
             </div>
             <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-5">
@@ -157,7 +157,9 @@ export default function MarketingHome() {
 
       <section className="gp-card border-dashed border-gp-gold/50 bg-gp-cream/70 text-center text-sm text-gp-evergreen/80">
         Coming soon: success stories and favorite gift combinations from real
-        GiftPerch families, couples, and teams. Want updates?{" "}
+        GiftPerch families, couples, and teams.
+        <br />
+        Want updates?{" "}
         <Link
           href="/blog"
           className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"

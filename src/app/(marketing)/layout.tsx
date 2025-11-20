@@ -54,7 +54,7 @@ export default function MarketingLayout({
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5 sm:px-6 lg:px-0">
           <Link
             href="/"
-            className="flex items-center gap-4 rounded-full bg-white/90 px-3 py-2 text-gp-evergreen shadow-sm"
+            className="flex items-center gap-4 rounded-full bg-white/90 px-7 py-3 text-gp-evergreen shadow-sm"
           >
             <Image
               src="/giftperch_logo_background.png"
