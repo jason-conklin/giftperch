@@ -65,8 +65,8 @@ export default function DashboardHome() {
           ))}
         </div>
         <div className="gp-card-soft flex w-full items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center sm:h-16 sm:w-16">
-            <PerchPalLoader variant="inline" size="sm" message={null} />
+          <div className="flex h-12 w-12 items-center justify-center sm:h-14 sm:w-14">
+            <PerchPalLoader variant="inline" size="md" message={null} />
           </div>
           <div>
             <p className="text-sm font-semibold text-gp-evergreen">

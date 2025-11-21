@@ -188,7 +188,7 @@ export function PerchPalChat() {
     if (message.role === "assistant") {
       return (
         <div key={message.id} className="flex items-start gap-3">
-          <PerchPalAnimatedAvatar size={40} />
+          <PerchPalAnimatedAvatar size={48} />
           <div>
             <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-gp-evergreen shadow-sm">
               {message.content.split("\n").map((line, idx) => (
@@ -231,8 +231,8 @@ export function PerchPalChat() {
     <section className="gp-card flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-row items-center gap-3 sm:gap-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm md:h-12 md:w-12">
-            <PerchPalLoader variant="inline" size="sm" message={null} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm sm:h-14 sm:w-14">
+            <PerchPalLoader variant="inline" size="md" message={null} />
           </div>
           <div className="space-y-0.5">
             <p className="text-sm font-semibold text-gp-evergreen md:text-base">
@@ -269,7 +269,7 @@ export function PerchPalChat() {
 
         {isSending && (
           <div className="flex items-end gap-2">
-            <PerchPalAnimatedAvatar size={40} showStatusDot={false} />
+            <PerchPalAnimatedAvatar size={48} showStatusDot={false} />
             <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3 py-2">
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce [animation-delay:-0.2s]" />
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce" />
@@ -340,7 +340,7 @@ function PerchPalAnimatedAvatar({
   );
 
   return (
-    <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm md:h-12 md:w-12 overflow-hidden">
+    <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm sm:h-14 sm:w-14">
       <Image
         src={currentFrame}
         alt="PerchPal mascot animation frame"
