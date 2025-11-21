@@ -188,7 +188,7 @@ export function PerchPalChat() {
     if (message.role === "assistant") {
       return (
         <div key={message.id} className="flex items-start gap-3">
-          <PerchPalAnimatedAvatar size={36} />
+          <PerchPalAnimatedAvatar size={40} />
           <div>
             <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-gp-evergreen shadow-sm">
               {message.content.split("\n").map((line, idx) => (
@@ -230,15 +230,15 @@ export function PerchPalChat() {
   return (
     <section className="gp-card flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <PerchPalLoader
-            variant="inline"
-            size="sm"
-            message={null}
-          />
-          <div>
-            <p className="text-sm font-semibold text-gp-evergreen">PerchPal</p>
-            <p className="text-xs text-gp-evergreen/70">
+        <div className="flex flex-row items-center gap-3 sm:gap-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm md:h-12 md:w-12">
+            <PerchPalLoader variant="inline" size="sm" message={null} />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-sm font-semibold text-gp-evergreen md:text-base">
+              PerchPal
+            </p>
+            <p className="text-xs text-gp-evergreen/70 md:text-sm">
               Always on, always delivering thoughtful ideas.
             </p>
           </div>
@@ -269,7 +269,7 @@ export function PerchPalChat() {
 
         {isSending && (
           <div className="flex items-end gap-2">
-            <PerchPalAnimatedAvatar size={36} showStatusDot={false} />
+            <PerchPalAnimatedAvatar size={40} showStatusDot={false} />
             <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3 py-2">
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce [animation-delay:-0.2s]" />
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce" />
@@ -340,7 +340,7 @@ function PerchPalAnimatedAvatar({
   );
 
   return (
-    <div className="relative flex h-12 w-12 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm">
+    <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm md:h-12 md:w-12 overflow-hidden">
       <Image
         src={currentFrame}
         alt="PerchPal mascot animation frame"
@@ -348,6 +348,7 @@ function PerchPalAnimatedAvatar({
         height={size}
         unoptimized
         priority
+        className="h-full w-full object-contain"
       />
       {showStatusDot ? (
         <span className="absolute -right-0.5 bottom-0 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white animate-pulse" />

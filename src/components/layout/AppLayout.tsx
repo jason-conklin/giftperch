@@ -458,7 +458,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </button>
           </div>
           {mobileNavOpen ? (
-            <nav className="space-y-1 border-b border-gp-evergreen/10 bg-gp-cream px-4 py-4 text-sm text-gp-evergreen">
+            <nav className="space-y-1 border-b border-gp-evergreen/10 bg-white px-4 py-4 text-sm text-gp-evergreen">
               {navItems.map((item) => renderMobileNavLink(item))}
             </nav>
           ) : null}

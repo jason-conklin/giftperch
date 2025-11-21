@@ -62,24 +62,24 @@ export default function MarketingLayout({
   return (
     <div className="flex min-h-screen flex-col bg-gp-cream/80 text-gp-evergreen">
       <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-3">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 pb-4 sm:px-6 lg:px-0 lg:pb-5">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-3 sm:px-6 lg:px-0 lg:pb-5">
           <Link
             href="/"
-            className="flex items-center gap-4 rounded-full bg-white/90 px-7 py-3 text-gp-evergreen shadow-sm"
+            className="flex items-center gap-3 rounded-full bg-white/90 px-4 py-2 text-gp-evergreen shadow-sm sm:gap-4 sm:px-6 sm:py-3"
           >
             <Image
               src="/giftperch_logo_background.png"
               alt="GiftPerch logo"
               width={68}
               height={68}
-              className="h-16 w-16 rounded-full border border-gp-cream/30 object-cover"
+              className="h-12 w-12 rounded-full border border-gp-cream/30 object-cover sm:h-14 sm:w-14 lg:h-16 lg:w-16"
               priority
             />
             <div className="text-gp-evergreen">
-              <p className="text-3xl font-semibold text-gp-evergreen leading-tight">
+              <p className="text-2xl font-semibold text-gp-evergreen leading-tight sm:text-3xl">
                 GiftPerch
               </p>
-              <p className="text-xs uppercase tracking-[0.4em] text-gp-evergreen/70">
+              <p className="max-w-[180px] text-[10px] font-semibold uppercase tracking-[0.35em] text-gp-evergreen/70 sm:max-w-none sm:text-xs sm:tracking-[0.4em]">
                 Thoughtful gifting, reimagined
               </p>
             </div>
