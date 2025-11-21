@@ -32,7 +32,7 @@ export default function MarketingHome() {
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
-            <span>Introducing pppppPerchPal,</span>
+            <span>Introducing PerchPal,</span>
             <span>Your AI gifting assistant</span>
           </div>
           <div className="flex items-center gap-4">

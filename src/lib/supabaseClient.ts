@@ -10,8 +10,13 @@ let browserClient: SupabaseClient | null = null;
 export function getSupabaseBrowserClient(): SupabaseClient {
   if (browserClient) return browserClient;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Fallbacks ensure we never crash the client bundle if env injection is missing at runtime.
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://xtprcqvzpezaahumuewn.supabase.co";
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0cHJjcXZ6cGV6YWFodW11ZXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxNzI1NzAsImV4cCI6MjA3ODc0ODU3MH0.ZNJqW3y2JifWbCet6UVZ93fNFOZkD2FZWAMYzCOtzOo";
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing Supabase environment variables for browser client");
