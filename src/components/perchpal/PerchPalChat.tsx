@@ -353,14 +353,14 @@ export function PerchPalChat() {
 
       {isExpanded ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200"
           onClick={() => setIsExpanded(false)}
         >
           <div
-            className="relative flex h-[calc(100vh-2rem)] w-full max-w-3xl translate-y-2 scale-95 flex-col rounded-3xl bg-gp-cream shadow-xl transition duration-200 ease-out sm:h-auto sm:max-h-[90vh] sm:translate-y-0 sm:scale-100"
+            className="relative flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-none bg-gp-cream shadow-xl transition duration-200 ease-out sm:h-[90vh] sm:rounded-3xl sm:px-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 px-4 py-3 sm:px-6">
+            <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 bg-gp-cream px-4 py-3 sm:px-6">
               <div className="flex items-center gap-3 sm:gap-4">
                 <PerchPalFlyingAvatar size="md" />
                 <div className="space-y-0.5">
@@ -395,8 +395,8 @@ export function PerchPalChat() {
               </button>
             </div>
 
-            <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
-              {renderMessagesArea("flex-1")}
+            <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+              {renderMessagesArea("flex-1 overscroll-y-contain")}
               {renderInputArea(
                 "perchpal-input-expanded",
                 "border-t border-gp-evergreen/10 pt-3",
