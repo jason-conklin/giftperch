@@ -218,7 +218,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 function ArticleBody({
   sections,
 }: {
-  sections: { heading: string; paragraphs: string[] }[];
+  sections: ReadonlyArray<{
+    heading: string;
+    paragraphs: ReadonlyArray<string>;
+  }>;
 }) {
   return (
     <div className="space-y-6">
