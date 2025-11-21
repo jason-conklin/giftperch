@@ -375,7 +375,7 @@ export function PerchPalChat() {
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/20 bg-white text-gp-evergreen transition hover:bg-gp-cream/90 cursor-pointer"
                 title="Close full conversation"
                 aria-label="Close full conversation"
               >
