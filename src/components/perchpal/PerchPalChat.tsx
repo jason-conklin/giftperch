@@ -212,7 +212,10 @@ export function PerchPalChat() {
     <section className="gp-card flex flex-col gap-5">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 sm:gap-4">
-          <PerchPalFlyingAvatar size="md" />
+          <PerchPalFlyingAvatar
+            size="md"
+            className="h-16 w-16 sm:h-14 sm:w-14"
+          />
           <div className="space-y-0.5">
             <p className="text-sm font-semibold text-gp-evergreen md:text-base">
               PerchPal
