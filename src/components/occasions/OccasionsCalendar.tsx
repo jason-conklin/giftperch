@@ -159,6 +159,15 @@ export function OccasionsCalendar({
     setCurrentMonth((prev) => new Date(year, prev.getMonth(), 1));
   };
 
+  const handleJumpToToday = () => {
+    setSelectedDayKey(null);
+    setCurrentMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+  };
+
+  const isOnCurrentMonth =
+    currentMonth.getFullYear() === today.getFullYear() &&
+    currentMonth.getMonth() === today.getMonth();
+
   return (
     <section
       aria-label="Occasions calendar"
@@ -178,6 +187,15 @@ export function OccasionsCalendar({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {!isOnCurrentMonth ? (
+            <button
+              type="button"
+              onClick={handleJumpToToday}
+              className="rounded-full border border-gp-evergreen/30 bg-gp-cream/80 px-3 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/30"
+            >
+              Jump to present
+            </button>
+          ) : null}
           <select
             aria-label="Select month"
             value={currentMonth.getMonth()}
