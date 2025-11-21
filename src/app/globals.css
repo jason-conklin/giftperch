@@ -46,11 +46,27 @@ body {
   }
 
   .gp-input {
-    @apply w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen placeholder:text-gp-evergreen/40 focus:border-gp-evergreen focus:outline-none;
+    @apply w-full rounded-2xl border border-gp-evergreen/30 bg-white px-3 py-2 text-sm text-gp-evergreen placeholder:text-gp-evergreen/40 focus:border-gp-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70;
   }
 
   .gp-skip-link {
     @apply absolute left-1/2 top-4 z-50 -translate-x-1/2 -translate-y-10 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream opacity-0 shadow-lg transition focus:translate-y-0 focus:opacity-100 focus:outline-none;
+  }
+}
+
+@layer base {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    @apply focus:border-gp-gold focus-visible:ring-2 focus-visible:ring-gp-gold/70 focus:outline-none;
   }
 }
 
