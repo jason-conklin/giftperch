@@ -130,6 +130,9 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   const today = useMemo(() => new Date(), []);
   const [open, setOpen] = useState(false);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const [manualInput, setManualInput] = useState(
+    formatBirthdayDisplay(value) || "",
+  );
   const [viewMonth, setViewMonth] = useState(
     () => parsedParts?.month ?? today.getMonth(),
   );
@@ -202,21 +205,56 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
     today.getMonth() === viewMonth &&
     today.getDate() === day;
 
+  useEffect(() => {
+    setManualInput(formatBirthdayDisplay(value) || "");
+  }, [value]);
+
+  const handleManualInputChange = (raw: string) => {
+    setManualInput(raw);
+    const cleaned = raw.trim();
+    if (!cleaned) {
+      onChange("");
+      return;
+    }
+    // Accept mm/dd/yyyy, mm-dd-yyyy, or ISO yyyy-mm-dd
+    const mmddyyyy = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    const isoMatch = cleaned.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (mmddyyyy) {
+      const [, m, d, y] = mmddyyyy;
+      const iso = isoFromParts(Number(y), Number(m) - 1, Number(d));
+      onChange(iso);
+      return;
+    }
+    if (isoMatch) {
+      const [, y, m, d] = isoMatch;
+      const iso = isoFromParts(Number(y), Number(m) - 1, Number(d));
+      onChange(iso);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-gp-evergreen">Birthday</label>
       <div className="relative">
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="mm/dd/yyyy"
+          value={manualInput}
+          onChange={(event) => handleManualInputChange(event.target.value)}
+          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 pr-10 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+          onFocus={() => setOpen(false)}
+        />
         <button
           type="button"
-          className="flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+          className="absolute inset-y-0 right-2 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-gp-evergreen transition hover:bg-gp-cream"
           onClick={() => setOpen((prev) => !prev)}
           aria-label="Open birthday picker"
           ref={triggerRef}
         >
-          <span>{formatBirthdayDisplay(value)}</span>
           <svg
             viewBox="0 0 24 24"
-            className="h-4 w-4 text-gp-evergreen/70"
+            className="h-4 w-4"
             fill="none"
             stroke="currentColor"
             strokeWidth={1.8}
