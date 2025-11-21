@@ -353,60 +353,62 @@ export function PerchPalChat() {
 
       {isExpanded ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-200"
+          className="fixed inset-0 z-[80] flex min-h-screen w-full flex-col bg-gp-cream transition-opacity duration-200 md:bg-black/40 md:backdrop-blur-sm"
           onClick={() => setIsExpanded(false)}
         >
           <div
-            className="relative flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-none bg-gp-cream shadow-xl transition duration-200 ease-out sm:h-[90vh] sm:rounded-3xl sm:px-0"
+            className="flex h-full min-h-screen w-full flex-col md:items-center md:justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 bg-gp-cream px-4 py-3 sm:px-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <PerchPalFlyingAvatar size="md" />
-                <div className="space-y-0.5">
-                  <p className="text-base font-semibold text-gp-evergreen">
-                    PerchPal
-                  </p>
-                  <p className="text-sm text-gp-evergreen/70">
-                    Always on, always delivering thoughtful ideas.
-                  </p>
+            <div className="relative flex h-full w-full flex-col bg-gp-cream md:h-[90vh] md:max-w-3xl md:overflow-hidden md:rounded-3xl md:border md:border-gp-evergreen/15 md:shadow-xl">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gp-evergreen/10 px-4 py-3 sm:px-6">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <PerchPalFlyingAvatar size="md" />
+                  <div className="space-y-0.5">
+                    <p className="text-base font-semibold text-gp-evergreen">
+                      PerchPal
+                    </p>
+                    <p className="text-sm text-gp-evergreen/70">
+                      Always on, always delivering thoughtful ideas.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsExpanded(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/20 bg-white text-gp-evergreen transition hover:bg-gp-cream/90 cursor-pointer"
-                title="Close full conversation"
-                aria-label="Close full conversation"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  aria-hidden="true"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(false)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/20 bg-white text-gp-evergreen transition hover:bg-gp-cream/90 cursor-pointer"
+                  title="Close full conversation"
+                  aria-label="Close full conversation"
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.8}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
 
-            <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
-              {renderMessagesArea("flex-1 overscroll-y-contain")}
-              {renderInputArea(
-                "perchpal-input-expanded",
-                "border-t border-gp-evergreen/10 pt-3",
-                2
-              )}
-              {error && (
-                <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
-                  {error}
-                </p>
-              )}
+              <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+                {renderMessagesArea("flex-1 overscroll-y-contain overflow-y-auto")}
+                {renderInputArea(
+                  "perchpal-input-expanded",
+                  "border-t border-gp-evergreen/10 pt-3",
+                  2
+                )}
+                {error && (
+                  <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
+                    {error}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
