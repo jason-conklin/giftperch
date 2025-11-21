@@ -26,14 +26,14 @@ type ChatMessage = {
 };
 
 const CHAT_AVATAR_FRAMES = [
-  "/giftperch_flying_animation1.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation2.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation1.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation2.PNG",
-  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation1.png",
+  "/giftperch_flying_animation3.png",
+  "/giftperch_flying_animation2.png",
+  "/giftperch_flying_animation3.png",
+  "/giftperch_flying_animation1.png",
+  "/giftperch_flying_animation3.png",
+  "/giftperch_flying_animation2.png",
+  "/giftperch_flying_animation3.png",
   "/giftperch_retrieve_animation_1.png",
   "/giftperch_retrieve_animation_3.png",
   "/giftperch_retrieve_animation_2.png",
