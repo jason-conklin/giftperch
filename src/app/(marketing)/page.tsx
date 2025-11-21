@@ -98,7 +98,7 @@ function LandingSampleProfiles() {
           <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
             Sample profile
           </p>
-          <div className="relative mt-2 min-h-[110px]">
+          <div className="relative mt-3 min-h-[110px]">
             {SAMPLE_PROFILES.map((profile, index) => (
               <div
                 key={profile.id}
@@ -143,7 +143,7 @@ function LandingSampleProfiles() {
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
             Gift ideas
           </p>
-          <div className="relative mt-2 min-h-[90px]">
+          <div className="relative mt-0 min-h-[90px]">
             {SAMPLE_PROFILES.map((profile, index) => (
               <ul
                 key={`${profile.id}-ideas`}
@@ -175,7 +175,7 @@ export default function MarketingHome() {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-        <div className="space-y-6">
+        <div className="space-y-9">
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-center text-xs font-medium uppercase tracking-wide text-gp-evergreen">
             <span className="whitespace-nowrap">Introducing PerchPal,</span>
             <span className="whitespace-nowrap">Your AI gifting assistant</span>
@@ -189,11 +189,11 @@ export default function MarketingHome() {
               className="h-28 w-28"
               priority
             />
-            <p className="text-3xl font-bold uppercase tracking-wide text-gp-evergreen">
+            <p className="text-5xl font-bold tracking-wide text-gp-evergreen">
               GiftPerch
             </p>
           </div>
-          <h1 className="text-4xl font-semibold leading-tight text-gp-evergreen">
+          <h1 className="mt-1 text-4xl font-semibold leading-tight text-gp-evergreen">
             Thoughtful gifting, reimagined with AI
           </h1>
           <p className="text-base text-gp-evergreen/80">
@@ -201,7 +201,7 @@ export default function MarketingHome() {
             and lean on PerchPal—the AI gifting copilot that surfaces
             Amazon/affiliate-ready suggestions with genuine context.
           </p>
-          <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="mt-20 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href="/auth/signup"
               className="rounded-full bg-gp-gold px-14 py-4 text-center text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
@@ -216,7 +216,9 @@ export default function MarketingHome() {
             </Link>
           </div>
         </div>
-        <LandingSampleProfiles />
+        <div className="mt-6 lg:mt-2">
+          <LandingSampleProfiles />
+        </div>
       </section>
 
       <section className="space-y-6">
