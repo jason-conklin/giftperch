@@ -23,13 +23,13 @@ const FLYING_SEQUENCE = [
 
 const RETURN_SEQUENCE = [
   "/giftperch_retrieve_animation_1.png",
-  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_3.PNG",
   "/giftperch_retrieve_animation_2.png",
-  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_3.PNG",
   "/giftperch_retrieve_animation_1.png",
-  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_3.PNG",
   "/giftperch_retrieve_animation_2.png",
-  "/giftperch_retrieve_animation_3.png",
+  "/giftperch_retrieve_animation_3.PNG",
 ] as const;
 
 const FRAME_SEQUENCE = [...FLYING_SEQUENCE, ...RETURN_SEQUENCE] as const;
