@@ -164,7 +164,7 @@ export function PerchPalFlyingAvatar({
 
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden rounded-full bg-gp-cream/90 ${sizeClasses} ${className ?? ""}`}
+      className={`flex items-center justify-center overflow-hidden rounded-full ${sizeClasses} ${className ?? ""}`}
     >
       <PerchPalLoader
         showText={false}
