@@ -131,7 +131,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
   const [open, setOpen] = useState(false);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const [manualInput, setManualInput] = useState(
-    formatBirthdayDisplay(value) || "",
+    value ? formatBirthdayDisplay(value) : "",
   );
   const [viewMonth, setViewMonth] = useState(
     () => parsedParts?.month ?? today.getMonth(),
@@ -206,29 +206,39 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
     today.getDate() === day;
 
   useEffect(() => {
-    setManualInput(formatBirthdayDisplay(value) || "");
+    setManualInput(value ? formatBirthdayDisplay(value) : "");
   }, [value]);
 
   const handleManualInputChange = (raw: string) => {
-    setManualInput(raw);
-    const cleaned = raw.trim();
-    if (!cleaned) {
+    const digits = raw.replace(/\D/g, "").slice(0, 8);
+    let formatted = digits;
+    if (digits.length > 2) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    }
+    if (digits.length > 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    }
+    setManualInput(formatted);
+
+    if (!digits) {
       onChange("");
       return;
     }
-    // Accept mm/dd/yyyy, mm-dd-yyyy, or ISO yyyy-mm-dd
-    const mmddyyyy = cleaned.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-    const isoMatch = cleaned.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-    if (mmddyyyy) {
-      const [, m, d, y] = mmddyyyy;
-      const iso = isoFromParts(Number(y), Number(m) - 1, Number(d));
-      onChange(iso);
-      return;
-    }
-    if (isoMatch) {
-      const [, y, m, d] = isoMatch;
-      const iso = isoFromParts(Number(y), Number(m) - 1, Number(d));
-      onChange(iso);
+
+    if (digits.length === 8) {
+      const month = Number(digits.slice(0, 2));
+      const day = Number(digits.slice(2, 4));
+      const year = Number(digits.slice(4));
+      const candidate = new Date(year, month - 1, day);
+      const isValid =
+        candidate.getFullYear() === year &&
+        candidate.getMonth() === month - 1 &&
+        candidate.getDate() === day;
+      if (isValid) {
+        onChange(isoFromParts(year, month - 1, day));
+        setViewMonth(month - 1);
+        setViewYear(year);
+      }
     }
   };
 
