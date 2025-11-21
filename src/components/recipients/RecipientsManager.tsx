@@ -205,10 +205,6 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
     today.getMonth() === viewMonth &&
     today.getDate() === day;
 
-  useEffect(() => {
-    setManualInput(value ? formatBirthdayDisplay(value) : "");
-  }, [value]);
-
   const handleManualInputChange = (raw: string) => {
     const digits = raw.replace(/\D/g, "").slice(0, 8);
     let formatted = digits;

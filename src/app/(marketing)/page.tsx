@@ -1,11 +1,8 @@
 "use client";
 
-// This page uses client-side hooks for the landing carousel
-// eslint-disable-next-line @next/next/no-async-client-component
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 const steps = [
@@ -74,14 +71,32 @@ const SAMPLE_PROFILES = [
 function LandingSampleProfiles() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const firstCycleRef = useRef(true);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    if (isHovered) return;
-    const id = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % SAMPLE_PROFILES.length);
-    }, 3000);
-    return () => clearInterval(id);
-  }, [isHovered]);
+    if (isHovered) {
+      clearTimer();
+      return;
+    }
+    const delay = firstCycleRef.current ? 3000 : 6000;
+    clearTimer();
+    timerRef.current = setTimeout(() => {
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % SAMPLE_PROFILES.length;
+        firstCycleRef.current = false;
+        return next;
+      });
+    }, delay);
+    return () => clearTimer();
+  }, [activeIndex, clearTimer, isHovered]);
 
   return (
     <div
