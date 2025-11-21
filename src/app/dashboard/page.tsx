@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
-import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { PerchPalFlyingAvatar } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
 
 const actions = [
@@ -65,9 +65,7 @@ export default function DashboardHome() {
           ))}
         </div>
         <div className="gp-card-soft flex w-full items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center sm:h-14 sm:w-14">
-            <PerchPalLoader variant="inline" size="md" message={null} />
-          </div>
+          <PerchPalFlyingAvatar size="md" />
           <div>
             <p className="text-sm font-semibold text-gp-evergreen">
               PerchPal is syncing upcoming gifting moments...

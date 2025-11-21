@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import {
+  PerchPalFlyingAvatar,
+  PerchPalLoader,
+} from "@/components/perchpal/PerchPalLoader";
 
 type ChatRole = "user" | "assistant";
 
@@ -24,27 +26,6 @@ type ChatMessage = {
   content: string;
   created_at: string;
 };
-
-const CHAT_AVATAR_FRAMES = [
-  "/giftperch_flying_animation1.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation2.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation1.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_flying_animation2.PNG",
-  "/giftperch_flying_animation3.PNG",
-  "/giftperch_retrieve_animation_1.png",
-  "/giftperch_retrieve_animation_3.PNG",
-  "/giftperch_retrieve_animation_2.png",
-  "/giftperch_retrieve_animation_3.PNG",
-  "/giftperch_retrieve_animation_1.png",
-  "/giftperch_retrieve_animation_3.PNG",
-  "/giftperch_retrieve_animation_2.png",
-  "/giftperch_retrieve_animation_3.PNG",
-] as const;
-
-const CHAT_AVATAR_FRAME_DURATION = 180;
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 
@@ -188,7 +169,7 @@ export function PerchPalChat() {
     if (message.role === "assistant") {
       return (
         <div key={message.id} className="flex items-start gap-3">
-          <PerchPalAnimatedAvatar size={48} />
+          <PerchPalFlyingAvatar size="sm" className="mt-1 shrink-0" />
           <div>
             <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-gp-evergreen shadow-sm">
               {message.content.split("\n").map((line, idx) => (
@@ -230,10 +211,8 @@ export function PerchPalChat() {
   return (
     <section className="gp-card flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-row items-center gap-3 sm:gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm sm:h-14 sm:w-14">
-            <PerchPalLoader variant="inline" size="md" message={null} />
-          </div>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <PerchPalFlyingAvatar size="md" />
           <div className="space-y-0.5">
             <p className="text-sm font-semibold text-gp-evergreen md:text-base">
               PerchPal
@@ -269,7 +248,7 @@ export function PerchPalChat() {
 
         {isSending && (
           <div className="flex items-end gap-2">
-            <PerchPalAnimatedAvatar size={48} showStatusDot={false} />
+            <PerchPalFlyingAvatar size="sm" className="mt-1 shrink-0" />
             <div className="inline-flex items-center gap-1 rounded-2xl rounded-bl-sm bg-white px-3 py-2">
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce [animation-delay:-0.2s]" />
               <span className="h-1.5 w-1.5 rounded-full bg-gp-evergreen/60 animate-bounce" />
@@ -316,44 +295,4 @@ export function PerchPalChat() {
   );
 }
 
-type AnimatedAvatarProps = {
-  size?: number;
-  showStatusDot?: boolean;
-};
-
-function PerchPalAnimatedAvatar({
-  size = 48,
-  showStatusDot = true,
-}: AnimatedAvatarProps) {
-  const [frameIndex, setFrameIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFrameIndex((prev) => (prev + 1) % CHAT_AVATAR_FRAMES.length);
-    }, CHAT_AVATAR_FRAME_DURATION);
-    return () => clearInterval(interval);
-  }, []);
-
-  const currentFrame = useMemo(
-    () => CHAT_AVATAR_FRAMES[frameIndex] ?? CHAT_AVATAR_FRAMES[0],
-    [frameIndex],
-  );
-
-  return (
-    <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-gold/50 bg-gp-cream shadow-sm sm:h-14 sm:w-14">
-      <Image
-        src={currentFrame}
-        alt="PerchPal mascot animation frame"
-        width={size}
-        height={size}
-        unoptimized
-        priority
-        className="h-full w-full object-contain"
-      />
-      {showStatusDot ? (
-        <span className="absolute -right-0.5 bottom-0 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white animate-pulse" />
-      ) : null}
-    </div>
-  );
-}
 

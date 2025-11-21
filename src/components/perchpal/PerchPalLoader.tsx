@@ -8,6 +8,8 @@ type PerchPalLoaderProps = {
   size?: "sm" | "md" | "lg";
   message?: string | null;
   ariaLabel?: string;
+  className?: string;
+  showText?: boolean;
 };
 
 const FLYING_SEQUENCE = [
@@ -37,9 +39,9 @@ const FRAME_SEQUENCE = [...FLYING_SEQUENCE, ...RETURN_SEQUENCE] as const;
 const FRAME_DURATION_MS = 200;
 
 const sizeMap = {
-  sm: { width: 50, height: 50, text: "text-xs", circle: "p-2" },
-  md: { width: 64, height: 64, text: "text-sm", circle: "p-3" },
-  lg: { width: 50, height: 50, text: "text-base", circle: "p-4" },
+  sm: { width: 48, height: 48, text: "text-xs", circle: "p-2" },
+  md: { width: 56, height: 56, text: "text-sm", circle: "p-2.5" },
+  lg: { width: 64, height: 64, text: "text-base", circle: "p-3" },
 } as const;
 
 export function PerchPalLoader({
@@ -47,6 +49,8 @@ export function PerchPalLoader({
   size = "md",
   message,
   ariaLabel,
+  className,
+  showText = true,
 }: PerchPalLoaderProps) {
   const [frameIndex, setFrameIndex] = useState(0);
   const sizeStyles = sizeMap[size];
@@ -80,9 +84,23 @@ export function PerchPalLoader({
         unoptimized
         priority
         aria-hidden="true"
+        className="object-contain"
       />
     </div>
   );
+
+  if (!showText) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label={label}
+        className={className}
+      >
+        {bird}
+      </div>
+    );
+  }
 
   const text =
     helperMessage === null ? null : (
@@ -93,31 +111,31 @@ export function PerchPalLoader({
 
   if (variant === "inline") {
     return (
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label={label}
-        className="flex items-center gap-3"
-      >
-        {bird}
-        {text}
-      </div>
-    );
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+      className={`flex items-center gap-3 ${className ?? ""}`}
+    >
+      {bird}
+      {text}
+    </div>
+  );
   }
 
   if (variant === "overlay") {
     return (
       <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-gp-evergreen/10 backdrop-blur-sm">
-        <div
-          role="status"
-          aria-live="polite"
-          aria-label={label}
-          className="flex flex-col items-center gap-3 rounded-3xl border border-gp-gold/40 bg-white/90 px-8 py-6 text-center shadow-lg"
-        >
-          {bird}
-          {text}
-        </div>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label={label}
+        className={`flex flex-col items-center gap-3 rounded-3xl border border-gp-gold/40 bg-white/90 px-8 py-6 text-center shadow-lg ${className ?? ""}`}
+      >
+        {bird}
+        {text}
       </div>
+    </div>
     );
   }
 
@@ -126,10 +144,33 @@ export function PerchPalLoader({
       role="status"
       aria-live="polite"
       aria-label={label}
-      className="flex flex-col items-center gap-3 text-center"
+      className={`flex flex-col items-center gap-3 text-center ${className ?? ""}`}
     >
       {bird}
       {text}
+    </div>
+  );
+}
+
+export function PerchPalFlyingAvatar({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClasses =
+    size === "lg" ? "h-16 w-16" : size === "sm" ? "h-12 w-12" : "h-14 w-14";
+
+  return (
+    <div
+      className={`flex items-center justify-center overflow-hidden rounded-full bg-gp-cream/90 ${sizeClasses} ${className ?? ""}`}
+    >
+      <PerchPalLoader
+        showText={false}
+        ariaLabel="PerchPal flying animation"
+        className="h-full w-full"
+      />
     </div>
   );
 }
