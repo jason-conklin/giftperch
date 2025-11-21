@@ -91,7 +91,7 @@ function LandingSampleProfiles() {
     >
       <div className="space-y-4">
         <p className="text-lg font-semibold text-gp-evergreen">
-          Make Recipient Profiles
+          Create & Save Recipient Profiles
         </p>
 
         <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">

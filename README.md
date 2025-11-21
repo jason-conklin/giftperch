@@ -1,356 +1,215 @@
-🎁 GiftPerch — AI-Powered Gifting, Reinvented
+🎁 GiftPerch — Thoughtful Gifting, Reimagined with AI
 
-A modern, personalized, AI-driven gifting platform.
+GiftPerch is an AI-powered gifting platform that helps people remember the important people in their lives — their interests, personalities, occasions, budgets, and gift history — and delivers deeply personalized gift recommendations using PerchPal, your friendly AI gifting assistant.
 
-GiftPerch is an AI-powered gifting app that helps users remember every important person in their life — their interests, personalities, past gifts, budgets, and life events — and delivers deeply personalized gift recommendations powered by PerchPal, your friendly AI gifting assistant.
+GiftPerch turns chaotic last-minute gifting into a warm, organized, meaningful experience.
 
-GiftPerch makes gifting meaningful, organized, and effortless.
-
-🔗 Coming Soon Page: https://giftperch.com
+🔗 Live Site: https://giftperch.com
 
 🔗 Portfolio: https://jasonconklin.dev
 
-🌟 Core Value Proposition
+🌟 What GiftPerch Does
 
-GiftPerch = a Personal Gift CRM + AI Gift Assistant + Wishlists + Amazon-powered revenue engine
+GiftPerch combines:
 
-Users can:
+A Personal Gift CRM (recipient profiles, interests, budgets, history)
 
-Build reusable profiles for friends/family
+An AI Gift Assistant (PerchPal) that generates thoughtful suggestions
 
-Track birthdays & occasions
+Occasion tracking with calendar navigation
 
-Store gift history
+User wishlists and identity profiles
 
-Maintain wishlists
+Affiliate-ready gift links (Amazon Associates integration)
 
-Get deeply personalized AI gift ideas
+It’s designed for families, friends, couples, and anyone who wants gifting to feel personal — not stressful.
 
-Reduce gift stress year after year
+📸 Screenshots (Coming soon)
+
+These are placeholders.
+
+![Landing Page](screenshots/landing.png)
+![Dashboard](screenshots/dashboard.png)
+![Recipient Profile](screenshots/recipient.png)
+![PerchPal Chat](screenshots/perchpal.png)
 
 🚀 Key Features
-🎯 1. Recipient Profiles (“Gift CRM”)
+1. Recipient Profiles (Your Gift CRM)
 
-Each recipient gets a reusable profile containing:
+Each person in your life gets a reusable profile containing:
 
 Interests & hobbies
 
-Personality traits
-
-Aesthetic & vibe tags
-
-Favorite brands
-
-Wishlist items
+Notes & preferences
 
 Budget ranges
 
-Relationship to user
+Relationship tags
+
+Favorite brands
 
 Past gifts
 
-Life events
+Occasions (birthdays, anniversaries, holidays)
 
-Notes & reminders
+Vibe / aesthetic tags
 
-Occasion calendar (birthdays, anniversaries, holidays)
+GiftPerch remembers everything so you don’t have to.
 
-GiftPerch remembers everything — even years later.
+2. PerchPal — Your AI Gifting Assistant
 
-🧠 2. PerchPal — Your AI Gift Assistant
+PerchPal analyzes the profile, gift history, budgets, and vibe to generate:
 
-PerchPal helps users from onboarding → discovery → gifting.
-Capabilities include:
+Personalized gift recommendations
 
-Auto-filling profiles from short descriptions
+“Why this fits them” rationales
 
-Predicting interests
+Budget-aware suggestions
 
-Generating thoughtful gift ideas with explanations
+Duplicate-gift prevention
 
-Detecting personality patterns
+Seasonal or event-specific ideas
 
-Filtering by budgets, vibes, and brands
+Quick freeform answers (“What should I get my sister who loves hiking?”)
 
-Avoiding duplicate gifts using history
+PerchPal also appears throughout the UI with smooth bird animations.
 
-Warning users about upcoming events
+3. AI Gift Generator (Public Tool)
 
-Answering any freeform gifting question
-
-Acting as the warm, friendly UI mascot
-
-PerchPal Mascot
-
-Stylized evergreen-gold bird (your custom vector mascot)
-
-Includes flying loading animations (up flap, mid-frame, down flap)
-
-Includes “retrieving gift” variant (bird flying backwards carrying a gold gift)
-
-🎁 3. AI Gift Generator (Public Tool)
-
-Interactive “AI Gift Finder” with:
-
-Interest filters
-
-Occasion filters
-
-Price range
-
-Aesthetic / vibe
-
-Amazon Product Advertising API integration
-
-Affiliate links (your revenue engine)
-
-“Why this gift fits” explanations
-
-Multi-tier recommendations (budget / mid / premium)
-
-Repeat-prevention
-
-This acts as an SEO magnet for “AI Gift Generator” searches.
-
-💌 4. User Identity & Wishlists
-
-Every user has their own:
-
-Wishlist
+Visitors and logged-in users can generate gift ideas using:
 
 Interests
 
-Shareable profile
+Occasion type
 
-Optional Amazon wishlist import (future)
+Price range
 
-Two-sided value:
-You create profiles for others → They create profiles for you → Gifting becomes collaborative.
+Aesthetic/vibe
 
-📅 5. Occasion Tracking
+Quick-select filters
 
-Built-in reminder system with:
+This feature helps with SEO (e.g., “AI gift generator”).
 
-Birthdays
+4. Occasion Tracking + Calendar
 
-Anniversaries
+GiftPerch includes a polished calendar:
 
-Holidays
+Monthly navigation + improved month/year selector
 
-Custom occasions
+Birthday/anniversary reminders
 
-Early warnings (“2 weeks until Sarah’s birthday”)
+Event-aware AI suggestions
 
-Optional email notifications (later SMS)
+“Plan ahead” nudges
 
-📚 6. Gift History
+5. Gift History
 
-For each recipient, GiftPerch stores:
+Track past gifts per recipient:
 
-Title
+Title, URL, price
 
-URL
-
-Price
-
-Occasion
-
-Date
+Occasion and date
 
 Notes
 
 Tags
 
-This prevents duplicate gifting and increases AI accuracy.
+Ensures you never repeat a gift and improves PerchPal’s reasoning.
 
-💵 7. Budget Tracking
+6. Affiliate Integration (Amazon Associates)
 
-Per user + per recipient:
+All Amazon links are affiliate-ready:
 
-Annual budgets
+tag=giftperch-20 automatically applied
 
-Occasion budgets
+Works for recommended gifts and general Amazon browsing links
 
-Gift price limits
+Current setup uses mock data until your PAAPI access is activated
 
-Running totals
+Complies with Amazon’s required disclosure:
 
-AI suggestions are budget-aware
+As an Amazon Associate, I earn from qualifying purchases.
 
-💰 8. Monetization & Affiliate Revenue
+🧠 AI Architecture
 
-Amazon Associates (primary revenue source)
-Users click → Buy on Amazon → You earn a commission.
+GiftPerch uses:
 
-This includes:
+OpenAI GPT-4o-mini (chat + suggestions)
 
-Clicking recommended gifts
+Custom PerchPal prompt recipe system
 
-Clicking any Amazon link via the site
+Contextual embeddings (interests + history)
 
-Clicking Amazon from dashboards, reminders, or wishlists
+Gift qualification rules (budget logic + event filtering)
 
-Clicking “Shop Now on Amazon” persistent navbar button (your idea)
-
-Additionally:
-
-Etsy / Target / Best Buy (future)
-
-Premium membership upgrade (wishlist syncing, early alerts, more AI credits)
-
-Corporate gifting tools
-
-Postgres tracks affiliate click-throughs.
-
-🔍 9. Full SEO Optimization Strategy
-
-GiftPerch is designed from day one to rank for:
-
-“AI gift generator”
-
-“gift ideas for boyfriend/girlfriend/friend/coworker/etc.”
-
-“personalized gift finder”
-
-“smart gift ideas”
-
-“AI gift search”
-
-“gift ideas [year]”
-
-“[interest] gift ideas” clusters
-
-SEO pillars include:
-Pillar Pages (Evergreen Mega-Guides)
-
-Long-form content (1,500–4,000 words) such as:
-
-“The Ultimate AI Gift Ideas Guide”
-
-“Best Gifts by Personality Type”
-
-“Minimalist Gift Ideas”
-
-“Gifts for People Who Have Everything”
-
-“Gift Ideas by Age / Budget / Vibe”
-
-These anchor your SEO clusters.
-
-Weekly Blog Posts
-
-Posted at: /blog/[slug]
-
-Cover trending searches, seasonal queries, and interest-based gift ideas.
-
-Optimized Metadata
-
-Rich previews
-
-JSON-LD structured data
-
-Occasional schema
-
-Fast load times (Vercel)
-
-Image alt tags
-
-Clear <h1> <h2> <h3> hierarchy
-
-Interactive Tool SEO Boost
-
-Search engines LOVE interactive tools → your AI Gift Generator will act as a traffic magnet.
+Animation-triggered AI loading states
 
 🎨 Branding & Design
 
-Evergreen + Gold + Cream Color System
+Evergreen + Gold + Cream color palette
 
-Name	Hex	Usage
-Evergreen	#0F3D3E	Primary brand color
-Gold	#D9C189	Accents / highlights
-Cream	#F8F5E0	Background
-Sand	#EAE5D3	Light accents
-Forest	#13402B	Dark accents
+Custom PerchPal bird mascot with multiple animation frames
 
-Design Feel:
+Clean UI with rounded cards and subtle shadows
 
-Clean
+Consistent typography + layout spacing
 
-Warm
-
-Premium
-
-Minimalist
-
-Trustworthy
-
-Mascot: PerchPal (stylized bird), with:
-
-Idle pose
-
-Flying cycle (3–6 frames)
-
-“Carrying gift” variant
-
-Used in loading animations, onboarding, and PerchPal Chat UI
+Mobile-responsive across all pages
 
 🏗️ Tech Stack
+
 Frontend
 
-Next.js 15 (App Router)
+Next.js (App Router)
+
+React Server Components
 
 TypeScript
 
 Tailwind CSS
 
-React Server Components
-
-ShadCN UI (optional)
+ShadCN UI (selective)
 
 Backend
 
-Supabase (Postgres, Auth, RLS, Storage)
+Supabase
 
-Supabase Edge Functions
+Postgres
 
-Row Level Security for user data protection
+Auth
+
+RLS (Row-Level Security)
+
+Storage
 
 AI
 
 OpenAI API
 
-Custom PerchPal prompt recipes
+Prompt recipes + gift logic engine
 
-Gift logic engines
+Other
 
-Deployment
+Amazon Associates Integration (PAAPI-ready)
 
-Vercel (auto-deploy on push to main)
+Resend (transactional email-ready)
 
-Supabase (managed backend)
+Deployed on Vercel
 
-### Deployment to Vercel
-
-1. Create a new Vercel project pointing at this repository (the main `giftperch/` folder). The default build command and output work without customization.
-2. In **Project → Settings → Environment Variables**, copy every key from `.env.example` and paste the matching values (Supabase URLs/keys, OpenAI key, Amazon PAAPI credentials, Resend, cron secret, etc.). Create entries for each environment (Preview/Production) as needed.
-3. Set `NEXT_PUBLIC_SITE_URL=https://www.giftperch.com` in the Production environment so links, metadata, and auth callbacks use the final domain.
-4. Deploy. Amazon PAAPI searches will automatically fall back to the built-in mock products until your Associates account is activated and valid credentials are supplied, so shipping without the live integration is safe.
-
-🗂️ Project Structure (Finalized)
+🗂️ Project Structure (Simplified)
 giftperch/
-├── supabase/                    # SQL migrations, RLS, seed data
+├── public/                # Images, icons animations
+├── supabase/              # DB migrations + seed data
 ├── src/
 │   ├── app/
-│   │   ├── (marketing)/         # Landing, blog, SEO pages
-│   │   ├── dashboard/           # Logged-in home
-│   │   ├── recipients/          # Recipient CRUD
-│   │   ├── wishlist/            # User wishlist identity
-│   │   ├── gifts/               # AI gift generator
-│   │   ├── api/                 # Route handlers
-│   │   └── page.tsx             # Homepage (marketing)
+│   │   ├── (marketing)/   # Landing, About, Blog
+│   │   ├── recipients/    # Profiles CRUD
+│   │   ├── dashboard/     # Logged-in hub
+│   │   ├── gifts/         # AI gift generator
+│   │   ├── occasions/     # Calendar views
+│   │   └── api/           # Route handlers
 │   ├── components/
-│   │   ├── ui/
-│   │   ├── perchpal/            # Chat UI + animations
+│   │   ├── perchpal/      # Chat UI + animations
 │   │   ├── recipient/
 │   │   └── gifts/
 │   ├── lib/
@@ -359,246 +218,94 @@ giftperch/
 │   │   │   ├── perchPal.ts
 │   │   │   └── promptRecipes.ts
 │   │   └── utils.ts
-│   └── styles/
-└── .env.local
+└── README.md
 
-🧩 Full Database Schema (Updated)
-
-Users
-
-id
-
-email
-
-display_name
-
-avatar_url
-
-bio
-
-Recipients
-
-id
-
-user_id
-
-name
-
-relationship
-
-pet_type
-
-gender
-
-birthday
-
-annual_budget
-
-gift_budget_min
-
-gift_budget_max
-
-favorite_brands
-
-vibe_tags
-
-notes
-
-Recipient Interests
-
-id
-
-recipient_id
-
-interest_name
-
-category
-
-Wishlists
-
-id
-
-user_id
-
-title
-
-Wishlist Items
-
-id
-
-wishlist_id
-
-title
-
-url
-
-image_url
-
-estimated_price
-
-Past Gifts
-
-id
-
-recipient_id
-
-title
-
-url
-
-price
-
-occasion
-
-date_given
-
-notes
-
-Gift Suggestions
-
-id
-
-recipient_id
-
-ai_model
-
-suggestions_json
-
-created_at
-
-Affiliate Clicks
-
-id
-
-user_id
-
-suggestion_id
-
-product_url
-
-clicked_at
-
-AI Interaction Logs
-
-id
-
-user_id
-
-recipient_id
-
-message
-
-response
-
-created_at
 
 🐦 Animation Assets
 
-Published frames include:
+GiftPerch includes a polished PerchPal animation set:
 
-Upward flap
+Up flap
 
 Mid flap
 
-Downward flap
+Down flap
 
-Downward flap (carrying gift)
+Gift-carrying frames
 
-Upward flap (carrying gift)
+Loading loop
 
-Used for:
+Retrieval loop
 
-Loading animations
+Used in loading states, fetching animations, and playful UI moments.
 
-PerchPal “thinking”
+📦 Environment Setup
 
-Retrieval animations (“Fetching gifts…”)
+Create a .env.local:
 
-🚀 Roadmap (Updated)
-Phase 1 — Foundation
-
-Next.js + Tailwind + Supabase wiring
-
-Auth
-
-Recipient CRUD
-
-User Wishlist
-
-Basic PerchPal UI
-
-SEO Marketing pages scaffolded
-
-Phase 2 — AI Engine
-
-PerchPal signature prompt system
-
-Gift suggestion generator
-
-Budget logic
-
-Duplicate-prevention logic
-
-Improvements from user history
-
-Phase 3 — Amazon API + Monetization
-
-Amazon PA-API integration
-
-Affiliate tracking
-
-Analytics dashboard
-
-Optional Premium tier
-
-Phase 4 — Growth & SEO
-
-Blog system
-
-Pillar pages
-
-Shareable profiles
-
-Social meta cards
-
-Email notifications
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_GOOGLE_CLIENT_ID=
+SUPABASE_GOOGLE_CLIENT_SECRET=
+OPENAI_API_KEY=
+AMAZON_PA_PARTNER_TAG=giftperch-20
+RESEND_API_KEY=
+DATABASE_PASSWORD=
+NEXT_PUBLIC_SITE_URL=https://giftperch.com
 
 🧪 Development
 npm install
 npm run dev
 npm run build
+npm run lint
 
 
-.env.local
+Supabase local DB:
 
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-DATABASE_PASSWORD=
+supabase db reset
+
+🚀 Deployment (Vercel)
+
+Connect repository
+
+Add environment variables (match .env.example)
+
+Set NEXT_PUBLIC_SITE_URL=https://giftperch.com
+
+Deploy
+
+Favicon is handled via public/favicon.ico + layout metadata.
+
+📈 Roadmap
+
+Short Term
+
+Refined PerchPal chat experience
+
+Customizable gift vibes
+
+Sharing recipient profiles
+
+More calendar improvements
+
+Long Term
+
+Email notification system
+
+Full Amazon PAAPI activation
+
+Profile import/export
+
+Mobile app version
 
 📜 License
 
-MIT (Recommended)
+MIT
 
 💬 Contact
 
 Created by Jason Conklin
-Portfolio: https://jasonconklin.dev
+🔗 https://jasonconklin.dev
 
-Project: https://giftperch.com
-## Database & Migrations
-GiftPerch stores data in Supabase Postgres. SQL migrations live in supabase/migrations/ and seed data lives in supabase/seed/seed_giftperch.sql.
-
-```bash
-# Apply migrations (requires Supabase CLI)
-supabase db push
-
-# Reset local database (drops, migrates, seeds)
-supabase db reset
-```
-
-Before running the seed file, replace the placeholder demo_user_id with a real auth.users.id from your project. When you are ready to generate typed helpers, run:
-
-```bash
-supabase gen types typescript --project-id "<project-id>" --schema public > src/lib/database.types.ts
-```
+🔗 https://giftperch.com
