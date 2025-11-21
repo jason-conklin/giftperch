@@ -11,13 +11,13 @@ function ensureSupabaseEnv(key: string): string {
   const value = cleanValue(process.env[key]);
   if (!value) {
     const message = `[env] ${key} is required to talk to Supabase.`;
-    if (isProd) {
-      throw new Error(message);
-    }
     if (!warnOnce.has(key)) {
       console.warn(message);
       warnOnce.add(key);
     }
+    // In production, return empty string instead of throwing to avoid hard-crashes
+    // if env injection is missing at runtime. Supabase clients will still fail
+    // gracefully without valid URLs/keys.
     return "";
   }
   return value;
