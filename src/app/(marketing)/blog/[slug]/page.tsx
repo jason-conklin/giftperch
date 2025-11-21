@@ -1,10 +1,16 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 const posts = {
   "ai-gift-generator-for-hard-to-shop-for-people": {
     title: "AI gift generator for hard-to-shop-for people",
     intro:
       'When someone shrugs and says "I do not need anything," GiftPerch pairs your profile data with PerchPal so the search still feels thoughtful.',
+    meta: {
+      published: "Updated 2025",
+      readingTime: "4 min read",
+      category: "Thoughtful gifting",
+    },
     sections: [
       {
         heading: "Capture the clues hiding in conversations",
@@ -33,6 +39,11 @@ const posts = {
     title: "Gift ideas for busy professionals",
     intro:
       "Your most overbooked friends crave gifts that feel restorative or that upgrade their daily systems. These themes keep utility and delight balanced.",
+    meta: {
+      published: "Updated 2025",
+      readingTime: "3 min read",
+      category: "Practical gifting",
+    },
     sections: [
       {
         heading: "Design gifts that create breathing room",
@@ -61,6 +72,11 @@ const posts = {
     title: "How to use recipient profiles to avoid bad gifts",
     intro:
       "Recipient profiles are your mini gift CRM. The more details you capture, the easier it becomes to dodge repeat misfires.",
+    meta: {
+      published: "Updated 2025",
+      readingTime: "3 min read",
+      category: "Recipient profiles",
+    },
     sections: [
       {
         heading: "Log intel right after conversations",
@@ -116,65 +132,159 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     );
   }
 
+  const meta = post.meta ?? {
+    published: "Updated recently",
+    readingTime: "3 min read",
+    category: "GiftPerch Journal",
+  };
+
   return (
-    <section className="space-y-6 py-6 sm:py-10 lg:py-12">
-      <header className="space-y-3">
-        <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-          GiftPerch Journal
-        </p>
-        <h1 className="text-3xl font-semibold text-gp-evergreen">
-          {post.title}
-        </h1>
-        <p className="text-base text-gp-evergreen/80">{post.intro}</p>
-      </header>
+    <section className="py-8 sm:py-10 lg:py-12">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+        <div className="w-full space-y-6 lg:max-w-3xl">
+          <header className="space-y-3 rounded-3xl border border-gp-evergreen/10 bg-gp-cream/80 p-6 shadow-sm lg:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gp-evergreen/60">
+              GiftPerch Journal
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl">
+              {post.title}
+            </h1>
+            <p className="text-base text-gp-evergreen/80">{post.intro}</p>
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+              <span className="rounded-full border border-gp-evergreen/15 bg-white/70 px-3 py-1">
+                {meta.published}
+              </span>
+              <span className="rounded-full border border-gp-evergreen/15 bg-white/70 px-3 py-1">
+                {meta.readingTime}
+              </span>
+              <span className="rounded-full border border-gp-gold/40 bg-gp-gold/20 px-3 py-1 text-gp-evergreen">
+                {meta.category}
+              </span>
+            </div>
+          </header>
 
-      <div className="space-y-5">
-        {post.sections.map((section) => (
-          <article key={section.heading} className="space-y-2">
-            <h2 className="text-xl font-semibold text-gp-evergreen">
-              {section.heading}
-            </h2>
-            {section.paragraphs.map((paragraph, index) => (
-              <p
-                key={`${section.heading}-${index}`}
-                className="text-base text-gp-evergreen/80"
+          <ArticleBody sections={post.sections} />
+
+          <BottomCta />
+        </div>
+
+        <aside className="w-full space-y-4 lg:max-w-sm">
+          <div className="rounded-3xl border border-gp-evergreen/10 bg-white/90 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gp-evergreen/60">
+              About GiftPerch
+            </h3>
+            <p className="mt-2 text-sm text-gp-evergreen/80 leading-relaxed">
+              GiftPerch helps you craft living recipient profiles, track
+              occasions, and lean on PerchPal to surface AI-ready gift ideas
+              with context.
+            </p>
+            <Link
+              href="/about"
+              className="mt-3 inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+            >
+              Learn more →
+            </Link>
+          </div>
+
+          <div className="rounded-3xl border border-gp-evergreen/15 bg-gp-cream/80 p-5 shadow-sm">
+            <p className="text-sm font-semibold text-gp-evergreen">
+              Ready to try GiftPerch?
+            </p>
+            <p className="mt-2 text-sm text-gp-evergreen/80 leading-relaxed">
+              Create your account or log in to start building recipient
+              profiles, budgets, and gift history.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href="/auth/signup"
+                className="gp-primary-button px-4 py-2 text-xs"
               >
-                {paragraph}
-              </p>
-            ))}
-          </article>
-        ))}
-      </div>
-
-      <div className="gp-card-soft text-sm text-gp-evergreen/80">
-        Want more thoughtful gifting frameworks?{" "}
-        <Link
-          href="/about"
-          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          Learn about GiftPerch
-        </Link>{" "}
-        or{" "}
-        <Link
-          href="/auth/signup"
-          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          create your account
-        </Link>
-        .
-      </div>
-
-      <div className="mt-12 border-t border-gp-evergreen/10 pt-6 text-sm text-gp-evergreen">
-        Looking for more ideas?{" "}
-        <a
-          href="https://www.amazon.com/?tag=giftperch-20"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
-        >
-          Explore Amazon’s full gift categories »
-        </a>
+                Sign up
+              </Link>
+              <Link
+                href="/"
+                className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+              >
+                See how it works
+              </Link>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
+  );
+}
+
+function ArticleBody({
+  sections,
+}: {
+  sections: { heading: string; paragraphs: string[] }[];
+}) {
+  return (
+    <div className="space-y-6">
+      {sections.map((section, index) => (
+        <article key={section.heading} className="space-y-3">
+          <h2 className="text-xl font-semibold text-gp-evergreen sm:text-2xl">
+            {section.heading}
+          </h2>
+          <div className="space-y-3 text-base leading-relaxed text-gp-evergreen/80">
+            {section.paragraphs.map((paragraph, paragraphIndex) => (
+              <p key={`${section.heading}-${paragraphIndex}`}>{paragraph}</p>
+            ))}
+          </div>
+
+          {index === 1 ? <MidArticleCallout /> : null}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function MidArticleCallout() {
+  return (
+    <div className="rounded-3xl border border-gp-gold/40 bg-gp-gold/15 p-5 text-sm text-gp-evergreen shadow-sm sm:p-6">
+      <p className="font-semibold text-gp-evergreen">Want more thoughtful gifting workflows?</p>
+      <p className="mt-2 leading-relaxed text-gp-evergreen/80">
+        GiftPerch keeps profiles, budgets, and gift history in one place so your
+        future searches feel more personal.
+      </p>
+      <Link
+        href="/auth/signup"
+        className="mt-3 inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+      >
+        Try GiftPerch →
+      </Link>
+    </div>
+  );
+}
+
+function BottomCta() {
+  return (
+    <div className="rounded-3xl border border-gp-evergreen/10 bg-gp-cream/80 p-6 shadow-sm sm:p-7">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-gp-evergreen">
+            Want more thoughtful gifting ideas?
+          </p>
+          <p className="text-sm text-gp-evergreen/80">
+            Explore GiftPerch or browse more articles from the Journal.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/"
+            className="gp-primary-button px-5 py-2 text-sm"
+          >
+            Explore GiftPerch features
+          </Link>
+          <Link
+            href="/blog"
+            className="gp-secondary-button px-4 py-2 text-sm"
+          >
+            Browse more articles
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }

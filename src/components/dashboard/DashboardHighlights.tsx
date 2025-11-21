@@ -37,6 +37,28 @@ type UpcomingEvent = {
   recipientName?: string | null;
 };
 
+const parseDateOnly = (value: string | null | undefined): Date | null => {
+  if (!value) return null;
+  const parts = value.split("-");
+  if (parts.length !== 3) return null;
+  const [yearStr, monthStr, dayStr] = parts;
+  const year = Number(yearStr);
+  const month = Number(monthStr) - 1;
+  const day = Number(dayStr);
+  if (
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    month < 0 ||
+    month > 11 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return null;
+  }
+  return new Date(year, month, day);
+};
+
 const seasonalEvents = [
   { id: "valentines", month: 1, day: 14, label: "Valentine's Day" },
   { id: "christmas", month: 11, day: 25, label: "Christmas Day" },
@@ -117,7 +139,8 @@ export function DashboardHighlights() {
 
     recipients.forEach((recipient) => {
       if (!recipient.birthday) return;
-      const original = new Date(recipient.birthday);
+      const original = parseDateOnly(recipient.birthday);
+      if (!original) return;
       const next = new Date(
         today.getFullYear(),
         original.getMonth(),
@@ -136,8 +159,8 @@ export function DashboardHighlights() {
 
     events.forEach((event) => {
       if (!event.event_date) return;
-      const eventDate = new Date(event.event_date);
-      if (eventDate < today) return;
+      const eventDate = parseDateOnly(event.event_date);
+      if (!eventDate || eventDate < today) return;
       upcoming.push({
         id: event.id,
         date: eventDate,
