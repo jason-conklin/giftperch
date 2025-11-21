@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 const steps = [
@@ -20,11 +23,150 @@ const steps = [
   },
 ];
 
-const sampleIdeas = [
-  "Handmade ceramic mug set",
-  "Outdoor adventure gift card",
-  "Organic tea & book pairing",
-];
+const SAMPLE_PROFILES = [
+  {
+    id: "maya",
+    name: "Maya",
+    relationship: "Sister",
+    avatarSrc: "/woman_icon.png",
+    description:
+      "Loves cozy rituals, hikes, indie bookstores. Prefers gifts under $150.",
+    ideasLabel: "Gift ideas",
+    ideas: [
+      "Handmade ceramic mug set",
+      "Outdoor adventure gift card",
+      "Organic tea & book pairing",
+    ],
+  },
+  {
+    id: "mocha",
+    name: "Mocha",
+    relationship: "Pet (Dog)",
+    avatarSrc: "/dog_icon.png",
+    description:
+      "Loves squeaky animatronic toys, cozy blankets, and anything that smells like treats.",
+    ideasLabel: "Gift ideas",
+    ideas: [
+      "Interactive treat puzzle toy",
+      "Plush “heartbeat” cuddle buddy",
+      "Automatic ball launcher for indoor fetch",
+    ],
+  },
+  {
+    id: "dad",
+    name: "Dad",
+    relationship: "Father",
+    avatarSrc: "/man_icon.png",
+    description:
+      "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
+    ideasLabel: "Gift ideas",
+    ideas: [
+      "Personalized grill tool set",
+      "Cozy game-day throw blanket",
+      "Compact multi-tool for everyday fixes",
+    ],
+  },
+] as const;
+
+function LandingSampleProfiles() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (isHovered) return;
+    const id = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % SAMPLE_PROFILES.length);
+    }, 8000);
+    return () => clearInterval(id);
+  }, [isHovered]);
+
+  return (
+    <div
+      className="gp-card p-6 sm:p-8"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="space-y-5">
+        <p className="text-lg font-semibold text-gp-evergreen">
+          Make Recipient Profiles
+        </p>
+
+        <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
+          <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
+            Sample profile
+          </p>
+          <div className="relative mt-3 min-h-[130px]">
+            {SAMPLE_PROFILES.map((profile, index) => (
+              <div
+                key={profile.id}
+                className={`flex items-start gap-3 transition-opacity duration-500 ${
+                  activeIndex === index
+                    ? "opacity-100"
+                    : "pointer-events-none opacity-0"
+                } absolute inset-0`}
+              >
+                <Image
+                  src={profile.avatarSrc}
+                  alt={`${profile.name} avatar`}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
+                />
+                <div className="space-y-1">
+                  <p className="text-lg font-semibold text-gp-evergreen">
+                    {profile.name}
+                  </p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+                    {profile.relationship}
+                  </p>
+                  <p className="text-sm text-gp-evergreen/80">
+                    {profile.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
+          <PerchPalLoader
+            variant="inline"
+            size="lg"
+            message="PerchPal is fetching gift ideas..."
+          />
+        </div>
+
+        <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-5">
+          <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
+            Gift ideas
+          </p>
+          <div className="relative mt-3 min-h-[110px]">
+            {SAMPLE_PROFILES.map((profile, index) => (
+              <ul
+                key={`${profile.id}-ideas`}
+                className={`space-y-2 transition-opacity duration-500 ${
+                  activeIndex === index
+                    ? "opacity-100"
+                    : "pointer-events-none opacity-0"
+                } absolute inset-0`}
+              >
+                {profile.ideas.map((idea) => (
+                  <li
+                    key={idea}
+                    className="flex items-center gap-2 text-sm text-gp-evergreen"
+                  >
+                    <span className="inline-flex h-2 w-2 rounded-full bg-gp-gold" />
+                    {idea}
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MarketingHome() {
   return (
@@ -71,62 +213,7 @@ export default function MarketingHome() {
             </Link>
           </div>
         </div>
-        <div className="gp-card p-6 sm:p-8">
-          <div className="space-y-5">
-            <p className="text-lg font-semibold text-gp-evergreen">
-              Make Recipient Profiles
-            </p>
-            <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
-              <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
-                Sample profile
-              </p>
-              <div className="mt-3 flex items-center gap-3">
-                <Image
-                  src="/woman_icon.png"
-                  alt="Maya avatar"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
-                />
-                <div>
-                  <p className="text-lg font-semibold text-gp-evergreen">
-                    Maya
-                  </p>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                    Sister
-                  </p>
-                  <p className="text-sm text-gp-evergreen/80">
-                    Loves cozy rituals, hikes, indie bookstores. Prefers gifts
-                    under $150.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
-              <PerchPalLoader
-                variant="inline"
-                size="lg"
-                message="PerchPal is fetching gift ideas..."
-              />
-            </div>
-            <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-5">
-              <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
-                Gift ideas
-              </p>
-              <ul className="mt-3 space-y-2">
-                {sampleIdeas.map((idea) => (
-                  <li
-                    key={idea}
-                    className="flex items-center gap-2 text-sm text-gp-evergreen"
-                  >
-                    <span className="inline-flex h-2 w-2 rounded-full bg-gp-gold" />
-                    {idea}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+        <LandingSampleProfiles />
       </section>
 
       <section className="space-y-6">
@@ -174,3 +261,4 @@ export default function MarketingHome() {
     </div>
   );
 }
+ "use client";
