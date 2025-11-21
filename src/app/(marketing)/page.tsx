@@ -1,5 +1,8 @@
 "use client";
 
+// This page uses client-side hooks for the landing carousel
+// eslint-disable-next-line @next/next/no-async-client-component
+
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -76,26 +79,26 @@ function LandingSampleProfiles() {
     if (isHovered) return;
     const id = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % SAMPLE_PROFILES.length);
-    }, 8000);
+    }, 3000);
     return () => clearInterval(id);
   }, [isHovered]);
 
   return (
     <div
-      className="gp-card p-6 sm:p-8"
+      className="gp-card p-5 sm:p-7"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="space-y-5">
+      <div className="space-y-4">
         <p className="text-lg font-semibold text-gp-evergreen">
           Make Recipient Profiles
         </p>
 
-        <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-5">
+        <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
           <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
             Sample profile
           </p>
-          <div className="relative mt-3 min-h-[130px]">
+          <div className="relative mt-2 min-h-[110px]">
             {SAMPLE_PROFILES.map((profile, index) => (
               <div
                 key={profile.id}
@@ -136,15 +139,15 @@ function LandingSampleProfiles() {
           />
         </div>
 
-        <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-5">
+        <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-4">
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
             Gift ideas
           </p>
-          <div className="relative mt-3 min-h-[110px]">
+          <div className="relative mt-2 min-h-[90px]">
             {SAMPLE_PROFILES.map((profile, index) => (
               <ul
                 key={`${profile.id}-ideas`}
-                className={`space-y-2 transition-opacity duration-500 ${
+                className={`space-y-1.5 transition-opacity duration-500 ${
                   activeIndex === index
                     ? "opacity-100"
                     : "pointer-events-none opacity-0"
@@ -173,9 +176,9 @@ export default function MarketingHome() {
     <div className="mx-auto w-full max-w-5xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
       <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
         <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gp-evergreen">
-            <span>Introducing PerchPal,</span>
-            <span>Your AI gifting assistant</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-center text-xs font-medium uppercase tracking-wide text-gp-evergreen">
+            <span className="whitespace-nowrap">Introducing PerchPal,</span>
+            <span className="whitespace-nowrap">Your AI gifting assistant</span>
           </div>
           <div className="flex items-center gap-4">
             <Image
@@ -261,4 +264,3 @@ export default function MarketingHome() {
     </div>
   );
 }
- "use client";
