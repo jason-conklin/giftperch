@@ -346,6 +346,7 @@ function PerchPalAnimatedAvatar({
         alt="PerchPal mascot animation frame"
         width={size}
         height={size}
+        unoptimized
         priority
       />
       {showStatusDot ? (

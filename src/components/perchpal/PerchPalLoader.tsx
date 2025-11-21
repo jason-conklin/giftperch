@@ -77,6 +77,7 @@ export function PerchPalLoader({
         alt="PerchPal animation frame"
         width={sizeStyles.width}
         height={sizeStyles.height}
+        unoptimized
         priority
         aria-hidden="true"
       />
