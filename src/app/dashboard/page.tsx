@@ -65,7 +65,7 @@ export default function DashboardHome() {
           ))}
         </div>
         <div className="gp-card-soft flex w-full items-center gap-4">
-          <PerchPalFlyingAvatar size="md" />
+          <PerchPalFlyingAvatar size="md" className="shrink-0" />
           <div>
             <p className="text-sm font-semibold text-gp-evergreen">
               PerchPal is syncing upcoming gifting moments...
