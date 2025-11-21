@@ -159,6 +159,21 @@ const initialsFromText = (value: string) =>
     .slice(0, 2)
     .toUpperCase();
 
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    className={className}
+  >
+    <path
+      d="M4 7h16M4 12h16M4 17h16"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -407,9 +422,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </aside>
 
-      <div className="flex min-h-screen flex-col pl-20 sm:pl-24 lg:pl-28">
+      <div className="flex min-h-screen flex-col lg:pl-28">
         <div className="md:hidden">
-          <div className="flex items-center justify-between border-b border-gp-evergreen/10 bg-white/90 px-4 py-3 text-gp-evergreen shadow-sm">
+          <div className="flex items-center justify-between border-b border-gp-evergreen/20 bg-gp-evergreen px-4 py-3 text-gp-cream shadow-sm">
             <div className="flex items-center gap-3">
               <Link
                 href="/dashboard"
@@ -421,15 +436,15 @@ export function AppLayout({ children }: AppLayoutProps) {
                   alt="GiftPerch logo"
                   width={72}
                   height={72}
-                  className="h-18 w-18 rounded-full border border-gp-evergreen/20 object-cover transition hover:scale-[1.02]"
+                  className="h-18 w-18 rounded-full border border-gp-cream/40 object-cover transition hover:scale-[1.02]"
                   priority
                 />
               </Link>
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+                <p className="text-xs uppercase tracking-[0.2em] text-gp-cream/70">
                   PerchPal HQ
                 </p>
-                <p className="text-base font-semibold">Your gifting workspace</p>
+                <p className="text-base font-semibold text-gp-cream">Your gifting workspace</p>
               </div>
             </div>
             <button
@@ -437,13 +452,13 @@ export function AppLayout({ children }: AppLayoutProps) {
               aria-label="Toggle navigation"
               aria-expanded={mobileNavOpen}
               onClick={() => setMobileNavOpen((open) => !open)}
-              className="gp-secondary-button px-3 py-1 text-xs font-semibold"
+              className="inline-flex items-center justify-center rounded-full border border-gp-cream/40 bg-gp-cream/90 px-3 py-2 text-gp-evergreen shadow-sm transition hover:bg-gp-cream"
             >
-              {mobileNavOpen ? "Close" : "Menu"}
+              <MenuIcon className="h-4 w-4" />
             </button>
           </div>
           {mobileNavOpen ? (
-            <nav className="space-y-1 border-b border-gp-evergreen/10 bg-white px-4 py-4 text-sm text-gp-evergreen">
+            <nav className="space-y-1 border-b border-gp-evergreen/10 bg-gp-cream px-4 py-4 text-sm text-gp-evergreen">
               {navItems.map((item) => renderMobileNavLink(item))}
             </nav>
           ) : null}

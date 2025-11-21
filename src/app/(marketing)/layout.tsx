@@ -11,6 +11,17 @@ const navItems = [
   { label: "Blog", href: "/blog" },
 ] as const;
 
+const MenuIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
+    <path
+      d="M4 7h16M4 12h16M4 17h16"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export default function MarketingLayout({
   children,
 }: {
@@ -50,8 +61,8 @@ export default function MarketingLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-gp-cream/80 text-gp-evergreen">
-      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5 sm:px-6 lg:px-0">
+      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 pb-4 sm:px-6 lg:px-0 lg:pb-5">
           <Link
             href="/"
             className="flex items-center gap-4 rounded-full bg-white/90 px-7 py-3 text-gp-evergreen shadow-sm"
@@ -92,12 +103,12 @@ export default function MarketingLayout({
           </div>
           <button
             type="button"
-            className="rounded-full border border-gp-cream/40 px-4 py-2 text-base font-semibold text-gp-cream transition hover:bg-gp-cream/20 sm:hidden"
+            className="inline-flex items-center justify-center rounded-full border border-gp-cream/40 bg-gp-cream/90 px-3 py-2 text-gp-evergreen shadow-sm transition hover:bg-gp-cream sm:hidden"
             aria-expanded={mobileNavOpen}
-            aria-label="Toggle navigation"
+            aria-label="Toggle navigation menu"
             onClick={() => setMobileNavOpen((prev) => !prev)}
           >
-            {mobileNavOpen ? "Close" : "Menu"}
+            <MenuIcon className="h-4 w-4" />
           </button>
         </div>
         {mobileNavOpen ? (

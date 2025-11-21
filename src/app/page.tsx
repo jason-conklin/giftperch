@@ -1,3 +1,5 @@
+"use client";
+
 import MarketingHome from "./(marketing)/page";
 
 /**
