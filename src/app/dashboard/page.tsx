@@ -29,7 +29,7 @@ export default function DashboardHome() {
   const heroBanner = (
     <div className="overflow-hidden rounded-3xl">
       <Image
-        src="/giftperch_banner.png"
+        src="/GiftPerch_custom_banner.png"
         alt="GiftPerch dashboard banner"
         width={1200}
         height={260}
