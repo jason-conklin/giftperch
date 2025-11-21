@@ -11,14 +11,14 @@ type PerchPalLoaderProps = {
 };
 
 const FLYING_SEQUENCE = [
-  "/giftperch_flying_animation1.png",
-  "/giftperch_flying_animation3.png",
-  "/giftperch_flying_animation2.png",
-  "/giftperch_flying_animation3.png",
-  "/giftperch_flying_animation1.png",
-  "/giftperch_flying_animation3.png",
-  "/giftperch_flying_animation2.png",
-  "/giftperch_flying_animation3.png",
+  "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation2.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation1.PNG",
+  "/giftperch_flying_animation3.PNG",
+  "/giftperch_flying_animation2.PNG",
+  "/giftperch_flying_animation3.PNG",
 ] as const;
 
 const RETURN_SEQUENCE = [
