@@ -210,7 +210,7 @@ export function PerchPalChat() {
 
   return (
     <section className="gp-card flex flex-col gap-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3 sm:gap-4">
           <PerchPalFlyingAvatar size="md" />
           <div className="space-y-0.5">
