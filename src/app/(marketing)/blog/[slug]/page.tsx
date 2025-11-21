@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -10,6 +11,10 @@ const posts = {
       published: "Updated 2025",
       readingTime: "4 min read",
       category: "Thoughtful gifting",
+    },
+    coverImage: {
+      src: "/blog/ai-gift-generator-hero.png",
+      alt: "Illustration of the GiftPerch bird and a gift box surrounded by abstract icons representing different hobbies, symbolizing AI-powered gift ideas.",
     },
     sections: [
       {
@@ -44,6 +49,10 @@ const posts = {
       readingTime: "3 min read",
       category: "Practical gifting",
     },
+    coverImage: {
+      src: "/blog/gifts-for-busy-professionals-hero.png",
+      alt: "Illustration of a laptop, calendar, coffee cup, and gift box on a tidy desk, representing thoughtful gifts for busy professionals.",
+    },
     sections: [
       {
         heading: "Design gifts that create breathing room",
@@ -76,6 +85,10 @@ const posts = {
       published: "Updated 2025",
       readingTime: "3 min read",
       category: "Recipient profiles",
+    },
+    coverImage: {
+      src: "/blog/recipient-profiles-hero.png",
+      alt: "Stylized cards with profile avatars, tags, and gift icons arranged like a simple CRM board, representing GiftPerch recipient profiles.",
     },
     sections: [
       {
@@ -137,12 +150,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     readingTime: "3 min read",
     category: "GiftPerch Journal",
   };
+  const coverImage = post.coverImage;
 
   return (
     <section className="py-8 sm:py-10 lg:py-12">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
         <div className="w-full space-y-6 lg:max-w-3xl">
-          <header className="space-y-3 rounded-3xl border border-gp-evergreen/10 bg-gp-cream/80 p-6 shadow-sm lg:p-8">
+          <header className="space-y-3 rounded-3xl border border-gp-evergreen/10 bg-white/95 p-6 shadow-sm lg:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.35em] text-gp-evergreen/60">
               GiftPerch Journal
             </p>
@@ -151,16 +165,30 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </h1>
             <p className="text-base text-gp-evergreen/80">{post.intro}</p>
             <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-              <span className="rounded-full border border-gp-evergreen/15 bg-white/70 px-3 py-1">
+              <span className="rounded-full border border-gp-evergreen/20 bg-gp-cream/70 px-3 py-1">
                 {meta.published}
               </span>
-              <span className="rounded-full border border-gp-evergreen/15 bg-white/70 px-3 py-1">
+              <span className="rounded-full border border-gp-evergreen/20 bg-gp-cream/70 px-3 py-1">
                 {meta.readingTime}
               </span>
               <span className="rounded-full border border-gp-gold/40 bg-gp-gold/20 px-3 py-1 text-gp-evergreen">
                 {meta.category}
               </span>
             </div>
+
+            {coverImage ? (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-gp-evergreen/10 bg-white shadow-sm">
+                <div className="relative aspect-[16/9] w-full">
+                  <Image
+                    src={coverImage.src}
+                    alt={coverImage.alt}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </div>
+            ) : null}
           </header>
 
           <ArticleBody sections={post.sections} />
@@ -186,7 +214,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </Link>
           </div>
 
-          <div className="rounded-3xl border border-gp-evergreen/15 bg-gp-cream/80 p-5 shadow-sm">
+          <div className="rounded-3xl border border-gp-evergreen/15 bg-gp-gold/70 p-5 shadow-sm">
             <p className="text-sm font-semibold text-gp-evergreen">
               Ready to try GiftPerch?
             </p>

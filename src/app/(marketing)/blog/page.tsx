@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const blogPosts = [
@@ -6,18 +7,30 @@ const blogPosts = [
     title: "AI gift generator for hard-to-shop-for people",
     description:
       "How GiftPerch helps with people who are impossible to shop for, using AI and profiles.",
+    coverImage: {
+      src: "/blog/ai-gift-generator-hero.png",
+      alt: "Illustration of the GiftPerch bird and a gift box surrounded by abstract icons representing different hobbies, symbolizing AI-powered gift ideas.",
+    },
   },
   {
     slug: "gift-ideas-for-busy-professionals",
     title: "Gift ideas for busy professionals",
     description:
       "What to buy for the friend or partner whose calendar is always packed — without defaulting to another mug.",
+    coverImage: {
+      src: "/blog/gifts-for-busy-professionals-hero.png",
+      alt: "Illustration of a laptop, calendar, coffee cup, and gift box on a tidy desk, representing thoughtful gifts for busy professionals.",
+    },
   },
   {
     slug: "how-to-use-recipient-profiles-to-avoid-bad-gifts",
     title: "How to use recipient profiles to avoid bad gifts",
     description:
       "Make GiftPerch your gift CRM by logging budgets, misfires, and hints so you never repeat mistakes.",
+    coverImage: {
+      src: "/blog/recipient-profiles-hero.png",
+      alt: "Stylized cards with profile avatars, tags, and gift icons arranged like a simple CRM board, representing GiftPerch recipient profiles.",
+    },
   },
 ] as const;
 
@@ -44,7 +57,23 @@ export default function BlogIndexPage() {
               key={post.slug}
               className="gp-card flex h-full flex-col justify-between gap-3"
             >
-              <div>
+              <div className="space-y-3">
+                {post.coverImage ? (
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="block overflow-hidden rounded-2xl border border-gp-evergreen/10 bg-white shadow-sm transition hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] w-full">
+                      <Image
+                        src={post.coverImage.src}
+                        alt={post.coverImage.alt}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    </div>
+                  </Link>
+                ) : null}
                 <h2 className="text-xl font-semibold text-gp-evergreen">
                   {post.title}
                 </h2>
