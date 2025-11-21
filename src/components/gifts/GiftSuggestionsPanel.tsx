@@ -794,7 +794,7 @@ export function GiftSuggestionsPanel() {
                     onClick={() =>
                       setRecipientMenuOpen((previous) => !previous)
                     }
-                    className="flex w-full items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+                    className="flex w-full items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
                   >
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-sm font-semibold text-gp-evergreen">
                       {(() => {
