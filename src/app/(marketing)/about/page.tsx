@@ -22,16 +22,14 @@ const features = [
 export default function AboutPage() {
   return (
     <div className="space-y-10">
-      <section className="gp-card overflow-hidden">
-        <Image
-          src="/giftperch_banner.png"
-          alt="GiftPerch banner"
-          width={1200}
-          height={400}
-          className="h-auto w-full rounded-3xl object-cover"
-          priority
-        />
-      </section>
+      <Image
+        src="/GiftPerch_custom_banner.png"
+        alt="GiftPerch banner"
+        width={1200}
+        height={400}
+        className="h-auto w-full rounded-3xl object-cover"
+        priority
+      />
 
       <section className="space-y-4">
         <div className="space-y-2">
