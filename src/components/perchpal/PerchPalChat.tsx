@@ -353,14 +353,14 @@ export function PerchPalChat() {
 
       {isExpanded ? (
         <div
-          className="fixed inset-0 z-[80] flex min-h-screen w-full flex-col bg-gp-cream transition-opacity duration-200 md:bg-black/40 md:backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex min-h-dvh w-full flex-col overflow-y-auto bg-gp-cream transition-opacity duration-200 md:bg-black/40 md:backdrop-blur-sm"
           onClick={() => setIsExpanded(false)}
         >
           <div
-            className="flex h-full min-h-screen w-full flex-col md:items-center md:justify-center"
+            className="flex min-h-dvh w-full flex-col md:items-center md:justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative flex h-full w-full flex-col bg-gp-cream md:h-[90vh] md:max-w-3xl md:overflow-hidden md:rounded-3xl md:border md:border-gp-evergreen/15 md:shadow-xl">
+            <div className="relative mx-auto flex h-full min-h-dvh w-full flex-col bg-gp-cream md:h-[90vh] md:max-w-3xl md:overflow-hidden md:rounded-3xl md:border md:border-gp-evergreen/15 md:shadow-xl">
               <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gp-evergreen/10 px-4 py-3 sm:px-6">
                 <div className="flex items-center gap-3 sm:gap-4">
                   <PerchPalFlyingAvatar size="md" />
@@ -396,8 +396,8 @@ export function PerchPalChat() {
                 </button>
               </div>
 
-              <div className="flex flex-1 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
-                {renderMessagesArea("flex-1 overscroll-y-contain overflow-y-auto")}
+              <div className="flex flex-1 min-h-0 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
+                {renderMessagesArea("flex-1 min-h-0 overscroll-y-contain overflow-y-auto")}
                 {renderInputArea(
                   "perchpal-input-expanded",
                   "border-t border-gp-evergreen/10 pt-3",
