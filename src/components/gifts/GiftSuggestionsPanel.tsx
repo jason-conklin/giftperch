@@ -1027,7 +1027,7 @@ export function GiftSuggestionsPanel() {
                 <button
                   type="submit"
                   disabled={!selectedRecipientId}
-                  className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                  className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   Ask PerchPal for suggestions
                 </button>

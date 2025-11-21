@@ -280,7 +280,7 @@ export function PerchPalChat() {
       <button
         type="submit"
         disabled={isSending || !input.trim()}
-        className="gp-primary-button w-full sm:w-auto transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md disabled:hover:translate-y-0 disabled:hover:shadow-none"
+        className="gp-primary-button w-full sm:w-auto cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
       >
         Send
       </button>
