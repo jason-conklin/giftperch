@@ -61,7 +61,7 @@ export default function MarketingHome() {
               href="/auth/signup"
               className="rounded-full bg-gp-gold px-14 py-4 text-center text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
             >
-              Get Started
+              Sign Up / Login
             </Link>
             <Link
               href="/about"

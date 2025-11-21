@@ -81,13 +81,13 @@ export default function MarketingLayout({
               href="/auth/login"
               className="rounded-full border border-gp-cream/40 bg-white/90 px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
             >
-              Sign in
+              Login
             </Link>
             <Link
               href="/auth/signup"
               className="rounded-full bg-gp-gold px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
             >
-              Get started
+              Sign Up
             </Link>
           </div>
           <button
