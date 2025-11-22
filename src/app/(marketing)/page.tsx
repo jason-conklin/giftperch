@@ -265,6 +265,29 @@ export default function MarketingHome() {
         </div>
       </section>
 
+      <div className="mt-8 mb-4 md:hidden">
+        <div className="flex items-center gap-3 rounded-2xl border border-gp-gold/40 bg-gp-cream/95 px-4 py-3 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-gp-cream">
+            <Image
+              src="/giftperch_favicon.png"
+              alt="GiftPerch app icon"
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gp-evergreen">
+              Mobile app coming soon!
+            </p>
+            <p className="mt-0.5 text-xs text-gp-evergreen/80">
+              Optimized for phones today. Native app experience planned as GiftPerch
+              grows.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <section className="gp-card border-dashed border-gp-gold/50 bg-gp-cream/70 text-center text-sm text-gp-evergreen/80">
         Coming soon: success stories and favorite gift combinations from real
         GiftPerch families, couples, and teams.
