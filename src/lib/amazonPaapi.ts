@@ -88,7 +88,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
     title: "",
     imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
-    priceDisplay: "",
+    priceDisplay: "Amazon.com",
     currency: "USD",
     primeEligible: false,
   },
