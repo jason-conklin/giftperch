@@ -354,7 +354,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                             >
                               {year}
                               {viewYear === year ? (
-                                <span className="text-gp-gold">â¦¿</span>
+                                <span className="text-gp-gold"></span>
                               ) : null}
                             </button>
                           </li>
@@ -551,9 +551,11 @@ const formatGiftBudgetRange = (
   min: number | null,
   max: number | null,
 ): string | null => {
-  if (min && max) return `${formatCurrency(min)}ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚ÂƒÃƒÂƒÃ‚Â‚ÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â€ÃƒÂ‚Ã‚ÂšÃƒÂƒÃ‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚Â…ÃƒÂ‚Ã‚Â“${formatCurrency(max)}`;
-  if (min) return `From ${formatCurrency(min)}`;
-  if (max) return `Up to ${formatCurrency(max)}`;
+  if (min !== null && max !== null) {
+    return `${formatCurrency(min)} – ${formatCurrency(max)}`;
+  }
+  if (min !== null) return `From ${formatCurrency(min)}`;
+  if (max !== null) return `Up to ${formatCurrency(max)}`;
   return null;
 };
 
@@ -1228,8 +1230,9 @@ export function RecipientsManager() {
                 className="text-[10px] font-semibold uppercase tracking-wide text-gp-evergreen/70 transition hover:text-gp-evergreen"
                 aria-label={`Remove ${interest.label}`}
               >
-                ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚ÂƒÃƒÂƒÃ‚Â†ÃƒÂ‚Ã‚Â’ÃƒÂƒÃ‚ÂƒÃƒÂ‚Ã‚Â¢ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â‚ÃƒÂ‚Ã‚Â¬ÃƒÂƒÃ‚Â¢ÃƒÂ‚Ã‚Â€ÃƒÂ‚Ã‚Â
+                ×
               </button>
+
             </span>
           ))}
           {tags.length === 0 && (
@@ -1416,7 +1419,7 @@ export function RecipientsManager() {
                 {recipient.birthday && (
                   <div className="flex justify-between">
                     <dt className="font-semibold">Birthday</dt>
-                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "â€”"}</dd>
+                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "—"}</dd>
                   </div>
                 )}
               </dl>
