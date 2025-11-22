@@ -1326,7 +1326,7 @@ export function RecipientsManager() {
             onClick={openCreateForm}
             className="mt-4 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
           >
-            Add your first recipient
+            Create a new recipient profile
           </button>
         </div>
       ) : (

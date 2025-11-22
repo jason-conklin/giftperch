@@ -8,7 +8,7 @@ import { AdminMetrics } from "./AdminMetrics";
 const actions = [
   {
     href: "/recipients",
-    title: "Add your first recipient",
+    title: "Create a new recipient profile",
     description:
       "Capture personality traits, budgets, occasions, and shared history.",
   },
