@@ -240,7 +240,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gp-evergreen">Birthday</label>
+      <label className="text-sm font-medium text-gp-cream">Birthday</label>
       <div className="relative">
         <input
           type="text"
@@ -374,7 +374,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
                 </button>
               ) : null}
             </div>
-            <div className="grid grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+            <div className="grid grid-cols-7 gap-1 text-xs font-semibold uppercase tracking-wide text-gp-cream/80">
               {WEEKDAYS.map((weekday) => (
                 <span key={weekday} className="text-center">
                   {weekday}
@@ -1687,7 +1687,7 @@ export function RecipientsManager() {
             className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-white/80 px-5 py-4">
+            <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
               <div>
                 <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
                   {formMode === "create" ? "New recipient" : "Edit recipient"}
@@ -1888,7 +1888,7 @@ export function RecipientsManager() {
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, name: event.target.value }))
                   }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                 />
               </div>
 
@@ -1945,7 +1945,7 @@ export function RecipientsManager() {
                           }))
                         }
                         placeholder="e.g., College mentor"
-                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                       />
                     </div>
                   )}
@@ -1966,7 +1966,7 @@ export function RecipientsManager() {
                             petType: event.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                       >
                         <option value="">Select pet type</option>
                         {PET_TYPES.map((type) => (
