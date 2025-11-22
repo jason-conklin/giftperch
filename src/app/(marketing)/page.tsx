@@ -12,7 +12,7 @@ const steps = [
       "Build a reusable Gift CRM with interests, budgets, occasions, and preferences.",
   },
   {
-    title: "Ask PerchPal",
+    title: "Ask PerchPal for Gift Ideas",
     description:
       "Give PerchPal a vibe, budget, or occasion and get curated suggestions with rationale.",
   },

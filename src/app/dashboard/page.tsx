@@ -3,6 +3,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
 import { PerchPalFlyingAvatar } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
+import { AdminMetrics } from "./AdminMetrics";
 
 const actions = [
   {
@@ -76,6 +77,7 @@ export default function DashboardHome() {
             </p>
           </div>
         </div>
+        <AdminMetrics />
       </section>
     </PageShell>
   );
