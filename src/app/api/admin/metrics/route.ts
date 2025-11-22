@@ -12,8 +12,43 @@ async function countTable(
   const { count, error } = await supabase
     .from(table)
     .select("*", { count: "exact", head: true });
-  if (error) return null;
+  if (error) throw error;
   return count ?? 0;
+}
+
+async function countUsersAdmin(
+  supabase: ReturnType<typeof getSupabaseServerClient>,
+) {
+  // Try direct auth.users count first
+  try {
+    const { count, error } = await supabase
+      .schema("auth")
+      .from("users")
+      .select("*", { count: "exact", head: true });
+    if (!error && typeof count === "number") {
+      return count;
+    }
+  } catch {
+    // fall back
+  }
+
+  // Fallback: paginate GoTrue admin users
+  let page = 1;
+  const perPage = 1000;
+  let total = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+    if (error) throw error;
+    const count = data?.users?.length ?? 0;
+    total += count;
+    if (count < perPage) break;
+    page += 1;
+  }
+  return total;
 }
 
 export async function GET(request: Request) {
@@ -39,32 +74,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const usersCount = await (async () => {
-    const { count, error } = await supabase
-      .schema("auth")
-      .from("users")
-      .select("*", { count: "exact", head: true });
-    if (error) return null;
-    return count ?? 0;
-  })();
+  try {
+    const users = await countUsersAdmin(supabase);
+    const recipientProfiles = await countTable(supabase, "recipient_profiles");
+    const wishlistItems = await countTable(supabase, "wishlist_items");
 
-  const recipientProfiles = await countTable(supabase, "recipient_profiles");
-  const wishlistItems = await countTable(supabase, "wishlist_items");
-
-  const suggestionTables = ["gift_suggestions", "ai_interactions", "ai_interaction_logs"];
-  let giftSuggestions: number | null = null;
-  for (const table of suggestionTables) {
-    const val = await countTable(supabase, table);
-    if (val !== null) {
-      giftSuggestions = val;
-      break;
+    const suggestionTables = ["gift_suggestions", "ai_interactions", "ai_interaction_logs"];
+    let giftSuggestions: number | null = null;
+    for (const table of suggestionTables) {
+      try {
+        giftSuggestions = await countTable(supabase, table);
+        break;
+      } catch {
+        // try next table
+      }
     }
-  }
 
-  return NextResponse.json({
-    users: usersCount ?? 0,
-    recipientProfiles: recipientProfiles ?? 0,
-    giftSuggestions: giftSuggestions ?? 0,
-    wishlistItems: wishlistItems ?? 0,
-  });
+    return NextResponse.json({
+      users,
+      recipientProfiles,
+      giftSuggestions: giftSuggestions ?? 0,
+      wishlistItems,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load metrics";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
