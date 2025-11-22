@@ -7,6 +7,7 @@ import {
   OccasionsCalendar,
   type OccasionEvent,
 } from "@/components/occasions/OccasionsCalendar";
+import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
 
 type RecipientOption = {
   id: string;
@@ -210,6 +211,12 @@ export function OccasionsManager() {
   const calendarEvents = useMemo<OccasionEvent[]>(() => {
     const currentYear = new Date().getFullYear();
     const mapped: OccasionEvent[] = [];
+    const years = Array.from({ length: 11 }, (_v, i) => currentYear - 5 + i);
+
+    years.forEach((year) => {
+      const holidays = getDefaultUsHolidaysForYear(year);
+      holidays.forEach((h) => mapped.push(h));
+    });
 
     recipients.forEach((recipient) => {
       if (!recipient.birthday) return;

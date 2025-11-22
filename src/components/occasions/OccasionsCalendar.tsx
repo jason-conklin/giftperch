@@ -24,6 +24,7 @@ export type OccasionEvent = {
   title: string;
   type: "birthday" | "anniversary" | "holiday" | "custom";
   recipientName?: string;
+  isGlobal?: boolean;
 };
 
 type CalendarDay = {
@@ -283,9 +284,14 @@ export function OccasionsCalendar({
                   {eventsToShow.map((event) => (
                     <span
                       key={event.id}
-                      className={`truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ${eventTypeStyles[event.type].chip}`}
+                      className={`truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        event.isGlobal && event.type === "holiday"
+                          ? "bg-gp-gold/30 text-gp-evergreen border border-gp-gold/50"
+                          : eventTypeStyles[event.type].chip
+                      }`}
                     >
                       {event.title}
+                      {event.isGlobal ? " • Holiday" : ""}
                     </span>
                   ))}
                   {extraCount > 0 ? (
@@ -322,13 +328,24 @@ export function OccasionsCalendar({
                   <p className="text-sm font-semibold text-gp-evergreen">
                     {event.title}
                   </p>
-                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${eventTypeStyles[event.type].chip}`}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                      event.isGlobal && event.type === "holiday"
+                        ? "bg-gp-gold/30 text-gp-evergreen border border-gp-gold/50"
+                        : eventTypeStyles[event.type].chip
+                    }`}
+                  >
                     {eventTypeStyles[event.type].label}
                   </span>
                 </div>
                 {event.recipientName ? (
                   <p className="text-xs text-gp-evergreen/70">
                     {event.recipientName}
+                  </p>
+                ) : null}
+                {event.isGlobal ? (
+                  <p className="text-[11px] uppercase tracking-wide text-gp-evergreen/60">
+                    Global holiday (U.S.)
                   </p>
                 ) : null}
                 <p className="text-xs text-gp-evergreen/60">
