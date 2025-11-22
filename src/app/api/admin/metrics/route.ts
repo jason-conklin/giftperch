@@ -36,8 +36,8 @@ async function countUsersAdmin(
   let page = 1;
   const perPage = 1000;
   let total = 0;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  let hasMore = true;
+  while (hasMore) {
     const { data, error } = await supabase.auth.admin.listUsers({
       page,
       perPage,
@@ -45,8 +45,10 @@ async function countUsersAdmin(
     if (error) throw error;
     const count = data?.users?.length ?? 0;
     total += count;
-    if (count < perPage) break;
-    page += 1;
+    hasMore = count >= perPage;
+    if (hasMore) {
+      page += 1;
+    }
   }
   return total;
 }

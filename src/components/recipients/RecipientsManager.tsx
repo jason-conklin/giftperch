@@ -248,7 +248,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
           placeholder="mm/dd/yyyy"
           value={manualInput}
           onChange={(event) => handleManualInputChange(event.target.value)}
-          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 pr-10 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+          className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 pr-10 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
           onFocus={() => setOpen(false)}
         />
         <button
@@ -1689,10 +1689,10 @@ export function RecipientsManager() {
           >
             <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
               <div>
-                <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+                <p className="text-sm uppercase tracking-wide text-gp-cream/80">
                   {formMode === "create" ? "New recipient" : "Edit recipient"}
                 </p>
-                <h2 className="text-2xl font-semibold text-gp-evergreen">
+                <h2 className="text-2xl font-semibold text-gp-cream">
                   {formMode === "create"
                     ? "Add a recipient profile"
                     : `Update ${activeRecipient?.name ?? "recipient"}`}
@@ -1701,7 +1701,7 @@ export function RecipientsManager() {
               <button
                 type="button"
                 onClick={() => closeForm()}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-evergreen/30 text-gp-evergreen transition hover:bg-gp-cream/80"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/50 text-gp-cream transition hover:bg-white/15"
                 aria-label="Close recipient form"
               >
                 <svg
@@ -1917,7 +1917,7 @@ export function RecipientsManager() {
                             : "",
                       }))
                     }
-                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                   >
                     <option value="">Select relationship</option>
                     {RELATIONSHIP_OPTIONS.map((option) => (
@@ -1994,7 +1994,7 @@ export function RecipientsManager() {
                         gender: event.target.value,
                       }))
                     }
-                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                   >
                     {GENDER_OPTIONS.map((option) => (
                       <option key={option.label} value={option.value}>
@@ -2039,7 +2039,7 @@ export function RecipientsManager() {
                           annualBudget: event.target.value,
                         }))
                       }
-                      className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                      className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2065,7 +2065,7 @@ export function RecipientsManager() {
                               giftBudgetMin: event.target.value,
                             }))
                           }
-                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                         />
                       </div>
                       <div className="space-y-1">
@@ -2084,7 +2084,7 @@ export function RecipientsManager() {
                               giftBudgetMax: event.target.value,
                             }))
                           }
-                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                         />
                       </div>
                     </div>
@@ -2107,7 +2107,7 @@ export function RecipientsManager() {
                   onChange={(event) =>
                     setFormState((prev) => ({ ...prev, notes: event.target.value }))
                   }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                 />
               </div>
 
@@ -2146,5 +2146,3 @@ export function RecipientsManager() {
     </div>
   );
 }
-
-
