@@ -85,7 +85,7 @@ const HOST_BY_REGION: Record<string, { host: string; marketplace: string }> = {
 const MOCK_PRODUCTS: AmazonProduct[] = [
   {
     asin: "MOCK-COFFEE-BOX",
-    title: "Premium Coffee Ritual Gift Box",
+    title: "",
     imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$42.00",
@@ -94,7 +94,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   },
   {
     asin: "MOCK-CANDLE",
-    title: "Evergreen Grove Candle Duo",
+    title: "",
     imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$28.50",
@@ -103,7 +103,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   },
   {
     asin: "MOCK-TEA-SET",
-    title: "Handcrafted Ceramic Tea Service",
+    title: "",
     imageUrl: "/gift_placeholder_img.png",
     detailPageUrl: null,
     priceDisplay: "$65.00",
