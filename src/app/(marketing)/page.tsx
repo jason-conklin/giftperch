@@ -227,7 +227,7 @@ export default function MarketingHome() {
               href="/about"
               className="rounded-full bg-gp-evergreen px-10 py-4 text-center text-base font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
             >
-              See how it works
+              More Info ➞
             </Link>
           </div>
         </div>
