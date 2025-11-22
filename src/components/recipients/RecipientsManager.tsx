@@ -686,6 +686,7 @@ export function RecipientsManager() {
   const [avatarOptionsVisible, setAvatarOptionsVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const recipientFormDialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (selectedRecipient) {
@@ -747,6 +748,25 @@ export function RecipientsManager() {
       previousActiveElement?.focus();
     };
   }, [selectedRecipient]);
+
+  useEffect(() => {
+    if (!isFormOpen) {
+      return undefined;
+    }
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeForm();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFormOpen]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -1655,447 +1675,474 @@ export function RecipientsManager() {
         </div>
       ) : null}
 
-      {isFormOpen && (
-        <div className="rounded-3xl border border-gp-evergreen/20 bg-white/95 p-6 shadow-lg">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-                {formMode === "create" ? "New recipient" : "Edit recipient"}
-              </p>
-              <h2 className="text-2xl font-semibold text-gp-evergreen">
-                {formMode === "create"
-                  ? "Add a recipient profile"
-                  : `Update ${activeRecipient?.name ?? "recipient"}`}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => closeForm()}
-              className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
-            >
-              Close
-            </button>
-          </div>
-
-          <form className="mt-6 space-y-4" onSubmit={handleFormSubmit}>
-            <div className="space-y-4 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-lg font-semibold text-gp-evergreen">
-                    {formState.avatar_url ? (
-                      <Image
-                        src={formState.avatar_url}
-                        alt={`${formState.name || "Recipient"} photo`}
-                        width={64}
-                        height={64}
-                        className="h-full w-full object-cover"
-                        unoptimized
-                      />
-                    ) : selectedPresetIcon ? (
-                      <Image
-                        src={selectedPresetIcon.image}
-                        alt={selectedPresetIcon.label}
-                        width={48}
-                        height={48}
-                        className="h-12 w-12 object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      getInitials(formState.name || "Recipient")
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gp-evergreen">
-                      Recipient photo
-                    </p>
-                    <p className="text-xs text-gp-evergreen/60">
-                      Optional. Helps PerchPal feel more personal.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                    {(formState.avatar_url || formState.avatar_icon) && (
-                      <button
-                        type="button"
-                        className="text-xs font-semibold text-red-600"
-                        onClick={() =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            avatar_url: "",
-                            avatar_icon: "",
-                          }))
-                        }
-                      >
-                        Remove
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="gp-secondary-button"
-                      onClick={() =>
-                        setAvatarOptionsVisible((visible) => !visible)
-                      }
-                    >
-                      {avatarOptionsVisible ? "Hide avatar options" : "Change avatar"}
-                    </button>
-                  </div>
-                  {!avatarOptionsVisible ? (
-                    <p className="text-xs text-gp-evergreen/60">
-                      Upload a photo or choose from preset icons.
-                    </p>
-                  ) : null}
-                </div>
+{isFormOpen ? (
+        <div
+          className="fixed inset-0 z-[180] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => closeForm()}
+        >
+          <div
+            ref={recipientFormDialogRef}
+            className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-white/80 px-5 py-4">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
+                  {formMode === "create" ? "New recipient" : "Edit recipient"}
+                </p>
+                <h2 className="text-2xl font-semibold text-gp-evergreen">
+                  {formMode === "create"
+                    ? "Add a recipient profile"
+                    : `Update ${activeRecipient?.name ?? "recipient"}`}
+                </h2>
               </div>
-              {avatarOptionsVisible ? (
-                <div className="space-y-4 border-t border-gp-evergreen/20 pt-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <input
-                      ref={recipientAvatarInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleRecipientAvatarUpload}
-                    />
-                    <button
-                      type="button"
-                      className="gp-secondary-button"
-                      onClick={() => recipientAvatarInputRef.current?.click()}
-                      disabled={avatarUploading}
-                    >
-                      {avatarUploading ? "Uploading..." : "Upload photo"}
-                    </button>
-                    {formState.avatar_url ? (
+              <button
+                type="button"
+                onClick={() => closeForm()}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-evergreen/30 text-gp-evergreen transition hover:bg-gp-cream/80"
+                aria-label="Close recipient form"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <form
+              className="flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-4 sm:px-6"
+              onSubmit={handleFormSubmit}
+            >
+              <div className="space-y-4 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-lg font-semibold text-gp-evergreen">
+                      {formState.avatar_url ? (
+                        <Image
+                          src={formState.avatar_url}
+                          alt={`${formState.name || "Recipient"} photo`}
+                          width={64}
+                          height={64}
+                          className="h-full w-full object-cover"
+                          unoptimized
+                        />
+                      ) : selectedPresetIcon ? (
+                        <Image
+                          src={selectedPresetIcon.image}
+                          alt={selectedPresetIcon.label}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        getInitials(formState.name || "Recipient")
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gp-evergreen">
+                        Recipient photo
+                      </p>
+                      <p className="text-xs text-gp-evergreen/60">
+                        Optional. Helps PerchPal feel more personal.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                      {(formState.avatar_url || formState.avatar_icon) && (
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-red-600"
+                          onClick={() =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              avatar_url: "",
+                              avatar_icon: "",
+                            }))
+                          }
+                        >
+                          Remove
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="text-xs font-semibold text-red-600"
+                        className="gp-secondary-button"
                         onClick={() =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            avatar_url: "",
-                          }))
+                          setAvatarOptionsVisible((visible) => !visible)
                         }
                       >
-                        Remove photo
+                        {avatarOptionsVisible ? "Hide avatar options" : "Change avatar"}
                       </button>
+                    </div>
+                    {!avatarOptionsVisible ? (
+                      <p className="text-xs text-gp-evergreen/60">
+                        Upload a photo or choose from preset icons.
+                      </p>
                     ) : null}
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {PRESET_AVATAR_OPTIONS.map((option) => {
-                      const selected = formState.avatar_icon === option.key;
-                      return (
+                </div>
+                {avatarOptionsVisible ? (
+                  <div className="space-y-4 border-t border-gp-evergreen/20 pt-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <input
+                        ref={recipientAvatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleRecipientAvatarUpload}
+                      />
+                      <button
+                        type="button"
+                        className="gp-secondary-button"
+                        onClick={() => recipientAvatarInputRef.current?.click()}
+                        disabled={avatarUploading}
+                      >
+                        {avatarUploading ? "Uploading..." : "Upload photo"}
+                      </button>
+                      {formState.avatar_url ? (
                         <button
-                          key={option.key}
                           type="button"
-                          aria-pressed={selected}
-                          title={option.label}
-                      onClick={() => {
-                        setFormState((prev) => ({
-                          ...prev,
-                          avatar_icon: option.key,
-                          avatar_url: "",
-                        }));
-                        setAvatarOptionsVisible(false);
-                      }}
-                          className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
-                            selected
-                              ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
-                              : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
-                          }`}
+                          className="text-xs font-semibold text-red-600"
+                          onClick={() =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              avatar_url: "",
+                            }))
+                          }
                         >
-                          <span
-                            className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                              selected ? "bg-white/10" : "bg-gp-cream"
+                          Remove photo
+                        </button>
+                      ) : null}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {PRESET_AVATAR_OPTIONS.map((option) => {
+                        const selected = formState.avatar_icon === option.key;
+                        return (
+                          <button
+                            key={option.key}
+                            type="button"
+                            aria-pressed={selected}
+                            title={option.label}
+                            onClick={() => {
+                              setFormState((prev) => ({
+                                ...prev,
+                                avatar_icon: option.key,
+                                avatar_url: "",
+                              }));
+                              setAvatarOptionsVisible(false);
+                            }}
+                            className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
+                              selected
+                                ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
+                                : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
                             }`}
                           >
-                            <Image
-                              src={option.image}
-                              alt={option.label}
-                              width={48}
-                              height={48}
-                              className="h-10 w-10 object-contain"
-                              unoptimized
-                            />
-                          </span>
-                          <span className="mt-2 text-[11px] uppercase tracking-wide">
-                            {option.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+                            <span
+                              className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                                selected ? "bg-white/10" : "bg-gp-cream"
+                              }`}
+                            >
+                              <Image
+                                src={option.image}
+                                alt={option.label}
+                                width={48}
+                                height={48}
+                                className="h-10 w-10 object-contain"
+                                unoptimized
+                              />
+                            </span>
+                            <span className="mt-2 text-[11px] uppercase tracking-wide">
+                              {option.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="recipient-name"
-                className="text-sm font-medium text-gp-evergreen"
-              >
-                Name*
-              </label>
-              <input
-                id="recipient-name"
-                type="text"
-                required
-                value={formState.name}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, name: event.target.value }))
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label
-                  htmlFor="relationship"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Relationship
-                </label>
-                <select
-                  id="relationship"
-                  value={formState.relationshipOption}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      relationshipOption: event.target.value,
-                      customRelationship:
-                        event.target.value === OTHER_RELATIONSHIP
-                          ? prev.customRelationship
-                          : "",
-                      petType:
-                        event.target.value === PET_RELATIONSHIP
-                          ? prev.petType
-                          : "",
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  <option value="">Select relationship</option>
-                  {RELATIONSHIP_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                {formState.relationshipOption === OTHER_RELATIONSHIP && (
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="custom-relationship"
-                      className="text-xs font-medium text-gp-evergreen/80"
-                    >
-                      Custom relationship
-                    </label>
-                    <input
-                      id="custom-relationship"
-                      type="text"
-                      value={formState.customRelationship}
-                      onChange={(event) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          customRelationship: event.target.value,
-                        }))
-                      }
-                      placeholder="e.g., College mentor"
-                      className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                    />
-                  </div>
-                )}
-                {formState.relationshipOption === PET_RELATIONSHIP && (
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="pet-type"
-                      className="text-xs font-medium text-gp-evergreen/80"
-                    >
-                      Pet type
-                    </label>
-                    <select
-                      id="pet-type"
-                      value={formState.petType}
-                      onChange={(event) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          petType: event.target.value,
-                        }))
-                      }
-                      className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                    >
-                      <option value="">Select pet type</option>
-                      {PET_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                ) : null}
               </div>
+
               <div className="space-y-2">
                 <label
-                  htmlFor="gender"
+                  htmlFor="recipient-name"
                   className="text-sm font-medium text-gp-evergreen"
                 >
-                  Gender
+                  Name*
                 </label>
-                <select
-                  id="gender"
-                  value={formState.gender}
+                <input
+                  id="recipient-name"
+                  type="text"
+                  required
+                  value={formState.name}
                   onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      gender: event.target.value,
-                    }))
+                    setFormState((prev) => ({ ...prev, name: event.target.value }))
                   }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  {GENDER_OPTIONS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                />
               </div>
-            </div>
 
-            <BirthdayField key={formState.birthday || "empty-birthday"}
-              value={formState.birthday}
-              onChange={(nextValue) =>
-                setFormState((prev) => ({ ...prev, birthday: nextValue }))
-              }
-              approxAge={approxAge}
-            />
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <label
-                  htmlFor="annual-budget"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Yearly budget (optional)
-                </label>
-                <div className="mt-1.5 space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                    Approximately
-                  </p>
-                  <input
-                    id="annual-budget"
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    placeholder="250"
-                    value={formState.annualBudget}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="relationship"
+                    className="text-sm font-medium text-gp-evergreen"
+                  >
+                    Relationship
+                  </label>
+                  <select
+                    id="relationship"
+                    value={formState.relationshipOption}
                     onChange={(event) =>
                       setFormState((prev) => ({
                         ...prev,
-                        annualBudget: event.target.value,
+                        relationshipOption: event.target.value,
+                        customRelationship:
+                          event.target.value === OTHER_RELATIONSHIP
+                            ? prev.customRelationship
+                            : "",
+                        petType:
+                          event.target.value === PET_RELATIONSHIP
+                            ? prev.petType
+                            : "",
                       }))
                     }
                     className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-gp-evergreen">
-                  Typical per-gift range (optional)
-                </label>
-                <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-white/40 p-3">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                        Minimum
-                      </p>
+                  >
+                    <option value="">Select relationship</option>
+                    {RELATIONSHIP_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  {formState.relationshipOption === OTHER_RELATIONSHIP && (
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="custom-relationship"
+                        className="text-xs font-medium text-gp-evergreen/80"
+                      >
+                        Custom relationship
+                      </label>
                       <input
-                        type="number"
-                        min="0"
-                        inputMode="numeric"
-                        placeholder="25"
-                        value={formState.giftBudgetMin}
+                        id="custom-relationship"
+                        type="text"
+                        value={formState.customRelationship}
                         onChange={(event) =>
                           setFormState((prev) => ({
                             ...prev,
-                            giftBudgetMin: event.target.value,
+                            customRelationship: event.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                        placeholder="e.g., College mentor"
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                        Maximum
-                      </p>
-                      <input
-                        type="number"
-                        min="0"
-                        inputMode="numeric"
-                        placeholder="75"
-                        value={formState.giftBudgetMax}
+                  )}
+                  {formState.relationshipOption === PET_RELATIONSHIP && (
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="pet-type"
+                        className="text-xs font-medium text-gp-evergreen/80"
+                      >
+                        Pet type
+                      </label>
+                      <select
+                        id="pet-type"
+                        value={formState.petType}
                         onChange={(event) =>
                           setFormState((prev) => ({
                             ...prev,
-                            giftBudgetMax: event.target.value,
+                            petType: event.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                      />
+                        className="w-full rounded-2xl border border-gp-evergreen/30 bg-white/80 px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                      >
+                        <option value="">Select pet type</option>
+                        {PET_TYPES.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="gender"
+                    className="text-sm font-medium text-gp-evergreen"
+                  >
+                    Gender
+                  </label>
+                  <select
+                    id="gender"
+                    value={formState.gender}
+                    onChange={(event) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        gender: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                  >
+                    {GENDER_OPTIONS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <BirthdayField
+                key={formState.birthday || "empty-birthday"}
+                value={formState.birthday}
+                onChange={(nextValue) =>
+                  setFormState((prev) => ({ ...prev, birthday: nextValue }))
+                }
+                approxAge={approxAge}
+              />
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="annual-budget"
+                    className="text-sm font-medium text-gp-evergreen"
+                  >
+                    Yearly budget (optional)
+                  </label>
+                  <div className="mt-1.5 space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                      Approximately
+                    </p>
+                    <input
+                      id="annual-budget"
+                      type="number"
+                      min="0"
+                      inputMode="numeric"
+                      placeholder="250"
+                      value={formState.annualBudget}
+                      onChange={(event) =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          annualBudget: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-sm font-medium text-gp-evergreen">
+                    Typical per-gift range (optional)
+                  </label>
+                  <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-white/40 p-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                          Minimum
+                        </p>
+                        <input
+                          type="number"
+                          min="0"
+                          inputMode="numeric"
+                          placeholder="25"
+                          value={formState.giftBudgetMin}
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              giftBudgetMin: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                          Maximum
+                        </p>
+                        <input
+                          type="number"
+                          min="0"
+                          inputMode="numeric"
+                          placeholder="75"
+                          value={formState.giftBudgetMax}
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              giftBudgetMax: event.target.value,
+                            }))
+                          }
+                          className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="notes"
-                className="text-sm font-medium text-gp-evergreen"
-              >
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                rows={8}
-                value={formState.notes}
-                placeholder={NOTES_PLACEHOLDER}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, notes: event.target.value }))
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60"
-              disabled={formSaving}
-            >
-              {formMode === "create" ? "Save recipient" : "Update recipient"}
-            </button>
-
-            {formSaving && (
-              <div className="flex justify-center">
-                <PerchPalLoader
-                  variant="inline"
-                  size="sm"
-                  message="PerchPal is saving your recipient..."
+              <div className="space-y-2">
+                <label
+                  htmlFor="notes"
+                  className="text-sm font-medium text-gp-evergreen"
+                >
+                  Notes
+                </label>
+                <textarea
+                  id="notes"
+                  rows={8}
+                  value={formState.notes}
+                  placeholder={NOTES_PLACEHOLDER}
+                  onChange={(event) =>
+                    setFormState((prev) => ({ ...prev, notes: event.target.value }))
+                  }
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                 />
               </div>
-            )}
 
-            {formError && (
-              <p className="rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700">
-                {formError}
-              </p>
-            )}
-            {formMessage && (
-              <p className="rounded-2xl bg-green-100 px-4 py-2 text-sm text-gp-evergreen">
-                {formMessage}
-              </p>
-            )}
-          </form>
+              <button
+                type="submit"
+                className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60"
+                disabled={formSaving}
+              >
+                {formMode === "create" ? "Save recipient" : "Update recipient"}
+              </button>
+
+              {formSaving && (
+                <div className="flex justify-center">
+                  <PerchPalLoader
+                    variant="inline"
+                    size="sm"
+                    message="PerchPal is saving your recipient..."
+                  />
+                </div>
+              )}
+
+              {formError && (
+                <p className="rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700">
+                  {formError}
+                </p>
+              )}
+              {formMessage && (
+                <p className="rounded-2xl bg-green-100 px-4 py-2 text-sm text-gp-evergreen">
+                  {formMessage}
+                </p>
+              )}
+            </form>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
