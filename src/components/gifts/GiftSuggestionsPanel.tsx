@@ -246,7 +246,7 @@ function GiftSuggestionCard({
             disabled
             className="flex-1 rounded-full border border-gp-evergreen/15 px-3 py-1 text-xs font-semibold text-gp-evergreen/50"
           >
-            Save Gift Idea (soon)
+            Save Gift Idea (Coming soon)
           </button>
         </div>
 
