@@ -30,12 +30,12 @@ const SAMPLE_PROFILES = [
     relationship: "Sister",
     avatarSrc: "/woman_icon.png",
     description:
-      "Loves scented candles, nature hikes, and books. Appreciates small, meaningful things.",
-    ideasLabel: "Gift ideas",
+      "Loves scented candles, nature hikes, and makeup. Appreciates small, meaningful things.",
+    ideasLabel: "Gift ideas for Maya",
     ideas: [
-      "Handmade ceramic mug set",
-      "Outdoor adventure gift card",
-      "Organic tea & book pairing",
+      "Essential oils candle set",
+      "Lightweight Hiking Backpack",
+      "Clean Beauty Essentials Kit",
     ],
   },
   {
@@ -45,7 +45,7 @@ const SAMPLE_PROFILES = [
     avatarSrc: "/dog_icon.png",
     description:
       "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
-    ideasLabel: "Gift ideas",
+    ideasLabel: "Gift ideas for Mocha",
     ideas: [
       "Interactive treat puzzle toy",
       "Plush “heartbeat” cuddle buddy",
@@ -59,7 +59,7 @@ const SAMPLE_PROFILES = [
     avatarSrc: "/man_icon.png",
     description:
       "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
-    ideasLabel: "Gift ideas",
+    ideasLabel: "Gift ideas for Dad",
     ideas: [
       "Personalized grill tool set",
       "Cozy game-day throw blanket",
