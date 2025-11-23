@@ -319,11 +319,14 @@ export function PerchPalChat() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M9 3H5a2 2 0 0 0-2 2v4" />
-              <path d="M15 3h4a2 2 0 0 1 2 2v4" />
-              <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
-              <path d="M15 21h4a2 2 0 0 0 2-2v-4" />
-              <path d="M10 7h4v4h-4z" />
+              {/* Top-left corner */}
+              <path d="M4 9V5a1 1 0 0 1 1-1h4" />
+              {/* Top-right corner */}
+              <path d="M20 9V5a1 1 0 0 0-1-1h-4" />
+              {/* Bottom-left corner */}
+              <path d="M4 15v4a1 1 0 0 0 1 1h4" />
+              {/* Bottom-right corner */}
+              <path d="M20 15v4a1 1 0 0 1-1 1h-4" />
             </svg>
           </button>
         ) : null}
