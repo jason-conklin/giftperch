@@ -8,6 +8,7 @@ import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { AmazonProduct } from "@/lib/amazonPaapi";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
+import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 
 type AvatarIconKey =
   | "babyboy"
@@ -144,6 +145,13 @@ type SuggestionCardProps = {
   copiedSuggestionId: string | null;
   onCopy: (suggestion: GiftSuggestion) => void;
   onFetchAmazon: (suggestion: GiftSuggestion) => void;
+  onSaveGift: (suggestion: GiftSuggestion) => void;
+  saveState?: {
+    saving: boolean;
+    success: boolean;
+    error: string | null;
+  };
+  onOpenSaved?: () => void;
 };
 
 function GiftSuggestionCard({
@@ -152,6 +160,9 @@ function GiftSuggestionCard({
   copiedSuggestionId,
   onCopy,
   onFetchAmazon,
+  onSaveGift,
+  saveState,
+  onOpenSaved,
 }: SuggestionCardProps) {
   const initialImage =
     suggestion.image_url && suggestion.image_url.startsWith("http")
@@ -243,12 +254,31 @@ function GiftSuggestionCard({
           </button>
           <button
             type="button"
-            disabled
-            className="flex-1 rounded-full border border-gp-evergreen/15 px-3 py-1 text-xs font-semibold text-gp-evergreen/50"
+            onClick={() => onSaveGift(suggestion)}
+            disabled={saveState?.saving}
+            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60"
           >
-            Save Gift Idea (Coming soon)
+            {saveState?.saving ? "Saving..." : "Save Gift Idea"}
           </button>
         </div>
+
+        {saveState?.success ? (
+          <div className="rounded-2xl border border-gp-evergreen/15 bg-green-50 px-3 py-2 text-xs text-gp-evergreen">
+            Saved gift idea.{" "}
+            <button
+              type="button"
+              className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
+              onClick={onOpenSaved}
+            >
+              View here →
+            </button>
+          </div>
+        ) : null}
+        {saveState?.error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {saveState.error}
+          </div>
+        ) : null}
 
         {amazonState && (
           <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/40 p-3 text-sm text-gp-evergreen">
@@ -358,6 +388,22 @@ export function GiftSuggestionsPanel() {
   const [recipientMenuOpen, setRecipientMenuOpen] = useState(false);
   const summaryButtonRef = useRef<HTMLButtonElement | null>(null);
   const recipientMenuRef = useRef<HTMLDivElement | null>(null);
+  const [savedGiftsRecipientId, setSavedGiftsRecipientId] = useState<
+    string | null
+  >(null);
+  const [savedGiftsRecipientName, setSavedGiftsRecipientName] = useState("");
+  const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [saveStates, setSaveStates] = useState<
+    Record<
+      string,
+      { saving: boolean; success: boolean; error: string | null; ts: number }
+    >
+  >({});
+  const selectedRecipient = useMemo(
+    () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
+    [recipients, selectedRecipientId],
+  );
 
   useEffect(() => {
     if (status !== "authenticated" || !user) return;
@@ -450,6 +496,79 @@ export function GiftSuggestionsPanel() {
   }, [recipientMenuOpen]);
 
   useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthToken(data.session?.access_token ?? null);
+    });
+  }, [supabase]);
+
+  const handleSaveGift = async (suggestion: GiftSuggestion) => {
+    if (!selectedRecipient) {
+      setError("Please select a recipient before saving gift ideas.");
+      return;
+    }
+    const suggestionId = suggestion.id;
+    setSaveStates((prev) => ({
+      ...prev,
+      [suggestionId]: {
+        saving: true,
+        success: false,
+        error: null,
+        ts: Date.now(),
+      },
+    }));
+
+    try {
+      const res = await fetch(
+        `/api/recipients/${selectedRecipient.id}/saved-gifts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({
+            suggestionId: suggestion.id,
+            title: suggestion.title,
+            tier: suggestion.tier,
+            rationale: suggestion.why_it_fits,
+            estimated_price_min: suggestion.price_min ?? null,
+            estimated_price_max: suggestion.price_max ?? null,
+            product_url: suggestion.suggested_url ?? null,
+            image_url: suggestion.image_url ?? null,
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to save gift idea");
+      }
+
+      setSaveStates((prev) => ({
+        ...prev,
+        [suggestionId]: {
+          saving: false,
+          success: true,
+          error: null,
+          ts: Date.now(),
+        },
+      }));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to save gift idea";
+      setSaveStates((prev) => ({
+        ...prev,
+        [suggestionId]: {
+          saving: false,
+          success: false,
+          error: message,
+          ts: Date.now(),
+        },
+      }));
+    }
+  };
+
+  useEffect(() => {
     if (!selectedRecipientId) {
       setRuns([]);
       setActiveRunId(null);
@@ -487,13 +606,6 @@ export function GiftSuggestionsPanel() {
       isMounted = false;
     };
   }, [selectedRecipientId, supabase]);
-
-  const selectedRecipient = useMemo(
-    () =>
-      recipients.find((recipient) => recipient.id === selectedRecipientId) ??
-      null,
-    [recipients, selectedRecipientId],
-  );
 
   const activeRun = useMemo(
     () => runs.find((run) => run.id === activeRunId) ?? null,
@@ -1166,18 +1278,27 @@ export function GiftSuggestionsPanel() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {visibleSuggestions.map((suggestion) => (
-                    <GiftSuggestionCard
-                      key={suggestion.id}
-                      suggestion={suggestion}
-                      amazonState={amazonBySuggestion[suggestion.id]}
-                      copiedSuggestionId={copiedSuggestionId}
-                      onCopy={handleCopySuggestion}
-                      onFetchAmazon={handleFetchAmazonProducts}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+                  <GiftSuggestionCard
+                    key={suggestion.id}
+                    suggestion={suggestion}
+                    amazonState={amazonBySuggestion[suggestion.id]}
+                    copiedSuggestionId={copiedSuggestionId}
+                    onCopy={handleCopySuggestion}
+                    onFetchAmazon={handleFetchAmazonProducts}
+                    onSaveGift={handleSaveGift}
+                    saveState={saveStates[suggestion.id]}
+                    onOpenSaved={() => {
+                      if (selectedRecipient) {
+                        setSavedGiftsRecipientId(selectedRecipient.id);
+                        setSavedGiftsRecipientName(selectedRecipient.name);
+                        setSavedGiftsOpen(true);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
           </div>
         </>
       )}
@@ -1195,6 +1316,15 @@ export function GiftSuggestionsPanel() {
           Shop Amazon’s full catalog »
         </a>
       </p>
+      {savedGiftsRecipientId ? (
+        <SavedGiftIdeasModal
+          recipientId={savedGiftsRecipientId}
+          recipientName={savedGiftsRecipientName}
+          isOpen={savedGiftsOpen}
+          onClose={() => setSavedGiftsOpen(false)}
+          authToken={authToken}
+        />
+      ) : null}
     </section>
   );
 }

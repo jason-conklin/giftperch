@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 
 export type RecipientInterest = {
   id: string;
@@ -551,12 +552,12 @@ const formatGiftBudgetRange = (
   min: number | null,
   max: number | null,
 ): string | null => {
+  if (min === null && max === null) return "Not set";
   if (min !== null && max !== null) {
-    return `${formatCurrency(min)} – ${formatCurrency(max)}`;
+    return `${formatCurrency(min)}–${formatCurrency(max)}`;
   }
   if (min !== null) return `From ${formatCurrency(min)}`;
-  if (max !== null) return `Up to ${formatCurrency(max)}`;
-  return null;
+  return `Up to ${formatCurrency(max ?? 0)}`;
 };
 
 const calculateAge = (birthday: string | null) => {
@@ -683,6 +684,9 @@ export function RecipientsManager() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isDeletingRecipient, setIsDeletingRecipient] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [savedGiftsRecipient, setSavedGiftsRecipient] =
+    useState<RecipientProfile | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarOptionsVisible, setAvatarOptionsVisible] = useState(false);
@@ -776,6 +780,9 @@ export function RecipientsManager() {
       setIsLoading(false);
       return;
     }
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthToken(data.session?.access_token ?? null);
+    });
     let isMounted = true;
     const fetchRecipients = async () => {
       setIsLoading(true);
@@ -1399,13 +1406,13 @@ export function RecipientsManager() {
                 </div>
               </div>
               <dl className="mt-4 space-y-2 text-sm text-gp-evergreen/80">
-                <div className="flex justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <dt className="font-semibold">Per-gift range</dt>
-                  <dd>
+                  <dd className="max-w-[180px] whitespace-nowrap overflow-hidden text-ellipsis text-right">
                     {formatGiftBudgetRange(
                       recipient.gift_budget_min,
                       recipient.gift_budget_max,
-                    ) ?? "Not set"}
+                    )}
                   </dd>
                 </div>
                 <div className="flex justify-between">
@@ -1425,6 +1432,13 @@ export function RecipientsManager() {
               </dl>
 
               <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSavedGiftsRecipient(recipient)}
+                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                >
+                  View Saved Gifts
+                </button>
                 <button
                   type="button"
                   onClick={() =>
@@ -2145,6 +2159,16 @@ export function RecipientsManager() {
             </form>
           </div>
         </div>
+      ) : null}
+
+      {savedGiftsRecipient ? (
+        <SavedGiftIdeasModal
+          recipientId={savedGiftsRecipient.id}
+          recipientName={savedGiftsRecipient.name}
+          isOpen={!!savedGiftsRecipient}
+          onClose={() => setSavedGiftsRecipient(null)}
+          authToken={authToken}
+        />
       ) : null}
     </div>
   );

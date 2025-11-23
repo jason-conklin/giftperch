@@ -161,22 +161,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [{ data: interestsData }, { data: giftsData }] = await Promise.all([
-      supabase
-        .from("recipient_interests")
-        .select("label, category")
-        .eq("recipient_id", recipientId)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("gift_history")
-        .select("title, price, purchased_at, notes")
-        .eq("recipient_id", recipientId)
-        .order("purchased_at", { ascending: false, nullsFirst: false })
-        .limit(5),
-    ]);
+    const [{ data: interestsData }, { data: giftsData }, { data: savedData }] =
+      await Promise.all([
+        supabase
+          .from("recipient_interests")
+          .select("label, category")
+          .eq("recipient_id", recipientId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("gift_history")
+          .select("title, price, purchased_at, notes")
+          .eq("recipient_id", recipientId)
+          .order("purchased_at", { ascending: false, nullsFirst: false })
+          .limit(5),
+        supabase
+          .from("recipient_saved_gift_ideas")
+          .select("title")
+          .eq("recipient_id", recipientId)
+          .eq("user_id", user.id),
+      ]);
 
     const interests = (interestsData ?? []) as RecipientInterest[];
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
+    const previouslySavedTitles = (savedData ?? [])
+      .map((row) => row.title?.trim())
+      .filter((title): title is string => !!title && title.length > 0);
 
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
@@ -209,6 +218,7 @@ export async function POST(request: NextRequest) {
       interests,
       recent_gifts: gifts,
       num_suggestions: numSuggestions,
+      previously_saved_titles: previouslySavedTitles,
     };
 
     const completion = await openai.chat.completions.create({
@@ -242,6 +252,11 @@ export async function POST(request: NextRequest) {
             "",
             "Return an object: { suggestions: GiftSuggestion[] }.",
             "Do not include code fences or any text outside JSON.",
+            previouslySavedTitles.length
+              ? `The user has already saved these gift ideas for this recipient: ${previouslySavedTitles.join(
+                  "; ",
+                )}. Do NOT repeat these exact ideas. Prefer novel, distinct recommendations.`
+              : "",
           ].join("\n"),
         },
         { role: "user", content: JSON.stringify(userMessageContent) },
@@ -264,7 +279,13 @@ export async function POST(request: NextRequest) {
 
     const normalizedSuggestions = (parsed.suggestions ?? [])
       .filter((item): item is GiftSuggestion => typeof item === "object")
-      .map((item, index) => normalizeSuggestion(item, index));
+      .map((item, index) => normalizeSuggestion(item, index))
+      .filter((item) => {
+        if (!item.title) return true;
+        return !previouslySavedTitles.some(
+          (saved) => saved.toLowerCase() === item.title.toLowerCase(),
+        );
+      });
 
     if (normalizedSuggestions.length === 0) {
       return NextResponse.json(
