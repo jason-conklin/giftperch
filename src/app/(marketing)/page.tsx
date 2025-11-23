@@ -30,7 +30,7 @@ const SAMPLE_PROFILES = [
     relationship: "Sister",
     avatarSrc: "/woman_icon.png",
     description:
-      "Loves scented candles, nature hikes, and reading books. Appreciates small, meaningful things.",
+      "Loves scented candles, nature hikes, and books. Appreciates small, meaningful things.",
     ideasLabel: "Gift ideas",
     ideas: [
       "Handmade ceramic mug set",
