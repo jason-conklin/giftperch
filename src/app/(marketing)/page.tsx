@@ -156,7 +156,7 @@ function LandingSampleProfiles() {
 
         <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-4">
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
-            Gift ideas
+            {SAMPLE_PROFILES[activeIndex].ideasLabel}
           </p>
           <div className="relative mt-0 min-h-[90px]">
             {SAMPLE_PROFILES.map((profile, index) => (
