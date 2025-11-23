@@ -1431,29 +1431,31 @@ export function RecipientsManager() {
                 )}
               </dl>
 
-              <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSavedGiftsRecipient(recipient)}
-                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
-                >
-                  View Saved Gifts
-                </button>
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSavedGiftsRecipient(recipient)}
+                    className="flex-1 min-w-[150px] inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                  >
+                    View Saved Gifts
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRecipient(recipient)}
+                    className="flex-1 min-w-[150px] inline-flex items-center justify-center rounded-full bg-gp-evergreen px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+                  >
+                    Show details
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() =>
                     router.push(`/gifts?recipientId=${recipient.id}`)
                   }
-                  className="inline-flex items-center justify-center rounded-full bg-gp-gold px-4 py-1.5 text-xs font-semibold text-gp-evergreen animate-gp-gift-glow transition hover:scale-[1.04] hover:bg-[#d9c585] hover:shadow-[0_0_24px_rgba(217,193,137,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                  className="inline-flex w-full items-center justify-center rounded-full bg-gp-gold px-5 py-2 text-sm font-semibold text-gp-evergreen animate-gp-gift-glow transition hover:scale-[1.04] hover:bg-[#d9c585] hover:shadow-[0_0_24px_rgba(217,193,137,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
                 >
                   Get gift ideas
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRecipient(recipient)}
-                  className="rounded-full bg-gp-evergreen px-3 py-1 text-xs font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
-                >
-                  Show details
                 </button>
               </div>
 
