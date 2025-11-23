@@ -16,7 +16,7 @@ const blogPosts = [
     slug: "gift-ideas-for-busy-professionals",
     title: "Gift ideas for busy professionals",
     description:
-      "What to buy for the friend or partner whose calendar is always packed — without defaulting to another mug.",
+      "What to buy for the friend or partner whose calendar is always packed — without falling back on the usual go-tos.",
     coverImage: {
       src: "/blog/gifts-for-busy-professionals-hero.png",
       alt: "Illustration of a laptop, calendar, coffee cup, and gift box on a tidy desk, representing thoughtful gifts for busy professionals.",
