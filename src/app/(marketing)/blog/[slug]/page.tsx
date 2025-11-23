@@ -98,7 +98,7 @@ const posts = {
         ],
       },
       {
-        heading: "Track budgets, sizes, and anti-gifts",
+        heading: "Track budgets, sizes, and interests",
         paragraphs: [
           "Budgets are not just dollar signs -- they tell PerchPal how bold or safe it should go. Record min and max ranges plus annual spend so the AI respects financial comfort.",
           "Add shoe sizes, allergies, or \"never again\" items. Future you (or a partner logging in) will be grateful.",

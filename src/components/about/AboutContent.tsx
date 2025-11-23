@@ -4,7 +4,7 @@ const featureHighlights = [
   {
     title: "Recipient profiles",
     description:
-      "Log preferences, budgets, and anti-gifts for everyone you shop for so PerchPal learns their personality.",
+      "Log preferences, budgets, and sizes for everyone you shop for so PerchPal learns their personality.",
   },
   {
     title: "PerchPal AI",

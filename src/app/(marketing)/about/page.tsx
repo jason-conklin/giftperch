@@ -5,7 +5,7 @@ const features = [
   {
     title: "Capture recipient profiles",
     description:
-      "Log interests, budgets, anti-gifts, and occasions so every person has a living gift CRM.",
+      "Log interests, budgets, sizes, and occasions so every person has a living gift CRM.",
   },
   {
     title: "Ask PerchPal",
@@ -44,7 +44,7 @@ export default function AboutPage() {
           <p className="max-w-3xl">
             GiftPerch keeps recipient profiles, PerchPal AI, wishlists, and gift
             history in a single workspace. Add the people you shop for, log
-            budgets, anti-gifts, and what makes them smile, then ask PerchPal for
+            budgets, interests, and what makes them smile, then ask PerchPal for
             context-rich recommendations.
           </p>
           <p className="max-w-3xl">

@@ -609,25 +609,25 @@ export function SettingsPanel() {
 
       <section className="gp-card flex flex-col gap-4">
         <header>
-          <div className="gp-pill">Your GiftPerch profile</div>
+          <div className="gp-pill">Your recipient profile</div>
           <p className="mt-3 text-sm text-gp-evergreen/70">
-            Share a snapshot of yourself so friends can import you directly into
-            their recipients list. Totally optional, but very handy.
+            Share a recipient profile of yourself so friends can import you directly
+            into their recipients list. Totally optional, but very handy.
           </p>
         </header>
 
         {!selfFormOpen ? (
           <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-5 text-sm text-gp-evergreen/80">
             <p>
-              Let PerchPal know your style, budgets, and anti-gifts. When you share
-              the link, people can add you to their GiftPerch with a single click.
+              Let PerchPal know your style, budgets, and interests. When you share
+              the link, people can add you to their GiftPerch recipients with a single click.
             </p>
             <button
               type="button"
               className="gp-primary-button mt-4 w-full sm:w-auto"
               onClick={() => setSelfFormOpen(true)}
             >
-              Set up my profile
+              Set up my recipient profile
             </button>
           </div>
         ) : (

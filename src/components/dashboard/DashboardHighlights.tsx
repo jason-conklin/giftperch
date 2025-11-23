@@ -193,7 +193,7 @@ export function DashboardHighlights() {
   const recipientsHighlight = recipients[0];
   const tipMessage =
     latestInteraction?.message ??
-    "Tip: Keep PerchPal close by logging budgets, anti-gifts, and notes right after conversations.";
+    "Tip: Keep PerchPal close by logging budgets, interests, and notes right after conversations.";
 
   if (loading) {
     return (
