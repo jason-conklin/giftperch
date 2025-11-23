@@ -44,7 +44,7 @@ const SAMPLE_PROFILES = [
     relationship: "Pet (Dog)",
     avatarSrc: "/dog_icon.png",
     description:
-      "Loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
+      "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
     ideasLabel: "Gift ideas",
     ideas: [
       "Interactive treat puzzle toy",
