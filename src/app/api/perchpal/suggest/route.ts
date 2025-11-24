@@ -18,6 +18,7 @@ type GiftSuggestion = {
   price_min?: number | null;
   price_max?: number | null;
   price_hint?: string | null;
+  price_guidance?: string | null;
   why_it_fits: string;
   suggested_url?: string | null;
   image_url?: string | null;
@@ -76,6 +77,19 @@ const PERCHPAL_UNAVAILABLE =
 const TIER_FALLBACK: GiftSuggestion["tier"] = "thoughtful";
 const MIN_SUGGESTIONS = 3;
 const MAX_SUGGESTIONS = 10;
+
+const PRICE_REGEX = /\$/;
+const DIGIT_REGEX = /\d/;
+
+function buildPriceGuidance(
+  min?: number | null,
+  max?: number | null,
+): string | null {
+  if (min == null && max == null) return null;
+  if (min != null && max != null) return `$${Math.round(min)}–$${Math.round(max)}`;
+  if (min != null) return `$${Math.round(min)}+`;
+  return `Up to $${Math.round(max as number)}`;
+}
 
 export async function POST(request: NextRequest) {
   if (!process.env.OPENAI_API_KEY) {
@@ -275,12 +289,14 @@ export async function POST(request: NextRequest) {
             "  price_min?: number | null;",
             "  price_max?: number | null;",
             "  price_hint?: string | null;",
+            '  price_guidance?: string | null; // SHORT price text only, e.g., \"$25–$50\", \"$50+\", \"Under $25\". If unknown, set null.',
             "  why_it_fits: string;",
             "  suggested_url?: string | null;",
             "  image_url?: string | null; // REQUIRED: real, publicly accessible HTTPS product/inspiration image (never example.com)",
             "};",
             "",
             "Expectations:",
+            '- price_guidance MUST be price-only text. Do NOT include descriptions. Examples: \"$25–$50\", \"$50+\", \"Under $25\". If no good price guess, use null.',
             "- Every suggestion should include image_url whenever possible.",
             "- Use reputable sources (brand CDN, Amazon images, Unsplash, etc.).",
             "- Never invent unreachable URLs or placeholders.",
@@ -476,6 +492,18 @@ function normalizeSuggestion(
       ? suggestion.price_hint.trim()
       : null;
 
+  const price_guidance_raw =
+    typeof suggestion.price_guidance === "string" &&
+    suggestion.price_guidance.trim().length > 0
+      ? suggestion.price_guidance.trim()
+      : null;
+  const cleaned_price_guidance =
+    price_guidance_raw &&
+    PRICE_REGEX.test(price_guidance_raw) &&
+    DIGIT_REGEX.test(price_guidance_raw)
+      ? price_guidance_raw
+      : null;
+
   const image_url =
     typeof suggestion.image_url === "string" &&
     suggestion.image_url.trim().length > 0
@@ -494,6 +522,8 @@ function normalizeSuggestion(
     price_min,
     price_max,
     price_hint,
+    price_guidance:
+      cleaned_price_guidance ?? buildPriceGuidance(price_min, price_max),
     why_it_fits:
       suggestion.why_it_fits?.trim() ||
       "PerchPal believes this matches their profile well.",

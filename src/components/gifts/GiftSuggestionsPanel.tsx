@@ -101,6 +101,7 @@ export type GiftSuggestion = {
   price_min?: number | null;
   price_max?: number | null;
   price_hint?: string | null;
+  price_guidance?: string | null;
   why_it_fits: string;
   suggested_url?: string | null;
   image_url?: string | null;
@@ -272,26 +273,30 @@ function GiftSuggestionCard({
           </div>
         </div>
 
-        <div className="text-sm text-gp-evergreen/80">
-          <p className="font-semibold text-gp-evergreen">Price guidance</p>
-          <p className="text-sm">
-            {buildPriceDisplay(
-              suggestion.price_min,
-              suggestion.price_max,
-              suggestion.price_hint,
-            )}
-          </p>
-          {suggestion.suggested_url ? (
-            <a
-              href={suggestion.suggested_url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-            >
-              View link
-            </a>
-          ) : null}
-        </div>
+        {(() => {
+          const priceDisplay = buildPriceDisplay(
+            suggestion.price_min,
+            suggestion.price_max,
+            suggestion.price_hint,
+            suggestion.price_guidance,
+          );
+          return priceDisplay ? (
+            <div className="text-sm text-gp-evergreen/80">
+              <p className="font-semibold text-gp-evergreen">Price guidance</p>
+              <p className="text-sm">{priceDisplay}</p>
+              {suggestion.suggested_url ? (
+                <a
+                  href={suggestion.suggested_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                >
+                  View link
+                </a>
+              ) : null}
+            </div>
+          ) : null;
+        })()}
 
         <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
@@ -1031,7 +1036,12 @@ export function GiftSuggestionsPanel() {
       suggestion.short_description,
       suggestion.why_it_fits,
       suggestion.price_hint ||
-        buildPriceDisplay(suggestion.price_min, suggestion.price_max),
+        buildPriceDisplay(
+          suggestion.price_min,
+          suggestion.price_max,
+          suggestion.price_hint,
+          suggestion.price_guidance,
+        ),
       suggestion.suggested_url,
     ]
       .filter(Boolean)
@@ -1602,7 +1612,15 @@ function buildPriceDisplay(
   min: number | null | undefined,
   max: number | null | undefined,
   hint?: string | null | undefined,
+  guidance?: string | null | undefined,
 ) {
+  const priceGuidance =
+    typeof guidance === "string" && guidance.trim().length > 0
+      ? guidance.trim()
+      : "";
+  if (priceGuidance) {
+    return priceGuidance;
+  }
   const priceHint = typeof hint === "string" ? hint.trim() : "";
   if (priceHint) {
     return priceHint;
@@ -1623,7 +1641,7 @@ function formatBudgetRange(
   min: number | null | undefined,
   max: number | null | undefined,
 ) {
-  const display = buildPriceDisplay(min, max);
+  const display = buildPriceDisplay(min, max, undefined, undefined);
   return display ? display : "Not specified";
 }
 
