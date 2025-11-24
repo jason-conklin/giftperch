@@ -226,35 +226,37 @@ function GiftSuggestionCard({
               {suggestion.short_description}
             </p>
           </div>
-          <span
-            className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-              tierBadgeClasses[suggestion.tier]
-            }`}
-          >
-            {tierLabels[suggestion.tier]}
-          </span>
-        </div>
-        <div className="mt-1.5 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onToggleFeedback("liked")}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-              feedback === "liked" ? "bg-blue-50" : ""
-            }`}
-            aria-label="Like this idea"
-          >
-            <ThumbUpIcon className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onToggleFeedback("disliked")}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-              feedback === "disliked" ? "bg-red-50" : ""
-            }`}
-            aria-label="Dislike this idea"
-          >
-            <ThumbDownIcon className="h-4 w-4" />
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                tierBadgeClasses[suggestion.tier]
+              }`}
+            >
+              {tierLabels[suggestion.tier]}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onToggleFeedback("liked")}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+                  feedback === "liked" ? "bg-blue-50" : ""
+                }`}
+                aria-label="Like this idea"
+              >
+                <ThumbUpIcon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleFeedback("disliked")}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+                  feedback === "disliked" ? "bg-red-50" : ""
+                }`}
+                aria-label="Dislike this idea"
+              >
+                <ThumbDownIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="text-sm text-gp-evergreen/80">
