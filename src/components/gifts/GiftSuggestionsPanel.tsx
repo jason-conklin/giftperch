@@ -160,7 +160,11 @@ const PERCHPAL_ERROR_MESSAGE =
 const AMAZON_PLACEHOLDER_MESSAGE =
   "No product matches found yet. Product previews will appear here when available.";
 
+const getSuggestionKey = (suggestion: GiftSuggestion) =>
+  suggestion.id || suggestion.title;
+
 type SuggestionCardProps = {
+  suggestionKey: string;
   suggestion: GiftSuggestion;
   amazonState: AmazonSuggestionState | undefined;
   copiedSuggestionId: string | null;
@@ -187,6 +191,7 @@ type SuggestionCardProps = {
 };
 
 function GiftSuggestionCard({
+  suggestionKey,
   suggestion,
   amazonState,
   copiedSuggestionId,
@@ -253,12 +258,12 @@ function GiftSuggestionCard({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => onToggleFeedback("liked")}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-                  isLiked ? "bg-blue-50" : ""
-                }`}
-                aria-label="Like this idea"
-                aria-pressed={isLiked}
+            onClick={() => onToggleFeedback("liked")}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+              isLiked ? "bg-blue-50" : ""
+            }`}
+            aria-label="Like this idea"
+            aria-pressed={isLiked}
               >
                 <ThumbUpIcon
                   className={`h-4 w-4 stroke-current ${
@@ -268,12 +273,12 @@ function GiftSuggestionCard({
               </button>
               <button
                 type="button"
-                onClick={() => onToggleFeedback("disliked")}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-                  isDisliked ? "bg-red-50" : ""
-                }`}
-                aria-label="Dislike this idea"
-                aria-pressed={isDisliked}
+            onClick={() => onToggleFeedback("disliked")}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+              isDisliked ? "bg-red-50" : ""
+            }`}
+            aria-label="Dislike this idea"
+            aria-pressed={isDisliked}
               >
                 <ThumbDownIcon
                   className={`h-4 w-4 stroke-current ${
@@ -345,10 +350,10 @@ function GiftSuggestionCard({
         </div>
 
         {(() => {
-          const recentlySaved =
-            isSaved && lastSavedId === suggestion.id && saveState?.success;
-          const recentlyUnsaved =
-            !isSaved && lastUnsavedId === suggestion.id && !saveState?.success;
+        const recentlySaved =
+          isSaved && lastSavedId === suggestionKey && saveState?.success;
+        const recentlyUnsaved =
+          !isSaved && lastUnsavedId === suggestionKey && !saveState?.success;
           const banner = isLiked
             ? {
                 className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
@@ -742,7 +747,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       setError("Please select a recipient before saving gift ideas.");
       return;
     }
-    const suggestionId = suggestion.id;
+    const suggestionId = getSuggestionKey(suggestion);
     setSaveStates((prev) => ({
       ...prev,
       [suggestionId]: {
@@ -813,7 +818,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
   const handleUnsaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) return;
-    const suggestionId = suggestion.id;
+    const suggestionId = getSuggestionKey(suggestion);
     setSaveStates((prev) => ({
       ...prev,
       [suggestionId]: {
@@ -1721,9 +1726,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                   ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {visibleSuggestions.map((suggestion, idx) => (
+                  {visibleSuggestions.map((suggestion, idx) => {
+                    const suggestionKey = getSuggestionKey(suggestion);
+                    return (
                   <GiftSuggestionCard
-                    key={suggestion.id}
+                    key={suggestionKey}
+                    suggestionKey={suggestionKey}
                     suggestion={suggestion}
                     amazonState={amazonBySuggestion[suggestion.id]}
                       copiedSuggestionId={copiedSuggestionId}
@@ -1731,12 +1739,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       onFetchAmazon={handleFetchAmazonProducts}
                       onSaveGift={handleSaveGift}
                       onUnsaveGift={handleUnsaveGift}
-                      isSaved={savedIds.has(suggestion.id)}
-                      isLiked={likedIds.has(suggestion.id)}
-                      isDisliked={dislikedIds.has(suggestion.id)}
+                      isSaved={savedIds.has(suggestionKey)}
+                      isLiked={likedIds.has(suggestionKey)}
+                      isDisliked={dislikedIds.has(suggestionKey)}
                       lastSavedId={lastSavedId}
                       lastUnsavedId={lastUnsavedId}
-                      saveState={saveStates[suggestion.id]}
+                      saveState={saveStates[suggestionKey]}
                     onOpenSaved={() => {
                       if (selectedRecipient) {
                         setSavedGiftsRecipientId(selectedRecipient.id);
@@ -1744,15 +1752,16 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                         setSavedGiftsOpen(true);
                       }
                     }}
-                    onDismissSave={() => handleDismissSave(suggestion.id)}
+                    onDismissSave={() => handleDismissSave(suggestionKey)}
                     onClearAmazon={() => handleClearAmazon(suggestion.id)}
-                    feedback={feedbackById[suggestion.id] ?? null}
-                    feedbackError={feedbackErrorById[suggestion.id] ?? null}
+                    feedback={feedbackById[suggestionKey] ?? null}
+                    feedbackError={feedbackErrorById[suggestionKey] ?? null}
                     onToggleFeedback={(next) =>
-                      toggleFeedback(suggestion.id, idx, next)
+                      toggleFeedback(suggestionKey, idx, next)
                     }
                   />
-                ))}
+                );
+              })}
               </div>
             </>
           )}
