@@ -1023,7 +1023,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     .join("|");
 
   useEffect(() => {
-    if (!selectedRecipientId || visibleSuggestions.length === 0) {
+    if (
+      status !== "authenticated" ||
+      !authToken ||
+      !selectedRecipientId ||
+      visibleSuggestions.length === 0
+    ) {
       setSavedMap({});
       setLikedMap({});
       setDislikedMap({});
@@ -1051,6 +1056,10 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
             { headers },
           ),
         ]);
+
+        if (!savedRes.ok || !feedbackRes.ok) {
+          return;
+        }
 
         const savedJson = await savedRes.json().catch(() => ({}));
         const feedbackJson = await feedbackRes.json().catch(() => ({}));
@@ -1121,6 +1130,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     supabase,
     visibleSuggestions.length,
     authToken,
+    status,
   ]);
 
   const isInitialLoading =
