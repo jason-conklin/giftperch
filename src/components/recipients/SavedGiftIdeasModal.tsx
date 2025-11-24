@@ -170,17 +170,22 @@ export function SavedGiftIdeasModal({
                   key={gift.id}
                   className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
                 >
-                  {gift.image_url ? (
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
-                      <Image
-                        src={gift.image_url}
-                        alt={gift.title}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : null}
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
+                    <Image
+                      src={gift.image_url || FALLBACK_IMAGE}
+                      alt={gift.title}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        if (target.src !== FALLBACK_IMAGE) {
+                          target.src = FALLBACK_IMAGE;
+                        }
+                      }}
+                      unoptimized
+                    />
+                  </div>
 
                   <div className="flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -250,3 +255,4 @@ function formatPriceRange(
   if (min !== null) return `From $${min}`;
   return `Up to $${max}`;
 }
+const FALLBACK_IMAGE = "/gift_placeholder_img.png";
