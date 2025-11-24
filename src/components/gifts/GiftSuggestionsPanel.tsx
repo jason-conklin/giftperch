@@ -167,6 +167,10 @@ type SuggestionCardProps = {
   onCopy: (suggestion: GiftSuggestion) => void;
   onFetchAmazon: (suggestion: GiftSuggestion) => void;
   onSaveGift: (suggestion: GiftSuggestion) => void;
+  onUnsaveGift: (suggestion: GiftSuggestion) => void;
+  isSaved: boolean;
+  lastSavedId: string | null;
+  lastUnsavedId: string | null;
   saveState?: {
     saving: boolean;
     success: boolean;
@@ -187,6 +191,10 @@ function GiftSuggestionCard({
   onCopy,
   onFetchAmazon,
   onSaveGift,
+  onUnsaveGift,
+  isSaved,
+  lastSavedId,
+  lastUnsavedId,
   saveState,
   onOpenSaved,
   onDismissSave,
@@ -322,15 +330,21 @@ function GiftSuggestionCard({
           </button>
           <button
             type="button"
-            onClick={() => onSaveGift(suggestion)}
+            onClick={() =>
+              isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
+            }
             disabled={saveState?.saving}
             className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
-            {saveState?.saving ? "Saving..." : "Save Gift Idea"}
+            {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
           </button>
         </div>
 
         {(() => {
+          const recentlySaved =
+            isSaved && lastSavedId === suggestion.id && saveState?.success;
+          const recentlyUnsaved =
+            !isSaved && lastUnsavedId === suggestion.id && !saveState?.success;
           const banner = isLiked
             ? {
                 className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
@@ -343,10 +357,17 @@ function GiftSuggestionCard({
                 message: "Gift idea disliked. ",
                 onDismiss: () => onToggleFeedback("disliked"),
               }
-            : saveState?.success
+            : recentlySaved
             ? {
-                className: "border border-gp-evergreen/15 bg-green-50 text-gp-evergreen",
-                message: "Saved gift idea. ",
+                className:
+                  "border border-gp-evergreen/15 bg-green-50 text-gp-evergreen",
+                message: "Gift idea saved. ",
+                onDismiss: onDismissSave,
+              }
+            : recentlyUnsaved
+            ? {
+                className: "border border-red-200 bg-red-50 text-red-900",
+                message: "Gift idea unsaved. ",
                 onDismiss: onDismissSave,
               }
             : null;
@@ -362,7 +383,7 @@ function GiftSuggestionCard({
                   className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
                   onClick={onOpenSaved}
                 >
-                  View here →
+                  View saved ideas →
                 </button>
               </span>
               <button
@@ -507,6 +528,9 @@ export function GiftSuggestionsPanel() {
   const [savedGiftsRecipientName, setSavedGiftsRecipientName] = useState("");
   const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [lastUnsavedId, setLastUnsavedId] = useState<string | null>(null);
   const [saveStates, setSaveStates] = useState<
     Record<
       string,
@@ -665,6 +689,13 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         throw new Error(body.error || "Failed to save gift idea");
       }
 
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        next.add(suggestionId);
+        return next;
+      });
+      setLastSavedId(suggestionId);
+      setLastUnsavedId(null);
       setSaveStates((prev) => ({
         ...prev,
         [suggestionId]: {
@@ -677,6 +708,66 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to save gift idea";
+      setSaveStates((prev) => ({
+        ...prev,
+        [suggestionId]: {
+          saving: false,
+          success: false,
+          error: message,
+          ts: Date.now(),
+        },
+      }));
+    }
+  };
+
+  const handleUnsaveGift = async (suggestion: GiftSuggestion) => {
+    if (!selectedRecipient) return;
+    const suggestionId = suggestion.id;
+    setSaveStates((prev) => ({
+      ...prev,
+      [suggestionId]: {
+        saving: true,
+        success: false,
+        error: null,
+        ts: Date.now(),
+      },
+    }));
+    try {
+      const res = await fetch(
+        `/api/recipients/${selectedRecipient.id}/saved-gifts?suggestionId=${encodeURIComponent(
+          suggestionId,
+        )}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to unsave gift idea");
+      }
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
+      setLastUnsavedId(suggestionId);
+      setLastSavedId(null);
+      setSaveStates((prev) => ({
+        ...prev,
+        [suggestionId]: {
+          saving: false,
+          success: false,
+          error: null,
+          ts: Date.now(),
+        },
+      }));
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to unsave gift idea";
       setSaveStates((prev) => ({
         ...prev,
         [suggestionId]: {
@@ -1514,6 +1605,10 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       onCopy={handleCopySuggestion}
                       onFetchAmazon={handleFetchAmazonProducts}
                       onSaveGift={handleSaveGift}
+                      onUnsaveGift={handleUnsaveGift}
+                      isSaved={savedIds.has(suggestion.id)}
+                      lastSavedId={lastSavedId}
+                      lastUnsavedId={lastUnsavedId}
                       saveState={saveStates[suggestion.id]}
                     onOpenSaved={() => {
                       if (selectedRecipient) {

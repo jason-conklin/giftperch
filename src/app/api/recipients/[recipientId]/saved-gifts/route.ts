@@ -193,7 +193,10 @@ export async function DELETE(
   if (!trimmedRecipientId) return badRequest("recipientId is required");
 
   const savedIdeaId = request.nextUrl.searchParams.get("id");
-  if (!savedIdeaId) return badRequest("id query param is required");
+  const suggestionId = request.nextUrl.searchParams.get("suggestionId");
+  if (!savedIdeaId && !suggestionId) {
+    return badRequest("id or suggestionId query param is required");
+  }
 
   // Ownership of the recipient is still enforced to prevent cross-account deletes.
   const ownsRecipient = await ensureRecipientOwnership(
@@ -203,11 +206,20 @@ export async function DELETE(
   );
   if (!ownsRecipient) return forbidden();
 
-  const { error } = await supabase
+  const deleteQuery = supabase
     .from("recipient_saved_gift_ideas")
     .delete()
-    .eq("id", savedIdeaId)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("recipient_id", trimmedRecipientId);
+
+  if (savedIdeaId) {
+    deleteQuery.eq("id", savedIdeaId);
+  }
+  if (suggestionId) {
+    deleteQuery.eq("suggestion_id", suggestionId);
+  }
+
+  const { error } = await deleteQuery;
 
   if (error) {
     return NextResponse.json(
