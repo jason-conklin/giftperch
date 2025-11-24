@@ -98,13 +98,19 @@ export async function POST(
     return badRequest("preference must be liked, disliked, or clear");
   }
 
+  const suggestionIndex =
+    typeof body.suggestionIndex === "number" && Number.isInteger(body.suggestionIndex)
+      ? (body.suggestionIndex as number)
+      : 0;
+
   if (preference === "clear") {
     const { error } = await supabase
       .from("recipient_gift_feedback")
       .delete()
       .eq("user_id", user.id)
       .eq("recipient_id", trimmedRecipientId)
-      .eq("suggestion_id", trimmedSuggestionId);
+      .eq("suggestion_id", trimmedSuggestionId)
+      .eq("suggestion_index", suggestionIndex);
     if (error) {
       return NextResponse.json(
         { error: error.message || "Failed to clear feedback" },
@@ -121,10 +127,11 @@ export async function POST(
         user_id: user.id,
         recipient_id: trimmedRecipientId,
         suggestion_id: trimmedSuggestionId,
+        suggestion_index: suggestionIndex,
         preference,
       },
       {
-        onConflict: "user_id,recipient_id,suggestion_id",
+        onConflict: "user_id,recipient_id,suggestion_id,suggestion_index",
       },
     )
     .select("id, preference")

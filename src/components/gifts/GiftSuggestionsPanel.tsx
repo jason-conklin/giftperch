@@ -515,12 +515,12 @@ export function GiftSuggestionsPanel() {
   >({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingRun, setIsDeletingRun] = useState(false);
-  const [feedbackById, setFeedbackById] = useState<
-    Record<string, "liked" | "disliked" | null>
-  >({});
-  const [feedbackErrorById, setFeedbackErrorById] = useState<
-    Record<string, string | null>
-  >({});
+const [feedbackById, setFeedbackById] = useState<
+  Record<string, "liked" | "disliked" | null>
+>({});
+const [feedbackErrorById, setFeedbackErrorById] = useState<
+  Record<string, string | null>
+>({});
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
@@ -738,6 +738,7 @@ export function GiftSuggestionsPanel() {
 
   const toggleFeedback = async (
     suggestionId: string,
+    suggestionIndex: number,
     next: "liked" | "disliked",
   ) => {
     if (!selectedRecipientId || !selectedRecipient) {
@@ -749,14 +750,14 @@ export function GiftSuggestionsPanel() {
     try {
       setFeedbackErrorById((prev) => ({ ...prev, [suggestionId]: null }));
       const res = await fetch(
-        `/api/recipients/${selectedRecipient.id}/suggestions/${suggestionId}/feedback`,
+        `/api/recipients/${selectedRecipient.id}/suggestions/${activeRunId}/feedback`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify({ preference }),
+          body: JSON.stringify({ preference, suggestionIndex }),
         },
       );
       if (!res.ok) {
@@ -1504,7 +1505,7 @@ export function GiftSuggestionsPanel() {
                   ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {visibleSuggestions.map((suggestion) => (
+                  {visibleSuggestions.map((suggestion, idx) => (
                   <GiftSuggestionCard
                     key={suggestion.id}
                     suggestion={suggestion}
@@ -1523,10 +1524,10 @@ export function GiftSuggestionsPanel() {
                     }}
                     onDismissSave={() => handleDismissSave(suggestion.id)}
                     onClearAmazon={() => handleClearAmazon(suggestion.id)}
-                    feedback={feedbackById[activeRun.id] ?? null}
-                    feedbackError={feedbackErrorById[activeRun.id] ?? null}
+                    feedback={feedbackById[suggestion.id] ?? null}
+                    feedbackError={feedbackErrorById[suggestion.id] ?? null}
                     onToggleFeedback={(next) =>
-                      toggleFeedback(activeRun.id, next)
+                      toggleFeedback(suggestion.id, idx, next)
                     }
                   />
                 ))}
