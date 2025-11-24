@@ -32,17 +32,11 @@ export function AdminMetrics() {
 
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
-        if (!token) {
-          setError("Missing access token");
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch("/api/admin/metrics", {
+const res = await fetch("/api/admin/metrics", {
           credentials: "include",
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            "x-user-email": user.email,
+            "x-user-email": user.email.toLowerCase(),
           },
         });
 
