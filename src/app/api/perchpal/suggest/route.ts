@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 type SuggestRequestBody = {
-  recipientId: string;
+  recipientId?: string;
   occasion?: string | null;
   budgetMin?: number | null;
   budgetMax?: number | null;
@@ -161,32 +161,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [{ data: interestsData }, { data: giftsData }, { data: savedData }] =
-      await Promise.all([
-        supabase
-          .from("recipient_interests")
-          .select("label, category")
-          .eq("recipient_id", recipientId)
-          .order("created_at", { ascending: true }),
-        supabase
-          .from("gift_history")
-          .select("title, price, purchased_at, notes")
-          .eq("recipient_id", recipientId)
-          .order("purchased_at", { ascending: false, nullsFirst: false })
-          .limit(5),
-        supabase
-          .from("recipient_saved_gift_ideas")
-          .select("title")
-          .eq("recipient_id", recipientId)
-          .eq("user_id", user.id),
-      ]);
+    const [
+      { data: interestsData },
+      { data: giftsData },
+      { data: savedData },
+      { data: feedbackData },
+    ] = await Promise.all([
+      supabase
+        .from("recipient_interests")
+        .select("label, category")
+        .eq("recipient_id", recipientId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("gift_history")
+        .select("title, price, purchased_at, notes")
+        .eq("recipient_id", recipientId)
+        .order("purchased_at", { ascending: false, nullsFirst: false })
+        .limit(5),
+      supabase
+        .from("recipient_saved_gift_ideas")
+        .select("title")
+        .eq("recipient_id", recipientId)
+        .eq("user_id", user.id),
+      supabase
+        .from("recipient_gift_feedback")
+        .select(
+          "preference, suggestion_id, gift_suggestions:suggestion_id (suggestions)",
+        )
+        .eq("recipient_id", recipientId)
+        .eq("user_id", user.id),
+    ]);
 
     const interests = (interestsData ?? []) as RecipientInterest[];
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
     const previouslySavedTitles = (savedData ?? [])
       .map((row) => row.title?.trim())
       .filter((title): title is string => !!title && title.length > 0);
-
+    type FeedbackRow = {
+      preference: "liked" | "disliked";
+      gift_suggestions:
+        | { suggestions: GiftSuggestion[] | null }
+        | { suggestions: GiftSuggestion[] | null }[]
+        | null;
+    };
+    const likedTitles: string[] = [];
+    const dislikedTitles: string[] = [];
+    (feedbackData ?? []).forEach((fb) => {
+      const row = fb as FeedbackRow;
+      const suggestionPayload = Array.isArray(row?.gift_suggestions)
+        ? row.gift_suggestions[0]
+        : row?.gift_suggestions;
+      const suggestions = suggestionPayload?.suggestions ?? [];
+      const titles = Array.isArray(suggestions)
+        ? suggestions
+            .map((s) =>
+              typeof s?.title === "string" ? s.title.trim() : null,
+            )
+            .filter((t): t is string => !!t && t.length > 0)
+        : [];
+      if (row.preference === "liked") likedTitles.push(...titles);
+      if (row.preference === "disliked") dislikedTitles.push(...titles);
+    });
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
     const last_gifts_summary = summarizeGifts(gifts);
@@ -252,6 +287,16 @@ export async function POST(request: NextRequest) {
             "",
             "Return an object: { suggestions: GiftSuggestion[] }.",
             "Do not include code fences or any text outside JSON.",
+            likedTitles.length
+              ? `The user has previously liked these gift ideas for this recipient: ${likedTitles.join(
+                  "; ",
+                )}. Favor ideas with similar qualities or vibe.`
+              : "",
+            dislikedTitles.length
+              ? `The user has previously disliked these gift ideas: ${dislikedTitles.join(
+                  "; ",
+                )}. Avoid repeating or closely matching these items.`
+              : "",
             previouslySavedTitles.length
               ? `The user has already saved these gift ideas for this recipient: ${previouslySavedTitles.join(
                   "; ",
@@ -282,9 +327,14 @@ export async function POST(request: NextRequest) {
       .map((item, index) => normalizeSuggestion(item, index))
       .filter((item) => {
         if (!item.title) return true;
-        return !previouslySavedTitles.some(
-          (saved) => saved.toLowerCase() === item.title.toLowerCase(),
-        );
+        const titleLower = item.title.toLowerCase();
+        if (
+          dislikedTitles.some((d) => d.toLowerCase() === titleLower) ||
+          previouslySavedTitles.some((saved) => saved.toLowerCase() === titleLower)
+        ) {
+          return false;
+        }
+        return true;
       });
 
     if (normalizedSuggestions.length === 0) {

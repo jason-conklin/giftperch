@@ -4,6 +4,19 @@ import type { Database } from "@/lib/database.types";
 
 type SavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
+type FeedbackIdea = {
+  id: string;
+  suggestion_id: string;
+  title: string;
+  tier: string | null;
+  rationale: string | null;
+  estimated_price_min: number | null;
+  estimated_price_max: number | null;
+  product_url: string | null;
+  image_url: string | null;
+  preference: "liked" | "disliked";
+};
+type CombinedGift = SavedGiftIdea | FeedbackIdea;
 
 type Props = {
   recipientId: string;
@@ -17,7 +30,12 @@ type FetchState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "success"; data: SavedGiftIdea[] };
+  | {
+      status: "success";
+      saved: SavedGiftIdea[];
+      liked: FeedbackIdea[];
+      disliked: FeedbackIdea[];
+    };
 
 export function SavedGiftIdeasModal({
   recipientId,
@@ -28,6 +46,9 @@ export function SavedGiftIdeasModal({
 }: Props) {
   const [state, setState] = useState<FetchState>({ status: "idle" });
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"saved" | "liked" | "disliked">(
+    "saved",
+  );
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const headers = useMemo(() => {
@@ -39,16 +60,29 @@ export function SavedGiftIdeasModal({
   const fetchGifts = async () => {
     setState({ status: "loading" });
     try {
-      const res = await fetch(
-        `/api/recipients/${recipientId}/saved-gifts`,
-        { headers },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+      const [savedRes, feedbackRes] = await Promise.all([
+        fetch(`/api/recipients/${recipientId}/saved-gifts`, { headers }),
+        fetch(`/api/recipients/${recipientId}/feedback/summary`, { headers }),
+      ]);
+      if (!savedRes.ok) {
+        const body = await savedRes.json().catch(() => ({}));
         throw new Error(body.error || "Failed to load saved gifts");
       }
-      const data = (await res.json()) as { savedGifts: SavedGiftIdea[] };
-      setState({ status: "success", data: data.savedGifts || [] });
+      if (!feedbackRes.ok) {
+        const body = await feedbackRes.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to load feedback");
+      }
+      const saved = (await savedRes.json()) as { savedGifts: SavedGiftIdea[] };
+      const feedback = (await feedbackRes.json()) as {
+        liked: FeedbackIdea[];
+        disliked: FeedbackIdea[];
+      };
+      setState({
+        status: "success",
+        saved: saved.savedGifts || [],
+        liked: feedback.liked || [],
+        disliked: feedback.disliked || [],
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load saved gifts";
@@ -61,6 +95,7 @@ export function SavedGiftIdeasModal({
       fetchGifts();
     } else {
       setState({ status: "idle" });
+      setActiveTab("saved");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, recipientId]);
@@ -88,12 +123,13 @@ export function SavedGiftIdeasModal({
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to remove gift");
       }
-      if (state.status === "success") {
-        setState({
-          status: "success",
-          data: state.data.filter((gift) => gift.id !== id),
-        });
-      }
+      setState((prev) => {
+        if (prev.status !== "success") return prev;
+        return {
+          ...prev,
+          saved: prev.saved.filter((gift) => gift.id !== id),
+        };
+      });
     } catch (err) {
       console.error(err);
       alert(
@@ -105,6 +141,40 @@ export function SavedGiftIdeasModal({
       setRemovingId(null);
     }
   };
+
+  const { savedTab, liked, disliked } = useMemo(() => {
+    if (state.status !== "success") {
+      return {
+        savedTab: [] as CombinedGift[],
+        liked: [] as FeedbackIdea[],
+        disliked: [] as FeedbackIdea[],
+      };
+    }
+    const bySuggestion: Record<string, boolean> = {};
+    const merged: CombinedGift[] = [];
+    state.saved.forEach((gift) => {
+      const key = gift.suggestion_id ?? gift.title;
+      if (!bySuggestion[key]) {
+        bySuggestion[key] = true;
+        merged.push(gift);
+      }
+    });
+    state.liked.forEach((gift) => {
+      const key = gift.suggestion_id ?? gift.title;
+      if (!bySuggestion[key]) {
+        bySuggestion[key] = true;
+        merged.push(gift);
+      }
+    });
+    return {
+      savedTab: merged,
+      liked: state.liked,
+      disliked: state.disliked,
+    };
+  }, [state]);
+
+  const activeList =
+    activeTab === "saved" ? savedTab : activeTab === "liked" ? liked : disliked;
 
   if (!isOpen) return null;
 
@@ -150,90 +220,127 @@ export function SavedGiftIdeasModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 px-5 py-4 sm:px-6">
+          <div className="inline-flex w-full rounded-full bg-gp-cream/80 p-1 text-sm font-semibold text-gp-evergreen shadow-sm">
+            {(["saved", "liked", "disliked"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 rounded-full px-3 py-2 transition ${
+                  activeTab === tab
+                    ? "bg-white shadow-sm"
+                    : "hover:bg-gp-cream"
+                }`}
+              >
+                {tab === "saved"
+                  ? "Saved"
+                  : tab === "liked"
+                  ? "Liked"
+                  : "Disliked"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
           {state.status === "loading" && (
             <p className="text-sm text-gp-evergreen/70">Loading saved gifts…</p>
           )}
           {state.status === "error" && (
             <p className="text-sm text-red-700">{state.message}</p>
           )}
-          {state.status === "success" && state.data.length === 0 && (
+          {state.status === "success" && activeList.length === 0 && (
             <p className="text-sm text-gp-evergreen/70">
               No saved gift ideas yet. Save ideas from AI suggestions to see them
               here.
             </p>
           )}
-          {state.status === "success" && state.data.length > 0 && (
+          {state.status === "success" && activeList.length > 0 && (
             <div className="space-y-3">
-              {state.data.map((gift) => (
-                <div
-                  key={gift.id}
-                  className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
-                >
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
-                    <Image
-                      src={FALLBACK_IMAGE}
-                      alt={gift.title}
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-
-                  <div className="flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-base font-semibold text-gp-evergreen">
-                        {gift.title}
-                      </p>
-                      {gift.tier ? (
-                        <span className="rounded-full bg-gp-gold/30 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen">
-                          {gift.tier}
-                        </span>
-                      ) : null}
+              {activeList.map((gift) => {
+                const isFeedback = "preference" in gift;
+                const priceMin =
+                  "estimated_price_min" in gift ? gift.estimated_price_min : null;
+                const priceMax =
+                  "estimated_price_max" in gift ? gift.estimated_price_max : null;
+                return (
+                  <div
+                    key={gift.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
+                  >
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
+                      <Image
+                        src={FALLBACK_IMAGE}
+                        alt={gift.title}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                        unoptimized
+                      />
                     </div>
-                    {gift.rationale ? (
-                      <p className="text-sm text-gp-evergreen/80 line-clamp-2">
-                        {gift.rationale}
-                      </p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
-                      {gift.estimated_price_min !== null ||
-                      gift.estimated_price_max !== null ? (
-                        <span>
-                          {formatPriceRange(
-                            gift.estimated_price_min,
-                            gift.estimated_price_max,
-                          )}
-                        </span>
+
+                    <div className="flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-base font-semibold text-gp-evergreen">
+                          {gift.title}
+                        </p>
+                        {gift.tier ? (
+                          <span className="rounded-full bg-gp-gold/30 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen">
+                            {gift.tier}
+                          </span>
+                        ) : null}
+                        {isFeedback ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                              gift.preference === "liked"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-red-50 text-red-700"
+                            }`}
+                          >
+                            {gift.preference === "liked" ? "Liked" : "Disliked"}
+                          </span>
+                        ) : null}
+                      </div>
+                      {gift.rationale ? (
+                        <p className="text-sm text-gp-evergreen/80 line-clamp-2">
+                          {gift.rationale}
+                        </p>
                       ) : null}
-                      {gift.product_url ? (
-                        <a
-                          href={gift.product_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline underline-offset-4 hover:text-gp-evergreen"
+                      <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
+                        {priceMin !== null || priceMax !== null ? (
+                          <span>{formatPriceRange(priceMin, priceMax)}</span>
+                        ) : null}
+                        {gift.product_url ? (
+                          <a
+                            href={gift.product_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline underline-offset-4 hover:text-gp-evergreen"
+                          >
+                            Open on Amazon
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
+                      {!isFeedback ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(gift.id)}
+                          disabled={removingId === gift.id}
+                          className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                         >
-                          Open on Amazon
-                        </a>
+                          {removingId === gift.id ? "Removing…" : "Remove"}
+                        </button>
                       ) : null}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(gift.id)}
-                      disabled={removingId === gift.id}
-                      className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      {removingId === gift.id ? "Removing…" : "Remove"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

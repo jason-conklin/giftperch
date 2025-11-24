@@ -9,6 +9,53 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      recipient_gift_feedback: {
+        Row: {
+          created_at: string;
+          id: string;
+          preference: "liked" | "disliked";
+          recipient_id: string;
+          suggestion_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          preference: "liked" | "disliked";
+          recipient_id: string;
+          suggestion_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          preference?: "liked" | "disliked";
+          recipient_id?: string;
+          suggestion_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recipient_gift_feedback_recipient_id_fkey";
+            columns: ["recipient_id"];
+            referencedRelation: "recipient_profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recipient_gift_feedback_suggestion_id_fkey";
+            columns: ["suggestion_id"];
+            referencedRelation: "gift_suggestions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "recipient_gift_feedback_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+            referencedSchema: "auth";
+          },
+        ];
+      };
       recipient_saved_gift_ideas: {
         Row: {
           created_at: string;

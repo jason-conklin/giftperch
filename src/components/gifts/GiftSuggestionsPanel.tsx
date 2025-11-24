@@ -8,6 +8,7 @@ import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { AmazonProduct } from "@/lib/amazonPaapi";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
+import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 
 type AvatarIconKey =
@@ -173,6 +174,9 @@ type SuggestionCardProps = {
   onOpenSaved?: () => void;
   onDismissSave?: () => void;
   onClearAmazon?: () => void;
+  feedback?: "liked" | "disliked" | null;
+  feedbackError?: string | null;
+  onToggleFeedback: (next: "liked" | "disliked") => void;
 };
 
 function GiftSuggestionCard({
@@ -186,6 +190,9 @@ function GiftSuggestionCard({
   onOpenSaved,
   onDismissSave,
   onClearAmazon,
+  feedback,
+  onToggleFeedback,
+  feedbackError,
 }: SuggestionCardProps) {
   const [imageSrc, setImageSrc] = useState(DEFAULT_GIFT_IMAGE);
 
@@ -219,13 +226,35 @@ function GiftSuggestionCard({
               {suggestion.short_description}
             </p>
           </div>
-          <span
-            className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-              tierBadgeClasses[suggestion.tier]
-            }`}
-          >
-            {tierLabels[suggestion.tier]}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onToggleFeedback("liked")}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+                feedback === "liked" ? "bg-blue-50" : ""
+              }`}
+              aria-label="Like this idea"
+            >
+              <ThumbUpIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleFeedback("disliked")}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
+                feedback === "disliked" ? "bg-red-50" : ""
+              }`}
+              aria-label="Dislike this idea"
+            >
+              <ThumbDownIcon className="h-4 w-4" />
+            </button>
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                tierBadgeClasses[suggestion.tier]
+              }`}
+            >
+              {tierLabels[suggestion.tier]}
+            </span>
+          </div>
         </div>
 
         <div className="text-sm text-gp-evergreen/80">
@@ -302,6 +331,9 @@ function GiftSuggestionCard({
               ×
             </button>
           </div>
+        ) : null}
+        {feedbackError ? (
+          <p className="text-xs text-red-600">{feedbackError}</p>
         ) : null}
         {saveState?.error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -439,6 +471,12 @@ export function GiftSuggestionsPanel() {
   >({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingRun, setIsDeletingRun] = useState(false);
+  const [feedbackById, setFeedbackById] = useState<
+    Record<string, "liked" | "disliked" | null>
+  >({});
+  const [feedbackErrorById, setFeedbackErrorById] = useState<
+    Record<string, string | null>
+  >({});
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
@@ -654,6 +692,48 @@ export function GiftSuggestionsPanel() {
     }
   };
 
+  const toggleFeedback = async (
+    suggestionId: string,
+    next: "liked" | "disliked",
+  ) => {
+    if (!selectedRecipientId || !selectedRecipient) {
+      return;
+    }
+    const current = feedbackById[suggestionId] ?? null;
+    const preference =
+      current === next ? "clear" : next;
+
+    try {
+      setFeedbackErrorById((prev) => ({ ...prev, [suggestionId]: null }));
+      const res = await fetch(
+        `/api/recipients/${selectedRecipient.id}/suggestions/${suggestionId}/feedback`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({ preference }),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to save feedback");
+      }
+      setFeedbackById((prev) => ({
+        ...prev,
+        [suggestionId]:
+          preference === "clear" ? null : (preference as "liked" | "disliked"),
+      }));
+    } catch (err) {
+      setFeedbackErrorById((prev) => ({
+        ...prev,
+        [suggestionId]:
+          err instanceof Error ? err.message : "Failed to save feedback",
+      }));
+    }
+  };
+
   useEffect(() => {
     if (!selectedRecipientId) {
       setRuns([]);
@@ -700,6 +780,8 @@ export function GiftSuggestionsPanel() {
 
   useEffect(() => {
     setAmazonBySuggestion({});
+    setFeedbackById({});
+    setFeedbackErrorById({});
   }, [activeRunId]);
 
   const visibleSuggestions = useMemo(() => {
@@ -1379,11 +1461,11 @@ export function GiftSuggestionsPanel() {
                     key={suggestion.id}
                     suggestion={suggestion}
                     amazonState={amazonBySuggestion[suggestion.id]}
-                    copiedSuggestionId={copiedSuggestionId}
-                    onCopy={handleCopySuggestion}
-                    onFetchAmazon={handleFetchAmazonProducts}
-                    onSaveGift={handleSaveGift}
-                    saveState={saveStates[suggestion.id]}
+                      copiedSuggestionId={copiedSuggestionId}
+                      onCopy={handleCopySuggestion}
+                      onFetchAmazon={handleFetchAmazonProducts}
+                      onSaveGift={handleSaveGift}
+                      saveState={saveStates[suggestion.id]}
                     onOpenSaved={() => {
                       if (selectedRecipient) {
                         setSavedGiftsRecipientId(selectedRecipient.id);
@@ -1393,6 +1475,9 @@ export function GiftSuggestionsPanel() {
                     }}
                     onDismissSave={() => handleDismissSave(suggestion.id)}
                     onClearAmazon={() => handleClearAmazon(suggestion.id)}
+                    feedback={feedbackById[suggestion.id] ?? null}
+                    feedbackError={feedbackErrorById[suggestion.id] ?? null}
+                    onToggleFeedback={(next) => toggleFeedback(suggestion.id, next)}
                   />
                 ))}
               </div>
