@@ -202,6 +202,9 @@ function GiftSuggestionCard({
     }
   };
 
+  const isLiked = feedback === "liked";
+  const isDisliked = feedback === "disliked";
+
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
       <div className="relative h-40 w-full overflow-hidden bg-gp-cream/70">
@@ -239,21 +242,31 @@ function GiftSuggestionCard({
                 type="button"
                 onClick={() => onToggleFeedback("liked")}
                 className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-                  feedback === "liked" ? "bg-blue-50" : ""
+                  isLiked ? "bg-blue-50" : ""
                 }`}
                 aria-label="Like this idea"
+                aria-pressed={isLiked}
               >
-                <ThumbUpIcon className="h-4 w-4" />
+                <ThumbUpIcon
+                  className={`h-4 w-4 stroke-current ${
+                    isLiked ? "fill-current" : "fill-none"
+                  }`}
+                />
               </button>
               <button
                 type="button"
                 onClick={() => onToggleFeedback("disliked")}
                 className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-                  feedback === "disliked" ? "bg-red-50" : ""
+                  isDisliked ? "bg-red-50" : ""
                 }`}
                 aria-label="Dislike this idea"
+                aria-pressed={isDisliked}
               >
-                <ThumbDownIcon className="h-4 w-4" />
+                <ThumbDownIcon
+                  className={`h-4 w-4 stroke-current ${
+                    isDisliked ? "fill-current" : "fill-none"
+                  }`}
+                />
               </button>
             </div>
           </div>
@@ -312,28 +325,52 @@ function GiftSuggestionCard({
           </button>
         </div>
 
-        {saveState?.success ? (
-          <div className="flex items-start justify-between gap-2 rounded-2xl border border-gp-evergreen/15 bg-green-50 px-3 py-2 text-xs text-gp-evergreen">
-            <span>
-              Saved gift idea.{" "}
+        {(() => {
+          const banner = isLiked
+            ? {
+                className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
+                message: "Gift idea liked. ",
+                onDismiss: () => onToggleFeedback("liked"),
+              }
+            : isDisliked
+            ? {
+                className: "border border-red-200 bg-red-50 text-red-900",
+                message: "Gift idea disliked. ",
+                onDismiss: () => onToggleFeedback("disliked"),
+              }
+            : saveState?.success
+            ? {
+                className: "border border-gp-evergreen/15 bg-green-50 text-gp-evergreen",
+                message: "Saved gift idea. ",
+                onDismiss: onDismissSave,
+              }
+            : null;
+          if (!banner) return null;
+          return (
+            <div
+              className={`flex items-start justify-between gap-2 rounded-2xl px-3 py-2 text-xs ${banner.className}`}
+            >
+              <span>
+                {banner.message}
+                <button
+                  type="button"
+                  className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
+                  onClick={onOpenSaved}
+                >
+                  View here →
+                </button>
+              </span>
               <button
                 type="button"
-                className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
-                onClick={onOpenSaved}
+                aria-label="Dismiss notice"
+                className="h-6 w-6 shrink-0 rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
+                onClick={banner.onDismiss}
               >
-                View here →
+                ×
               </button>
-            </span>
-            <button
-              type="button"
-              aria-label="Dismiss saved gift notice"
-              className="h-6 w-6 shrink-0 rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
-              onClick={onDismissSave}
-            >
-              ×
-            </button>
-          </div>
-        ) : null}
+            </div>
+          );
+        })()}
         {feedbackError ? (
           <p className="text-xs text-red-600">{feedbackError}</p>
         ) : null}
