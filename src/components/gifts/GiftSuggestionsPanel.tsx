@@ -700,8 +700,7 @@ export function GiftSuggestionsPanel() {
       return;
     }
     const current = feedbackById[suggestionId] ?? null;
-    const preference =
-      current === next ? "clear" : next;
+    const preference = current === next ? "clear" : next;
 
     try {
       setFeedbackErrorById((prev) => ({ ...prev, [suggestionId]: null }));
@@ -1475,9 +1474,11 @@ export function GiftSuggestionsPanel() {
                     }}
                     onDismissSave={() => handleDismissSave(suggestion.id)}
                     onClearAmazon={() => handleClearAmazon(suggestion.id)}
-                    feedback={feedbackById[suggestion.id] ?? null}
-                    feedbackError={feedbackErrorById[suggestion.id] ?? null}
-                    onToggleFeedback={(next) => toggleFeedback(suggestion.id, next)}
+                    feedback={feedbackById[activeRun.id] ?? null}
+                    feedbackError={feedbackErrorById[activeRun.id] ?? null}
+                    onToggleFeedback={(next) =>
+                      toggleFeedback(activeRun.id, next)
+                    }
                   />
                 ))}
               </div>
