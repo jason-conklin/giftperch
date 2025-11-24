@@ -169,6 +169,8 @@ type SuggestionCardProps = {
   onSaveGift: (suggestion: GiftSuggestion) => void;
   onUnsaveGift: (suggestion: GiftSuggestion) => void;
   isSaved: boolean;
+  isLiked: boolean;
+  isDisliked: boolean;
   lastSavedId: string | null;
   lastUnsavedId: string | null;
   saveState?: {
@@ -193,6 +195,8 @@ function GiftSuggestionCard({
   onSaveGift,
   onUnsaveGift,
   isSaved,
+  isLiked: isLikedProp,
+  isDisliked: isDislikedProp,
   lastSavedId,
   lastUnsavedId,
   saveState,
@@ -211,8 +215,8 @@ function GiftSuggestionCard({
     }
   };
 
-  const isLiked = feedback === "liked";
-  const isDisliked = feedback === "disliked";
+  const isLiked = isLikedProp ?? feedback === "liked";
+  const isDisliked = isDislikedProp ?? feedback === "disliked";
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
@@ -529,6 +533,8 @@ export function GiftSuggestionsPanel() {
   const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [dislikedIds, setDislikedIds] = useState<Set<string>>(new Set());
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [lastUnsavedId, setLastUnsavedId] = useState<string | null>(null);
   const [saveStates, setSaveStates] = useState<
@@ -649,6 +655,8 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
   useEffect(() => {
     if (!selectedRecipientId) {
       setSavedIds(new Set());
+      setLikedIds(new Set());
+      setDislikedIds(new Set());
       setFeedbackById({});
       return;
     }
@@ -686,21 +694,27 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
           if (key) nextSaved.add(key);
         });
 
+        const nextLiked = new Set<string>();
+        const nextDisliked = new Set<string>();
         const feedbackMap: Record<string, "liked" | "disliked"> = {};
         (fbJson.liked ?? []).forEach((fb) => {
           const key = fb.suggestion_id || fb.title;
           if (key) {
+            nextLiked.add(key);
             feedbackMap[key] = "liked";
           }
         });
         (fbJson.disliked ?? []).forEach((fb) => {
           const key = fb.suggestion_id || fb.title;
           if (key) {
+            nextDisliked.add(key);
             feedbackMap[key] = "disliked";
           }
         });
 
         setSavedIds(nextSaved);
+        setLikedIds(nextLiked);
+        setDislikedIds(nextDisliked);
         setFeedbackById(feedbackMap);
       } catch (err) {
         console.warn("Failed to hydrate saved/feedback state", err);
@@ -924,6 +938,40 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         [suggestionId]:
           preference === "clear" ? null : (preference as "liked" | "disliked"),
       }));
+      if (preference === "clear") {
+        setLikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.delete(suggestionId);
+          return nextSet;
+        });
+        setDislikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.delete(suggestionId);
+          return nextSet;
+        });
+      } else if (preference === "liked") {
+        setLikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.add(suggestionId);
+          return nextSet;
+        });
+        setDislikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.delete(suggestionId);
+          return nextSet;
+        });
+      } else if (preference === "disliked") {
+        setDislikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.add(suggestionId);
+          return nextSet;
+        });
+        setLikedIds((prev) => {
+          const nextSet = new Set(prev);
+          nextSet.delete(suggestionId);
+          return nextSet;
+        });
+      }
     } catch (err) {
       setFeedbackErrorById((prev) => ({
         ...prev,
@@ -1671,6 +1719,8 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       onSaveGift={handleSaveGift}
                       onUnsaveGift={handleUnsaveGift}
                       isSaved={savedIds.has(suggestion.id)}
+                      isLiked={likedIds.has(suggestion.id)}
+                      isDisliked={dislikedIds.has(suggestion.id)}
                       lastSavedId={lastSavedId}
                       lastUnsavedId={lastUnsavedId}
                       saveState={saveStates[suggestion.id]}

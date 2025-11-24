@@ -79,7 +79,16 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({ savedGifts: (data ?? []) as RecipientSavedGiftIdea[] });
+  const mapped =
+    (data ?? []).map((row) => {
+      const typed = row as RecipientSavedGiftIdea;
+      return {
+        ...typed,
+        suggestionId: typed.suggestion_id,
+      };
+    }) || [];
+
+  return NextResponse.json({ savedGifts: mapped });
 }
 
 export async function POST(
