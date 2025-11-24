@@ -1182,6 +1182,14 @@ export function GiftSuggestionsPanel() {
             </div>
           </form>
 
+          {selectedRecipient?.name ? (
+            <div className="mt-4">
+              <p className="text-base font-semibold text-gp-evergreen sm:text-lg">
+                Gift ideas for {selectedRecipient.name}
+              </p>
+            </div>
+          ) : null}
+
           {runs.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gp-evergreen/70">
               <span className="font-semibold uppercase tracking-wide">
