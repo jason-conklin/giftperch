@@ -241,7 +241,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gp-cream">Birthday</label>
+      <label className="text-sm font-medium text-gp-evergreen">Birthday</label>
       <div className="relative">
         <input
           type="text"
@@ -254,7 +254,7 @@ function BirthdayField({ value, onChange, approxAge }: BirthdayFieldProps) {
         />
         <button
           type="button"
-          className="absolute inset-y-0 right-2 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-gp-evergreen transition hover:bg-gp-cream"
+          className="absolute inset-y-0 right-2 my-auto flex h-8 w-8 items-center justify-center rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
           onClick={() => setOpen((prev) => !prev)}
           aria-label="Open birthday picker"
           ref={triggerRef}
@@ -1578,7 +1578,7 @@ export function RecipientsManager() {
                     openEditForm(selectedRecipient);
                     setSelectedRecipient(null);
                   }}
-                  className="rounded-full border border-gp-cream/30 px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-white/15"
+                  className="rounded-full border border-gp-cream/30 px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-white/15 cursor-pointer"
                 >
                   Edit recipient
                 </button>
@@ -1586,7 +1586,7 @@ export function RecipientsManager() {
                   type="button"
                   ref={closeButtonRef}
                   onClick={() => setSelectedRecipient(null)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/30 text-gp-cream transition hover:bg-white/15"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/30 text-gp-cream transition hover:bg-white/15 cursor-pointer"
                   aria-label="Close recipient details"
                 >
                   <svg
@@ -1684,7 +1684,7 @@ export function RecipientsManager() {
             <div className="flex justify-end border-t border-gp-evergreen/10 px-6 py-3">
               <button
                 type="button"
-                className="gp-secondary-button"
+                className="gp-secondary-button cursor-pointer"
                 onClick={() => setSelectedRecipient(null)}
               >
                 Close
@@ -1720,7 +1720,7 @@ export function RecipientsManager() {
               <button
                 type="button"
                 onClick={() => closeForm()}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/50 text-gp-cream transition hover:bg-white/15"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/50 text-gp-cream transition hover:bg-white/15 cursor-pointer"
                 aria-label="Close recipient form"
               >
                 <svg
@@ -1782,7 +1782,7 @@ export function RecipientsManager() {
                       {(formState.avatar_url || formState.avatar_icon) && (
                         <button
                           type="button"
-                          className="text-xs font-semibold text-red-600"
+                          className="text-xs font-semibold text-red-600 cursor-pointer"
                           onClick={() =>
                             setFormState((prev) => ({
                               ...prev,
@@ -1796,7 +1796,7 @@ export function RecipientsManager() {
                       )}
                       <button
                         type="button"
-                        className="gp-secondary-button"
+                        className="gp-secondary-button cursor-pointer"
                         onClick={() =>
                           setAvatarOptionsVisible((visible) => !visible)
                         }
@@ -1823,7 +1823,7 @@ export function RecipientsManager() {
                       />
                       <button
                         type="button"
-                        className="gp-secondary-button"
+                        className="gp-secondary-button cursor-pointer"
                         onClick={() => recipientAvatarInputRef.current?.click()}
                         disabled={avatarUploading}
                       >
@@ -1832,7 +1832,7 @@ export function RecipientsManager() {
                       {formState.avatar_url ? (
                         <button
                           type="button"
-                          className="text-xs font-semibold text-red-600"
+                          className="text-xs font-semibold text-red-600 cursor-pointer"
                           onClick={() =>
                             setFormState((prev) => ({
                               ...prev,
@@ -1861,25 +1861,25 @@ export function RecipientsManager() {
                               }));
                               setAvatarOptionsVisible(false);
                             }}
-                            className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
-                              selected
-                                ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
-                                : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
-                            }`}
-                          >
-                            <span
-                              className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                                selected ? "bg-white/10" : "bg-gp-cream"
-                              }`}
+                    className={`flex flex-col items-center rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gp-gold ${
+                      selected
+                        ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
+                        : "border-gp-evergreen/20 bg-white text-gp-evergreen hover:border-gp-evergreen/50"
+                    } cursor-pointer`}
+                  >
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                        selected ? "bg-white/10" : "bg-gp-cream"
+                      }`}
                             >
-                              <Image
-                                src={option.image}
-                                alt={option.label}
-                                width={48}
-                                height={48}
-                                className="h-10 w-10 object-contain"
-                                unoptimized
-                              />
+                      <Image
+                        src={option.image}
+                        alt={option.label}
+                        width={48}
+                        height={48}
+                        className="h-10 w-10 object-contain"
+                        unoptimized
+                      />
                             </span>
                             <span className="mt-2 text-[11px] uppercase tracking-wide">
                               {option.label}
@@ -2132,7 +2132,7 @@ export function RecipientsManager() {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60"
+                className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60 cursor-pointer"
                 disabled={formSaving}
               >
                 {formMode === "create" ? "Save recipient" : "Update recipient"}
