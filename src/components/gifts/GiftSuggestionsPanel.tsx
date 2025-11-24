@@ -646,6 +646,70 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     });
   }, [supabase]);
 
+  useEffect(() => {
+    if (!selectedRecipientId) {
+      setSavedIds(new Set());
+      setFeedbackById({});
+      return;
+    }
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (authToken) headers.Authorization = `Bearer ${authToken}`;
+
+    const hydrate = async () => {
+      try {
+        const [savedRes, fbRes] = await Promise.all([
+          fetch(`/api/recipients/${selectedRecipientId}/saved-gifts`, {
+            headers,
+          }),
+          fetch(`/api/recipients/${selectedRecipientId}/feedback/summary`, {
+            headers,
+          }),
+        ]);
+
+        const savedJson = (await savedRes
+          .json()
+          .catch(() => ({ savedGifts: [] }))) as {
+          savedGifts?: { suggestion_id: string | null; title: string }[];
+        };
+        const fbJson = (await fbRes
+          .json()
+          .catch(() => ({ liked: [], disliked: [] }))) as {
+          liked?: { suggestion_id: string; title: string }[];
+          disliked?: { suggestion_id: string; title: string }[];
+        };
+
+        const nextSaved = new Set<string>();
+        (savedJson.savedGifts ?? []).forEach((gift) => {
+          const key = gift.suggestion_id || gift.title;
+          if (key) nextSaved.add(key);
+        });
+
+        const feedbackMap: Record<string, "liked" | "disliked"> = {};
+        (fbJson.liked ?? []).forEach((fb) => {
+          const key = fb.suggestion_id || fb.title;
+          if (key) {
+            feedbackMap[key] = "liked";
+          }
+        });
+        (fbJson.disliked ?? []).forEach((fb) => {
+          const key = fb.suggestion_id || fb.title;
+          if (key) {
+            feedbackMap[key] = "disliked";
+          }
+        });
+
+        setSavedIds(nextSaved);
+        setFeedbackById(feedbackMap);
+      } catch (err) {
+        console.warn("Failed to hydrate saved/feedback state", err);
+      }
+    };
+
+    void hydrate();
+  }, [selectedRecipientId, activeRunId, authToken]);
+
   const handleSaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) {
       setError("Please select a recipient before saving gift ideas.");
