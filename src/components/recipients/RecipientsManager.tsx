@@ -1294,7 +1294,7 @@ export function RecipientsManager() {
         <button
           type="button"
           onClick={openCreateForm}
-          className="rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
+          className="rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
         >
           Add Recipient
         </button>
