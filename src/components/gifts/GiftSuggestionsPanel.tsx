@@ -168,11 +168,7 @@ function GiftSuggestionCard({
   onDismissSave,
   onClearAmazon,
 }: SuggestionCardProps) {
-  const initialImage =
-    suggestion.image_url && suggestion.image_url.startsWith("http")
-      ? suggestion.image_url
-      : DEFAULT_GIFT_IMAGE;
-  const [imageSrc, setImageSrc] = useState(initialImage);
+  const [imageSrc, setImageSrc] = useState(DEFAULT_GIFT_IMAGE);
 
   const handleImageError = () => {
     if (imageSrc !== DEFAULT_GIFT_IMAGE) {
