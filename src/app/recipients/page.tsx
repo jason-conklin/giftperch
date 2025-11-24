@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { RecipientsManager } from "@/components/recipients/RecipientsManager";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - Recipients",
+};
 
 export default function RecipientsPage() {
   return (

@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { PerchPalChat } from "@/components/perchpal/PerchPalChat";
 import { GiftSuggestionsPanel } from "@/components/gifts/GiftSuggestionsPanel";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - Gift Ideas",
+};
 
 export default function GiftsPage() {
   return (

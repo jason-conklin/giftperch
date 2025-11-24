@@ -2,16 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 
-const title = "GiftPerch – AI-Powered Recipient Profiles & Gift Ideas";
+const title = "GiftPerch";
 const description =
   "GiftPerch helps you build reusable recipient profiles and lean on PerchPal, an AI gifting assistant, to find thoughtful, Amazon-ready present ideas.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://giftperch.com"),
-  title: {
-    default: title,
-    template: "%s | GiftPerch",
-  },
+  title,
   description,
   openGraph: {
     title,

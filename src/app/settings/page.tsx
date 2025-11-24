@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageShell } from "@/components/layout/PageShell";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - Settings",
+};
 
 export default function SettingsPage() {
   return (

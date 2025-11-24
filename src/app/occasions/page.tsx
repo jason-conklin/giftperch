@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageShell } from "@/components/layout/PageShell";
 import { OccasionsManager } from "@/components/occasions/OccasionsManager";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - Occasions",
+};
 
 export default function OccasionsPage() {
   return (

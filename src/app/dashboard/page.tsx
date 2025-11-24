@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { PageShell } from "@/components/layout/PageShell";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
 import { PerchPalFlyingAvatar } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
 import { AdminMetrics } from "./AdminMetrics";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - Dashboard",
+};
 
 const actions = [
   {

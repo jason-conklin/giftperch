@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -318,3 +319,6 @@ function BottomCta() {
     </div>
   );
 }
+export const metadata: Metadata = {
+  title: "GiftPerch - Blog",
+};

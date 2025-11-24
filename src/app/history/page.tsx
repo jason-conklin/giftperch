@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GiftHistoryTable } from "@/components/gifts/GiftHistoryTable";
+
+export const metadata: Metadata = {
+  title: "GiftPerch - History",
+};
 
 export default function GiftHistoryPage() {
   return (
