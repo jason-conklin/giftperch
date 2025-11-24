@@ -160,22 +160,15 @@ const PERCHPAL_ERROR_MESSAGE =
 const AMAZON_PLACEHOLDER_MESSAGE =
   "No product matches found yet. Product previews will appear here when available.";
 
-const getSuggestionKeyFromTitle = (title: string) => title.trim().toLowerCase();
+const normalize = (str: string | null | undefined) => (str ?? "").trim().toLowerCase();
+const makeIdentity = (title: string, tier?: string | null) =>
+  `${normalize(title)}::${normalize(tier) || "none"}`;
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
-  suggestion.id?.trim() || getSuggestionKeyFromTitle(suggestion.title);
-const getIdentityFromSavedRow = (row: { suggestion_id?: string | null; title?: string | null }) => {
-  if (row.suggestion_id) return row.suggestion_id.trim();
-  if (row.title) return getSuggestionKeyFromTitle(row.title);
-  return "";
-};
-const getIdentityFromFeedbackRow = (row: {
-  suggestion_id?: string | null;
-  title?: string | null;
-}) => {
-  if (row.suggestion_id) return row.suggestion_id.trim();
-  if (row.title) return getSuggestionKeyFromTitle(row.title);
-  return "";
-};
+  makeIdentity(suggestion.title, suggestion.tier);
+const getIdentityFromSavedRow = (row: { title?: string | null; tier?: string | null }) =>
+  makeIdentity(row.title ?? "", row.tier ?? null);
+const getIdentityFromFeedbackRow = (row: { title?: string | null; tier?: string | null }) =>
+  makeIdentity(row.title ?? "", row.tier ?? null);
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -1041,15 +1034,14 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     let cancelled = false;
     (async () => {
       try {
-        // Fetch saved/feedback directly from Supabase so we rely on the same IDs the DB stores
         const [savedRowsRes, feedbackRowsRes] = await Promise.all([
           supabase
             .from("recipient_saved_gift_ideas")
-            .select("suggestion_id, title")
+            .select("title, tier")
             .eq("recipient_id", selectedRecipientId),
           supabase
             .from("recipient_gift_feedback")
-            .select("suggestion_id, title, preference")
+            .select("title, tier, preference")
             .eq("recipient_id", selectedRecipientId),
         ]);
 
