@@ -185,10 +185,12 @@ type SuggestionCardProps = {
   };
   onOpenSaved?: () => void;
   onDismissSave?: () => void;
+  onDismissFeedback?: () => void;
   onClearAmazon?: () => void;
   feedback?: "liked" | "disliked" | null;
   feedbackError?: string | null;
   onToggleFeedback: (next: "liked" | "disliked") => void;
+  dismissedFeedback?: boolean;
 };
 
 function GiftSuggestionCard({
@@ -208,10 +210,12 @@ function GiftSuggestionCard({
   saveState,
   onOpenSaved,
   onDismissSave,
+  onDismissFeedback,
   onClearAmazon,
   feedback,
   onToggleFeedback,
   feedbackError,
+  dismissedFeedback,
 }: SuggestionCardProps) {
   const [imageSrc, setImageSrc] = useState(DEFAULT_GIFT_IMAGE);
 
@@ -355,17 +359,17 @@ function GiftSuggestionCard({
           isSaved && lastSavedId === suggestionKey && saveState?.success;
         const recentlyUnsaved =
           !isSaved && lastUnsavedId === suggestionKey && !saveState?.success;
-          const banner = isLiked
+          const banner = isLiked && !dismissedFeedback
             ? {
-                className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
-                message: "Gift idea liked. ",
-                onDismiss: () => onToggleFeedback("liked"),
+              className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
+              message: "Gift idea liked. ",
+              onDismiss: onDismissFeedback,
               }
-            : isDisliked
+            : isDisliked && !dismissedFeedback
             ? {
-                className: "border border-red-200 bg-red-50 text-red-900",
-                message: "Gift idea disliked. ",
-                onDismiss: () => onToggleFeedback("disliked"),
+              className: "border border-red-200 bg-red-50 text-red-900",
+              message: "Gift idea disliked. ",
+              onDismiss: onDismissFeedback,
               }
             : recentlySaved
             ? {
@@ -551,12 +555,15 @@ export function GiftSuggestionsPanel() {
   >({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingRun, setIsDeletingRun] = useState(false);
-const [feedbackById, setFeedbackById] = useState<
+  const [feedbackById, setFeedbackById] = useState<
   Record<string, "liked" | "disliked" | null>
 >({});
 const [feedbackErrorById, setFeedbackErrorById] = useState<
   Record<string, string | null>
 >({});
+  const [dismissedFeedbackByKey, setDismissedFeedbackByKey] = useState<
+    Record<string, boolean>
+  >({});
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
@@ -849,6 +856,11 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
     try {
       setFeedbackErrorById((prev) => ({ ...prev, [suggestionKey]: null }));
+      setDismissedFeedbackByKey((prev) => {
+        const nextMap = { ...prev };
+        delete nextMap[suggestionKey];
+        return nextMap;
+      });
       const res = await fetch(
         `/api/recipients/${selectedRecipient.id}/suggestions/${activeRunId}/feedback`,
         {
@@ -1061,6 +1073,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       setLikedByKey(nextLiked);
       setDislikedByKey(nextDisliked);
       setFeedbackById(feedbackMap);
+      setDismissedFeedbackByKey({});
     })();
 
     return () => {
@@ -1733,6 +1746,13 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                     onClearAmazon={() => handleClearAmazon(suggestion.id)}
                     feedback={feedbackById[suggestionKey] ?? null}
                     feedbackError={feedbackErrorById[suggestionKey] ?? null}
+                    dismissedFeedback={!!dismissedFeedbackByKey[suggestionKey]}
+                    onDismissFeedback={() =>
+                      setDismissedFeedbackByKey((prev) => ({
+                        ...prev,
+                        [suggestionKey]: true,
+                      }))
+                    }
                     onToggleFeedback={(next) =>
                       toggleFeedback(suggestionKey, suggestion, idx, next)
                     }
