@@ -679,13 +679,25 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const savedJson = (await savedRes
           .json()
           .catch(() => ({ savedGifts: [] }))) as {
-          savedGifts?: { suggestion_id: string | null; suggestionId?: string | null; title: string }[];
+          savedGifts?: {
+            suggestion_id: string | null;
+            suggestionId?: string | null;
+            title: string;
+          }[];
         };
         const fbJson = (await fbRes
           .json()
           .catch(() => ({ liked: [], disliked: [] }))) as {
-          liked?: { suggestion_id: string; suggestionId?: string | null; title: string }[];
-          disliked?: { suggestion_id: string; suggestionId?: string | null; title: string }[];
+          liked?: {
+            suggestion_id: string;
+            suggestionId?: string | null;
+            title: string;
+          }[];
+          disliked?: {
+            suggestion_id: string;
+            suggestionId?: string | null;
+            title: string;
+          }[];
         };
 
         const nextSaved = new Set<string>();
