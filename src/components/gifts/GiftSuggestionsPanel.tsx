@@ -105,6 +105,8 @@ export type GiftSuggestion = {
   why_it_fits: string;
   suggested_url?: string | null;
   image_url?: string | null;
+  initialSaved?: boolean;
+  initialPreference?: "liked" | "disliked" | null;
 };
 
 type GiftPromptContext = {
@@ -165,10 +167,6 @@ const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
   makeIdentity(suggestion.title, suggestion.tier);
-const getIdentityFromSavedRow = (row: { title?: string | null; tier?: string | null }) =>
-  makeIdentity(row.title ?? "", row.tier ?? null);
-const getIdentityFromFeedbackRow = (row: { title?: string | null; tier?: string | null }) =>
-  makeIdentity(row.title ?? "", row.tier ?? null);
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -1031,71 +1029,36 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       return;
     }
 
-    let cancelled = false;
-    (async () => {
-      try {
-        const [savedRowsRes, feedbackRowsRes] = await Promise.all([
-          supabase
-            .from("recipient_saved_gift_ideas")
-            .select("title, tier")
-            .eq("recipient_id", selectedRecipientId),
-          supabase
-            .from("recipient_gift_feedback")
-            .select("title, tier, preference")
-            .eq("recipient_id", selectedRecipientId),
-        ]);
+    const nextSaved: Record<string, boolean> = {};
+    const nextLiked: Record<string, boolean> = {};
+    const nextDisliked: Record<string, boolean> = {};
+    const nextFeedback: Record<string, "liked" | "disliked" | null> = {};
 
-        if (cancelled) return;
-
-        const savedRows = savedRowsRes.data ?? [];
-        const feedbackRows = feedbackRowsRes.data ?? [];
-
-        const nextSaved: Record<string, boolean> = {};
-        const nextLiked: Record<string, boolean> = {};
-        const nextDisliked: Record<string, boolean> = {};
-
-        savedRows.forEach((row) => {
-          const key = getIdentityFromSavedRow(row);
-          if (!key) return;
-          nextSaved[key] = true;
-        });
-
-        feedbackRows.forEach((row) => {
-          const key = getIdentityFromFeedbackRow(row);
-          if (!key) return;
-          if (row.preference === "liked") {
-            nextLiked[key] = true;
-            delete nextDisliked[key];
-          } else if (row.preference === "disliked") {
-            nextDisliked[key] = true;
-            delete nextLiked[key];
-          }
-        });
-
-        const feedbackMap: Record<string, "liked" | "disliked" | null> = {};
-        Object.keys(nextLiked).forEach((key) => {
-          feedbackMap[key] = "liked";
-        });
-        Object.keys(nextDisliked).forEach((key) => {
-          feedbackMap[key] = "disliked";
-        });
-
-        setSavedMap(nextSaved);
-        setLikedMap(nextLiked);
-        setDislikedMap(nextDisliked);
-        setFeedbackById(feedbackMap);
-        setDismissedFeedbackByKey({});
-      } catch (e) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("Failed to hydrate suggestion state", e);
-        }
+    visibleSuggestions.forEach((sugg) => {
+      const key = makeIdentity(sugg.title, sugg.tier);
+      if (sugg.initialSaved) {
+        nextSaved[key] = true;
       }
-    })();
+      if (sugg.initialPreference === "liked") {
+        nextLiked[key] = true;
+        nextFeedback[key] = "liked";
+      } else if (sugg.initialPreference === "disliked") {
+        nextDisliked[key] = true;
+        nextFeedback[key] = "disliked";
+      }
+    });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedRecipientId, visibleSuggestionsKey, supabase, visibleSuggestions.length]);
+    setSavedMap(nextSaved);
+    setLikedMap(nextLiked);
+    setDislikedMap(nextDisliked);
+    setFeedbackById(nextFeedback);
+    setDismissedFeedbackByKey({});
+  }, [
+    selectedRecipientId,
+    visibleSuggestionsKey,
+    visibleSuggestions.length,
+    visibleSuggestions,
+  ]);
 
   const isInitialLoading =
     status === "loading" ||

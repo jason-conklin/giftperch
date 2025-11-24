@@ -23,6 +23,8 @@ type GiftSuggestion = {
   suggested_url?: string | null;
   image_url?: string | null;
   imageUrl?: string | null;
+  initialSaved?: boolean;
+  initialPreference?: "liked" | "disliked" | null;
 };
 
 type GiftPromptContext = {
@@ -80,6 +82,10 @@ const MAX_SUGGESTIONS = 10;
 
 const PRICE_REGEX = /\$/;
 const DIGIT_REGEX = /\d/;
+const normalize = (str: string | null | undefined) =>
+  (str ?? "").trim().toLowerCase();
+const makeIdentity = (title: string, tier?: string | null) =>
+  `${normalize(title)}::${normalize(tier) || "none"}`;
 
 function buildPriceGuidance(
   min?: number | null,
@@ -194,47 +200,40 @@ export async function POST(request: NextRequest) {
         .limit(5),
       supabase
         .from("recipient_saved_gift_ideas")
-        .select("title")
+        .select("title, tier")
         .eq("recipient_id", recipientId)
         .eq("user_id", user.id),
       supabase
         .from("recipient_gift_feedback")
-        .select(
-          "preference, suggestion_id, gift_suggestions:suggestion_id (suggestions)",
-        )
+        .select("preference, title, tier")
         .eq("recipient_id", recipientId)
         .eq("user_id", user.id),
     ]);
 
     const interests = (interestsData ?? []) as RecipientInterest[];
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
-    const previouslySavedTitles = (savedData ?? [])
-      .map((row) => row.title?.trim())
-      .filter((title): title is string => !!title && title.length > 0);
-    type FeedbackRow = {
-      preference: "liked" | "disliked";
-      gift_suggestions:
-        | { suggestions: GiftSuggestion[] | null }
-        | { suggestions: GiftSuggestion[] | null }[]
-        | null;
-    };
+    const savedByIdentity: Record<string, boolean> = {};
+    const preferenceByIdentity: Record<string, "liked" | "disliked"> = {};
+    const previouslySavedTitles: string[] = [];
+    (savedData ?? []).forEach((row) => {
+      const key = makeIdentity(row.title ?? "", row.tier ?? null);
+      if (!key) return;
+      savedByIdentity[key] = true;
+      if (row.title) previouslySavedTitles.push(row.title.trim());
+    });
+
     const likedTitles: string[] = [];
     const dislikedTitles: string[] = [];
-    (feedbackData ?? []).forEach((fb) => {
-      const row = fb as FeedbackRow;
-      const suggestionPayload = Array.isArray(row?.gift_suggestions)
-        ? row.gift_suggestions[0]
-        : row?.gift_suggestions;
-      const suggestions = suggestionPayload?.suggestions ?? [];
-      const titles = Array.isArray(suggestions)
-        ? suggestions
-            .map((s) =>
-              typeof s?.title === "string" ? s.title.trim() : null,
-            )
-            .filter((t): t is string => !!t && t.length > 0)
-        : [];
-      if (row.preference === "liked") likedTitles.push(...titles);
-      if (row.preference === "disliked") dislikedTitles.push(...titles);
+    (feedbackData ?? []).forEach((row) => {
+      const key = makeIdentity(row.title ?? "", row.tier ?? null);
+      if (!key) return;
+      if (row.preference === "liked") {
+        preferenceByIdentity[key] = "liked";
+        if (row.title) likedTitles.push(row.title.trim());
+      } else if (row.preference === "disliked") {
+        preferenceByIdentity[key] = "disliked";
+        if (row.title) dislikedTitles.push(row.title.trim());
+      }
     });
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
@@ -380,10 +379,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const suggestionsWithFlags = normalizedSuggestions.map((s) => {
+      const identity = makeIdentity(s.title, s.tier);
+      return {
+        ...s,
+        initialSaved: !!savedByIdentity[identity],
+        initialPreference: preferenceByIdentity[identity] ?? null,
+      };
+    });
+
     return NextResponse.json({
       suggestionRunId: inserted.id,
       createdAt: inserted.created_at,
-      suggestions: normalizedSuggestions,
+      suggestions: suggestionsWithFlags,
       promptContext,
     });
   } catch (err) {
