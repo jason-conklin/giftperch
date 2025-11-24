@@ -114,9 +114,13 @@ export async function POST(
       : null;
   if (!title) return badRequest("title is required");
 
-  const suggestionId =
+  const suggestionIdRaw =
     typeof body.suggestionId === "string" && body.suggestionId.trim().length > 0
       ? body.suggestionId.trim()
+      : null;
+  const suggestionId =
+    suggestionIdRaw && /^[0-9a-fA-F-]{32,36}$/.test(suggestionIdRaw)
+      ? suggestionIdRaw
       : null;
 
   const tier =
