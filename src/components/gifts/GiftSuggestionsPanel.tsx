@@ -1033,59 +1033,95 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
     let cancelled = false;
     (async () => {
-      const { data: savedRows } = await supabase
-        .from("recipient_saved_gift_ideas")
-        .select("suggestion_id, title")
-        .eq("recipient_id", selectedRecipientId);
-
-      const { data: feedbackRows } = await supabase
-        .from("recipient_gift_feedback")
-        .select("suggestion_id, title, preference")
-        .eq("recipient_id", selectedRecipientId);
-
-      if (cancelled) return;
-
-      const nextSaved: Record<string, boolean> = {};
-      const nextLiked: Record<string, boolean> = {};
-      const nextDisliked: Record<string, boolean> = {};
-
-      (savedRows ?? []).forEach((row) => {
-        const key = getIdentityFromSavedRow(row);
-        if (!key) return;
-        nextSaved[key] = true;
-      });
-
-      (feedbackRows ?? []).forEach((row) => {
-        const key = getIdentityFromFeedbackRow(row);
-        if (!key) return;
-        if (row.preference === "liked") {
-          nextLiked[key] = true;
-          delete nextDisliked[key];
-        } else if (row.preference === "disliked") {
-          nextDisliked[key] = true;
-          delete nextLiked[key];
+      try {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (authToken) {
+          headers.Authorization = `Bearer ${authToken}`;
         }
-      });
 
-      const feedbackMap: Record<string, "liked" | "disliked" | null> = {};
-      Object.keys(nextLiked).forEach((key) => {
-        feedbackMap[key] = "liked";
-      });
-      Object.keys(nextDisliked).forEach((key) => {
-        feedbackMap[key] = "disliked";
-      });
+        const [savedRes, feedbackRes] = await Promise.all([
+          fetch(
+            `/api/recipients/${selectedRecipientId}/saved-gifts`,
+            { headers },
+          ),
+          fetch(
+            `/api/recipients/${selectedRecipientId}/feedback/summary`,
+            { headers },
+          ),
+        ]);
 
-      setSavedMap(nextSaved);
-      setLikedMap(nextLiked);
-      setDislikedMap(nextDisliked);
-      setFeedbackById(feedbackMap);
-      setDismissedFeedbackByKey({});
+        const savedJson = await savedRes.json().catch(() => ({}));
+        const feedbackJson = await feedbackRes.json().catch(() => ({}));
+
+        if (cancelled) return;
+
+        const nextSaved: Record<string, boolean> = {};
+        const nextLiked: Record<string, boolean> = {};
+        const nextDisliked: Record<string, boolean> = {};
+
+        (savedJson.savedGifts ?? []).forEach(
+          (row: { suggestionId?: string | null; title?: string | null }) => {
+            const key =
+              row.suggestionId?.trim() ||
+              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
+            if (!key) return;
+            nextSaved[key] = true;
+          },
+        );
+
+        (feedbackJson.liked ?? []).forEach(
+          (row: { suggestion_id?: string | null; title?: string | null }) => {
+            const key =
+              row.suggestion_id?.trim() ||
+              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
+            if (!key) return;
+            nextLiked[key] = true;
+            delete nextDisliked[key];
+          },
+        );
+        (feedbackJson.disliked ?? []).forEach(
+          (row: { suggestion_id?: string | null; title?: string | null }) => {
+            const key =
+              row.suggestion_id?.trim() ||
+              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
+            if (!key) return;
+            nextDisliked[key] = true;
+            delete nextLiked[key];
+          },
+        );
+
+        const feedbackMap: Record<string, "liked" | "disliked" | null> = {};
+        Object.keys(nextLiked).forEach((key) => {
+          feedbackMap[key] = "liked";
+        });
+        Object.keys(nextDisliked).forEach((key) => {
+          feedbackMap[key] = "disliked";
+        });
+
+        setSavedMap(nextSaved);
+        setLikedMap(nextLiked);
+        setDislikedMap(nextDisliked);
+        setFeedbackById(feedbackMap);
+        setDismissedFeedbackByKey({});
+      } catch (e) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Failed to hydrate suggestion state", e);
+        }
+      }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [selectedRecipientId, visibleSuggestionsKey, supabase, visibleSuggestions.length]);
+  }, [
+    selectedRecipientId,
+    visibleSuggestionsKey,
+    supabase,
+    visibleSuggestions.length,
+    authToken,
+  ]);
 
   const isInitialLoading =
     status === "loading" ||
