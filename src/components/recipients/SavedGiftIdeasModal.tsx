@@ -219,6 +219,10 @@ export function SavedGiftIdeasModal({
   const activeList =
     activeTab === "saved" ? savedTab : activeTab === "liked" ? liked : disliked;
 
+  const savedCount = savedTab.length;
+  const likedCount = liked.length;
+  const dislikedCount = disliked.length;
+
   if (!isOpen) return null;
 
   return (
@@ -264,25 +268,30 @@ export function SavedGiftIdeasModal({
         </div>
 
         <div className="flex flex-col gap-3 px-5 py-4 sm:px-6">
-          <div className="inline-flex w-full rounded-full bg-gp-cream/80 p-1 text-sm font-semibold text-gp-evergreen shadow-sm">
-            {(["saved", "liked", "disliked"] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 rounded-full px-3 py-2 transition ${
-                  activeTab === tab
-                    ? "bg-white shadow-sm"
-                    : "hover:bg-gp-cream"
-                }`}
-              >
-                {tab === "saved"
-                  ? "Saved"
+          <div className="inline-flex w-full rounded-full bg-white p-1 text-sm font-semibold text-gp-evergreen shadow-sm border border-gp-evergreen/15">
+            {(["saved", "liked", "disliked"] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              const label =
+                tab === "saved"
+                  ? `Saved (${savedCount})`
                   : tab === "liked"
-                  ? "Liked"
-                  : "Disliked"}
-              </button>
-            ))}
+                  ? `Liked (${likedCount})`
+                  : `Disliked (${dislikedCount})`;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 rounded-full px-3 py-2 transition ${
+                    isActive
+                      ? "bg-gp-gold text-gp-evergreen shadow-sm"
+                      : "bg-white text-gp-evergreen/80 hover:bg-gp-cream/70"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex-1 overflow-y-auto">
