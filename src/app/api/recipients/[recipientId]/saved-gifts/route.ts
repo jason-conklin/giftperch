@@ -74,7 +74,7 @@ export async function GET(
 
   if (error) {
     return NextResponse.json(
-      { error: "Failed to load saved gift ideas" },
+      { error: error.message || "Failed to load saved gift ideas" },
       { status: 500 },
     );
   }
@@ -168,7 +168,7 @@ export async function POST(
 
   if (error || !data) {
     return NextResponse.json(
-      { error: "Failed to save gift idea" },
+      { error: error?.message || "Failed to save gift idea" },
       { status: 500 },
     );
   }
@@ -207,7 +207,7 @@ export async function DELETE(
 
   if (error) {
     return NextResponse.json(
-      { error: "Failed to delete saved gift idea" },
+      { error: error.message || "Failed to delete saved gift idea" },
       { status: 500 },
     );
   }
