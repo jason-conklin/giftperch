@@ -160,8 +160,9 @@ const PERCHPAL_ERROR_MESSAGE =
 const AMAZON_PLACEHOLDER_MESSAGE =
   "No product matches found yet. Product previews will appear here when available.";
 
+const getSuggestionKeyFromTitle = (title: string) => title.trim().toLowerCase();
 const getSuggestionKey = (suggestion: GiftSuggestion) =>
-  suggestion.id || suggestion.title;
+  getSuggestionKeyFromTitle(suggestion.title);
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -299,7 +300,7 @@ function GiftSuggestionCard({
           );
           return priceDisplay ? (
             <div className="text-sm text-gp-evergreen/80">
-              <p className="font-semibold text-gp-evergreen">Price guidance</p>
+              <p className="font-semibold text-gp-evergreen">Price range</p>
               <p className="text-sm">{priceDisplay}</p>
               {suggestion.suggested_url ? (
                 <a
@@ -537,9 +538,9 @@ export function GiftSuggestionsPanel() {
   const [savedGiftsRecipientName, setSavedGiftsRecipientName] = useState("");
   const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
-  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [dislikedIds, setDislikedIds] = useState<Set<string>>(new Set());
+  const [savedByKey, setSavedByKey] = useState<Record<string, boolean>>({});
+  const [likedByKey, setLikedByKey] = useState<Record<string, boolean>>({});
+  const [dislikedByKey, setDislikedByKey] = useState<Record<string, boolean>>({});
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [lastUnsavedId, setLastUnsavedId] = useState<string | null>(null);
   const [saveStates, setSaveStates] = useState<
@@ -657,100 +658,15 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     });
   }, [supabase]);
 
-  useEffect(() => {
-    if (!selectedRecipientId) {
-      setSavedIds(new Set());
-      setLikedIds(new Set());
-      setDislikedIds(new Set());
-      setFeedbackById({});
-      return;
-    }
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (authToken) headers.Authorization = `Bearer ${authToken}`;
-
-    const hydrate = async () => {
-      try {
-        const [savedRes, fbRes] = await Promise.all([
-          fetch(`/api/recipients/${selectedRecipientId}/saved-gifts`, {
-            headers,
-          }),
-          fetch(`/api/recipients/${selectedRecipientId}/feedback/summary`, {
-            headers,
-          }),
-        ]);
-
-        const savedJson = (await savedRes
-          .json()
-          .catch(() => ({ savedGifts: [] }))) as {
-          savedGifts?: {
-            suggestion_id: string | null;
-            suggestionId?: string | null;
-            title: string;
-          }[];
-        };
-        const fbJson = (await fbRes
-          .json()
-          .catch(() => ({ liked: [], disliked: [] }))) as {
-          liked?: {
-            suggestion_id: string;
-            suggestionId?: string | null;
-            title: string;
-          }[];
-          disliked?: {
-            suggestion_id: string;
-            suggestionId?: string | null;
-            title: string;
-          }[];
-        };
-
-        const nextSaved = new Set<string>();
-        (savedJson.savedGifts ?? []).forEach((gift) => {
-          const key =
-            gift.suggestionId || gift.suggestion_id || gift.title;
-          if (key) nextSaved.add(key);
-        });
-
-        const nextLiked = new Set<string>();
-        const nextDisliked = new Set<string>();
-        const feedbackMap: Record<string, "liked" | "disliked"> = {};
-        (fbJson.liked ?? []).forEach((fb) => {
-          const key = fb.suggestionId || fb.suggestion_id || fb.title;
-          if (key) {
-            nextLiked.add(key);
-            feedbackMap[key] = "liked";
-          }
-        });
-        (fbJson.disliked ?? []).forEach((fb) => {
-          const key = fb.suggestionId || fb.suggestion_id || fb.title;
-          if (key) {
-            nextDisliked.add(key);
-            feedbackMap[key] = "disliked";
-          }
-        });
-
-        setSavedIds(nextSaved);
-        setLikedIds(nextLiked);
-        setDislikedIds(nextDisliked);
-        setFeedbackById(feedbackMap);
-      } catch (err) {
-        console.warn("Failed to hydrate saved/feedback state", err);
-      }
-    };
-
-    void hydrate();
-  }, [selectedRecipientId, activeRunId, authToken]);
-
   const handleSaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) {
       setError("Please select a recipient before saving gift ideas.");
       return;
     }
-    const suggestionId = getSuggestionKey(suggestion);
+    const suggestionKey = getSuggestionKey(suggestion);
     setSaveStates((prev) => ({
       ...prev,
-      [suggestionId]: {
+      [suggestionKey]: {
         saving: true,
         success: false,
         error: null,
@@ -785,16 +701,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         throw new Error(body.error || "Failed to save gift idea");
       }
 
-      setSavedIds((prev) => {
-        const next = new Set(prev);
-        next.add(suggestionId);
-        return next;
-      });
-      setLastSavedId(suggestionId);
+      setSavedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
+      setLastSavedId(suggestionKey);
       setLastUnsavedId(null);
       setSaveStates((prev) => ({
         ...prev,
-        [suggestionId]: {
+        [suggestionKey]: {
           saving: false,
           success: true,
           error: null,
@@ -806,7 +718,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         err instanceof Error ? err.message : "Failed to save gift idea";
       setSaveStates((prev) => ({
         ...prev,
-        [suggestionId]: {
+        [suggestionKey]: {
           saving: false,
           success: false,
           error: message,
@@ -818,10 +730,10 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
   const handleUnsaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) return;
-    const suggestionId = getSuggestionKey(suggestion);
+    const suggestionKey = getSuggestionKey(suggestion);
     setSaveStates((prev) => ({
       ...prev,
-      [suggestionId]: {
+      [suggestionKey]: {
         saving: true,
         success: false,
         error: null,
@@ -831,7 +743,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     try {
       const res = await fetch(
         `/api/recipients/${selectedRecipient.id}/saved-gifts?suggestionId=${encodeURIComponent(
-          suggestionId,
+          suggestion.id,
         )}`,
         {
           method: "DELETE",
@@ -845,16 +757,16 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to unsave gift idea");
       }
-      setSavedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(suggestionId);
+      setSavedByKey((prev) => {
+        const next = { ...prev };
+        delete next[suggestionKey];
         return next;
       });
-      setLastUnsavedId(suggestionId);
+      setLastUnsavedId(suggestionKey);
       setLastSavedId(null);
       setSaveStates((prev) => ({
         ...prev,
-        [suggestionId]: {
+        [suggestionKey]: {
           saving: false,
           success: false,
           error: null,
@@ -866,7 +778,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         err instanceof Error ? err.message : "Failed to unsave gift idea";
       setSaveStates((prev) => ({
         ...prev,
-        [suggestionId]: {
+        [suggestionKey]: {
           saving: false,
           success: false,
           error: message,
@@ -924,18 +836,19 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
   };
 
   const toggleFeedback = async (
-    suggestionId: string,
+    suggestionKey: string,
+    suggestion: GiftSuggestion,
     suggestionIndex: number,
     next: "liked" | "disliked",
   ) => {
     if (!selectedRecipientId || !selectedRecipient) {
       return;
     }
-    const current = feedbackById[suggestionId] ?? null;
+    const current = feedbackById[suggestionKey] ?? null;
     const preference = current === next ? "clear" : next;
 
     try {
-      setFeedbackErrorById((prev) => ({ ...prev, [suggestionId]: null }));
+      setFeedbackErrorById((prev) => ({ ...prev, [suggestionKey]: null }));
       const res = await fetch(
         `/api/recipients/${selectedRecipient.id}/suggestions/${activeRunId}/feedback`,
         {
@@ -944,7 +857,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
             "Content-Type": "application/json",
             ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify({ preference, suggestionIndex }),
+          body: JSON.stringify({
+            preference,
+            suggestionIndex,
+            suggestionId: suggestion.id,
+            title: suggestion.title,
+          }),
         },
       );
       if (!res.ok) {
@@ -953,47 +871,39 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       }
       setFeedbackById((prev) => ({
         ...prev,
-        [suggestionId]:
+        [suggestionKey]:
           preference === "clear" ? null : (preference as "liked" | "disliked"),
       }));
       if (preference === "clear") {
-        setLikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.delete(suggestionId);
-          return nextSet;
+        setLikedByKey((prev) => {
+          const next = { ...prev };
+          delete next[suggestionKey];
+          return next;
         });
-        setDislikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.delete(suggestionId);
-          return nextSet;
+        setDislikedByKey((prev) => {
+          const next = { ...prev };
+          delete next[suggestionKey];
+          return next;
         });
       } else if (preference === "liked") {
-        setLikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.add(suggestionId);
-          return nextSet;
-        });
-        setDislikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.delete(suggestionId);
-          return nextSet;
+        setLikedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
+        setDislikedByKey((prev) => {
+          const next = { ...prev };
+          delete next[suggestionKey];
+          return next;
         });
       } else if (preference === "disliked") {
-        setDislikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.add(suggestionId);
-          return nextSet;
-        });
-        setLikedIds((prev) => {
-          const nextSet = new Set(prev);
-          nextSet.delete(suggestionId);
-          return nextSet;
+        setDislikedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
+        setLikedByKey((prev) => {
+          const next = { ...prev };
+          delete next[suggestionKey];
+          return next;
         });
       }
     } catch (err) {
       setFeedbackErrorById((prev) => ({
         ...prev,
-        [suggestionId]:
+        [suggestionKey]:
           err instanceof Error ? err.message : "Failed to save feedback",
       }));
     }
@@ -1090,6 +1000,73 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
     return suggestions;
   }, [activeRun, tierFilter, searchTerm, sortOption]);
+  const visibleSuggestionsKey = visibleSuggestions
+    .map((s) => s.title)
+    .join("|");
+
+  useEffect(() => {
+    if (!selectedRecipientId || visibleSuggestions.length === 0) {
+      setSavedByKey({});
+      setLikedByKey({});
+      setDislikedByKey({});
+      setFeedbackById({});
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const { data: savedRows } = await supabase
+        .from("recipient_saved_gift_ideas")
+        .select("title")
+        .eq("recipient_id", selectedRecipientId);
+
+      const { data: feedbackRows } = await supabase
+        .from("recipient_gift_feedback")
+        .select("title, preference")
+        .eq("recipient_id", selectedRecipientId);
+
+      if (cancelled) return;
+
+      const nextSaved: Record<string, boolean> = {};
+      const nextLiked: Record<string, boolean> = {};
+      const nextDisliked: Record<string, boolean> = {};
+
+      (savedRows ?? []).forEach((row) => {
+        if (!row?.title) return;
+        const key = getSuggestionKeyFromTitle(row.title);
+        nextSaved[key] = true;
+      });
+
+      (feedbackRows ?? []).forEach((row) => {
+        if (!row?.title) return;
+        const key = getSuggestionKeyFromTitle(row.title);
+        if (row.preference === "liked") {
+          nextLiked[key] = true;
+          delete nextDisliked[key];
+        } else if (row.preference === "disliked") {
+          nextDisliked[key] = true;
+          delete nextLiked[key];
+        }
+      });
+
+      const feedbackMap: Record<string, "liked" | "disliked" | null> = {};
+      Object.keys(nextLiked).forEach((key) => {
+        feedbackMap[key] = "liked";
+      });
+      Object.keys(nextDisliked).forEach((key) => {
+        feedbackMap[key] = "disliked";
+      });
+
+      setSavedByKey(nextSaved);
+      setLikedByKey(nextLiked);
+      setDislikedByKey(nextDisliked);
+      setFeedbackById(feedbackMap);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRecipientId, visibleSuggestionsKey, supabase, visibleSuggestions.length]);
 
   const isInitialLoading =
     status === "loading" ||
@@ -1739,9 +1716,9 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       onFetchAmazon={handleFetchAmazonProducts}
                       onSaveGift={handleSaveGift}
                       onUnsaveGift={handleUnsaveGift}
-                      isSaved={savedIds.has(suggestionKey)}
-                      isLiked={likedIds.has(suggestionKey)}
-                      isDisliked={dislikedIds.has(suggestionKey)}
+                      isSaved={!!savedByKey[suggestionKey]}
+                      isLiked={!!likedByKey[suggestionKey]}
+                      isDisliked={!!dislikedByKey[suggestionKey]}
                       lastSavedId={lastSavedId}
                       lastUnsavedId={lastUnsavedId}
                       saveState={saveStates[suggestionKey]}
@@ -1757,7 +1734,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                     feedback={feedbackById[suggestionKey] ?? null}
                     feedbackError={feedbackErrorById[suggestionKey] ?? null}
                     onToggleFeedback={(next) =>
-                      toggleFeedback(suggestionKey, idx, next)
+                      toggleFeedback(suggestionKey, suggestion, idx, next)
                     }
                   />
                 );
