@@ -679,18 +679,19 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const savedJson = (await savedRes
           .json()
           .catch(() => ({ savedGifts: [] }))) as {
-          savedGifts?: { suggestion_id: string | null; title: string }[];
+          savedGifts?: { suggestion_id: string | null; suggestionId?: string | null; title: string }[];
         };
         const fbJson = (await fbRes
           .json()
           .catch(() => ({ liked: [], disliked: [] }))) as {
-          liked?: { suggestion_id: string; title: string }[];
-          disliked?: { suggestion_id: string; title: string }[];
+          liked?: { suggestion_id: string; suggestionId?: string | null; title: string }[];
+          disliked?: { suggestion_id: string; suggestionId?: string | null; title: string }[];
         };
 
         const nextSaved = new Set<string>();
         (savedJson.savedGifts ?? []).forEach((gift) => {
-          const key = gift.suggestion_id || gift.title;
+          const key =
+            gift.suggestionId || gift.suggestion_id || gift.title;
           if (key) nextSaved.add(key);
         });
 
@@ -698,14 +699,14 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const nextDisliked = new Set<string>();
         const feedbackMap: Record<string, "liked" | "disliked"> = {};
         (fbJson.liked ?? []).forEach((fb) => {
-          const key = fb.suggestion_id || fb.title;
+          const key = fb.suggestionId || fb.suggestion_id || fb.title;
           if (key) {
             nextLiked.add(key);
             feedbackMap[key] = "liked";
           }
         });
         (fbJson.disliked ?? []).forEach((fb) => {
-          const key = fb.suggestion_id || fb.title;
+          const key = fb.suggestionId || fb.suggestion_id || fb.title;
           if (key) {
             nextDisliked.add(key);
             feedbackMap[key] = "disliked";

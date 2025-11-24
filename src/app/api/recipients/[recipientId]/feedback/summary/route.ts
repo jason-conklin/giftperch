@@ -147,6 +147,7 @@ export async function GET(
     const idea = {
       id: row.id,
       suggestion_id: row.suggestion_id ?? "",
+      suggestionId: row.suggestion_id ?? "",
       title: suggestion.title ?? "Gift idea",
       tier: suggestion.tier ?? null,
       rationale: suggestion.why_it_fits ?? null,
