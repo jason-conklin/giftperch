@@ -39,8 +39,10 @@ export function AdminMetrics() {
         }
 
         const res = await fetch("/api/admin/metrics", {
+          credentials: "include",
           headers: {
-            Authorization: `Bearer ${token}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            "x-user-email": user.email,
           },
         });
 

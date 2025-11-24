@@ -459,7 +459,7 @@ export function SettingsPanel() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/auth/login");
+    window.location.href = "/";
   };
 
   const handleDeleteAccount = async () => {
