@@ -163,12 +163,19 @@ const AMAZON_PLACEHOLDER_MESSAGE =
 const getSuggestionKeyFromTitle = (title: string) => title.trim().toLowerCase();
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
   suggestion.id?.trim() || getSuggestionKeyFromTitle(suggestion.title);
-const getIdentityFromSavedRow = (row: { suggestion_id?: string | null; title?: string | null }) =>
-  (row.suggestion_id?.trim() || (row.title ? getSuggestionKeyFromTitle(row.title) : "")).trim();
+const getIdentityFromSavedRow = (row: { suggestion_id?: string | null; title?: string | null }) => {
+  if (row.suggestion_id) return row.suggestion_id.trim();
+  if (row.title) return getSuggestionKeyFromTitle(row.title);
+  return "";
+};
 const getIdentityFromFeedbackRow = (row: {
   suggestion_id?: string | null;
   title?: string | null;
-}) => (row.suggestion_id?.trim() || (row.title ? getSuggestionKeyFromTitle(row.title) : "")).trim();
+}) => {
+  if (row.suggestion_id) return row.suggestion_id.trim();
+  if (row.title) return getSuggestionKeyFromTitle(row.title);
+  return "";
+};
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -1034,29 +1041,34 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     let cancelled = false;
     (async () => {
       try {
-        const { data: savedRows } = await supabase
-          .from("recipient_saved_gift_ideas")
-          .select("suggestion_id, title")
-          .eq("recipient_id", selectedRecipientId);
-
-        const { data: feedbackRows } = await supabase
-          .from("recipient_gift_feedback")
-          .select("suggestion_id, title, preference")
-          .eq("recipient_id", selectedRecipientId);
+        // Fetch saved/feedback directly from Supabase so we rely on the same IDs the DB stores
+        const [savedRowsRes, feedbackRowsRes] = await Promise.all([
+          supabase
+            .from("recipient_saved_gift_ideas")
+            .select("suggestion_id, title")
+            .eq("recipient_id", selectedRecipientId),
+          supabase
+            .from("recipient_gift_feedback")
+            .select("suggestion_id, title, preference")
+            .eq("recipient_id", selectedRecipientId),
+        ]);
 
         if (cancelled) return;
+
+        const savedRows = savedRowsRes.data ?? [];
+        const feedbackRows = feedbackRowsRes.data ?? [];
 
         const nextSaved: Record<string, boolean> = {};
         const nextLiked: Record<string, boolean> = {};
         const nextDisliked: Record<string, boolean> = {};
 
-        (savedRows ?? []).forEach((row) => {
+        savedRows.forEach((row) => {
           const key = getIdentityFromSavedRow(row);
           if (!key) return;
           nextSaved[key] = true;
         });
 
-        (feedbackRows ?? []).forEach((row) => {
+        feedbackRows.forEach((row) => {
           const key = getIdentityFromFeedbackRow(row);
           if (!key) return;
           if (row.preference === "liked") {
