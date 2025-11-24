@@ -1023,12 +1023,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     .join("|");
 
   useEffect(() => {
-    if (
-      status !== "authenticated" ||
-      !authToken ||
-      !selectedRecipientId ||
-      visibleSuggestions.length === 0
-    ) {
+    if (!selectedRecipientId || visibleSuggestions.length === 0) {
       setSavedMap({});
       setLikedMap({});
       setDislikedMap({});
@@ -1039,30 +1034,15 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     let cancelled = false;
     (async () => {
       try {
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-        };
-        if (authToken) {
-          headers.Authorization = `Bearer ${authToken}`;
-        }
+        const { data: savedRows } = await supabase
+          .from("recipient_saved_gift_ideas")
+          .select("suggestion_id, title")
+          .eq("recipient_id", selectedRecipientId);
 
-        const [savedRes, feedbackRes] = await Promise.all([
-          fetch(
-            `/api/recipients/${selectedRecipientId}/saved-gifts`,
-            { headers },
-          ),
-          fetch(
-            `/api/recipients/${selectedRecipientId}/feedback/summary`,
-            { headers },
-          ),
-        ]);
-
-        if (!savedRes.ok || !feedbackRes.ok) {
-          return;
-        }
-
-        const savedJson = await savedRes.json().catch(() => ({}));
-        const feedbackJson = await feedbackRes.json().catch(() => ({}));
+        const { data: feedbackRows } = await supabase
+          .from("recipient_gift_feedback")
+          .select("suggestion_id, title, preference")
+          .eq("recipient_id", selectedRecipientId);
 
         if (cancelled) return;
 
@@ -1070,36 +1050,23 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const nextLiked: Record<string, boolean> = {};
         const nextDisliked: Record<string, boolean> = {};
 
-        (savedJson.savedGifts ?? []).forEach(
-          (row: { suggestionId?: string | null; title?: string | null }) => {
-            const key =
-              row.suggestionId?.trim() ||
-              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
-            if (!key) return;
-            nextSaved[key] = true;
-          },
-        );
+        (savedRows ?? []).forEach((row) => {
+          const key = getIdentityFromSavedRow(row);
+          if (!key) return;
+          nextSaved[key] = true;
+        });
 
-        (feedbackJson.liked ?? []).forEach(
-          (row: { suggestion_id?: string | null; title?: string | null }) => {
-            const key =
-              row.suggestion_id?.trim() ||
-              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
-            if (!key) return;
+        (feedbackRows ?? []).forEach((row) => {
+          const key = getIdentityFromFeedbackRow(row);
+          if (!key) return;
+          if (row.preference === "liked") {
             nextLiked[key] = true;
             delete nextDisliked[key];
-          },
-        );
-        (feedbackJson.disliked ?? []).forEach(
-          (row: { suggestion_id?: string | null; title?: string | null }) => {
-            const key =
-              row.suggestion_id?.trim() ||
-              (row.title ? getSuggestionKeyFromTitle(row.title) : "");
-            if (!key) return;
+          } else if (row.preference === "disliked") {
             nextDisliked[key] = true;
             delete nextLiked[key];
-          },
-        );
+          }
+        });
 
         const feedbackMap: Record<string, "liked" | "disliked" | null> = {};
         Object.keys(nextLiked).forEach((key) => {
@@ -1124,14 +1091,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     return () => {
       cancelled = true;
     };
-  }, [
-    selectedRecipientId,
-    visibleSuggestionsKey,
-    supabase,
-    visibleSuggestions.length,
-    authToken,
-    status,
-  ]);
+  }, [selectedRecipientId, visibleSuggestionsKey, supabase, visibleSuggestions.length]);
 
   const isInitialLoading =
     status === "loading" ||
