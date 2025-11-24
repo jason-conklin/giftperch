@@ -134,6 +134,25 @@ type AmazonSuggestionState = {
 };
 
 const DEFAULT_GIFT_IMAGE = "/gift_placeholder_img.png";
+
+const formatRunLabel = (run: SuggestionRun) => {
+  const date = new Date(run.created_at);
+  const dateStr = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const occasion =
+    (run.prompt_context.occasion &&
+      run.prompt_context.occasion
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase())) ||
+    "No occasion";
+  return `${dateStr} • ${timeStr} • ${occasion}`;
+};
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 const AMAZON_PLACEHOLDER_MESSAGE =
@@ -418,6 +437,8 @@ export function GiftSuggestionsPanel() {
       { saving: boolean; success: boolean; error: string | null; ts: number }
     >
   >({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeletingRun, setIsDeletingRun] = useState(false);
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
@@ -601,6 +622,36 @@ export function GiftSuggestionsPanel() {
       delete next[suggestionId];
       return next;
     });
+  };
+
+  const handleDeleteRun = async () => {
+    if (!activeRunId || !user?.id) return;
+    try {
+      setIsDeletingRun(true);
+      const { error } = await supabase
+        .from("gift_suggestions")
+        .delete()
+        .eq("id", activeRunId)
+        .eq("recipient_id", selectedRecipientId || "")
+        .eq("user_id", user.id);
+      if (error) throw error;
+
+      setRuns((prev) => {
+        const remaining = prev.filter((run) => run.id !== activeRunId);
+        const next = remaining[0];
+        setActiveRunId(next ? next.id : null);
+        if (!next) {
+          setAmazonBySuggestion({});
+        }
+        return remaining;
+      });
+
+      setShowDeleteConfirm(false);
+    } catch (err) {
+      console.error("Failed to delete run", err);
+    } finally {
+      setIsDeletingRun(false);
+    }
   };
 
   useEffect(() => {
@@ -1191,32 +1242,35 @@ export function GiftSuggestionsPanel() {
           ) : null}
 
           {runs.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-gp-evergreen/70">
-              <span className="font-semibold uppercase tracking-wide">
-                Previous runs
-              </span>
-              {runs.map((run) => (
+            <div className="mt-4 flex flex-col gap-3 text-gp-evergreen">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex-1 max-w-md">
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+                    Previous runs
+                  </label>
+                  <select
+                    value={activeRunId ?? ""}
+                    onChange={(e) =>
+                      setActiveRunId(e.target.value || null)
+                    }
+                    className="w-full rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer"
+                  >
+                    {runs.map((run) => (
+                      <option key={run.id} value={run.id}>
+                        {formatRunLabel(run)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
-                  key={run.id}
                   type="button"
-                  onClick={() => setActiveRunId(run.id)}
-                  className={`rounded-full border px-3 py-1 cursor-pointer ${
-                    run.id === activeRunId
-                      ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
-                      : "border-gp-evergreen/30 text-gp-evergreen hover:bg-gp-cream/70"
-                  }`}
+                  disabled={!activeRunId}
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
                 >
-                  {new Date(run.created_at).toLocaleString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {run.prompt_context.occasion
-                    ? ` - ${run.prompt_context.occasion}`
-                    : ""}
+                  Delete run
                 </button>
-              ))}
+              </div>
             </div>
           )}
 
@@ -1369,6 +1423,37 @@ export function GiftSuggestionsPanel() {
           onClose={() => setSavedGiftsOpen(false)}
           authToken={authToken}
         />
+      ) : null}
+
+      {showDeleteConfirm && activeRunId ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-gp-cream p-5 shadow-xl">
+            <p className="text-sm font-semibold text-gp-evergreen">
+              Delete this run?
+            </p>
+            <p className="mt-2 text-sm text-gp-evergreen/80">
+              This will remove the saved suggestions for this run from your
+              history. This action can’t be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-gp-evergreen border border-gp-evergreen/20 hover:bg-gp-cream/80"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteRun}
+                disabled={isDeletingRun}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+              >
+                {isDeletingRun ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   );
