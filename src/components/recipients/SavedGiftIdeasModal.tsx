@@ -46,6 +46,9 @@ export function SavedGiftIdeasModal({
 }: Props) {
   const [state, setState] = useState<FetchState>({ status: "idle" });
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removingFeedbackId, setRemovingFeedbackId] = useState<string | null>(
+    null,
+  );
   const [activeTab, setActiveTab] = useState<"saved" | "liked" | "disliked">(
     "saved",
   );
@@ -139,6 +142,46 @@ export function SavedGiftIdeasModal({
       );
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleRemoveFeedback = async (
+    id: string,
+    kind: "liked" | "disliked",
+  ) => {
+    setRemovingFeedbackId(id);
+    try {
+      const res = await fetch(
+        `/api/recipients/${recipientId}/feedback?id=${encodeURIComponent(id)}`,
+        { method: "DELETE", headers },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || "Failed to remove feedback");
+      }
+      setState((prev) => {
+        if (prev.status !== "success") return prev;
+        return {
+          ...prev,
+          liked:
+            kind === "liked"
+              ? prev.liked.filter((gift) => gift.id !== id)
+              : prev.liked,
+          disliked:
+            kind === "disliked"
+              ? prev.disliked.filter((gift) => gift.id !== id)
+              : prev.disliked,
+        };
+      });
+    } catch (err) {
+      console.error(err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Unable to remove feedback. Please try again.",
+      );
+    } finally {
+      setRemovingFeedbackId(null);
     }
   };
 
@@ -324,7 +367,25 @@ export function SavedGiftIdeasModal({
                     </div>
 
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
-                      {!isFeedback ? (
+                      {isFeedback ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRemoveFeedback(
+                              gift.id,
+                              gift.preference === "liked"
+                                ? "liked"
+                                : "disliked",
+                            )
+                          }
+                          disabled={removingFeedbackId === gift.id}
+                          className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          {removingFeedbackId === gift.id
+                            ? "Removing…"
+                            : "Remove"}
+                        </button>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => handleRemove(gift.id)}
@@ -333,7 +394,7 @@ export function SavedGiftIdeasModal({
                         >
                           {removingId === gift.id ? "Removing…" : "Remove"}
                         </button>
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 );
