@@ -172,17 +172,11 @@ export function SavedGiftIdeasModal({
                 >
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
                     <Image
-                      src={gift.image_url || FALLBACK_IMAGE}
+                      src={FALLBACK_IMAGE}
                       alt={gift.title}
                       fill
                       sizes="80px"
                       className="object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        if (target.src !== FALLBACK_IMAGE) {
-                          target.src = FALLBACK_IMAGE;
-                        }
-                      }}
                       unoptimized
                     />
                   </div>
