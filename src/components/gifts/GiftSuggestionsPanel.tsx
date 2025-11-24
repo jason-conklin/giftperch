@@ -162,11 +162,8 @@ const PERCHPAL_ERROR_MESSAGE =
 const AMAZON_PLACEHOLDER_MESSAGE =
   "No product matches found yet. Product previews will appear here when available.";
 
-const normalize = (str: string | null | undefined) => (str ?? "").trim().toLowerCase();
-const makeIdentity = (title: string, tier?: string | null) =>
-  `${normalize(title)}::${normalize(tier) || "none"}`;
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
-  makeIdentity(suggestion.title, suggestion.tier);
+  suggestion.id?.trim() || "";
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -1035,7 +1032,8 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     const nextFeedback: Record<string, "liked" | "disliked" | null> = {};
 
     visibleSuggestions.forEach((sugg) => {
-      const key = makeIdentity(sugg.title, sugg.tier);
+      const key = getSuggestionIdentity(sugg);
+      if (!key) return;
       if (sugg.initialSaved) {
         nextSaved[key] = true;
       }
