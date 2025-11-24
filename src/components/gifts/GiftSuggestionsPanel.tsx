@@ -241,14 +241,14 @@ function GiftSuggestionCard({
           <button
             type="button"
             onClick={() => onCopy(suggestion)}
-            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
           >
             {copiedSuggestionId === suggestion.id ? "Copied!" : "Copy idea"}
           </button>
           <button
             type="button"
             onClick={() => onFetchAmazon(suggestion)}
-            className="flex-1 rounded-full border border-gp-gold/50 bg-gp-gold/20 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-gold/30"
+            className="flex-1 rounded-full border border-gp-gold/50 bg-gp-gold/20 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-gold/30 cursor-pointer"
           >
             {amazonState?.loading ? "Searching Amazon..." : "Find on Amazon"}
           </button>
@@ -256,7 +256,7 @@ function GiftSuggestionCard({
             type="button"
             onClick={() => onSaveGift(suggestion)}
             disabled={saveState?.saving}
-            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60"
+            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {saveState?.saving ? "Saving..." : "Save Gift Idea"}
           </button>
@@ -1157,7 +1157,7 @@ export function GiftSuggestionsPanel() {
                   key={run.id}
                   type="button"
                   onClick={() => setActiveRunId(run.id)}
-                  className={`rounded-full border px-3 py-1 ${
+                  className={`rounded-full border px-3 py-1 cursor-pointer ${
                     run.id === activeRunId
                       ? "border-gp-evergreen bg-gp-evergreen text-gp-cream"
                       : "border-gp-evergreen/30 text-gp-evergreen hover:bg-gp-cream/70"

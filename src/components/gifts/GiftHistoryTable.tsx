@@ -345,7 +345,7 @@ export function GiftHistoryTable() {
           <button
             type="button"
             onClick={openCreateForm}
-            className="w-full rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] md:w-auto"
+            className="w-full rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] md:w-auto cursor-pointer"
           >
             Add gift
           </button>
@@ -383,7 +383,7 @@ export function GiftHistoryTable() {
           <button
             type="button"
             onClick={openCreateForm}
-            className="mt-4 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
+            className="mt-4 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
           >
             Log your first gift
           </button>
@@ -485,7 +485,7 @@ export function GiftHistoryTable() {
             <button
               type="button"
               onClick={closeForm}
-              className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
+              className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
             >
               Close
             </button>
@@ -634,7 +634,7 @@ export function GiftHistoryTable() {
 
             <button
               type="submit"
-              className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60"
+              className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               disabled={formSaving}
             >
               {formMode === "create" ? "Save gift" : "Update gift"}

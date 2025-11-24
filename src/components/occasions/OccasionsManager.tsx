@@ -370,7 +370,7 @@ export function OccasionsManager() {
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Recipient
               <select
-                className="gp-input"
+                className="gp-input cursor-pointer"
                 value={newRecipientId}
                 onChange={(event) => setNewRecipientId(event.target.value)}
                 required
@@ -409,7 +409,7 @@ export function OccasionsManager() {
               Event date
               <input
                 type="date"
-                className="gp-input"
+                className="gp-input cursor-pointer"
                 value={newEventDate}
                 onChange={(event) => setNewEventDate(event.target.value)}
                 required
@@ -428,7 +428,7 @@ export function OccasionsManager() {
 
             <button
               type="submit"
-              className="gp-primary-button w-full"
+              className="gp-primary-button w-full cursor-pointer disabled:cursor-not-allowed"
               disabled={saving}
             >
               {saving ? "Saving..." : "Save occasion"}

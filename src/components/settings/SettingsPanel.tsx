@@ -540,7 +540,7 @@ export function SettingsPanel() {
               />
               <button
                 type="button"
-                className="gp-secondary-button"
+                className="gp-secondary-button cursor-pointer"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={avatarUploading}
               >
@@ -549,7 +549,7 @@ export function SettingsPanel() {
               {profile.avatar_url ? (
                 <button
                   type="button"
-                  className="text-xs font-semibold text-red-600"
+                  className="text-xs font-semibold text-red-600 cursor-pointer"
                   onClick={handleAvatarRemove}
                 >
                   Remove
@@ -594,7 +594,7 @@ export function SettingsPanel() {
 
         <button
           type="submit"
-          className="gp-primary-button w-full sm:w-auto"
+          className="gp-primary-button w-full sm:w-auto cursor-pointer disabled:cursor-not-allowed"
           disabled={savingProfile}
         >
           {savingProfile ? "Saving..." : "Save profile"}
@@ -624,7 +624,7 @@ export function SettingsPanel() {
             </p>
             <button
               type="button"
-              className="gp-primary-button mt-4 w-full sm:w-auto"
+              className="gp-primary-button mt-4 w-full sm:w-auto cursor-pointer"
               onClick={() => setSelfFormOpen(true)}
             >
               Set up my recipient profile
@@ -717,14 +717,14 @@ export function SettingsPanel() {
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="gp-primary-button"
+                className="gp-primary-button cursor-pointer disabled:cursor-not-allowed"
                 disabled={selfSaving}
               >
                 {selfProfile ? "Update profile" : "Create profile"}
               </button>
               <button
                 type="button"
-                className="gp-secondary-button"
+                className="gp-secondary-button cursor-pointer"
                 onClick={() => setSelfFormOpen(false)}
               >
                 {selfProfile ? "Hide form" : "Skip for now"}
@@ -793,7 +793,7 @@ export function SettingsPanel() {
         </header>
         <Link
           href="/wishlist"
-          className="gp-secondary-button inline-flex w-full items-center justify-center sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] sm:w-auto"
         >
           Open my wishlists
         </Link>
@@ -873,7 +873,7 @@ export function SettingsPanel() {
 
         <button
           type="button"
-          className="gp-secondary-button w-full sm:w-auto"
+          className="w-full sm:w-auto rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           onClick={handlePreferencesSave}
           disabled={savingPreferences}
         >
@@ -891,7 +891,7 @@ export function SettingsPanel() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             type="button"
-            className="rounded-full bg-gp-gold px-5 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] w-full sm:w-auto"
+            className="rounded-full bg-gp-gold px-5 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] w-full sm:w-auto cursor-pointer"
             onClick={handleLogout}
           >
             Log Out
@@ -899,7 +899,7 @@ export function SettingsPanel() {
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 w-full sm:w-auto"
+            className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl px-4 py-2 w-full sm:w-auto cursor-pointer"
           >
             Delete Account
           </button>
@@ -963,7 +963,4 @@ export function SettingsPanel() {
     </div>
   );
 }
-
-
-
 

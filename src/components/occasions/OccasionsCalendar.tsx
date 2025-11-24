@@ -201,7 +201,7 @@ export function OccasionsCalendar({
             aria-label="Select month"
             value={currentMonth.getMonth()}
             onChange={(event) => handleSelectMonth(Number(event.target.value))}
-            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40"
+            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40 cursor-pointer"
           >
             {MONTH_LABELS.map((label, index) => (
               <option key={label} value={index}>
@@ -213,7 +213,7 @@ export function OccasionsCalendar({
             aria-label="Select year"
             value={currentMonth.getFullYear()}
             onChange={(event) => handleSelectYear(Number(event.target.value))}
-            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40"
+            className="rounded-full border border-gp-cream bg-gp-cream/80 px-3 py-1 text-sm font-semibold text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus:outline-none focus:ring-2 focus:ring-gp-evergreen/40 cursor-pointer"
           >
             {yearOptions.map((yearOption) => (
               <option key={yearOption} value={yearOption}>
@@ -223,14 +223,14 @@ export function OccasionsCalendar({
           </select>
           <button
             type="button"
-            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
+            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
             onClick={() => changeMonth("prev")}
           >
             Previous
           </button>
           <button
             type="button"
-            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
+            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
             onClick={() => changeMonth("next")}
           >
             Next
