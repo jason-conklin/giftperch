@@ -2,7 +2,7 @@ import MarketingHome from "./(marketing)/page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "GiftPerch",
+  title: "GiftPerch - AI Gifting Workspace",
 };
 
 /**
