@@ -152,6 +152,8 @@ type SuggestionCardProps = {
     error: string | null;
   };
   onOpenSaved?: () => void;
+  onDismissSave?: () => void;
+  onClearAmazon?: () => void;
 };
 
 function GiftSuggestionCard({
@@ -163,6 +165,8 @@ function GiftSuggestionCard({
   onSaveGift,
   saveState,
   onOpenSaved,
+  onDismissSave,
+  onClearAmazon,
 }: SuggestionCardProps) {
   const initialImage =
     suggestion.image_url && suggestion.image_url.startsWith("http")
@@ -263,14 +267,24 @@ function GiftSuggestionCard({
         </div>
 
         {saveState?.success ? (
-          <div className="rounded-2xl border border-gp-evergreen/15 bg-green-50 px-3 py-2 text-xs text-gp-evergreen">
-            Saved gift idea.{" "}
+          <div className="flex items-start justify-between gap-2 rounded-2xl border border-gp-evergreen/15 bg-green-50 px-3 py-2 text-xs text-gp-evergreen">
+            <span>
+              Saved gift idea.{" "}
+              <button
+                type="button"
+                className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
+                onClick={onOpenSaved}
+              >
+                View here →
+              </button>
+            </span>
             <button
               type="button"
-              className="font-semibold underline underline-offset-4 hover:text-gp-evergreen/70"
-              onClick={onOpenSaved}
+              aria-label="Dismiss saved gift notice"
+              className="h-6 w-6 shrink-0 rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
+              onClick={onDismissSave}
             >
-              View here →
+              ×
             </button>
           </div>
         ) : null}
@@ -282,6 +296,19 @@ function GiftSuggestionCard({
 
         {amazonState && (
           <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/40 p-3 text-sm text-gp-evergreen">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
+                Amazon finds
+              </p>
+              <button
+                type="button"
+                className="h-6 w-6 shrink-0 rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
+                aria-label="Close Amazon finds"
+                onClick={onClearAmazon}
+              >
+                ×
+              </button>
+            </div>
             {amazonState.loading ? (
               <div className="flex justify-center">
                 <PerchPalLoader
@@ -299,48 +326,43 @@ function GiftSuggestionCard({
                 {AMAZON_PLACEHOLDER_MESSAGE}
               </p>
             ) : (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                  Amazon finds
-                </p>
-                <div className="space-y-3">
-                  {amazonState.products.map((product) => {
-                    const href = buildAmazonAffiliateUrl({
-                      productUrl: product.detailPageUrl,
-                      title: product.title,
-                    });
-                    return (
-                      <a
-                        key={product.asin}
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
-                      >
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.title}
-                            width={48}
-                            height={48}
-                            className="h-12 w-12 rounded-xl object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
-                            No image
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold">{product.title}</p>
-                          <p className="text-gp-evergreen/70">
-                            {product.priceDisplay ?? "Price unavailable"}
-                          </p>
+              <div className="mt-2 space-y-3">
+                {amazonState.products.map((product) => {
+                  const href = buildAmazonAffiliateUrl({
+                    productUrl: product.detailPageUrl,
+                    title: product.title,
+                  });
+                  return (
+                    <a
+                      key={product.asin}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
+                    >
+                      {product.imageUrl ? (
+                        <Image
+                          src={product.imageUrl}
+                          alt={product.title}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 rounded-xl object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
+                          No image
                         </div>
-                      </a>
-                    );
-                  })}
-                </div>
+                      )}
+                      <div>
+                        <p className="font-semibold">{product.title}</p>
+                        <p className="text-gp-evergreen/70">
+                          {product.priceDisplay ?? "Price unavailable"}
+                        </p>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -566,6 +588,23 @@ export function GiftSuggestionsPanel() {
         },
       }));
     }
+  };
+
+  const handleDismissSave = (suggestionId: string) => {
+    setSaveStates((prev) => {
+      if (!prev[suggestionId]) return prev;
+      const next = { ...prev };
+      next[suggestionId] = { ...next[suggestionId], success: false };
+      return next;
+    });
+  };
+
+  const handleClearAmazon = (suggestionId: string) => {
+    setAmazonBySuggestion((prev) => {
+      const next = { ...prev };
+      delete next[suggestionId];
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -1294,6 +1333,8 @@ export function GiftSuggestionsPanel() {
                         setSavedGiftsOpen(true);
                       }
                     }}
+                    onDismissSave={() => handleDismissSave(suggestion.id)}
+                    onClearAmazon={() => handleClearAmazon(suggestion.id)}
                   />
                 ))}
               </div>

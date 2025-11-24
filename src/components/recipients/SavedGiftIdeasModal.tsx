@@ -132,7 +132,7 @@ export function SavedGiftIdeasModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/50 text-gp-cream transition hover:bg-white/15"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/50 text-gp-cream transition hover:bg-white/15 cursor-pointer"
             aria-label="Close saved gifts"
           >
             <svg
@@ -231,7 +231,7 @@ export function SavedGiftIdeasModal({
                       type="button"
                       onClick={() => handleRemove(gift.id)}
                       disabled={removingId === gift.id}
-                      className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60"
+                      className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {removingId === gift.id ? "Removing…" : "Remove"}
                     </button>
