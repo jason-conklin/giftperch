@@ -161,8 +161,14 @@ const AMAZON_PLACEHOLDER_MESSAGE =
   "No product matches found yet. Product previews will appear here when available.";
 
 const getSuggestionKeyFromTitle = (title: string) => title.trim().toLowerCase();
-const getSuggestionKey = (suggestion: GiftSuggestion) =>
-  getSuggestionKeyFromTitle(suggestion.title);
+const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
+  suggestion.id?.trim() || getSuggestionKeyFromTitle(suggestion.title);
+const getIdentityFromSavedRow = (row: { suggestion_id?: string | null; title?: string | null }) =>
+  (row.suggestion_id?.trim() || (row.title ? getSuggestionKeyFromTitle(row.title) : "")).trim();
+const getIdentityFromFeedbackRow = (row: {
+  suggestion_id?: string | null;
+  title?: string | null;
+}) => (row.suggestion_id?.trim() || (row.title ? getSuggestionKeyFromTitle(row.title) : "")).trim();
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -542,9 +548,9 @@ export function GiftSuggestionsPanel() {
   const [savedGiftsRecipientName, setSavedGiftsRecipientName] = useState("");
   const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
-  const [savedByKey, setSavedByKey] = useState<Record<string, boolean>>({});
-  const [likedByKey, setLikedByKey] = useState<Record<string, boolean>>({});
-  const [dislikedByKey, setDislikedByKey] = useState<Record<string, boolean>>({});
+  const [savedMap, setSavedMap] = useState<Record<string, boolean>>({});
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [dislikedMap, setDislikedMap] = useState<Record<string, boolean>>({});
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [lastUnsavedId, setLastUnsavedId] = useState<string | null>(null);
   const [saveStates, setSaveStates] = useState<
@@ -670,7 +676,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       setError("Please select a recipient before saving gift ideas.");
       return;
     }
-    const suggestionKey = getSuggestionKey(suggestion);
+    const suggestionKey = getSuggestionIdentity(suggestion);
     setSaveStates((prev) => ({
       ...prev,
       [suggestionKey]: {
@@ -708,7 +714,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         throw new Error(body.error || "Failed to save gift idea");
       }
 
-      setSavedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
+      setSavedMap((prev) => ({ ...prev, [suggestionKey]: true }));
       setLastSavedId(suggestionKey);
       setLastUnsavedId(null);
       setSaveStates((prev) => ({
@@ -737,7 +743,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
 
   const handleUnsaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) return;
-    const suggestionKey = getSuggestionKey(suggestion);
+    const suggestionKey = getSuggestionIdentity(suggestion);
     setSaveStates((prev) => ({
       ...prev,
       [suggestionKey]: {
@@ -764,7 +770,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to unsave gift idea");
       }
-      setSavedByKey((prev) => {
+      setSavedMap((prev) => {
         const next = { ...prev };
         delete next[suggestionKey];
         return next;
@@ -887,26 +893,26 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
           preference === "clear" ? null : (preference as "liked" | "disliked"),
       }));
       if (preference === "clear") {
-        setLikedByKey((prev) => {
+        setLikedMap((prev) => {
           const next = { ...prev };
           delete next[suggestionKey];
           return next;
         });
-        setDislikedByKey((prev) => {
+        setDislikedMap((prev) => {
           const next = { ...prev };
           delete next[suggestionKey];
           return next;
         });
       } else if (preference === "liked") {
-        setLikedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
-        setDislikedByKey((prev) => {
+        setLikedMap((prev) => ({ ...prev, [suggestionKey]: true }));
+        setDislikedMap((prev) => {
           const next = { ...prev };
           delete next[suggestionKey];
           return next;
         });
       } else if (preference === "disliked") {
-        setDislikedByKey((prev) => ({ ...prev, [suggestionKey]: true }));
-        setLikedByKey((prev) => {
+        setDislikedMap((prev) => ({ ...prev, [suggestionKey]: true }));
+        setLikedMap((prev) => {
           const next = { ...prev };
           delete next[suggestionKey];
           return next;
@@ -1013,14 +1019,14 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     return suggestions;
   }, [activeRun, tierFilter, searchTerm, sortOption]);
   const visibleSuggestionsKey = visibleSuggestions
-    .map((s) => s.title)
+    .map((s) => getSuggestionIdentity(s))
     .join("|");
 
   useEffect(() => {
     if (!selectedRecipientId || visibleSuggestions.length === 0) {
-      setSavedByKey({});
-      setLikedByKey({});
-      setDislikedByKey({});
+      setSavedMap({});
+      setLikedMap({});
+      setDislikedMap({});
       setFeedbackById({});
       return;
     }
@@ -1029,12 +1035,12 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     (async () => {
       const { data: savedRows } = await supabase
         .from("recipient_saved_gift_ideas")
-        .select("title")
+        .select("suggestion_id, title")
         .eq("recipient_id", selectedRecipientId);
 
       const { data: feedbackRows } = await supabase
         .from("recipient_gift_feedback")
-        .select("title, preference")
+        .select("suggestion_id, title, preference")
         .eq("recipient_id", selectedRecipientId);
 
       if (cancelled) return;
@@ -1044,14 +1050,14 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       const nextDisliked: Record<string, boolean> = {};
 
       (savedRows ?? []).forEach((row) => {
-        if (!row?.title) return;
-        const key = getSuggestionKeyFromTitle(row.title);
+        const key = getIdentityFromSavedRow(row);
+        if (!key) return;
         nextSaved[key] = true;
       });
 
       (feedbackRows ?? []).forEach((row) => {
-        if (!row?.title) return;
-        const key = getSuggestionKeyFromTitle(row.title);
+        const key = getIdentityFromFeedbackRow(row);
+        if (!key) return;
         if (row.preference === "liked") {
           nextLiked[key] = true;
           delete nextDisliked[key];
@@ -1069,9 +1075,9 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         feedbackMap[key] = "disliked";
       });
 
-      setSavedByKey(nextSaved);
-      setLikedByKey(nextLiked);
-      setDislikedByKey(nextDisliked);
+      setSavedMap(nextSaved);
+      setLikedMap(nextLiked);
+      setDislikedMap(nextDisliked);
       setFeedbackById(feedbackMap);
       setDismissedFeedbackByKey({});
     })();
@@ -1717,7 +1723,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {visibleSuggestions.map((suggestion, idx) => {
-                    const suggestionKey = getSuggestionKey(suggestion);
+                    const suggestionKey = getSuggestionIdentity(suggestion);
                     return (
                   <GiftSuggestionCard
                     key={suggestionKey}
@@ -1729,9 +1735,9 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       onFetchAmazon={handleFetchAmazonProducts}
                       onSaveGift={handleSaveGift}
                       onUnsaveGift={handleUnsaveGift}
-                      isSaved={!!savedByKey[suggestionKey]}
-                      isLiked={!!likedByKey[suggestionKey]}
-                      isDisliked={!!dislikedByKey[suggestionKey]}
+                      isSaved={!!savedMap[suggestionKey]}
+                      isLiked={!!likedMap[suggestionKey]}
+                      isDisliked={!!dislikedMap[suggestionKey]}
                       lastSavedId={lastSavedId}
                       lastUnsavedId={lastUnsavedId}
                       saveState={saveStates[suggestionKey]}
