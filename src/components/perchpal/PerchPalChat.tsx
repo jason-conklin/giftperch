@@ -291,7 +291,14 @@ export function PerchPalChat() {
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 sm:gap-4">
-          <PerchPalFlyingAvatar size="md" />
+          <Image
+            src="/giftperch_perchpal_front.png"
+            alt="PerchPal"
+            width={56}
+            height={56}
+            className="h-12 w-12 sm:h-14 sm:w-14 rounded-full object-contain bg-gp-cream/80 border border-gp-evergreen/10 shadow-sm"
+            priority
+          />
           <div className="space-y-0.5">
             <p className="text-sm font-semibold text-gp-evergreen md:text-base">
               PerchPal
@@ -416,4 +423,3 @@ export function PerchPalChat() {
     </>
   );
 }
-
