@@ -397,12 +397,27 @@ export function OccasionsManager() {
 
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Occasion type
-              <input
-                className="gp-input"
+              <select
+                className="gp-input cursor-pointer"
                 value={newEventType}
                 onChange={(event) => setNewEventType(event.target.value)}
-                placeholder="birthday, anniversary, milestone..."
-              />
+              >
+                <option value="">Choose an occasion</option>
+                <option value="birthday">Birthday</option>
+                <option value="christmas_holidays">Christmas / Holidays</option>
+                <option value="anniversary">Anniversary</option>
+                <option value="graduation">Graduation</option>
+                <option value="wedding">Wedding</option>
+                <option value="baby">Baby shower / New baby</option>
+                <option value="housewarming">Housewarming</option>
+                <option value="promotion">Promotion / New job</option>
+                <option value="thank_you">Thank you / Appreciation</option>
+                <option value="get_well">Get well soon</option>
+                <option value="valentines">Valentine’s Day</option>
+                <option value="mothers_day">Mother’s Day</option>
+                <option value="fathers_day">Father’s Day</option>
+                <option value="just_because">Just because / No special occasion</option>
+              </select>
             </label>
 
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
