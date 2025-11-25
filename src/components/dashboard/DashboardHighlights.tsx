@@ -320,57 +320,60 @@ export function DashboardHighlights() {
           Next big occasion
         </p>
         {nextOccasion ? (
-          <>
-            {(() => {
-              const occasionType = getOccasionType(nextOccasion.label);
-              const { src, alt } = getOccasionIcon(occasionType);
-              return (
-                <div className="mt-2 flex justify-center">
-                  <Image
-                    src={src}
-                    alt={alt}
-                    width={56}
-                    height={56}
-                    className="h-14 w-14 rounded-full shadow-sm"
-                  />
+          (() => {
+            const occasionType = getOccasionType(nextOccasion.label);
+            const { src, alt } = getOccasionIcon(occasionType);
+            const mood = getOccasionMoodText(occasionType);
+
+            return (
+              <>
+                <h3 className="text-lg font-semibold text-gp-evergreen">
+                  {nextOccasion.label}
+                </h3>
+
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="h-12 w-12 rounded-full bg-gp-cream/80 flex items-center justify-center shadow-sm">
+                    <Image
+                      src={src}
+                      alt={alt}
+                      width={48}
+                      height={48}
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
+                  <p className="text-gp-text-secondary text-[15px] leading-snug">
+                    {mood}
+                  </p>
                 </div>
-              );
-            })()}
-            <h3 className="text-lg font-semibold text-gp-evergreen">
-              {nextOccasion.label}
-            </h3>
-            <p className="text-sm text-gp-evergreen/70">
-              {formatFullDate(nextOccasion.date)}
-            </p>
-            {(() => {
-              const occasionType = getOccasionType(nextOccasion.label);
-              const mood = getOccasionMoodText(occasionType);
-              return (
-                <p className="mt-3 text-sm text-gp-evergreen/80">
-                  {mood}
+
+                <p className="text-sm text-gp-evergreen/70">
+                  {formatFullDate(nextOccasion.date)}
                 </p>
-              );
-            })()}
-            {buildCountdownLabel(nextOccasion.date) ? (
-              <span className="inline-flex w-fit rounded-full bg-gp-cream px-3 py-1 text-xs font-medium text-gp-evergreen/80">
-                {buildCountdownLabel(nextOccasion.date)}
-              </span>
-            ) : null}
-            {nextOccasion.recipientId ? (
-              <Link
-                href={`/recipients`}
-                className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-              >
-                Prepare for {nextOccasion.recipientName}
-              </Link>
-            ) : null}
-            <Link
-              href="/occasions"
-              className="gp-primary-button w-fit"
-            >
-              View occasions →
-            </Link>
-          </>
+
+                {buildCountdownLabel(nextOccasion.date) ? (
+                  <span className="inline-flex w-fit rounded-full bg-gp-cream px-3 py-1 text-xs font-medium text-gp-evergreen/80">
+                    {buildCountdownLabel(nextOccasion.date)}
+                  </span>
+                ) : null}
+
+                {nextOccasion.recipientId ? (
+                  <Link
+                    href={`/recipients`}
+                    className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                  >
+                    Prepare for {nextOccasion.recipientName}
+                  </Link>
+                ) : null}
+
+                <Link
+                  href="/occasions"
+                  className="gp-primary-button w-fit"
+                >
+                  View occasions →
+                </Link>
+              </>
+            );
+          })()
         ) : (
           <p className="text-sm text-gp-evergreen/70">
             Add birthdays or occasions to see what&apos;s coming up next.
