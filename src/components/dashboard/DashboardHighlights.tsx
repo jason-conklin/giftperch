@@ -256,7 +256,7 @@ export function DashboardHighlights() {
             ) : null}
             <Link
               href="/occasions"
-              className="text-sm font-medium text-gp-evergreen underline-offset-4 hover:underline"
+              className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-sm font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
             >
               View occasions →
             </Link>
@@ -314,9 +314,9 @@ export function DashboardHighlights() {
         ) : null}
         <Link
           href="/recipients"
-          className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+          className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-sm font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
         >
-          Manage recipients
+          Manage recipients →
         </Link>
       </article>
 
@@ -330,7 +330,7 @@ export function DashboardHighlights() {
           Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
         </p>
         <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
-          Open Gift Ideas
+          Open Gift Ideas →
         </Link>
         {lastRunLabel ? (
           <p className="text-xs text-gp-evergreen/60">Last run: {lastRunLabel}</p>
