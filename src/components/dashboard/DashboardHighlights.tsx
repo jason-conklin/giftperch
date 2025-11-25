@@ -348,7 +348,7 @@ export function DashboardHighlights() {
         <p className="text-sm text-gp-evergreen/80">
           Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
         </p>
-        <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
+        <Link href="/gifts" className="gp-primary-button mt-2 w-fit self-center">
           Open Gift Ideas →
         </Link>
         {lastRunLabel ? (
