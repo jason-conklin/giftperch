@@ -191,9 +191,10 @@ export function DashboardHighlights() {
   }, [events, recipients]);
 
   const recipientsHighlight = recipients[0];
-  const tipMessage =
-    latestInteraction?.message ??
-    "Tip: Keep PerchPal close by logging budgets, interests, and notes right after conversations.";
+  const lastRunLabel = useMemo(() => {
+    if (!latestInteraction?.message) return null;
+    return latestInteraction.message;
+  }, [latestInteraction]);
 
   if (loading) {
     return (
@@ -277,15 +278,19 @@ export function DashboardHighlights() {
 
       <article className="gp-card flex flex-col gap-3">
         <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-          PerchPal tip
+          PerchPal
         </p>
-        <p className="text-sm text-gp-evergreen/80">{tipMessage}</p>
-        <Link
-          href="/gifts"
-          className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          Ask PerchPal for ideas
+        <h3 className="text-lg font-semibold text-gp-evergreen">Chat with PerchPal</h3>
+        <p className="text-sm text-gp-evergreen/70">Your AI gifting assistant</p>
+        <p className="text-sm text-gp-evergreen/80">
+          Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
+        </p>
+        <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
+          Open Gift Ideas
         </Link>
+        {lastRunLabel ? (
+          <p className="text-xs text-gp-evergreen/60">Last run: {lastRunLabel}</p>
+        ) : null}
       </article>
     </div>
   );
