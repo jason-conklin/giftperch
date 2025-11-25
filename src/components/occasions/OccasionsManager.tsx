@@ -213,6 +213,12 @@ export function OccasionsManager() {
     const mapped: OccasionEvent[] = [];
     const years = Array.from({ length: 11 }, (_v, i) => currentYear - 5 + i);
 
+    const makeLocalIso = (year: number, month: number, day: number) => {
+      // month is 1-based coming in; Date expects 0-based month
+      const d = new Date(year, month - 1, day, 12, 0, 0);
+      return d.toISOString();
+    };
+
     years.forEach((year) => {
       const holidays = getDefaultUsHolidaysForYear(year);
       holidays.forEach((h) => mapped.push(h));
@@ -220,19 +226,20 @@ export function OccasionsManager() {
 
     recipients.forEach((recipient) => {
       if (!recipient.birthday) return;
-      const parsed = new Date(recipient.birthday);
-      if (Number.isNaN(parsed.getTime())) return;
-      const nextBirthday = new Date(
-        currentYear,
-        parsed.getMonth(),
-        parsed.getDate()
-      );
-      mapped.push({
-        id: `birthday-${recipient.id}-${currentYear}`,
-        date: nextBirthday.toISOString(),
-        title: `${recipient.name}'s birthday`,
-        type: "birthday",
-        recipientName: recipient.name,
+      const parts = recipient.birthday.split("-");
+      if (parts.length < 3) return;
+      const month = Number(parts[1]);
+      const day = Number(parts[2]);
+      if (!month || !day) return;
+
+      years.forEach((year) => {
+        mapped.push({
+          id: `birthday-${recipient.id}-${year}`,
+          date: makeLocalIso(year, month, day),
+          title: `${recipient.name}'s birthday`,
+          type: "birthday",
+          recipientName: recipient.name,
+        });
       });
     });
 
