@@ -39,6 +39,7 @@ export type OccasionsCalendarProps = {
   events: OccasionEvent[];
   emptyMessage?: string;
   isLoading?: boolean;
+  onAddDate?: (isoDate: string) => void;
 };
 
 const getDateKey = (date: Date) => {
@@ -106,6 +107,7 @@ export function OccasionsCalendar({
   events,
   emptyMessage,
   isLoading = false,
+  onAddDate,
 }: OccasionsCalendarProps) {
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -311,9 +313,7 @@ export function OccasionsCalendar({
                       ? "border-gp-gold/70 ring-2 ring-gp-gold/25"
                       : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
                   } focus:outline-none focus:ring-2 focus:ring-gp-evergreen/30`}
-                  onClick={() =>
-                    day.events.length ? setSelectedDayKey(day.key) : undefined
-                  }
+                  onClick={() => setSelectedDayKey(day.key)}
                 >
                   <div className="flex w-full justify-start px-1">
                     <p className="text-[11px] font-semibold sm:text-sm">
@@ -366,7 +366,10 @@ export function OccasionsCalendar({
             {selectedEvents.map((event) => {
               const icon = getOccasionIcon(event);
               return (
-                <div key={event.id} className="flex items-start gap-3 rounded-2xl bg-white/80 p-3 shadow-sm">
+                <div
+                  key={event.id}
+                  className="flex items-start gap-3 rounded-2xl bg-white/80 p-3 shadow-sm"
+                >
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gp-cream/80 border border-gp-evergreen/10">
                     <Image
                       src={icon}
@@ -412,6 +415,41 @@ export function OccasionsCalendar({
                 </div>
               );
             })}
+          </div>
+        ) : selectedDayKey ? (
+          <div className="mt-3 space-y-3">
+            <div className="flex items-start gap-3 rounded-2xl bg-white/80 p-3 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gp-cream/80 border border-gp-evergreen/10">
+                <Image
+                  src="/icons/occasions/icon-occasion-day.png"
+                  alt="Day icon"
+                  width={28}
+                  height={28}
+                  className="h-7 w-7 object-contain"
+                />
+              </div>
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-semibold text-gp-evergreen">
+                  No special occasion
+                </p>
+                <p className="text-xs text-gp-evergreen/60">
+                  {new Date(selectedDayKey).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+                {onAddDate ? (
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-gp-evergreen/20 bg-white px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+                    onClick={() => onAddDate(selectedDayKey)}
+                  >
+                    Add occasion
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
         ) : (
           <p className="mt-3 text-sm text-gp-evergreen/70">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type GettingStartedCardProps = {
   recipientCount: number;
@@ -42,13 +42,13 @@ export function GettingStartedCard({
     () => (userId ? `gp_onboarding_dismissed_${userId}` : "gp_onboarding_dismissed"),
     [userId],
   );
-  const [dismissed, setDismissed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const [dismissed, setDismissed] = useState<boolean | null>(() => {
+    if (typeof window === "undefined") return null;
     const value = window.localStorage.getItem(dismissKey);
-    setDismissed(value === "true");
-  }, [dismissKey]);
+    if (value === "true") return true;
+    if (value === "false") return false;
+    return null;
+  });
 
   const handleDismiss = () => {
     if (typeof window !== "undefined") {

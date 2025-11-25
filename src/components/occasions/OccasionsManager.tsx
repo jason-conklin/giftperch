@@ -280,6 +280,13 @@ export function OccasionsManager() {
         events={calendarEvents}
         emptyMessage={calendarEmptyMessage}
         isLoading={loading || loadingRecipients}
+        onAddDate={(iso) => {
+          setNewEventDate(iso);
+          const el = document.getElementById("add-occasion-form");
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }}
       />
 
       <section className="gp-card-soft flex flex-col gap-2 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
@@ -373,7 +380,7 @@ export function OccasionsManager() {
             Loading recipients...
           </p>
         ) : hasRecipients ? (
-          <form className="space-y-4" onSubmit={handleAddOccasion}>
+          <form id="add-occasion-form" className="space-y-4" onSubmit={handleAddOccasion}>
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Recipient
               <select
