@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -45,6 +46,23 @@ const getDateKey = (date: Date) => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+};
+
+const getOccasionIcon = (event: OccasionEvent) => {
+  const value = `${event.type ?? ""} ${event.title ?? ""}`.toLowerCase();
+
+  if (value.includes("birthday")) return "/icons/occasions/occasion-birthday.png";
+  if (value.includes("christmas")) return "/icons/occasions/occasion-christmas.png";
+  if (value.includes("valentine")) return "/icons/occasions/occasion-valentines.png";
+  if (value.includes("mother")) return "/icons/occasions/occasion-mothers-day.png";
+  if (value.includes("father")) return "/icons/occasions/occasion-fathers-day.png";
+  if (value.includes("new year")) return "/icons/occasions/occasion-new-year.png";
+  if (value.includes("thank")) return "/icons/occasions/occasion-thanksgiving.png";
+  if (value.includes("anniversary") || value.includes("wedding"))
+    return "/icons/occasions/occasion-anniversary.png";
+  if (value.includes("graduation")) return "/icons/occasions/occasion-graduation.png";
+  if (value.includes("halloween")) return "/icons/occasions/occasion-gift.png";
+  return "/icons/occasions/occasion-generic.png";
 };
 
 const eventTypeStyles: Record<
@@ -139,7 +157,7 @@ export function OccasionsCalendar({
   const hasEvents = events.length > 0;
   const appliedEmptyMessage =
     emptyMessage ??
-    "No occasions on the calendar yet. Add birthdays or special dates to see them here.";
+    "No occasions on the calendar yet. Add birthdays || special dates to see them here.";
 
   const changeMonth = (direction: "prev" | "next") => {
     setSelectedDayKey(null);
@@ -246,7 +264,7 @@ export function OccasionsCalendar({
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1" role="grid">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2" role="grid">
           {calendarDays.map((day) => {
             const isToday =
               day.date.getFullYear() === today.getFullYear() &&
@@ -266,7 +284,7 @@ export function OccasionsCalendar({
                     day: "numeric",
                   }) ?? ""
                 } with ${day.events.length} events`}
-                className={`relative min-h-[110px] rounded-2xl border p-3 text-left transition ${
+                className={`relative rounded-xl border p-2 sm:p-3 text-left transition aspect-[4/3] min-h-[80px] sm:min-h-[110px] ${
                   day.isCurrentMonth
                     ? "bg-gp-cream/60 text-gp-evergreen"
                     : "bg-gp-cream/40 text-gp-evergreen/50"
@@ -280,23 +298,30 @@ export function OccasionsCalendar({
                 }
               >
                 <p className="text-sm font-semibold">{day.date.getDate()}</p>
-                <div className="mt-2 flex flex-col gap-1">
-                  {eventsToShow.map((event) => (
-                    <span
-                      key={event.id}
-                      className={`truncate rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        event.isGlobal && event.type === "holiday"
-                          ? "bg-gp-gold/30 text-gp-evergreen border border-gp-gold/50"
-                          : eventTypeStyles[event.type].chip
-                      }`}
-                    >
-                      {event.title}
-                      {event.isGlobal ? " • Holiday" : ""}
-                    </span>
-                  ))}
+                <div className="mt-2 flex flex-col gap-1 sm:gap-2">
+                  {eventsToShow.map((event) => {
+                    const icon = getOccasionIcon(event);
+                    return (
+                      <div
+                        key={event.id}
+                        className="inline-flex items-center gap-2 rounded-full bg-gp-cream px-3 py-1 text-xs shadow-sm"
+                      >
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gp-cream/90">
+                          <Image
+                            src={icon}
+                            alt={event.title}
+                            width={18}
+                            height={18}
+                            className="h-4 w-4 object-contain"
+                          />
+                        </span>
+                        <span className="truncate text-gp-evergreen/90">{event.title}</span>
+                      </div>
+                    );
+                  })}
                   {extraCount > 0 ? (
-                    <span className="text-xs font-semibold text-gp-evergreen/70">
-                      +{extraCount} more
+                    <span className="text-[10px] font-semibold text-gp-evergreen/70">
+                      +{extraCount}
                     </span>
                   ) : null}
                 </div>

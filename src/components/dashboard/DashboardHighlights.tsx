@@ -327,11 +327,7 @@ export function DashboardHighlights() {
 
             return (
               <>
-                <h3 className="text-lg font-semibold text-gp-evergreen">
-                  {nextOccasion.label}
-                </h3>
-
-                <div className="flex items-center gap-3 mt-2">
+                <div className="mt-4 flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gp-cream/80 flex items-center justify-center shadow-sm">
                     <Image
                       src={src}
@@ -341,9 +337,9 @@ export function DashboardHighlights() {
                       className="h-10 w-10 object-contain"
                     />
                   </div>
-                  <p className="text-gp-text-secondary text-[15px] leading-snug">
-                    {mood}
-                  </p>
+                  <h3 className="text-xl font-semibold text-gp-evergreen">
+                    {nextOccasion.label}
+                  </h3>
                 </div>
 
                 <p className="text-sm text-gp-evergreen/70">
@@ -355,6 +351,10 @@ export function DashboardHighlights() {
                     {buildCountdownLabel(nextOccasion.date)}
                   </span>
                 ) : null}
+
+                <p className="mt-3 text-sm text-gp-evergreen/80">
+                  {mood}
+                </p>
 
                 {nextOccasion.recipientId ? (
                   <Link
