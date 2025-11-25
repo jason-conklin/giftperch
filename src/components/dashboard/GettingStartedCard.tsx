@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type GettingStartedCardProps = {
   recipientCount: number;
+  onboardingCompleted: boolean;
+  userId: string | null;
 };
 
 const steps = [
@@ -31,10 +33,32 @@ const steps = [
   },
 ];
 
-export function GettingStartedCard({ recipientCount }: GettingStartedCardProps) {
-  const [showCard, setShowCard] = useState(true);
+export function GettingStartedCard({
+  recipientCount,
+  onboardingCompleted,
+  userId,
+}: GettingStartedCardProps) {
+  const dismissKey = useMemo(
+    () => (userId ? `gp_onboarding_dismissed_${userId}` : "gp_onboarding_dismissed"),
+    [userId],
+  );
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
 
-  if (!showCard || recipientCount > 0) return null;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const value = window.localStorage.getItem(dismissKey);
+    setDismissed(value === "true");
+  }, [dismissKey]);
+
+  const handleDismiss = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(dismissKey, "true");
+    }
+    setDismissed(true);
+  };
+
+  if (dismissed === null) return null;
+  if (dismissed || onboardingCompleted || recipientCount > 0) return null;
 
   return (
     <article className="bg-white rounded-3xl shadow-sm border border-gp-cream/60 px-5 py-4 sm:px-6 sm:py-5">
@@ -49,7 +73,7 @@ export function GettingStartedCard({ recipientCount }: GettingStartedCardProps) 
         </div>
         <button
           type="button"
-          onClick={() => setShowCard(false)}
+          onClick={handleDismiss}
           className="text-sm text-gp-evergreen/60 hover:text-gp-evergreen focus:outline-none"
           aria-label="Dismiss onboarding card"
         >

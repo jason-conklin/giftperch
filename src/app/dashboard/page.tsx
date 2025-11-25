@@ -41,19 +41,39 @@ export default async function DashboardHome() {
   } = await supabase.auth.getUser();
 
   let recipientCountValue = 0;
+  let suggestionCountValue = 0;
+  let engagementCountValue = 0;
 
   if (user?.id) {
     const userId = user.id;
 
-    const [{ count: recipientCount }] = await Promise.all([
-      supabase
-        .from("recipient_profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-    ]);
+    const [{ count: recipientCount }, { count: suggestionCount }, { count: savedCount }, { count: feedbackCount }] =
+      await Promise.all([
+        supabase
+          .from("recipient_profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("gift_suggestions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("recipient_saved_gift_ideas")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("recipient_gift_feedback")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+      ]);
 
     recipientCountValue = recipientCount ?? 0;
+    suggestionCountValue = suggestionCount ?? 0;
+    engagementCountValue = (savedCount ?? 0) + (feedbackCount ?? 0);
   }
+
+  const onboardingCompletedByData =
+    recipientCountValue > 0 && (suggestionCountValue > 0 || engagementCountValue > 0);
 
   const heroBanner = (
     <div className="overflow-hidden rounded-3xl">
@@ -77,7 +97,11 @@ export default async function DashboardHome() {
     >
       <WelcomeOnboardingModal />
       <section className="space-y-8">
-        <GettingStartedCard recipientCount={recipientCountValue} />
+        <GettingStartedCard
+          recipientCount={recipientCountValue}
+          userId={user?.id ?? null}
+          onboardingCompleted={onboardingCompletedByData}
+        />
         <DashboardHighlights />
         <div className="grid gap-4 md:grid-cols-3">
           {actions.map((action) => (
