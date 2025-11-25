@@ -275,7 +275,6 @@ export function OccasionsCalendar({
                 day.date.getMonth() === today.getMonth() &&
                 day.date.getDate() === today.getDate();
               const primaryEvent = day.events[0];
-              const extraCount = Math.max(0, day.events.length - 1);
 
               return (
                 <button
@@ -307,19 +306,16 @@ export function OccasionsCalendar({
                     </p>
                   </div>
                   {primaryEvent ? (
-                    <div className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-gp-gold/20 px-2 py-0.5">
+                    <div className="mt-1 flex flex-1 flex-col items-center justify-center gap-1">
                       <Image
                         src={getOccasionIcon(primaryEvent)}
                         alt={primaryEvent.title}
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 shrink-0"
+                        width={40}
+                        height={40}
+                        className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
                       />
-                      <span className="truncate text-[11px] font-medium text-gp-evergreen sm:text-xs">
-                        <span className="sr-only sm:not-sr-only">
-                          {primaryEvent.title}
-                          {extraCount > 0 ? ` (+${extraCount})` : ""}
-                        </span>
+                      <span className="text-[11px] sm:text-xs text-gp-evergreen/80 text-center leading-tight line-clamp-2">
+                        {primaryEvent.title}
                       </span>
                     </div>
                   ) : null}
