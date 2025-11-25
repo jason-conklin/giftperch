@@ -367,12 +367,12 @@ export function DashboardHighlights() {
                 </p>
 
                 {buildCountdownLabel(nextOccasion.date) ? (
-                  <span className="inline-flex w-fit rounded-full border border-2 border-gp-gold/40 bg-white px-3 py-1 text-xs font-medium text-gp-evergreen">
+                  <span className="inline-flex w-fit rounded-full border border-3 border-gp-gold/40 bg-white px-3 py-1 text-xs font-medium text-gp-evergreen">
                     {buildCountdownLabel(nextOccasion.date)}
                   </span>
                 ) : null}
 
-                <div className="mt-3 inline-flex rounded-full bg-gp-cream/80 px-3 py-1">
+                <div className="mt-1 mb-1 inline-flex rounded-full bg-gp-cream/80 px-3 py-1">
                   <p className="text-[11px] text-gp-evergreen/70 sm:text-xs">
                     {mood}
                   </p>
