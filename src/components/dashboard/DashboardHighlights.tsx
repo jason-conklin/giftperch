@@ -344,15 +344,11 @@ export function DashboardHighlights() {
             </p>
             {(() => {
               const occasionType = getOccasionType(nextOccasion.label);
-              const { src, alt } = getOccasionIcon(occasionType);
               const mood = getOccasionMoodText(occasionType);
               return (
-                <div className="mt-3 flex items-center gap-2 text-sm text-gp-evergreen/80">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gp-cream px-2 py-1 text-xs font-medium text-gp-evergreen/80">
-                    <Image src={src} alt={alt} width={20} height={20} className="h-5 w-5" />
-                  </div>
-                  <p className="text-sm text-gp-evergreen/80">{mood}</p>
-                </div>
+                <p className="mt-3 text-sm text-gp-evergreen/80">
+                  {mood}
+                </p>
               );
             })()}
             {buildCountdownLabel(nextOccasion.date) ? (
