@@ -256,7 +256,7 @@ export function DashboardHighlights() {
             ) : null}
             <Link
               href="/occasions"
-              className="w-fit mx-auto rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
+              className="gp-primary-button w-fit mx-auto"
             >
               View occasions →
             </Link>
@@ -314,7 +314,7 @@ export function DashboardHighlights() {
         ) : null}
         <Link
           href="/recipients"
-          className="w-fit mx-auto rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
+          className="gp-primary-button w-fit mx-auto"
         >
           Manage recipients →
         </Link>
