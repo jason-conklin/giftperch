@@ -256,16 +256,19 @@ export function OccasionsCalendar({
         </div>
       </div>
 
-      <div className="mt-2 overflow-x-auto">
-        <div className="min-w-[640px] sm:min-w-0 rounded-3xl border border-gp-evergreen/10 bg-white/95 shadow-sm">
-          <div className="grid grid-cols-7 border-b border-gp-evergreen/10 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+      <div className="mt-6">
+        <div className="rounded-[32px] border border-gp-evergreen/5 bg-white/95 px-4 py-4 shadow-sm sm:px-6 sm:py-6">
+          <div className="grid grid-cols-7 gap-x-2 text-[11px] font-medium text-gp-evergreen/70 sm:text-xs">
             {WEEKDAYS.map((day) => (
-              <div key={day} className="px-3 py-2 text-center">
+              <div key={day} className="text-center">
                 {day}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-2 sm:gap-3" role="grid">
+          <div
+            className="mt-3 grid grid-cols-7 gap-x-1.5 gap-y-2 sm:mt-4 sm:gap-x-3 sm:gap-y-4"
+            role="grid"
+          >
             {calendarDays.map((day) => {
               const isToday =
                 day.date.getFullYear() === today.getFullYear() &&
@@ -285,43 +288,40 @@ export function OccasionsCalendar({
                       day: "numeric",
                     }) ?? ""
                   } with ${day.events.length} events`}
-                  className={`relative flex min-h-[3.25rem] flex-col justify-start rounded-3xl border p-2 text-left transition sm:min-h-[4.25rem] sm:p-3 ${
+                  className={`flex flex-col justify-between rounded-3xl border px-2 py-2 text-left transition sm:px-3 sm:py-3 ${
                     day.isCurrentMonth
-                      ? "bg-gp-cream/60 text-gp-evergreen"
-                      : "bg-gp-cream/40 text-gp-evergreen/50"
+                      ? "bg-gp-cream/70 text-gp-evergreen"
+                      : "bg-gp-cream/50 text-gp-evergreen/50"
                   } ${
                     isToday
-                      ? "border-gp-gold/70 ring-2 ring-gp-gold/30"
+                      ? "border-gp-gold/70 ring-2 ring-gp-gold/25"
                       : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
                   }`}
+                  style={{ minHeight: "60px" }}
                   onClick={() =>
                     day.events.length ? setSelectedDayKey(day.key) : undefined
                   }
                 >
-                  <p className="text-xs font-semibold sm:text-sm">
-                    {day.date.getDate()}
-                  </p>
-                  <div className="mt-2 flex flex-col gap-1 sm:gap-2">
-                    {primaryEvent ? (
-                      <div className="inline-flex items-center gap-1 rounded-full bg-gp-gold/15 px-2 py-1 text-[11px] shadow-sm sm:gap-2 sm:text-xs">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gp-cream/90 sm:h-6 sm:w-6">
-                          <Image
-                            src={getOccasionIcon(primaryEvent)}
-                            alt={primaryEvent.title}
-                            width={18}
-                            height={18}
-                            className="h-4 w-4 object-contain"
-                          />
-                        </span>
-                        <span className="truncate text-gp-evergreen/90">{primaryEvent.title}</span>
-                        {extraCount > 0 ? (
-                          <span className="text-[10px] font-semibold text-gp-evergreen/70">
-                            +{extraCount}
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
+                  <div className="flex items-start justify-between">
+                    <p className="text-xs font-semibold sm:text-sm">
+                      {day.date.getDate()}
+                    </p>
                   </div>
+                  {primaryEvent ? (
+                    <div className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-gp-gold/20 px-2 py-0.5">
+                      <Image
+                        src={getOccasionIcon(primaryEvent)}
+                        alt={primaryEvent.title}
+                        width={16}
+                        height={16}
+                        className="h-4 w-4 shrink-0"
+                      />
+                      <span className="truncate text-[11px] font-medium text-gp-evergreen sm:text-xs">
+                        {primaryEvent.title}
+                        {extraCount > 0 ? ` (+${extraCount})` : ""}
+                      </span>
+                    </div>
+                  ) : null}
                 </button>
               );
             })}
