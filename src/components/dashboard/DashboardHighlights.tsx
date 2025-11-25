@@ -327,7 +327,7 @@ export function DashboardHighlights() {
 
             return (
               <>
-                <div className="mt-2 flex items-center gap-3">
+                <div className="mt-0 flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gp-cream/80 flex items-center justify-center shadow-sm">
                     <Image
                       src={src}
