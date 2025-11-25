@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { PerchPalFlyingAvatar, PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 type RecipientSummary = {
   id: string;
@@ -429,7 +429,7 @@ export function DashboardHighlights() {
         ) : null}
         <Link
           href="/recipients"
-          className="gp-primary-button w-fit"
+          className="gp-primary-button w-fit mt-1"
         >
           Manage recipients →
         </Link>
@@ -439,8 +439,13 @@ export function DashboardHighlights() {
         <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
           PerchPal
         </p>
-        <h3 className="text-lg font-semibold text-gp-evergreen">Chat with PerchPal</h3>
-        <p className="text-sm text-gp-evergreen/70">Your AI gifting assistant</p>
+        <div className="flex items-center gap-3">
+          <PerchPalFlyingAvatar size="sm" className="shrink-0" />
+          <div>
+            <h3 className="text-lg font-semibold text-gp-evergreen">Chat with PerchPal</h3>
+            <p className="text-sm text-gp-evergreen/70">Your AI gifting assistant</p>
+          </div>
+        </div>
         <p className="text-sm text-gp-evergreen/80">
           Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
         </p>
