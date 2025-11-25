@@ -310,21 +310,21 @@ export function DashboardHighlights() {
                 <Image
                   src={recipientsHighlight.avatar_url}
                   alt={recipientsHighlight.name}
-                  width={40}
-                  height={40}
-                  className="h-10 w-10 rounded-full border border-gp-evergreen/15 bg-white object-cover"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full border border-gp-evergreen/15 bg-white object-cover"
                   unoptimized
                 />
               ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gp-evergreen/10 text-sm font-semibold text-gp-evergreen">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gp-evergreen/10 text-base font-semibold text-gp-evergreen">
                   {getInitials(recipientsHighlight.name)}
                 </div>
               )}
               <div>
-                <p className="text-sm font-semibold text-gp-evergreen">
+                <p className="text-base font-semibold text-gp-evergreen">
                   {recipientsHighlight.name}
                 </p>
-                <p className="text-[11px] uppercase tracking-wide text-gp-evergreen/60">
+                <p className="text-[12px] uppercase tracking-wide text-gp-evergreen/60">
                   {recipientsHighlight.relationship ?? "Relationship TBD"}
                 </p>
               </div>
