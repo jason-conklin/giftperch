@@ -32,7 +32,8 @@ export function AdminMetrics() {
 
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
-const res = await fetch("/api/admin/metrics", {
+
+        const res = await fetch("/api/admin/metrics", {
           credentials: "include",
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),

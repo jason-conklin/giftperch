@@ -193,24 +193,10 @@ export function SavedGiftIdeasModal({
         disliked: [] as FeedbackIdea[],
       };
     }
-    const bySuggestion: Record<string, boolean> = {};
-    const merged: CombinedGift[] = [];
-    state.saved.forEach((gift) => {
-      const key = gift.suggestion_id ?? gift.title;
-      if (!bySuggestion[key]) {
-        bySuggestion[key] = true;
-        merged.push(gift);
-      }
-    });
-    state.liked.forEach((gift) => {
-      const key = gift.suggestion_id ?? gift.title;
-      if (!bySuggestion[key]) {
-        bySuggestion[key] = true;
-        merged.push(gift);
-      }
-    });
+
+    // Saved tab should only contain explicitly saved ideas (do not merge liked here).
     return {
-      savedTab: merged,
+      savedTab: state.saved,
       liked: state.liked,
       disliked: state.disliked,
     };
