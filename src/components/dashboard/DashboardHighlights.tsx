@@ -245,7 +245,7 @@ export function DashboardHighlights() {
       setActiveRecipientIndex((prev) =>
         recipients.length ? (prev + 1) % recipients.length : 0
       );
-    }, 4000);
+    }, 2500);
     return () => window.clearInterval(id);
   }, [recipients.length, recipientsHover]);
 
