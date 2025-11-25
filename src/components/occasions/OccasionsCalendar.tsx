@@ -96,7 +96,7 @@ const HolidayCell = ({ title, icon }: { title: string; icon: string }) => (
       height={32}
       className="h-6 w-6 sm:h-8 sm:w-8 object-contain pointer-events-none"
     />
-    <span className="w-full truncate text-[11px] leading-tight text-gp-evergreen/80 sm:text-xs">
+    <span className="w-full text-[11px] leading-tight text-gp-evergreen/80 sm:text-xs text-center">
       {title}
     </span>
   </div>
@@ -281,7 +281,7 @@ export function OccasionsCalendar({
             ))}
           </div>
           <div
-            className="mt-3 grid grid-cols-7 auto-rows-[72px] gap-x-1 gap-y-2 sm:mt-4 sm:auto-rows-[84px] sm:gap-x-3 sm:gap-y-4"
+            className="mt-3 grid grid-cols-7 gap-1 sm:mt-4 sm:gap-3"
             role="grid"
           >
             {calendarDays.map((day) => {
@@ -302,7 +302,7 @@ export function OccasionsCalendar({
                       day: "numeric",
                     }) ?? ""
                   } with ${day.events.length} events`}
-                  className={`relative flex h-[72px] flex-col items-center justify-start overflow-hidden rounded-3xl border px-2 pb-1 pt-1 text-left transition sm:h-[84px] sm:px-3 sm:pb-2 sm:pt-2 ${
+                  className={`relative flex aspect-square flex-col items-center justify-start overflow-hidden rounded-3xl border px-2 pb-1 pt-1 text-left transition sm:px-3 sm:pb-2 sm:pt-2 ${
                     day.isCurrentMonth
                       ? "bg-gp-cream/70 text-gp-evergreen"
                       : "bg-gp-cream/50 text-gp-evergreen/50"
