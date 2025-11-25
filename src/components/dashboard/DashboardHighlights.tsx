@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
@@ -64,9 +66,27 @@ const seasonalEvents = [
   { id: "christmas", month: 11, day: 25, label: "Christmas Day" },
 ] as const;
 
+const formatFullDate = (date: Date) =>
+  date.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+const getInitials = (name: string | null | undefined) => {
+  if (!name) return "GP";
+  const parts = name.trim().split(/\s+/);
+  if (!parts.length) return "GP";
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
+  return `${first}${last}`.toUpperCase() || "GP";
+};
+
 export function DashboardHighlights() {
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const router = useRouter();
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
   const [events, setEvents] = useState<RecipientEventRow[]>([]);
   const [latestInteraction, setLatestInteraction] = useState<AiInteraction | null>(null);
@@ -220,15 +240,11 @@ export function DashboardHighlights() {
         </p>
         {nextOccasion ? (
           <>
-            <h3 className="text-xl font-semibold text-gp-evergreen">
+            <h3 className="text-lg font-semibold text-gp-evergreen">
               {nextOccasion.label}
             </h3>
             <p className="text-sm text-gp-evergreen/70">
-              {nextOccasion.date.toLocaleDateString(undefined, {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {formatFullDate(nextOccasion.date)}
             </p>
             {nextOccasion.recipientId ? (
               <Link
@@ -238,6 +254,12 @@ export function DashboardHighlights() {
                 Prepare for {nextOccasion.recipientName}
               </Link>
             ) : null}
+            <Link
+              href="/occasions"
+              className="text-sm font-medium text-gp-evergreen underline-offset-4 hover:underline"
+            >
+              View occasions →
+            </Link>
           </>
         ) : (
           <p className="text-sm text-gp-evergreen/70">
@@ -259,14 +281,36 @@ export function DashboardHighlights() {
             : "Start by adding the people you shop for most often."}
         </p>
         {recipientsHighlight ? (
-          <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/70 p-3">
-            <p className="text-sm font-semibold text-gp-evergreen">
-              {recipientsHighlight.name}
-            </p>
-            <p className="text-xs text-gp-evergreen/60">
-              {recipientsHighlight.relationship ?? "Relationship TBD"}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/recipients")}
+            className="rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-3 py-2 text-left shadow-sm transition hover:border-gp-evergreen/25"
+          >
+            <div className="flex items-center gap-3">
+              {recipientsHighlight.avatar_url ? (
+                <Image
+                  src={recipientsHighlight.avatar_url}
+                  alt={recipientsHighlight.name}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full border border-gp-evergreen/15 bg-white object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gp-evergreen/10 text-sm font-semibold text-gp-evergreen">
+                  {getInitials(recipientsHighlight.name)}
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-gp-evergreen">
+                  {recipientsHighlight.name}
+                </p>
+                <p className="text-[11px] uppercase tracking-wide text-gp-evergreen/60">
+                  {recipientsHighlight.relationship ?? "Relationship TBD"}
+                </p>
+              </div>
+            </div>
+          </button>
         ) : null}
         <Link
           href="/recipients"
