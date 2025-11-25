@@ -133,7 +133,7 @@ const getOccasionIcon = (type: OccasionType) => {
 const getOccasionMoodText = (type: OccasionType): string => {
   switch (type) {
     case "birthday":
-      return "Birthday coming up – start planning a surprise?";
+      return "Birthday coming up – start planning gift ideas?";
     case "christmas":
       return "Holiday gifting season is around the corner.";
     case "anniversary":
@@ -147,7 +147,7 @@ const getOccasionMoodText = (type: OccasionType): string => {
     case "fathersday":
       return "Time to thank them for all they do.";
     case "newyears":
-      return "Fresh year, fresh surprises to share.";
+      return "New year, new gifts to share!";
     case "thanksgiving":
       return "Gathering soon – thoughtful thanks go a long way.";
     default:
@@ -419,7 +419,7 @@ export function DashboardHighlights() {
           <button
             type="button"
             onClick={() => router.push("/recipients")}
-            className="rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-3 py-2 text-left shadow-sm transition hover:border-gp-evergreen/25"
+            className="rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-3 py-2 text-left shadow-sm transition hover:border-gp-evergreen/25 cursor-pointer"
             onMouseEnter={() => setRecipientsHover(true)}
             onMouseLeave={() => setRecipientsHover(false)}
           >
