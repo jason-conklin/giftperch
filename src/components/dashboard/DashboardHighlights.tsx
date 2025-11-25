@@ -367,7 +367,7 @@ export function DashboardHighlights() {
                 </p>
 
                 {buildCountdownLabel(nextOccasion.date) ? (
-                  <span className="inline-flex w-fit rounded-full border border-gp-gold/40 bg-white px-3 py-1 text-xs font-medium text-gp-evergreen">
+                  <span className="inline-flex w-fit rounded-full border border-2 border-gp-gold/40 bg-white px-3 py-1 text-xs font-medium text-gp-evergreen">
                     {buildCountdownLabel(nextOccasion.date)}
                   </span>
                 ) : null}
