@@ -51,17 +51,17 @@ const getDateKey = (date: Date) => {
 const getOccasionIcon = (event: OccasionEvent) => {
   const value = `${event.type ?? ""} ${event.title ?? ""}`.toLowerCase();
 
-  if (value.includes("birthday")) return "/icons/occasions/occasion-birthday.png";
-  if (value.includes("christmas")) return "/icons/occasions/occasion-christmas.png";
-  if (value.includes("valentine")) return "/icons/occasions/occasion-valentines.png";
-  if (value.includes("mother")) return "/icons/occasions/occasion-mothers-day.png";
-  if (value.includes("father")) return "/icons/occasions/occasion-fathers-day.png";
-  if (value.includes("new year")) return "/icons/occasions/occasion-new-year.png";
-  if (value.includes("thank")) return "/icons/occasions/occasion-thanksgiving.png";
+  if (value.includes("birthday")) return "/icons/occasions/icon-occasion-birthday.png";
+  if (value.includes("christmas")) return "/icons/occasions/icon-occasion-christmas.png";
+  if (value.includes("valentine")) return "/icons/occasions/icon-occasion-valentines.png";
+  if (value.includes("mother")) return "/icons/occasions/icon-occasion-mothersday.png";
+  if (value.includes("father")) return "/icons/occasions/icon-occasion-fathersday.png";
+  if (value.includes("new year")) return "/icons/occasions/icon-occasion-newyears.png";
+  if (value.includes("thank")) return "/icons/occasions/icon-occasion-thanksgiving.png";
   if (value.includes("anniversary") || value.includes("wedding"))
-    return "/icons/occasions/occasion-anniversary.png";
-  if (value.includes("graduation")) return "/icons/occasions/occasion-graduation.png";
-  if (value.includes("halloween")) return "/icons/occasions/occasion-gift.png";
+    return "/icons/occasions/icon-occasion-anniversary.png";
+  if (value.includes("graduation")) return "/icons/occasions/icon-occasion-graduation.png";
+  if (value.includes("halloween")) return "/icons/occasions/icon-occasion-gift.png";
   return "/icons/occasions/occasion-generic.png";
 };
 
