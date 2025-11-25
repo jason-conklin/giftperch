@@ -87,6 +87,21 @@ const eventTypeStyles: Record<
   },
 };
 
+const HolidayCell = ({ title, icon }: { title: string; icon: string }) => (
+  <div className="flex w-full flex-1 flex-col items-center justify-center gap-1 overflow-hidden px-1 text-center">
+    <Image
+      src={icon}
+      alt={title}
+      width={32}
+      height={32}
+      className="h-6 w-6 sm:h-8 sm:w-8 object-contain pointer-events-none"
+    />
+    <span className="w-full truncate text-[11px] leading-tight text-gp-evergreen/80 sm:text-xs">
+      {title}
+    </span>
+  </div>
+);
+
 export function OccasionsCalendar({
   events,
   emptyMessage,
@@ -266,7 +281,7 @@ export function OccasionsCalendar({
             ))}
           </div>
           <div
-            className="mt-3 grid grid-cols-7 gap-x-1 gap-y-2 sm:mt-4 sm:gap-x-3 sm:gap-y-4"
+            className="mt-3 grid grid-cols-7 auto-rows-[72px] gap-x-1 gap-y-2 sm:mt-4 sm:auto-rows-[84px] sm:gap-x-3 sm:gap-y-4"
             role="grid"
           >
             {calendarDays.map((day) => {
@@ -287,7 +302,7 @@ export function OccasionsCalendar({
                       day: "numeric",
                     }) ?? ""
                   } with ${day.events.length} events`}
-                  className={`flex min-h-[56px] flex-col justify-between rounded-3xl border px-2 py-2 text-left transition sm:min-h-[80px] sm:px-3 sm:py-3 ${
+                  className={`relative flex h-[72px] flex-col items-center justify-start overflow-hidden rounded-3xl border px-2 pb-1 pt-1 text-left transition sm:h-[84px] sm:px-3 sm:pb-2 sm:pt-2 ${
                     day.isCurrentMonth
                       ? "bg-gp-cream/70 text-gp-evergreen"
                       : "bg-gp-cream/50 text-gp-evergreen/50"
@@ -300,25 +315,19 @@ export function OccasionsCalendar({
                     day.events.length ? setSelectedDayKey(day.key) : undefined
                   }
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex w-full justify-start px-1">
                     <p className="text-[11px] font-semibold sm:text-sm">
                       {day.date.getDate()}
                     </p>
                   </div>
                   {primaryEvent ? (
-                    <div className="mt-1 flex flex-1 flex-col items-center justify-center gap-1">
-                      <Image
-                        src={getOccasionIcon(primaryEvent)}
-                        alt={primaryEvent.title}
-                        width={40}
-                        height={40}
-                        className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
-                      />
-                      <span className="text-[11px] sm:text-xs text-gp-evergreen/80 text-center leading-tight line-clamp-2">
-                        {primaryEvent.title}
-                      </span>
-                    </div>
-                  ) : null}
+                    <HolidayCell
+                      title={primaryEvent.title}
+                      icon={getOccasionIcon(primaryEvent)}
+                    />
+                  ) : (
+                    <div className="flex flex-1" />
+                  )}
                 </button>
               );
             })}
