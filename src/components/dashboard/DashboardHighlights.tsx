@@ -353,7 +353,7 @@ export function DashboardHighlights() {
                 ) : null}
 
                 <div className="mt-3 inline-flex rounded-full bg-gp-cream/80 px-3 py-1">
-                  <p className="text-xs text-gp-evergreen/70 sm:text-sm">
+                  <p className="text-[11px] text-gp-evergreen/70 sm:text-xs">
                     {mood}
                   </p>
                 </div>
