@@ -256,7 +256,7 @@ export function DashboardHighlights() {
             ) : null}
             <Link
               href="/occasions"
-              className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-sm font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
+              className="w-fit mx-auto rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
             >
               View occasions →
             </Link>
@@ -314,7 +314,7 @@ export function DashboardHighlights() {
         ) : null}
         <Link
           href="/recipients"
-          className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-sm font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
+          className="w-fit mx-auto rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream shadow-sm transition hover:bg-gp-evergreen/90"
         >
           Manage recipients →
         </Link>
