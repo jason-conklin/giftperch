@@ -316,8 +316,10 @@ export function OccasionsCalendar({
                         className="h-4 w-4 shrink-0"
                       />
                       <span className="truncate text-[11px] font-medium text-gp-evergreen sm:text-xs">
-                        {primaryEvent.title}
-                        {extraCount > 0 ? ` (+${extraCount})` : ""}
+                        <span className="sr-only sm:not-sr-only">
+                          {primaryEvent.title}
+                          {extraCount > 0 ? ` (+${extraCount})` : ""}
+                        </span>
                       </span>
                     </div>
                   ) : null}
