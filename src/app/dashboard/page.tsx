@@ -15,19 +15,19 @@ const actions = [
     href: "/recipients",
     title: "Create a new recipient profile",
     description:
-      "Capture personality traits, budgets, occasions, and shared history.",
-  },
-  {
-    href: "/wishlist",
-    title: "Set up your wishlist",
-    description:
-      "Document what you are loving right now so others can shop with confidence.",
+      "Capture their interests, budgets, key dates, and gift history in one place.",
   },
   {
     href: "/gifts",
     title: "Ask PerchPal for a gift idea",
     description:
-      "Let the AI co-pilot suggest thoughtful surprises powered by profile data.",
+      "Choose a recipient and let your AI co-pilot suggest thoughtful gift ideas.",
+  },
+  {
+    href: "/history",
+    title: "View gift history",
+    description:
+      "Review past gifts so you don’t repeat yourself and can level them up next time.",
   },
 ];
 
