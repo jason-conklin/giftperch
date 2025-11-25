@@ -256,8 +256,8 @@ export function OccasionsCalendar({
         </div>
       </div>
 
-      <div className="mt-6">
-        <div className="rounded-[32px] border border-gp-evergreen/5 bg-white/95 px-4 py-4 shadow-sm sm:px-6 sm:py-6">
+      <div className="mt-6 overflow-x-hidden">
+        <div className="rounded-[32px] border border-gp-evergreen/5 bg-white/95 px-3 py-4 shadow-sm sm:px-6 sm:py-6">
           <div className="grid grid-cols-7 gap-x-2 text-[11px] font-medium text-gp-evergreen/70 sm:text-xs">
             {WEEKDAYS.map((day) => (
               <div key={day} className="text-center">
@@ -266,7 +266,7 @@ export function OccasionsCalendar({
             ))}
           </div>
           <div
-            className="mt-3 grid grid-cols-7 gap-x-1.5 gap-y-2 sm:mt-4 sm:gap-x-3 sm:gap-y-4"
+            className="mt-3 grid grid-cols-7 gap-x-1 gap-y-2 sm:mt-4 sm:gap-x-3 sm:gap-y-4"
             role="grid"
           >
             {calendarDays.map((day) => {
@@ -288,7 +288,7 @@ export function OccasionsCalendar({
                       day: "numeric",
                     }) ?? ""
                   } with ${day.events.length} events`}
-                  className={`flex flex-col justify-between rounded-3xl border px-2 py-2 text-left transition sm:px-3 sm:py-3 ${
+                  className={`flex min-h-[56px] flex-col justify-between rounded-3xl border px-2 py-2 text-left transition sm:min-h-[80px] sm:px-3 sm:py-3 ${
                     day.isCurrentMonth
                       ? "bg-gp-cream/70 text-gp-evergreen"
                       : "bg-gp-cream/50 text-gp-evergreen/50"
@@ -296,14 +296,13 @@ export function OccasionsCalendar({
                     isToday
                       ? "border-gp-gold/70 ring-2 ring-gp-gold/25"
                       : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
-                  }`}
-                  style={{ minHeight: "60px" }}
+                  } focus:outline-none focus:ring-2 focus:ring-gp-evergreen/30`}
                   onClick={() =>
                     day.events.length ? setSelectedDayKey(day.key) : undefined
                   }
                 >
                   <div className="flex items-start justify-between">
-                    <p className="text-xs font-semibold sm:text-sm">
+                    <p className="text-[11px] font-semibold sm:text-sm">
                       {day.date.getDate()}
                     </p>
                   </div>
