@@ -74,6 +74,20 @@ const formatFullDate = (date: Date) =>
     year: "numeric",
   });
 
+const buildCountdownLabel = (target: Date | null): string | null => {
+  if (!target) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const targetClean = new Date(target);
+  targetClean.setHours(0, 0, 0, 0);
+  const diffMs = targetClean.getTime() - today.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days < 0) return null;
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day away";
+  return `${days} days away`;
+};
+
 const getInitials = (name: string | null | undefined) => {
   if (!name) return "GP";
   const parts = name.trim().split(/\s+/);
@@ -246,6 +260,11 @@ export function DashboardHighlights() {
             <p className="text-sm text-gp-evergreen/70">
               {formatFullDate(nextOccasion.date)}
             </p>
+            {buildCountdownLabel(nextOccasion.date) ? (
+              <span className="inline-flex w-fit rounded-full bg-gp-cream px-3 py-1 text-xs font-medium text-gp-evergreen/80">
+                {buildCountdownLabel(nextOccasion.date)}
+              </span>
+            ) : null}
             {nextOccasion.recipientId ? (
               <Link
                 href={`/recipients`}
