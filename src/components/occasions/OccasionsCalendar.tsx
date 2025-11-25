@@ -346,9 +346,21 @@ export function OccasionsCalendar({
       ) : null}
 
       <div className="rounded-3xl border border-gp-evergreen/10 bg-gp-cream/70 p-4">
-        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-          {selectedEvents.length ? "Day details" : "Browse dates"}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            {selectedEvents.length ? "Day details" : "Browse dates"}
+          </p>
+          {selectedEvents.length ? (
+            <button
+              type="button"
+              className="text-sm font-semibold text-gp-evergreen/70 hover:text-gp-evergreen focus:outline-none"
+              aria-label="Close day details"
+              onClick={() => setSelectedDayKey(null)}
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
         {selectedEvents.length ? (
           <div className="mt-3 space-y-3">
             {selectedEvents.map((event) => {
