@@ -347,41 +347,55 @@ export function OccasionsCalendar({
         </p>
         {selectedEvents.length ? (
           <div className="mt-3 space-y-3">
-            {selectedEvents.map((event) => (
-              <div key={event.id} className="rounded-2xl bg-white/80 p-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-gp-evergreen">
-                    {event.title}
-                  </p>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                      event.isGlobal && event.type === "holiday"
-                        ? "bg-gp-gold/30 text-gp-evergreen border border-gp-gold/50"
-                        : eventTypeStyles[event.type].chip
-                    }`}
-                  >
-                    {eventTypeStyles[event.type].label}
-                  </span>
+            {selectedEvents.map((event) => {
+              const icon = getOccasionIcon(event);
+              return (
+                <div key={event.id} className="flex items-start gap-3 rounded-2xl bg-white/80 p-3 shadow-sm">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gp-cream/80 border border-gp-evergreen/10">
+                    <Image
+                      src={icon}
+                      alt={event.title}
+                      width={28}
+                      height={28}
+                      className="h-7 w-7 object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-gp-evergreen">
+                        {event.title}
+                      </p>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          event.isGlobal && event.type === "holiday"
+                            ? "bg-gp-gold/30 text-gp-evergreen border border-gp-gold/50"
+                            : eventTypeStyles[event.type].chip
+                        }`}
+                      >
+                        {eventTypeStyles[event.type].label}
+                      </span>
+                    </div>
+                    {event.recipientName ? (
+                      <p className="text-xs text-gp-evergreen/70">
+                        {event.recipientName}
+                      </p>
+                    ) : null}
+                    {event.isGlobal ? (
+                      <p className="text-[11px] uppercase tracking-wide text-gp-evergreen/60">
+                        Global holiday (U.S.)
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-gp-evergreen/60">
+                      {new Date(event.date).toLocaleDateString(undefined, {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
                 </div>
-                {event.recipientName ? (
-                  <p className="text-xs text-gp-evergreen/70">
-                    {event.recipientName}
-                  </p>
-                ) : null}
-                {event.isGlobal ? (
-                  <p className="text-[11px] uppercase tracking-wide text-gp-evergreen/60">
-                    Global holiday (U.S.)
-                  </p>
-                ) : null}
-                <p className="text-xs text-gp-evergreen/60">
-                  {new Date(event.date).toLocaleDateString(undefined, {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="mt-3 text-sm text-gp-evergreen/70">
