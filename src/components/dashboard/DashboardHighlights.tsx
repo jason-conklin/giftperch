@@ -275,7 +275,7 @@ export function DashboardHighlights() {
             ) : null}
             <Link
               href="/occasions"
-              className="gp-primary-button w-fit mx-auto"
+              className="gp-primary-button w-fit"
             >
               View occasions →
             </Link>
@@ -333,7 +333,7 @@ export function DashboardHighlights() {
         ) : null}
         <Link
           href="/recipients"
-          className="gp-primary-button w-fit mx-auto"
+          className="gp-primary-button w-fit"
         >
           Manage recipients →
         </Link>
@@ -348,7 +348,7 @@ export function DashboardHighlights() {
         <p className="text-sm text-gp-evergreen/80">
           Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
         </p>
-        <Link href="/gifts" className="gp-primary-button mt-2 w-fit self-center">
+        <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
           Open Gift Ideas →
         </Link>
         {lastRunLabel ? (
