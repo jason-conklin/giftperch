@@ -173,6 +173,8 @@ export function DashboardHighlights() {
   const [latestInteraction, setLatestInteraction] = useState<AiInteraction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeRecipientIndex, setActiveRecipientIndex] = useState(0);
+  const [recipientsHover, setRecipientsHover] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -231,6 +233,21 @@ export function DashboardHighlights() {
       active = false;
     };
   }, [supabase, user?.id]);
+
+  useEffect(() => {
+    if (!recipients.length) return;
+    setActiveRecipientIndex((prev) => prev % recipients.length);
+  }, [recipients.length]);
+
+  useEffect(() => {
+    if (!recipients.length || recipientsHover) return;
+    const id = window.setInterval(() => {
+      setActiveRecipientIndex((prev) =>
+        recipients.length ? (prev + 1) % recipients.length : 0
+      );
+    }, 7000);
+    return () => window.clearInterval(id);
+  }, [recipients.length, recipientsHover]);
 
   const nextOccasion = useMemo(() => {
     if (!recipients.length) return null;
@@ -291,7 +308,10 @@ export function DashboardHighlights() {
     return upcoming[0] ?? null;
   }, [events, recipients]);
 
-  const recipientsHighlight = recipients[0];
+  const recipientsHighlight =
+    recipients.length && activeRecipientIndex < recipients.length
+      ? recipients[activeRecipientIndex]
+      : null;
   const lastRunLabel = useMemo(() => {
     if (!latestInteraction?.message) return null;
     return latestInteraction.message;
@@ -400,6 +420,8 @@ export function DashboardHighlights() {
             type="button"
             onClick={() => router.push("/recipients")}
             className="rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-3 py-2 text-left shadow-sm transition hover:border-gp-evergreen/25"
+            onMouseEnter={() => setRecipientsHover(true)}
+            onMouseLeave={() => setRecipientsHover(false)}
           >
             <div className="flex items-center gap-3">
               {recipientsHighlight.avatar_url ? (
@@ -453,7 +475,7 @@ export function DashboardHighlights() {
           </div>
         </div>
         <p className="text-sm text-gp-evergreen/80">
-          Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas.
+          Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas for each of your recipient profiles.
         </p>
         <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
           Open Gift Ideas →
