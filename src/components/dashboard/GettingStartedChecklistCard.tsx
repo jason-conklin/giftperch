@@ -12,7 +12,7 @@ const steps = [
   {
     key: "recipient",
     title: "Create a recipient profile",
-    description: "Add the people you shop for so PerchPal can tailor suggestions.",
+    description: "Add the people you shop for and their interests so PerchPal can tailor suggestions.",
     actionHref: "/recipients",
     actionLabel: "Add recipient →",
   },

@@ -6,7 +6,7 @@ import { PerchPalFlyingAvatar } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
 import { AdminMetrics } from "./AdminMetrics";
 import { WelcomeOnboardingModal } from "@/components/dashboard/WelcomeOnboardingModal";
-import { GettingStartedChecklistCard } from "@/components/dashboard/GettingStartedChecklistCard";
+import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 export const metadata: Metadata = {
@@ -40,36 +40,19 @@ export default async function DashboardHome() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let hasRecipient = false;
-  let hasGenerated = false;
-  let hasSavedOrLiked = false;
+  let recipientCountValue = 0;
 
   if (user?.id) {
     const userId = user.id;
 
-    const [{ count: recipientCount }, { count: runCount }, { count: savedCount }, { count: feedbackCount }] =
-      await Promise.all([
-        supabase
-          .from("recipient_profiles")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId),
-        supabase
-          .from("gift_suggestions")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId),
-        supabase
-          .from("recipient_saved_gift_ideas")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId),
-        supabase
-          .from("recipient_gift_feedback")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", userId),
-      ]);
+    const [{ count: recipientCount }] = await Promise.all([
+      supabase
+        .from("recipient_profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId),
+    ]);
 
-    hasRecipient = (recipientCount ?? 0) > 0;
-    hasGenerated = (runCount ?? 0) > 0;
-    hasSavedOrLiked = (savedCount ?? 0) > 0 || (feedbackCount ?? 0) > 0;
+    recipientCountValue = recipientCount ?? 0;
   }
 
   const heroBanner = (
@@ -94,13 +77,7 @@ export default async function DashboardHome() {
     >
       <WelcomeOnboardingModal />
       <section className="space-y-8">
-        {!hasRecipient || !hasGenerated || !hasSavedOrLiked ? (
-          <GettingStartedChecklistCard
-            hasRecipient={hasRecipient}
-            hasGenerated={hasGenerated}
-            hasSavedOrLiked={hasSavedOrLiked}
-          />
-        ) : null}
+        <GettingStartedCard recipientCount={recipientCountValue} />
         <DashboardHighlights />
         <div className="grid gap-4 md:grid-cols-3">
           {actions.map((action) => (
