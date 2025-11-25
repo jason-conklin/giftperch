@@ -39,6 +39,18 @@ type UpcomingEvent = {
   recipientName?: string | null;
 };
 
+type OccasionType =
+  | "birthday"
+  | "christmas"
+  | "anniversary"
+  | "graduation"
+  | "gift"
+  | "valentines"
+  | "mothersday"
+  | "fathersday"
+  | "newyears"
+  | "thanksgiving";
+
 const parseDateOnly = (value: string | null | undefined): Date | null => {
   if (!value) return null;
   const parts = value.split("-");
@@ -86,6 +98,61 @@ const buildCountdownLabel = (target: Date | null): string | null => {
   if (days === 0) return "Today";
   if (days === 1) return "1 day away";
   return `${days} days away`;
+};
+
+const getOccasionType = (name: string): OccasionType => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("birthday")) return "birthday";
+  if (normalized.includes("christmas")) return "christmas";
+  if (normalized.includes("anniversary") || normalized.includes("wedding")) return "anniversary";
+  if (normalized.includes("graduation")) return "graduation";
+  if (normalized.includes("valentine")) return "valentines";
+  if (normalized.includes("mother")) return "mothersday";
+  if (normalized.includes("father")) return "fathersday";
+  if (normalized.includes("new year")) return "newyears";
+  if (normalized.includes("thanksgiving")) return "thanksgiving";
+  return "gift";
+};
+
+const getOccasionIcon = (type: OccasionType) => {
+  const map: Record<OccasionType, { src: string; alt: string }> = {
+    birthday: { src: "/icons/occasions/icon-occasion-birthday.png", alt: "Birthday" },
+    christmas: { src: "/icons/occasions/icon-occasion-christmas.png", alt: "Christmas" },
+    anniversary: { src: "/icons/occasions/icon-occasion-anniversary.png", alt: "Anniversary" },
+    graduation: { src: "/icons/occasions/icon-occasion-graduation.png", alt: "Graduation" },
+    gift: { src: "/icons/occasions/icon-occasion-gift.png", alt: "Occasion" },
+    valentines: { src: "/icons/occasions/icon-occasion-valentines.png", alt: "Valentine's Day" },
+    mothersday: { src: "/icons/occasions/icon-occasion-mothersday.png", alt: "Mother's Day" },
+    fathersday: { src: "/icons/occasions/icon-occasion-fathersday.png", alt: "Father's Day" },
+    newyears: { src: "/icons/occasions/icon-occasion-newyears.png", alt: "New Year's" },
+    thanksgiving: { src: "/icons/occasions/icon-occasion-thanksgiving.png", alt: "Thanksgiving" },
+  };
+  return map[type] ?? map.gift;
+};
+
+const getOccasionMoodText = (type: OccasionType): string => {
+  switch (type) {
+    case "birthday":
+      return "Birthday coming up – start planning a surprise?";
+    case "christmas":
+      return "Holiday gifting season is around the corner.";
+    case "anniversary":
+      return "Anniversary on the horizon – don’t leave it last-minute.";
+    case "graduation":
+      return "Big milestone ahead – celebrate their hard work.";
+    case "valentines":
+      return "Romantic moment ahead – make it feel special.";
+    case "mothersday":
+      return "A chance to show extra appreciation.";
+    case "fathersday":
+      return "Time to thank them for all they do.";
+    case "newyears":
+      return "Fresh year, fresh surprises to share.";
+    case "thanksgiving":
+      return "Gathering soon – thoughtful thanks go a long way.";
+    default:
+      return "A special occasion is coming up – plan something thoughtful.";
+  }
 };
 
 const getInitials = (name: string | null | undefined) => {
@@ -254,12 +321,40 @@ export function DashboardHighlights() {
         </p>
         {nextOccasion ? (
           <>
+            {(() => {
+              const occasionType = getOccasionType(nextOccasion.label);
+              const { src, alt } = getOccasionIcon(occasionType);
+              return (
+                <div className="mt-2 flex justify-center">
+                  <Image
+                    src={src}
+                    alt={alt}
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 rounded-full shadow-sm"
+                  />
+                </div>
+              );
+            })()}
             <h3 className="text-lg font-semibold text-gp-evergreen">
               {nextOccasion.label}
             </h3>
             <p className="text-sm text-gp-evergreen/70">
               {formatFullDate(nextOccasion.date)}
             </p>
+            {(() => {
+              const occasionType = getOccasionType(nextOccasion.label);
+              const { src, alt } = getOccasionIcon(occasionType);
+              const mood = getOccasionMoodText(occasionType);
+              return (
+                <div className="mt-3 flex items-center gap-2 text-sm text-gp-evergreen/80">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gp-cream px-2 py-1 text-xs font-medium text-gp-evergreen/80">
+                    <Image src={src} alt={alt} width={20} height={20} className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm text-gp-evergreen/80">{mood}</p>
+                </div>
+              );
+            })()}
             {buildCountdownLabel(nextOccasion.date) ? (
               <span className="inline-flex w-fit rounded-full bg-gp-cream px-3 py-1 text-xs font-medium text-gp-evergreen/80">
                 {buildCountdownLabel(nextOccasion.date)}
