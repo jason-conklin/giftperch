@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
-import { PerchPalFlyingAvatar, PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 type RecipientSummary = {
   id: string;
@@ -245,7 +245,7 @@ export function DashboardHighlights() {
       setActiveRecipientIndex((prev) =>
         recipients.length ? (prev + 1) % recipients.length : 0
       );
-    }, 7000);
+    }, 4000);
     return () => window.clearInterval(id);
   }, [recipients.length, recipientsHover]);
 
