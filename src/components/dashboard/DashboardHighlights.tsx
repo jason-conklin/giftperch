@@ -327,7 +327,7 @@ export function DashboardHighlights() {
 
             return (
               <>
-                <div className="mt-4 flex items-center gap-3">
+                <div className="mt-2 flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gp-cream/80 flex items-center justify-center shadow-sm">
                     <Image
                       src={src}
@@ -352,9 +352,11 @@ export function DashboardHighlights() {
                   </span>
                 ) : null}
 
-                <p className="mt-3 text-sm text-gp-evergreen/80">
-                  {mood}
-                </p>
+                <div className="mt-3 inline-flex rounded-full bg-gp-cream/80 px-3 py-1">
+                  <p className="text-xs text-gp-evergreen/70 sm:text-sm">
+                    {mood}
+                  </p>
+                </div>
 
                 {nextOccasion.recipientId ? (
                   <Link
