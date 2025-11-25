@@ -10,6 +10,7 @@ import { AmazonProduct } from "@/lib/amazonPaapi";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
+import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
 
 type AvatarIconKey =
   | "babyboy"
@@ -135,6 +136,10 @@ type AmazonSuggestionState = {
   loading: boolean;
   error: string;
   products: AmazonProduct[];
+};
+
+type GiftSuggestionsPanelProps = {
+  onFirstRunComplete?: () => void;
 };
 
 const DEFAULT_GIFT_IMAGE = "/gift_placeholder_img.png";
@@ -499,7 +504,7 @@ function GiftSuggestionCard({
   );
 }
 
-export function GiftSuggestionsPanel() {
+export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPanelProps) {
   const { user, status } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
@@ -557,11 +562,11 @@ export function GiftSuggestionsPanel() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingRun, setIsDeletingRun] = useState(false);
   const [feedbackById, setFeedbackById] = useState<
-  Record<string, "liked" | "disliked" | null>
->({});
-const [feedbackErrorById, setFeedbackErrorById] = useState<
-  Record<string, string | null>
->({});
+    Record<string, "liked" | "disliked" | null>
+  >({});
+  const [feedbackErrorById, setFeedbackErrorById] = useState<
+    Record<string, string | null>
+  >({});
   const [dismissedFeedbackByKey, setDismissedFeedbackByKey] = useState<
     Record<string, boolean>
   >({});
@@ -569,6 +574,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
   );
+  const [showTipBanner, setShowTipBanner] = useState(false);
 
   useEffect(() => {
     if (status !== "authenticated" || !user) return;
@@ -950,6 +956,9 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
         const fetchedRuns = (data ?? []) as SuggestionRun[];
         setRuns(fetchedRuns);
         setActiveRunId(fetchedRuns.length > 0 ? fetchedRuns[0].id : null);
+        if (fetchedRuns.length > 0 && onFirstRunComplete) {
+          onFirstRunComplete();
+        }
       }
 
       setIsLoadingRuns(false);
@@ -959,7 +968,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     return () => {
       isMounted = false;
     };
-  }, [selectedRecipientId, supabase]);
+  }, [selectedRecipientId, supabase, onFirstRunComplete]);
 
   const activeRun = useMemo(
     () => runs.find((run) => run.id === activeRunId) ?? null,
@@ -1023,6 +1032,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       setLikedMap({});
       setDislikedMap({});
       setFeedbackById({});
+      setShowTipBanner(false);
       return;
     }
 
@@ -1051,6 +1061,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
     setDislikedMap(nextDisliked);
     setFeedbackById(nextFeedback);
     setDismissedFeedbackByKey({});
+    setShowTipBanner(true);
   }, [
     selectedRecipientId,
     visibleSuggestionsKey,
@@ -1148,6 +1159,9 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
       setError(message);
     } finally {
       setIsRequesting(false);
+      if (onFirstRunComplete) {
+        onFirstRunComplete();
+      }
     }
   };
 
@@ -1681,6 +1695,7 @@ const [feedbackErrorById, setFeedbackErrorById] = useState<
                       ? ` - ${activeRun.prompt_context.occasion}`
                       : ""}
                   </span>
+                  <FirstSuggestionsTipBanner hasSuggestionsThisSession={showTipBanner} />
                   {activeRun.prompt_context.budget_min ||
                   activeRun.prompt_context.budget_max ? (
                     <span>
