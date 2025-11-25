@@ -62,7 +62,7 @@ const getOccasionIcon = (event: OccasionEvent) => {
     return "/icons/occasions/icon-occasion-anniversary.png";
   if (value.includes("graduation")) return "/icons/occasions/icon-occasion-graduation.png";
   if (value.includes("halloween")) return "/icons/occasions/icon-occasion-halloween.png";
-  return "/icons/occasions/occasion-generic.png";
+  return "/icons/occasions/icon-occasion-gift.png";
 };
 
 const eventTypeStyles: Record<
@@ -256,78 +256,76 @@ export function OccasionsCalendar({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-gp-evergreen/10 bg-white/95 shadow-sm">
-        <div className="grid grid-cols-7 border-b border-gp-evergreen/10 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-          {WEEKDAYS.map((day) => (
-            <div key={day} className="px-3 py-2 text-center">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1 sm:gap-2" role="grid">
-          {calendarDays.map((day) => {
-            const isToday =
-              day.date.getFullYear() === today.getFullYear() &&
-              day.date.getMonth() === today.getMonth() &&
-              day.date.getDate() === today.getDate();
-            const eventsToShow = day.events.slice(0, 3);
-            const extraCount = day.events.length - eventsToShow.length;
+      <div className="mt-2 overflow-x-auto">
+        <div className="min-w-[640px] sm:min-w-0 rounded-3xl border border-gp-evergreen/10 bg-white/95 shadow-sm">
+          <div className="grid grid-cols-7 border-b border-gp-evergreen/10 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+            {WEEKDAYS.map((day) => (
+              <div key={day} className="px-3 py-2 text-center">
+                {day}
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-2 sm:gap-3" role="grid">
+            {calendarDays.map((day) => {
+              const isToday =
+                day.date.getFullYear() === today.getFullYear() &&
+                day.date.getMonth() === today.getMonth() &&
+                day.date.getDate() === today.getDate();
+              const primaryEvent = day.events[0];
+              const extraCount = Math.max(0, day.events.length - 1);
 
-            return (
-              <button
-                key={day.key}
-                type="button"
-                role="gridcell"
-                aria-label={`${
-                  day.date.toLocaleDateString(undefined, {
-                    month: "long",
-                    day: "numeric",
-                  }) ?? ""
-                } with ${day.events.length} events`}
-                className={`relative rounded-xl border p-2 sm:p-3 text-left transition aspect-[4/3] min-h-[80px] sm:min-h-[110px] ${
-                  day.isCurrentMonth
-                    ? "bg-gp-cream/60 text-gp-evergreen"
-                    : "bg-gp-cream/40 text-gp-evergreen/50"
-                } ${
-                  isToday
-                    ? "border-gp-gold/70 ring-2 ring-gp-gold/30"
-                    : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
-                }`}
-                onClick={() =>
-                  day.events.length ? setSelectedDayKey(day.key) : undefined
-                }
-              >
-                <p className="text-sm font-semibold">{day.date.getDate()}</p>
-                <div className="mt-2 flex flex-col gap-1 sm:gap-2">
-                  {eventsToShow.map((event) => {
-                    const icon = getOccasionIcon(event);
-                    return (
-                      <div
-                        key={event.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-gp-cream px-3 py-1 text-xs shadow-sm"
-                      >
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gp-cream/90">
+              return (
+                <button
+                  key={day.key}
+                  type="button"
+                  role="gridcell"
+                  aria-label={`${
+                    day.date.toLocaleDateString(undefined, {
+                      month: "long",
+                      day: "numeric",
+                    }) ?? ""
+                  } with ${day.events.length} events`}
+                  className={`relative flex min-h-[3.25rem] flex-col justify-start rounded-3xl border p-2 text-left transition sm:min-h-[4.25rem] sm:p-3 ${
+                    day.isCurrentMonth
+                      ? "bg-gp-cream/60 text-gp-evergreen"
+                      : "bg-gp-cream/40 text-gp-evergreen/50"
+                  } ${
+                    isToday
+                      ? "border-gp-gold/70 ring-2 ring-gp-gold/30"
+                      : "border-gp-evergreen/10 hover:border-gp-evergreen/40"
+                  }`}
+                  onClick={() =>
+                    day.events.length ? setSelectedDayKey(day.key) : undefined
+                  }
+                >
+                  <p className="text-xs font-semibold sm:text-sm">
+                    {day.date.getDate()}
+                  </p>
+                  <div className="mt-2 flex flex-col gap-1 sm:gap-2">
+                    {primaryEvent ? (
+                      <div className="inline-flex items-center gap-1 rounded-full bg-gp-gold/15 px-2 py-1 text-[11px] shadow-sm sm:gap-2 sm:text-xs">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gp-cream/90 sm:h-6 sm:w-6">
                           <Image
-                            src={icon}
-                            alt={event.title}
+                            src={getOccasionIcon(primaryEvent)}
+                            alt={primaryEvent.title}
                             width={18}
                             height={18}
                             className="h-4 w-4 object-contain"
                           />
                         </span>
-                        <span className="truncate text-gp-evergreen/90">{event.title}</span>
+                        <span className="truncate text-gp-evergreen/90">{primaryEvent.title}</span>
+                        {extraCount > 0 ? (
+                          <span className="text-[10px] font-semibold text-gp-evergreen/70">
+                            +{extraCount}
+                          </span>
+                        ) : null}
                       </div>
-                    );
-                  })}
-                  {extraCount > 0 ? (
-                    <span className="text-[10px] font-semibold text-gp-evergreen/70">
-                      +{extraCount}
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            );
-          })}
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
