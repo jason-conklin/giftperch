@@ -440,7 +440,13 @@ export function DashboardHighlights() {
           PerchPal
         </p>
         <div className="flex items-center gap-3">
-          <PerchPalFlyingAvatar size="sm" className="shrink-0" />
+          <Image
+            src="/giftperch_perchpal_front.png"
+            alt="PerchPal"
+            width={56}
+            height={56}
+            className="h-12 w-12 rounded-full border border-gp-evergreen/10 bg-gp-cream/80 object-contain shadow-sm"
+          />
           <div>
             <h3 className="text-lg font-semibold text-gp-evergreen">Chat with PerchPal</h3>
             <p className="text-sm text-gp-evergreen/70">Your AI gifting assistant</p>
