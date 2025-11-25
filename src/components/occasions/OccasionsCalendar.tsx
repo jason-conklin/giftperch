@@ -61,7 +61,7 @@ const getOccasionIcon = (event: OccasionEvent) => {
   if (value.includes("anniversary") || value.includes("wedding"))
     return "/icons/occasions/icon-occasion-anniversary.png";
   if (value.includes("graduation")) return "/icons/occasions/icon-occasion-graduation.png";
-  if (value.includes("halloween")) return "/icons/occasions/icon-occasion-gift.png";
+  if (value.includes("halloween")) return "/icons/occasions/icon-occasion-halloween.png";
   return "/icons/occasions/occasion-generic.png";
 };
 
