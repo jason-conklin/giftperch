@@ -278,15 +278,17 @@ export async function POST(request: NextRequest) {
       previous_suggestions: previousSuggestions,
     };
 
-    const completion = await openai.chat.completions.create({
-      model: SUGGESTION_MODEL,
-      temperature: 1.2,
-      top_p: 0.95,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.4,
-      response_format: { type: "json_object" },
-      messages: [
-        {
+    let completion;
+    try {
+      completion = await openai.chat.completions.create({
+        model: SUGGESTION_MODEL,
+        temperature: 1.2,
+        top_p: 0.95,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.4,
+        response_format: { type: "json_object" },
+        messages: [
+          {
           role: "system",
           content: [
             "You are PerchPal, an AI gifting assistant inside the GiftPerch app.",
@@ -353,8 +355,16 @@ export async function POST(request: NextRequest) {
           ].join("\n"),
         },
         { role: "user", content: JSON.stringify(userMessageContent) },
-      ],
-    });
+        ],
+        timeout: OPENAI_TIMEOUT_MS,
+      });
+    } catch (err) {
+      console.error("OpenAI suggestion generation failed", err);
+      return NextResponse.json(
+        { error: PERCHPAL_UNAVAILABLE },
+        { status: 504 },
+      );
+    }
 
     const rawContent =
       completion.choices[0]?.message?.content?.trim() ?? '{"suggestions":[]}';
