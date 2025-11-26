@@ -1530,7 +1530,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     ariaLabel="Asking PerchPal for suggestions"
                   />
                   <span>Retrieving gifts...</span>
-                  <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white shadow-inner">
+                  <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white shadow-inner border border-black/40">
                     <div
                       className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
                       style={{ width: `${Math.min(100, requestProgress)}%` }}
