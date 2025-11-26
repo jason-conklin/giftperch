@@ -88,6 +88,25 @@ const normalize = (str: string | null | undefined) =>
 const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
 const OPENAI_TIMEOUT_MS = 90_000;
+const SUGGESTION_MAX_TOKENS = 2800;
+
+const tryParseJsonObject = (raw: string): { suggestions?: unknown } => {
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    const first = raw.indexOf("{");
+    const last = raw.lastIndexOf("}");
+    if (first !== -1 && last !== -1 && last > first) {
+      try {
+        return JSON.parse(raw.slice(first, last + 1));
+      } catch {
+        // ignore
+      }
+    }
+    console.error("Unable to parse AI JSON after fallback", err, raw);
+    return {};
+  }
+};
 
 function buildPriceGuidance(
   min?: number | null,
@@ -289,7 +308,7 @@ export async function POST(request: NextRequest) {
           top_p: 0.95,
           presence_penalty: 0.6,
           frequency_penalty: 0.4,
-          max_tokens: 1400,
+          max_tokens: SUGGESTION_MAX_TOKENS,
           response_format: { type: "json_object" },
         messages: [
           {
@@ -374,16 +393,9 @@ export async function POST(request: NextRequest) {
     const rawContent =
       completion.choices[0]?.message?.content?.trim() ?? '{"suggestions":[]}';
 
-    let parsed: { suggestions?: GiftSuggestion[] } = {};
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch (err) {
-      console.error("Failed to parse suggestions JSON", err, rawContent);
-      return NextResponse.json(
-        { error: "Failed to parse AI response" },
-        { status: 500 },
-      );
-    }
+    const parsed = tryParseJsonObject(rawContent) as {
+      suggestions?: GiftSuggestion[];
+    };
 
   const previousTitleSet = new Set(
     previousSuggestions.map((title) => title.toLowerCase()),
