@@ -87,7 +87,7 @@ const normalize = (str: string | null | undefined) =>
   (str ?? "").trim().toLowerCase();
 const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
-const OPENAI_TIMEOUT_MS = 45_000;
+const OPENAI_TIMEOUT_MS = 90_000;
 
 function buildPriceGuidance(
   min?: number | null,
@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
           .map((item) => item.trim())
           .filter(Boolean)
       : [];
+  const cappedPreviousSuggestions = previousSuggestions.slice(0, 50);
 
   try {
     const { data: recipient, error: recipientError } = await supabase
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest) {
       recent_gifts: gifts,
       num_suggestions: numSuggestions,
       previously_saved_titles: previouslySavedTitles,
-      previous_suggestions: previousSuggestions,
+      previous_suggestions: cappedPreviousSuggestions,
     };
 
     let completion;
@@ -284,11 +285,12 @@ export async function POST(request: NextRequest) {
       completion = await openai.chat.completions.create(
       {
         model: SUGGESTION_MODEL,
-        temperature: 1.2,
-        top_p: 0.95,
-        presence_penalty: 0.6,
-        frequency_penalty: 0.4,
-        response_format: { type: "json_object" },
+          temperature: 1.2,
+          top_p: 0.95,
+          presence_penalty: 0.6,
+          frequency_penalty: 0.4,
+          max_tokens: 1400,
+          response_format: { type: "json_object" },
         messages: [
           {
           role: "system",
@@ -329,16 +331,16 @@ export async function POST(request: NextRequest) {
             "- Use reputable sources (brand CDN, Amazon images, Unsplash, etc.).",
             "- Never invent unreachable URLs or placeholders.",
             "",
-            "Return an object: { suggestions: GiftSuggestion[] }.",
-            "Do not include code fences or any text outside JSON.",
-            "",
-            `Requested count N: ${numSuggestions}. Generate exactly this many suggestions.`,
-            previousSuggestions.length
-              ? [
-                  "Previously suggested (DO NOT REPEAT OR IMITATE):",
-                  ...previousSuggestions.map((idea) => `- ${idea}`),
-                ].join("\n")
-              : "",
+              "Return an object: { suggestions: GiftSuggestion[] }.",
+              "Do not include code fences or any text outside JSON.",
+              "",
+              `Requested count N: ${numSuggestions}. Generate exactly this many suggestions.`,
+              cappedPreviousSuggestions.length
+                ? [
+                    "Previously suggested (DO NOT REPEAT OR IMITATE):",
+                    ...cappedPreviousSuggestions.map((idea) => `- ${idea}`),
+                  ].join("\n")
+                : "",
             likedTitles.length
               ? `The user has previously liked these gift ideas for this recipient: ${likedTitles.join(
                   "; ",
