@@ -547,8 +547,17 @@ export function OccasionsManager() {
                   key={occasion.id}
                   className="flex flex-col gap-2 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/70 p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                      <Image
+                        src={`/icons/occasions/${occasion.icon_key ?? "icon-occasion-gift.png"}`}
+                        alt={occasion.label ?? "Occasion icon"}
+                        width={48}
+                        height={48}
+                        className="h-10 w-10 object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
                       <p className="text-sm font-semibold text-gp-evergreen">
                         {occasion.label ?? "Upcoming occasion"}
                       </p>
@@ -570,13 +579,6 @@ export function OccasionsManager() {
                         </p>
                       ) : null}
                     </div>
-                    <Image
-                      src={`/icons/occasions/${occasion.icon_key ?? "icon-occasion-gift.png"}`}
-                      alt={occasion.label ?? "Occasion icon"}
-                      width={48}
-                      height={48}
-                      className="h-12 w-12 object-contain"
-                    />
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href="/gifts" className="gp-primary-button px-4 py-2 text-xs">
@@ -605,7 +607,7 @@ export function OccasionsManager() {
           <PerchPalFlyingAvatar size="lg" className="shrink-0" />
           <div>
             <p className="text-sm font-semibold text-gp-evergreen">
-              PerchPal tip
+              PerchPal Tip:
             </p>
             <p className="text-xs text-gp-evergreen/70">
               PerchPal uses these dates to prioritize reminders, queue fresh gift
