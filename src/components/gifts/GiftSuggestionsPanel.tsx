@@ -1169,7 +1169,10 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     const query = suggestion.title.trim();
     if (!query) return;
 
-    const url = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+    const partnerTag =
+      process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
+    const baseUrl = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+    const url = `${baseUrl}&tag=${encodeURIComponent(partnerTag)}`;
     if (typeof window !== "undefined") {
       const win = window.open(url, "_blank", "noopener,noreferrer");
       if (!win) {
