@@ -435,7 +435,9 @@ export function OccasionsManager() {
       <div className="grid gap-6 lg:grid-cols-[3fr,2fr]">
         <section className="gp-card flex flex-col gap-4">
           <header className="space-y-1">
-            <div className="gp-pill">Next big occasion</div>
+            <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+              Next big occasion
+            </p>
             <p className="text-sm text-gp-evergreen/70">
               See what’s up next and jump into ideas before the rush.
             </p>
@@ -524,7 +526,9 @@ export function OccasionsManager() {
         <section className="gp-card flex flex-col gap-4">
           <header className="flex items-center justify-between gap-3">
             <div>
-              <div className="gp-pill">Custom occasions</div>
+              <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+                Custom Occasions
+              </p>
               <p className="mt-1 text-sm text-gp-evergreen/70">
                 Track your own milestones and plans.
               </p>
