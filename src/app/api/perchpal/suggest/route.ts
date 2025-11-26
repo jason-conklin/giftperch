@@ -8,6 +8,7 @@ type SuggestRequestBody = {
   budgetMin?: number | null;
   budgetMax?: number | null;
   numSuggestions?: number;
+  previousSuggestions?: string[];
 };
 
 type GiftSuggestion = {
@@ -163,6 +164,13 @@ export async function POST(request: NextRequest) {
     typeof body.budgetMax === "number" && !Number.isNaN(body.budgetMax)
       ? body.budgetMax
       : null;
+  const previousSuggestions =
+    Array.isArray(body.previousSuggestions) && body.previousSuggestions.length
+      ? body.previousSuggestions
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
 
   try {
     const { data: recipient, error: recipientError } = await supabase
@@ -267,17 +275,33 @@ export async function POST(request: NextRequest) {
       recent_gifts: gifts,
       num_suggestions: numSuggestions,
       previously_saved_titles: previouslySavedTitles,
+      previous_suggestions: previousSuggestions,
     };
 
     const completion = await openai.chat.completions.create({
       model: SUGGESTION_MODEL,
-      temperature: 0.6,
+      temperature: 1.2,
+      top_p: 0.95,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.4,
       messages: [
         {
           role: "system",
           content: [
             "You are PerchPal, an AI gifting assistant inside the GiftPerch app.",
             "You generate concrete gift ideas tailored to the recipient’s profile, interests, budget, and gift history.",
+            "",
+            "Follow this staged process before you answer:",
+            "1) Interpret the recipient and notes deeply.",
+            "2) Create at least 5 diverse thematic angles (e.g., creative experiences, sentimental keepsakes, tech + hobbies, subscriptions, DIY/handmade, etc.).",
+            "3) Brainstorm many internal candidate ideas (at least 2–3× the requested count N).",
+            "4) Select the most unique, surprising, and recipient-aligned ideas.",
+            "",
+            "Generation rules:",
+            " - Generate exactly {N} distinct gift ideas. Assume N can vary; always respect the requested count.",
+            " - Each batch must span multiple categories: physical items, personalized items, experience-based gifts, digital/AI gifts, subscription-type gifts, and sentimental/DIY gifts. Use at least min(4, N) distinct categories in each batch.",
+            " - Avoid generic, overused gifts like “cozy blanket”, “spa set”, “scented candles”, “generic gift card”, or anything very similar unless the context makes them unusually specific and personalized.",
+            " - You will receive previous gift ideas. Treat them as ALREADY USED. Do not repeat or closely mimic any of them. If an idea feels even moderately similar, discard it and generate a different one.",
             "You must respond ONLY as JSON, with no extra prose, using this exact TypeScript-like structure:",
             "",
             "type GiftSuggestion = {",
@@ -302,6 +326,14 @@ export async function POST(request: NextRequest) {
             "",
             "Return an object: { suggestions: GiftSuggestion[] }.",
             "Do not include code fences or any text outside JSON.",
+            "",
+            `Requested count N: ${numSuggestions}. Generate exactly this many suggestions.`,
+            previousSuggestions.length
+              ? [
+                  "Previously suggested (DO NOT REPEAT OR IMITATE):",
+                  ...previousSuggestions.map((idea) => `- ${idea}`),
+                ].join("\n")
+              : "",
             likedTitles.length
               ? `The user has previously liked these gift ideas for this recipient: ${likedTitles.join(
                   "; ",
@@ -337,6 +369,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const previousTitleSet = new Set(
+      previousSuggestions.map((title) => title.toLowerCase()),
+    );
+
     const normalizedSuggestions = (parsed.suggestions ?? [])
       .filter((item): item is GiftSuggestion => typeof item === "object")
       .map((item, index) => normalizeSuggestion(item, index))
@@ -345,7 +381,8 @@ export async function POST(request: NextRequest) {
         const titleLower = item.title.toLowerCase();
         if (
           dislikedTitles.some((d) => d.toLowerCase() === titleLower) ||
-          previouslySavedTitles.some((saved) => saved.toLowerCase() === titleLower)
+          previouslySavedTitles.some((saved) => saved.toLowerCase() === titleLower) ||
+          previousTitleSet.has(titleLower)
         ) {
           return false;
         }

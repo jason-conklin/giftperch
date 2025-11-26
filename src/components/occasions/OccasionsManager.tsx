@@ -642,11 +642,11 @@ export function OccasionsManager() {
             >
               ×
             </button>
-            <div className="space-y-2 rounded-t-3xl bg-gp-gold/80 px-6 py-4 shadow-inner">
-              <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/80">
+            <div className="space-y-2 rounded-t-3xl bg-gp-evergreen px-6 py-4 shadow-inner">
+              <p className="text-xs uppercase tracking-[0.2em] text-gp-cream">
                 Add occasion
               </p>
-              <p className="text-sm text-gp-evergreen">
+              <p className="text-sm text-white">
                 Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
               </p>
             </div>
@@ -778,7 +778,7 @@ export function OccasionsManager() {
 
                 <button
                   type="submit"
-                  className="gp-primary-button w-full cursor-pointer disabled:cursor-not-allowed"
+                  className="w-full cursor-pointer rounded-full bg-gp-gold px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-[#d8ba6c] disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save occasion"}
