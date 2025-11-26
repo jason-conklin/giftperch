@@ -358,7 +358,7 @@ function SavedIdeaItem({
         <button
           type="button"
           onClick={onLog}
-          className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70"
+          className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132]"
         >
           Log this gift
         </button>
@@ -789,13 +789,13 @@ export function GiftHistoryTable() {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="inline-flex rounded-full bg-gp-cream/70 p-1 shadow-sm">
+        <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setActiveTab("history")}
             className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
               activeTab === "history"
-                ? "bg-white text-gp-evergreen shadow-sm"
+                ? "bg-gp-gold text-gp-evergreen shadow-sm"
                 : "text-gp-evergreen/60 hover:text-gp-evergreen"
             }`}
           >
@@ -806,7 +806,7 @@ export function GiftHistoryTable() {
             onClick={() => setActiveTab("saved")}
             className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
               activeTab === "saved"
-                ? "bg-white text-gp-evergreen shadow-sm"
+                ? "bg-gp-gold text-gp-evergreen shadow-sm"
                 : "text-gp-evergreen/60 hover:text-gp-evergreen"
             }`}
           >
@@ -903,7 +903,7 @@ export function GiftHistoryTable() {
                   onClick={() => setSavedTypeFilter(type)}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                     savedTypeFilter === type
-                      ? "bg-gp-evergreen text-gp-cream shadow-sm"
+                      ? "bg-gp-gold text-gp-evergreen shadow-sm"
                       : "bg-gp-cream/70 text-gp-evergreen/70 hover:bg-gp-cream"
                   }`}
                 >
