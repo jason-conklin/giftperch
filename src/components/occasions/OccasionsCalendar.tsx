@@ -75,6 +75,22 @@ const getOccasionIcon = (event: OccasionEvent) => {
   return "/icons/occasions/icon-occasion-gift.png";
 };
 
+const parseEventDate = (value: string) => {
+  if (!value) return null;
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
+
+  if (dateOnly.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
+      return new Date(year, month - 1, day, 12, 0, 0);
+    }
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
 const eventTypeStyles: Record<
   OccasionEvent["type"],
   { chip: string; label: string }
@@ -98,13 +114,13 @@ const eventTypeStyles: Record<
 };
 
 const HolidayCell = ({ title, icon }: { title: string; icon: string }) => (
-  <div className="flex w-full flex-1 flex-col items-center justify-center gap-1 overflow-hidden px-1 text-center">
+  <div className="flex w-full flex-1 flex-col items-center justify-center gap-2 overflow-hidden px-1 text-center">
     <Image
       src={icon}
       alt={title}
-      width={32}
-      height={32}
-      className="h-6 w-6 sm:h-8 sm:w-8 object-contain pointer-events-none"
+      width={56}
+      height={56}
+      className="h-12 w-12 sm:h-14 sm:w-14 object-contain pointer-events-none drop-shadow-sm"
     />
     <span className="w-full text-[11px] leading-tight text-gp-evergreen/80 sm:text-xs text-center">
       {title}
@@ -135,12 +151,15 @@ export function OccasionsCalendar({
   const eventsByDay = useMemo(() => {
     const map = new Map<string, OccasionEvent[]>();
     events.forEach((event) => {
-      const eventDate = new Date(event.date);
-      if (Number.isNaN(eventDate.getTime())) return;
+      const eventDate = parseEventDate(event.date);
+      if (!eventDate) return;
       const normalized = new Date(
         eventDate.getFullYear(),
         eventDate.getMonth(),
-        eventDate.getDate()
+        eventDate.getDate(),
+        12,
+        0,
+        0
       );
       const key = getDateKey(normalized);
       if (!map.has(key)) {
@@ -167,8 +186,8 @@ export function OccasionsCalendar({
         date,
         isCurrentMonth: date.getMonth() === currentMonth.getMonth(),
         events: [...(eventsByDay.get(key) ?? [])].sort((a, b) => {
-          const aDate = new Date(a.date).getTime();
-          const bDate = new Date(b.date).getTime();
+          const aDate = parseEventDate(a.date)?.getTime() ?? 0;
+          const bDate = parseEventDate(b.date)?.getTime() ?? 0;
           return aDate - bDate;
         }),
       });
@@ -378,6 +397,11 @@ export function OccasionsCalendar({
             <div className="mt-3 space-y-3">
             {selectedEvents.map((event) => {
               const icon = getOccasionIcon(event);
+              const eventDate = parseEventDate(event.date);
+              const displayDate =
+                eventDate && !Number.isNaN(eventDate.getTime())
+                  ? eventDate
+                  : new Date(event.date);
               return (
                 <div
                   key={event.id}
@@ -418,11 +442,13 @@ export function OccasionsCalendar({
                       </p>
                     ) : null}
                     <p className="text-xs text-gp-evergreen/60">
-                      {new Date(event.date).toLocaleDateString(undefined, {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {Number.isNaN(displayDate.getTime())
+                        ? event.date
+                        : displayDate.toLocaleDateString(undefined, {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
                     </p>
                   </div>
                 </div>
@@ -446,14 +472,12 @@ export function OccasionsCalendar({
                     No special occasion
                   </p>
                   <p className="text-xs text-gp-evergreen/60">
-                    {(selectedDayDate ?? new Date(selectedDayKey)).toLocaleDateString(
-                      undefined,
-                      {
+                    {(selectedDayDate ?? parseEventDate(selectedDayKey) ?? new Date(selectedDayKey))
+                      .toLocaleDateString(undefined, {
                         month: "long",
                         day: "numeric",
                         year: "numeric",
-                      },
-                    )}
+                      })}
                   </p>
                   {onAddDate ? (
                     <button
