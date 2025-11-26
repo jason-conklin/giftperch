@@ -37,6 +37,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="impact-site-verification"
+          value="79003bc0-36ca-4bc9-a140-88d70ffbb3d9"
+        />
+      </head>
       <body className="bg-gp-cream text-gp-evergreen font-sans antialiased">
         <SupabaseProvider>
           <a href="#gp-main-content" className="gp-skip-link">
