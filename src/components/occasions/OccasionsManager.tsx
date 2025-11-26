@@ -644,10 +644,10 @@ export function OccasionsManager() {
             </button>
             <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
               <div>
-                <p className="text-sm uppercase tracking-wide text-gp-cream/80">
+                <p className="text-base uppercase tracking-wide text-gp-cream/80">
                   Add occasion
                 </p>
-                <h2 className="text-lg font-semibold text-gp-cream">
+                <h2 className="text-sm font-semibold text-gp-cream">
                   Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
                 </h2>
               </div>
