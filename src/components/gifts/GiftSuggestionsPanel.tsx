@@ -1090,7 +1090,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           if (prev >= target) return prev;
           const increment = Math.min(
             0.8,
-            Math.max(0.12, (target - prev) * 0.03),
+            Math.max(0.2, (target - prev) * 0.04),
           );
           return Math.min(target, prev + increment);
         });
