@@ -399,6 +399,7 @@ export function GiftHistoryTable() {
     let isMounted = true;
 
     const load = async () => {
+      if (!userId) return;
       setIsLoading(true);
       setError("");
 
@@ -406,10 +407,12 @@ export function GiftHistoryTable() {
         supabase
           .from("recipient_profiles")
           .select("id, name, relationship, is_self")
+          .eq("user_id", userId)
           .order("name", { ascending: true }),
         supabase
           .from("gift_history")
           .select("*")
+          .eq("user_id", userId)
           .order("purchased_at", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false }),
       ]);
@@ -436,7 +439,7 @@ export function GiftHistoryTable() {
     return () => {
       isMounted = false;
     };
-  }, [supabase]);
+  }, [supabase, userId]);
 
   useEffect(() => {
     if (initializedFilter || !recipients.length) return;
@@ -536,6 +539,10 @@ export function GiftHistoryTable() {
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!userId) {
+      setFormError("You must be signed in to log gifts.");
+      return;
+    }
     setFormSaving(true);
     setFormError("");
 
@@ -548,6 +555,7 @@ export function GiftHistoryTable() {
         ? new Date(formState.purchased_at).toISOString()
         : null,
       notes: formState.notes.trim() || null,
+      user_id: userId,
     };
 
     try {
@@ -568,6 +576,7 @@ export function GiftHistoryTable() {
           .from("gift_history")
           .update(payload)
           .eq("id", activeGift.id)
+          .eq("user_id", userId)
           .select()
           .single();
         if (error) throw error;
@@ -587,6 +596,10 @@ export function GiftHistoryTable() {
 
   const handleDeleteGift = async (gift: GiftHistoryEntry) => {
     setDeleteError("");
+    if (!userId) {
+      setDeleteError("You must be signed in to delete gifts.");
+      return;
+    }
     const confirmDelete = window.confirm(
       `Remove "${gift.title}" from gift history?`
     );
@@ -595,7 +608,8 @@ export function GiftHistoryTable() {
       const { error } = await supabase
         .from("gift_history")
         .delete()
-        .eq("id", gift.id);
+        .eq("id", gift.id)
+        .eq("user_id", userId);
       if (error) throw error;
       setGifts((prev) => prev.filter((entry) => entry.id !== gift.id));
     } catch (err) {
