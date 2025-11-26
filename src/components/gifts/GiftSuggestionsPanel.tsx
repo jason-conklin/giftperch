@@ -529,6 +529,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [isLoadingRecipients, setIsLoadingRecipients] = useState(true);
   const [isLoadingRuns, setIsLoadingRuns] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [requestProgress, setRequestProgress] = useState(0);
   const [error, setError] = useState("");
   const [copiedSuggestionId, setCopiedSuggestionId] = useState<string | null>(
     null,
@@ -1077,6 +1078,33 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     status === "loading" ||
     (status === "authenticated" && isLoadingRecipients && !recipients.length);
 
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    if (isRequesting) {
+      setRequestProgress((prev) => (prev > 0 ? prev : 5));
+      interval = setInterval(() => {
+        setRequestProgress((prev) => {
+          const target = 85;
+          if (prev >= target) return prev;
+          const increment = Math.max(0.5, (target - prev) * 0.08);
+          return Math.min(target, prev + increment);
+        });
+      }, 200);
+    } else {
+      // Complete and reset after a brief delay
+      setRequestProgress((prev) => (prev > 0 && prev < 100 ? 100 : prev));
+      const timeout = setTimeout(() => setRequestProgress(0), 500);
+      return () => {
+        if (timeout) clearTimeout(timeout);
+      };
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRequesting]);
+
   const handleRequestSuggestions = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedRecipientId) {
@@ -1502,6 +1530,12 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     ariaLabel="Asking PerchPal for suggestions"
                   />
                   <span>Retrieving gifts...</span>
+                  <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white shadow-inner">
+                    <div
+                      className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
+                      style={{ width: `${Math.min(100, requestProgress)}%` }}
+                    />
+                  </div>
                 </div>
               ) : (
                 <button
