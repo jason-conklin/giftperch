@@ -448,6 +448,7 @@ export function OccasionsManager() {
               </p>
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {[
+                  { key: "icon-occasion-day.png", label: "Everyday" },
                   { key: "icon-occasion-birthday.png", label: "Birthday" },
                   { key: "icon-occasion-christmas.png", label: "Christmas" },
                   { key: "icon-occasion-anniversary.png", label: "Anniversary" },
@@ -459,7 +460,6 @@ export function OccasionsManager() {
                   { key: "icon-occasion-newyears.png", label: "New Year's" },
                   { key: "icon-occasion-thanksgiving.png", label: "Thanksgiving" },
                   { key: "icon-occasion-halloween.png", label: "Halloween" },
-                  { key: "icon-occasion-day.png", label: "Everyday" },
                 ].map((option) => {
                   const selected = newIconKey === option.key;
                   return (
