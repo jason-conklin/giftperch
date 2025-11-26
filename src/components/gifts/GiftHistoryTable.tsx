@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -35,6 +36,26 @@ type GiftFormState = {
   notes: string;
 };
 
+type SavedIdeaAggregated = {
+  id: string;
+  recipient_id: string;
+  recipient_name: string;
+  recipient_relationship: string | null;
+  title: string;
+  url: string | null;
+  status: "saved" | "liked" | "disliked";
+  created_at: string;
+};
+
+const getInitials = (value: string) => {
+  if (!value) return "GP";
+  const parts = value.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
+  const initials = `${first}${last}`.toUpperCase();
+  return initials || "GP";
+};
+
 const emptyGiftForm: GiftFormState = {
   recipient_id: "",
   title: "",
@@ -44,9 +65,312 @@ const emptyGiftForm: GiftFormState = {
   notes: "",
 };
 
+type AddGiftModalProps = {
+  isOpen: boolean;
+  mode: "create" | "edit";
+  recipients: RecipientSummary[];
+  formState: GiftFormState;
+  formError: string;
+  formSaving: boolean;
+  onClose: () => void;
+  onChange: (updater: (prev: GiftFormState) => GiftFormState) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+};
+
+type GiftHistoryItemProps = {
+  gift: GiftHistoryEntry;
+  recipient: RecipientSummary | undefined;
+  onEdit: (gift: GiftHistoryEntry) => void;
+  onDelete: (gift: GiftHistoryEntry) => void;
+};
+
+function AddGiftModal({
+  isOpen,
+  mode,
+  recipients,
+  formState,
+  formError,
+  formSaving,
+  onClose,
+  onChange,
+  onSubmit,
+}: AddGiftModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add gift"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-3xl bg-gp-cream p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
+          aria-label="Close"
+        >
+          ×
+        </button>
+
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            Log a gift
+          </p>
+          <h2 className="text-xl font-semibold text-gp-evergreen">
+            {mode === "create" ? "Add a new gift" : "Edit gift"}
+          </h2>
+        </div>
+
+        <form className="mt-4 space-y-4" onSubmit={onSubmit}>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+            Recipient*
+            <select
+              required
+              value={formState.recipient_id}
+              onChange={(event) =>
+                onChange((prev) => ({
+                  ...prev,
+                  recipient_id: event.target.value,
+                }))
+              }
+              className="gp-input cursor-pointer bg-white"
+            >
+              <option value="">Select recipient</option>
+              {recipients.map((recipient) => (
+                <option key={recipient.id} value={recipient.id}>
+                  {recipient.name}
+                  {recipient.relationship ? ` (${recipient.relationship})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+            Gift title*
+            <input
+              required
+              value={formState.title}
+              onChange={(event) =>
+                onChange((prev) => ({ ...prev, title: event.target.value }))
+              }
+              className="gp-input bg-white"
+            />
+          </label>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+              URL
+              <input
+                type="url"
+                value={formState.url}
+                onChange={(event) =>
+                  onChange((prev) => ({ ...prev, url: event.target.value }))
+                }
+                className="gp-input bg-white"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+              Price
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formState.price}
+                onChange={(event) =>
+                  onChange((prev) => ({ ...prev, price: event.target.value }))
+                }
+                className="gp-input bg-white"
+              />
+            </label>
+          </div>
+
+          <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+            Purchased date
+            <input
+              type="date"
+              value={formState.purchased_at}
+              onChange={(event) =>
+                onChange((prev) => ({
+                  ...prev,
+                  purchased_at: event.target.value,
+                }))
+              }
+              className="gp-input cursor-pointer bg-white"
+            />
+          </label>
+
+          <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+            Notes
+            <textarea
+              value={formState.notes}
+              onChange={(event) =>
+                onChange((prev) => ({ ...prev, notes: event.target.value }))
+              }
+              className="gp-input min-h-[90px] resize-none bg-white"
+              placeholder="Any details you want to remember."
+            />
+          </label>
+
+          {formError ? (
+            <p className="rounded-2xl bg-red-50 px-3 py-2 text-xs text-red-700">
+              {formError}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            className="gp-primary-button w-full cursor-pointer disabled:opacity-70"
+            disabled={formSaving}
+          >
+            {formSaving ? "Saving..." : "Save gift"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function GiftHistoryItem({
+  gift,
+  recipient,
+  onEdit,
+  onDelete,
+}: GiftHistoryItemProps) {
+  const dateLabel = gift.purchased_at
+    ? new Date(gift.purchased_at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="gp-card flex w-full gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream text-sm font-semibold text-gp-evergreen shadow-sm">
+        {recipient ? getInitials(recipient.name) : "GP"}
+      </div>
+      <div className="flex-1 space-y-2">
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-gp-evergreen">
+              {gift.title}
+            </p>
+          </div>
+          {gift.url ? (
+            <Link
+              href={gift.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 rounded-full bg-gp-cream/80 px-2 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+            >
+              Link
+            </Link>
+          ) : null}
+        </div>
+        <p className="text-xs text-gp-evergreen/70">
+          For: {recipient?.name ?? "Unknown"}
+          {recipient?.relationship ? ` (${recipient.relationship})` : ""}{" "}
+          {dateLabel ? `· ${dateLabel}` : ""}
+        </p>
+        {gift.notes ? (
+          <p className="text-xs text-gp-evergreen/80">{gift.notes}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(gift)}
+            className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70"
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(gift)}
+            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:underline"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SavedIdeaItem({
+  idea,
+  onLog,
+}: {
+  idea: SavedIdeaAggregated;
+  onLog: () => void;
+}) {
+  const badgeStyles =
+    idea.status === "saved"
+      ? "bg-gp-gold/25 text-gp-evergreen"
+      : idea.status === "liked"
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-red-100 text-red-700";
+
+  const savedLabel =
+    idea.status === "saved"
+      ? "Saved"
+      : idea.status === "liked"
+      ? "Liked"
+      : "Disliked";
+
+  const dateLabel = idea.created_at
+    ? new Date(idea.created_at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  return (
+    <div className="gp-card flex flex-col gap-1 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm font-semibold text-gp-evergreen">{idea.title}</p>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeStyles}`}>
+          {savedLabel}
+        </span>
+      </div>
+      <p className="text-xs text-gp-evergreen/70">
+        For: {idea.recipient_name}
+        {idea.recipient_relationship ? ` (${idea.recipient_relationship})` : ""}{" "}
+        {dateLabel ? `· ${dateLabel}` : ""}
+      </p>
+      {idea.url ? (
+        <a
+          href={idea.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+        >
+          Open link
+        </a>
+      ) : null}
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={onLog}
+          className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70"
+        >
+          Log this gift
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function GiftHistoryTable() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const searchParams = useSearchParams();
+  const userId = useSupabaseSession().user?.id ?? null;
   const [gifts, setGifts] = useState<GiftHistoryEntry[]>([]);
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,15 +379,21 @@ export function GiftHistoryTable() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [activeGift, setActiveGift] = useState<GiftHistoryEntry | null>(null);
   const [formState, setFormState] = useState<GiftFormState>(emptyGiftForm);
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState("");
-  const [formMessage, setFormMessage] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [initializedFilter, setInitializedFilter] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"history" | "saved">("history");
+  const [savedIdeas, setSavedIdeas] = useState<SavedIdeaAggregated[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savedError, setSavedError] = useState("");
+  const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
+  const [savedTypeFilter, setSavedTypeFilter] = useState<"all" | "saved" | "liked" | "disliked">("all");
 
   useEffect(() => {
     let isMounted = true;
@@ -131,6 +461,18 @@ export function GiftHistoryTable() {
     [recipients]
   );
 
+  const filteredSavedIdeas = useMemo(() => {
+    return savedIdeas.filter((idea) => {
+      if (savedRecipientFilter !== "all" && idea.recipient_id !== savedRecipientFilter) {
+        return false;
+      }
+      if (savedTypeFilter !== "all" && idea.status !== savedTypeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [savedIdeas, savedRecipientFilter, savedTypeFilter]);
+
   const filteredGifts = useMemo(() => {
     return gifts.filter((gift) => {
       if (recipientFilter !== "all" && gift.recipient_id !== recipientFilter) {
@@ -164,8 +506,7 @@ export function GiftHistoryTable() {
     setActiveGift(null);
     setFormState(emptyGiftForm);
     setFormError("");
-    setFormMessage("");
-    setIsFormOpen(true);
+    setShowAddModal(true);
   };
 
   const openEditForm = (gift: GiftHistoryEntry) => {
@@ -182,16 +523,14 @@ export function GiftHistoryTable() {
       notes: gift.notes ?? "",
     });
     setFormError("");
-    setFormMessage("");
-    setIsFormOpen(true);
+    setShowAddModal(true);
   };
 
   const closeForm = () => {
-    setIsFormOpen(false);
+    setShowAddModal(false);
     setActiveGift(null);
     setFormState(emptyGiftForm);
     setFormError("");
-    setFormMessage("");
     setFormSaving(false);
   };
 
@@ -199,7 +538,6 @@ export function GiftHistoryTable() {
     event.preventDefault();
     setFormSaving(true);
     setFormError("");
-    setFormMessage("");
 
     const payload = {
       recipient_id: formState.recipient_id,
@@ -224,8 +562,7 @@ export function GiftHistoryTable() {
           .single();
         if (error) throw error;
         setGifts((prev) => [data, ...prev]);
-        setFormMessage("Gift saved.");
-        setFormState(emptyGiftForm);
+        closeForm();
       } else if (formMode === "edit" && activeGift) {
         const { data, error } = await supabase
           .from("gift_history")
@@ -237,7 +574,7 @@ export function GiftHistoryTable() {
         setGifts((prev) =>
           prev.map((gift) => (gift.id === data.id ? data : gift))
         );
-        setFormMessage("Gift updated.");
+        closeForm();
       }
     } catch (err) {
       const message =
@@ -268,86 +605,212 @@ export function GiftHistoryTable() {
     }
   };
 
+  const handleLogSavedIdea = (idea: SavedIdeaAggregated) => {
+    setFormMode("create");
+    setActiveGift(null);
+    setFormError("");
+    setFormSaving(false);
+    setFormState({
+      recipient_id: idea.recipient_id,
+      title: idea.title,
+      url: idea.url ?? "",
+      price: "",
+      purchased_at: "",
+      notes: "",
+    });
+    setShowAddModal(true);
+  };
+
+  useEffect(() => {
+    const loadSavedIdeas = async () => {
+      if (activeTab !== "saved") return;
+      if (!userId) return;
+      if (!recipients.length) return;
+      setSavedLoading(true);
+      setSavedError("");
+
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+        const fetches = recipients.map(async (recipient) => {
+          const [savedRes, feedbackRes] = await Promise.all([
+            fetch(`/api/recipients/${recipient.id}/saved-gifts`, { headers }),
+            fetch(`/api/recipients/${recipient.id}/feedback/summary`, { headers }),
+          ]);
+
+          if (!savedRes.ok) {
+            const body = await savedRes.json().catch(() => ({}));
+            throw new Error(body.error || "Failed to load saved gifts");
+          }
+          if (!feedbackRes.ok) {
+            const body = await feedbackRes.json().catch(() => ({}));
+            throw new Error(body.error || "Failed to load feedback");
+          }
+
+          const saved = (await savedRes.json()) as {
+            savedGifts: {
+              id: string;
+              title: string;
+              product_url: string | null;
+              created_at: string;
+            }[];
+          };
+          const feedback = (await feedbackRes.json()) as {
+            liked: { id: string; title: string; product_url: string | null; created_at: string }[];
+            disliked: { id: string; title: string; product_url: string | null; created_at: string }[];
+          };
+
+          const mapItem = (
+            item: { id: string; title: string; product_url: string | null; created_at: string },
+            status: "saved" | "liked" | "disliked",
+          ): SavedIdeaAggregated => ({
+            id: item.id,
+            recipient_id: recipient.id,
+            recipient_name: recipient.name,
+            recipient_relationship: recipient.relationship ?? null,
+            title: item.title,
+            url: item.product_url,
+            status,
+            created_at: item.created_at,
+          });
+
+          return [
+            ...saved.savedGifts.map((item) => mapItem(item, "saved")),
+            ...feedback.liked.map((item) => mapItem(item, "liked")),
+            ...feedback.disliked.map((item) => mapItem(item, "disliked")),
+          ];
+        });
+
+        const results = await Promise.all(fetches);
+        const flattened = results.flat().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setSavedIdeas(flattened);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unable to load saved ideas.";
+        setSavedError(message);
+      } finally {
+        setSavedLoading(false);
+      }
+    };
+
+    loadSavedIdeas();
+  }, [activeTab, recipients, supabase, userId]);
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-3xl border border-gp-evergreen/15 bg-white/90 p-4 shadow-sm md:grid md:grid-cols-2 md:items-end">
-        <div className="space-y-2">
-          <label
-            htmlFor="recipient-filter"
-            className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((prev) => !prev)}
+          className="gp-card flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/10 bg-white/90 px-4 py-3 text-sm text-gp-evergreen transition hover:border-gp-evergreen/30"
+        >
+          <span className="font-semibold text-gp-evergreen">Filter gifts</span>
+          <svg
+            aria-hidden="true"
+            className={`h-4 w-4 transition ${filtersOpen ? "rotate-180" : ""}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            Recipient
-          </label>
-          <select
-            id="recipient-filter"
-            value={recipientFilter}
-            onChange={(event) => setRecipientFilter(event.target.value)}
-            className="w-full rounded-full border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-          >
-            <option value="all">All recipients</option>
-            {recipients.map((recipient) => (
-              <option key={recipient.id} value={recipient.id}>
-                {recipient.name}
-                {recipient.relationship
-                  ? ` (${recipient.relationship})`
-                  : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="gift-search"
-            className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-          >
-            Search
-          </label>
-          <input
-            id="gift-search"
-            type="text"
-            placeholder="Search by gift title or notes..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="w-full rounded-full border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="date-from"
-            className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-          >
-            Date from
-          </label>
-          <input
-            id="date-from"
-            type="date"
-            value={dateFrom}
-            onChange={(event) => setDateFrom(event.target.value)}
-            className="w-full rounded-full border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-          />
-        </div>
-        <div className="space-y-2">
-          <label
-            htmlFor="date-to"
-            className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-          >
-            Date to
-          </label>
-          <input
-            id="date-to"
-            type="date"
-            value={dateTo}
-            onChange={(event) => setDateTo(event.target.value)}
-            className="w-full rounded-full border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-          />
-        </div>
-        <div className="md:col-span-2">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+
+        {filtersOpen ? (
+          <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+                Recipient
+                <select
+                  value={recipientFilter}
+                  onChange={(event) => setRecipientFilter(event.target.value)}
+                  className="gp-input cursor-pointer"
+                >
+                  <option value="all">All recipients</option>
+                  {recipients.map((recipient) => (
+                    <option key={recipient.id} value={recipient.id}>
+                      {recipient.name}
+                      {recipient.relationship ? ` (${recipient.relationship})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+                Search
+                <input
+                  type="text"
+                  placeholder="Search by gift title or notes..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="gp-input"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+                Date from
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(event) => setDateFrom(event.target.value)}
+                  className="gp-input cursor-pointer"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+                Date to
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(event) => setDateTo(event.target.value)}
+                  className="gp-input cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+        ) : null}
+
+        <div>
           <button
             type="button"
             onClick={openCreateForm}
-            className="w-full rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] md:w-auto cursor-pointer"
+            className="gp-primary-button cursor-pointer rounded-full px-5 py-2 text-sm font-semibold"
           >
             Add gift
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="inline-flex rounded-full bg-gp-cream/70 p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              activeTab === "history"
+                ? "bg-white text-gp-evergreen shadow-sm"
+                : "text-gp-evergreen/60 hover:text-gp-evergreen"
+            }`}
+          >
+            Gift history
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("saved")}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              activeTab === "saved"
+                ? "bg-white text-gp-evergreen shadow-sm"
+                : "text-gp-evergreen/60 hover:text-gp-evergreen"
+            }`}
+          >
+            Saved ideas
           </button>
         </div>
       </div>
@@ -371,298 +834,123 @@ export function GiftHistoryTable() {
             message="PerchPal is loading your gift history..."
           />
         </div>
-      ) : filteredGifts.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-gp-evergreen/30 bg-gp-cream/70 p-6 text-center text-sm text-gp-evergreen">
-          <p className="text-base font-semibold text-gp-evergreen">
-            No gifts logged yet
-          </p>
-          <p className="mt-2 text-sm text-gp-evergreen/80">
-            Track what you’ve gifted so PerchPal can avoid duplicates and
-            surface new ideas. Start by logging a recent present.
-          </p>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="mt-4 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
-          >
-            Log your first gift
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredGifts.map((gift) => {
-            const recipient = recipientMap[gift.recipient_id];
-            return (
-              <div
-                key={gift.id}
-                className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-semibold text-gp-evergreen">
-                      {gift.title}
-                    </p>
-                    {recipient ? (
-                      <p className="text-sm text-gp-evergreen/70">
-                        {recipient.name}
-                        {recipient.relationship
-                          ? ` · ${recipient.relationship}`
-                          : ""}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-gp-evergreen/70">
-                        Unknown recipient
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openEditForm(gift)}
-                      className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteGift(gift)}
-                      className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                <dl className="mt-4 space-y-2 text-sm text-gp-evergreen/80">
-                  {gift.purchased_at && (
-                    <div className="flex justify-between">
-                      <dt className="font-semibold">Purchased</dt>
-                      <dd>
-                        {new Date(gift.purchased_at).toLocaleDateString()}
-                      </dd>
-                    </div>
-                  )}
-                  {gift.price !== null && (
-                    <div className="flex justify-between">
-                      <dt className="font-semibold">Price</dt>
-                      <dd>${gift.price.toFixed(2)}</dd>
-                    </div>
-                  )}
-                </dl>
-                {gift.url && (
-                  <Link
-                    href={gift.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                  >
-                    View product link
-                  </Link>
-                )}
-                {gift.notes && (
-                  <p className="mt-3 rounded-xl bg-gp-cream/70 px-3 py-2 text-xs text-gp-evergreen/80">
-                    {gift.notes}
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {isFormOpen && (
-        <section className="rounded-3xl border border-gp-evergreen/20 bg-white/95 p-6 shadow-lg">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-                {formMode === "create" ? "Log a gift" : "Edit gift"}
-              </p>
-              <h2 className="text-2xl font-semibold text-gp-evergreen">
-                {formMode === "create"
-                  ? "Add a new gift"
-                  : `Update ${activeGift?.title ?? "gift"}`}
-              </h2>
-            </div>
+      ) : activeTab === "history" ? (
+        filteredGifts.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-gp-evergreen/15 bg-gp-cream/60 px-6 py-10 text-center text-sm text-gp-evergreen">
+            <p className="text-lg font-semibold text-gp-evergreen">
+              No gifts logged yet
+            </p>
+            <p className="mt-3 text-sm text-gp-evergreen/80">
+              Track what you’ve gifted so PerchPal can avoid duplicates and surface better ideas. Start by logging a recent present.
+            </p>
             <button
               type="button"
-              onClick={closeForm}
-              className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
+              onClick={openCreateForm}
+              className="gp-primary-button mt-5 cursor-pointer rounded-full px-5 py-2 text-sm font-semibold"
             >
-              Close
+              Log your first gift
             </button>
           </div>
-
-          <form className="mt-6 space-y-4" onSubmit={handleFormSubmit}>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label
-                  htmlFor="form-recipient"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Recipient*
-                </label>
-                <select
-                  id="form-recipient"
-                  required
-                  value={formState.recipient_id}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      recipient_id: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  <option value="">Select recipient</option>
-                  {recipients.map((recipient) => (
-                    <option key={recipient.id} value={recipient.id}>
-                      {recipient.name}
-                      {recipient.relationship
-                        ? ` (${recipient.relationship})`
-                        : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="form-title"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Gift title*
-                </label>
-                <input
-                  id="form-title"
-                  type="text"
-                  required
-                  value={formState.title}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      title: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <label
-                  htmlFor="form-url"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  URL
-                </label>
-                <input
-                  id="form-url"
-                  type="url"
-                  value={formState.url}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      url: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="form-price"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Price
-                </label>
-                <input
-                  id="form-price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formState.price}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      price: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label
-                  htmlFor="form-purchased"
-                  className="text-sm font-medium text-gp-evergreen"
-                >
-                  Purchased date
-                </label>
-                <input
-                  id="form-purchased"
-                  type="date"
-                  value={formState.purchased_at}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      purchased_at: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="form-notes"
-                className="text-sm font-medium text-gp-evergreen"
-              >
-                Notes
-              </label>
-              <textarea
-                id="form-notes"
-                rows={3}
-                value={formState.notes}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    notes: event.target.value,
-                  }))
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+        ) : (
+          <div className="space-y-3">
+            {filteredGifts.map((gift) => (
+              <GiftHistoryItem
+                key={gift.id}
+                gift={gift}
+                recipient={recipientMap[gift.recipient_id]}
+                onEdit={openEditForm}
+                onDelete={handleDeleteGift}
               />
+            ))}
+          </div>
+        )
+      ) : savedLoading ? (
+        <div className="flex justify-center">
+          <PerchPalLoader
+            variant="block"
+            size="md"
+            message="Loading saved ideas..."
+          />
+        </div>
+      ) : savedError ? (
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {savedError}
+        </div>
+      ) : filteredSavedIdeas.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-gp-evergreen/15 bg-gp-cream/60 px-6 py-10 text-center text-sm text-gp-evergreen">
+          <p className="text-base font-semibold text-gp-evergreen">
+            No saved ideas yet
+          </p>
+          <p className="mt-2 text-sm text-gp-evergreen/70">
+            Try saving or liking suggestions from PerchPal on the Gift Ideas page. They’ll show up here so you can log them once you’ve gifted them.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm md:flex-row md:items-end md:justify-between">
+            <label className="flex flex-1 flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+              Recipient
+              <select
+                value={savedRecipientFilter}
+                onChange={(event) => setSavedRecipientFilter(event.target.value)}
+                className="gp-input cursor-pointer"
+              >
+                <option value="all">All recipients</option>
+                {recipients.map((recipient) => (
+                  <option key={recipient.id} value={recipient.id}>
+                    {recipient.name}
+                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {(["all", "saved", "liked", "disliked"] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setSavedTypeFilter(type)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    savedTypeFilter === type
+                      ? "bg-gp-evergreen text-gp-cream shadow-sm"
+                      : "bg-gp-cream/70 text-gp-evergreen/70 hover:bg-gp-cream"
+                  }`}
+                >
+                  {type === "all"
+                    ? "All"
+                    : type === "saved"
+                    ? "Saved"
+                    : type === "liked"
+                    ? "Liked"
+                    : "Disliked"}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <button
-              type="submit"
-              className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-              disabled={formSaving}
-            >
-              {formMode === "create" ? "Save gift" : "Update gift"}
-            </button>
-
-            {formSaving && (
-              <div className="flex justify-center">
-                <PerchPalLoader
-                  variant="inline"
-                  size="sm"
-                  message="PerchPal is saving your gift..."
-                />
-              </div>
-            )}
-
-            {formError && (
-              <p className="rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700">
-                {formError}
-              </p>
-            )}
-            {formMessage && (
-              <p className="rounded-2xl bg-gp-cream px-4 py-2 text-sm text-gp-evergreen">
-                {formMessage}
-              </p>
-            )}
-          </form>
-        </section>
+          <div className="space-y-3">
+            {filteredSavedIdeas.map((idea) => (
+              <SavedIdeaItem
+                key={`${idea.status}-${idea.id}`}
+                idea={idea}
+                onLog={() => handleLogSavedIdea(idea)}
+              />
+            ))}
+          </div>
+        </div>
       )}
+
+      <AddGiftModal
+        isOpen={showAddModal}
+        mode={formMode}
+        recipients={recipients}
+        formState={formState}
+        formError={formError}
+        formSaving={formSaving}
+        onClose={closeForm}
+        onChange={setFormState}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   );
 }
