@@ -10,7 +10,6 @@ import { FirstGenerationGuideBanner } from "@/components/gifts/FirstGenerationGu
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { useLocalFlag } from "@/hooks/useLocalFlag";
-import type { Metadata } from "next";
 
 export default function GiftsPage() {
   const { user, status } = useSupabaseSession();
@@ -70,6 +69,3 @@ export default function GiftsPage() {
     </Suspense>
   );
 }
-export const metadata: Metadata = {
-  title: "GiftPerch - Gift Ideas",
-};
