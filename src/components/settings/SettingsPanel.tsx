@@ -87,6 +87,11 @@ export function SettingsPanel() {
   const { status, user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const router = useRouter();
+  const isAffiliateAllowed = useMemo(() => {
+    const allowedEmails = ["jasonconklin64@gmail.com", "giftperch@gmail.com"];
+    const email = user?.email?.toLowerCase();
+    return email ? allowedEmails.includes(email) : false;
+  }, [user?.email]);
 
   const [profile, setProfile] = useState<Profile>({
     display_name: "",
@@ -168,9 +173,9 @@ export function SettingsPanel() {
           send_occasion_reminders:
             settingsData.send_occasion_reminders ??
             defaultSettings.send_occasion_reminders,
-          send_affiliate_reports:
-            settingsData.send_affiliate_reports ??
-            defaultSettings.send_affiliate_reports,
+          send_affiliate_reports: isAffiliateAllowed
+            ? settingsData.send_affiliate_reports ?? defaultSettings.send_affiliate_reports
+            : false,
         });
       }
 
@@ -306,6 +311,9 @@ export function SettingsPanel() {
       {
         user_id: user.id,
         ...settings,
+        send_affiliate_reports: isAffiliateAllowed
+          ? settings.send_affiliate_reports
+          : false,
       },
       { onConflict: "user_id" }
     );
@@ -857,27 +865,29 @@ export function SettingsPanel() {
           </div>
         </label>
 
-        <label className="flex items-start gap-3 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/70 p-4">
-          <input
-            type="checkbox"
-            checked={settings.send_affiliate_reports}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                send_affiliate_reports: event.target.checked,
-              }))
-            }
-            className="mt-1 h-4 w-4 rounded border-gp-evergreen/40 text-gp-evergreen focus:ring-gp-evergreen"
-          />
-          <div>
-            <p className="text-sm font-semibold text-gp-evergreen">
-              Affiliate performance
-            </p>
-            <p className="text-xs text-gp-evergreen/70">
-              Weekly snapshot of clicks and conversions from shared links.
-            </p>
-          </div>
-        </label>
+        {isAffiliateAllowed ? (
+          <label className="flex items-start gap-3 rounded-2xl border border-gp-evergreen/15 bg-gp-cream/70 p-4">
+            <input
+              type="checkbox"
+              checked={settings.send_affiliate_reports}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  send_affiliate_reports: event.target.checked,
+                }))
+              }
+              className="mt-1 h-4 w-4 rounded border-gp-evergreen/40 text-gp-evergreen focus:ring-gp-evergreen"
+            />
+            <div>
+              <p className="text-sm font-semibold text-gp-evergreen">
+                Affiliate performance
+              </p>
+              <p className="text-xs text-gp-evergreen/70">
+                Weekly snapshot of clicks and conversions from shared links.
+              </p>
+            </div>
+          </label>
+        ) : null}
 
         <button
           type="button"
