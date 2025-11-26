@@ -641,7 +641,7 @@ export function OccasionsManager() {
           >
             <button
               type="button"
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
               onClick={() => setShowAddModal(false)}
             >
               <svg
