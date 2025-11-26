@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
             "4) Select the most unique, surprising, and recipient-aligned ideas.",
             "",
             "Generation rules:",
-            " - Generate exactly {N} distinct gift ideas. Assume N can vary; always respect the requested count.",
+            ` - Generate exactly ${numSuggestions} distinct gift ideas. Assume N can vary; always respect the requested count.`,
             " - Each batch must span multiple categories: physical items, personalized items, experience-based gifts, digital/AI gifts, subscription-type gifts, and sentimental/DIY gifts. Use at least min(4, N) distinct categories in each batch.",
             " - Avoid generic, overused gifts like “cozy blanket”, “spa set”, “scented candles”, “generic gift card”, or anything very similar unless the context makes them unusually specific and personalized.",
             " - You will receive previous gift ideas. Treat them as ALREADY USED. Do not repeat or closely mimic any of them. If an idea feels even moderately similar, discard it and generate a different one.",
@@ -370,27 +370,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const previousTitleSet = new Set(
-      previousSuggestions.map((title) => title.toLowerCase()),
-    );
+  const previousTitleSet = new Set(
+    previousSuggestions.map((title) => title.toLowerCase()),
+  );
 
     const normalizedSuggestions = (parsed.suggestions ?? [])
       .filter((item): item is GiftSuggestion => typeof item === "object")
       .map((item, index) => normalizeSuggestion(item, index))
       .filter((item) => {
-        if (!item.title) return true;
-        const titleLower = item.title.toLowerCase();
+        const title = item.title?.trim();
+        if (!title) return false;
+        const titleLower = title.toLowerCase();
+        const isPlaceholder = /^idea\s*\d+/i.test(titleLower) || titleLower === "placeholder";
+        const isGenericStub =
+          item.short_description?.toLowerCase().includes("thoughtful gift idea") &&
+          titleLower.startsWith("idea ");
         if (
           dislikedTitles.some((d) => d.toLowerCase() === titleLower) ||
           previouslySavedTitles.some((saved) => saved.toLowerCase() === titleLower) ||
-          previousTitleSet.has(titleLower)
+          previousTitleSet.has(titleLower) ||
+          isPlaceholder ||
+          isGenericStub
         ) {
           return false;
         }
         return true;
       });
 
-    if (normalizedSuggestions.length === 0) {
+    const uniqueByTitle = new Map<string, GiftSuggestion>();
+    normalizedSuggestions.forEach((item) => {
+      const key = item.title.toLowerCase();
+      if (!uniqueByTitle.has(key)) uniqueByTitle.set(key, item);
+    });
+    let finalSuggestions = Array.from(uniqueByTitle.values());
+
+    if (finalSuggestions.length > numSuggestions) {
+      finalSuggestions = finalSuggestions.slice(0, numSuggestions);
+    }
+
+    if (finalSuggestions.length < numSuggestions) {
+      console.warn(
+        `AI returned ${finalSuggestions.length}/${numSuggestions} suggestions after filtering; sending partial list.`,
+      );
+    }
+
+    if (finalSuggestions.length === 0) {
       return NextResponse.json(
         { error: "AI did not return any suggestions" },
         { status: 500 },
@@ -404,7 +428,7 @@ export async function POST(request: NextRequest) {
         recipient_id: recipient.id,
         model: SUGGESTION_MODEL,
         prompt_context: promptContext,
-        suggestions: normalizedSuggestions,
+        suggestions: finalSuggestions,
       })
       .select()
       .single();
@@ -417,7 +441,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const suggestionsWithFlags = normalizedSuggestions.map((s) => {
+    const suggestionsWithFlags = finalSuggestions.map((s) => {
       const identity = makeIdentity(s.title, s.tier);
       return {
         ...s,
