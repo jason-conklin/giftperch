@@ -25,6 +25,8 @@ export type RecipientSummary = {
   name: string;
   relationship: string | null;
   is_self?: boolean;
+  avatar_url?: string | null;
+  avatar_icon?: string | null;
 };
 
 type GiftFormState = {
@@ -54,6 +56,13 @@ const getInitials = (value: string) => {
   const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
   const initials = `${first}${last}`.toUpperCase();
   return initials || "GP";
+};
+
+const toNoonIso = (dateStr: string | null | undefined) => {
+  if (!dateStr) return null;
+  const parsed = new Date(`${dateStr}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
 };
 
 const emptyGiftForm: GiftFormState = {
@@ -228,7 +237,7 @@ function AddGiftModal({
             className="gp-primary-button w-full cursor-pointer disabled:opacity-70"
             disabled={formSaving}
           >
-            {formSaving ? "Saving..." : "Save gift"}
+            {formSaving ? "Saving..." : "Log gift"}
           </button>
         </form>
       </div>
@@ -252,8 +261,26 @@ function GiftHistoryItem({
 
   return (
     <div className="gp-card flex w-full gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
-      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream text-sm font-semibold text-gp-evergreen shadow-sm">
-        {recipient ? getInitials(recipient.name) : "GP"}
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream text-sm font-semibold text-gp-evergreen shadow-sm overflow-hidden">
+        {recipient?.avatar_url ? (
+          <Image
+            src={recipient.avatar_url}
+            alt={recipient.name}
+            width={48}
+            height={48}
+            className="h-full w-full object-cover"
+          />
+        ) : recipient?.avatar_icon ? (
+          <Image
+            src={`/${recipient.avatar_icon}_icon.png`}
+            alt={recipient.name}
+            width={48}
+            height={48}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          getInitials(recipient?.name ?? "")
+        )}
       </div>
       <div className="flex-1 space-y-2">
         <div className="flex items-start gap-2">
@@ -394,6 +421,10 @@ export function GiftHistoryTable() {
   const [savedError, setSavedError] = useState("");
   const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
   const [savedTypeFilter, setSavedTypeFilter] = useState<"all" | "saved" | "liked" | "disliked">("all");
+  const [giftToDelete, setGiftToDelete] = useState<GiftHistoryEntry | null>(null);
+  const [isDeletingGift, setIsDeletingGift] = useState(false);
+  const [loggedFromSaved, setLoggedFromSaved] = useState(false);
+  const [showSavedLogToast, setShowSavedLogToast] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -406,7 +437,7 @@ export function GiftHistoryTable() {
       const [recipientsRes, giftsRes] = await Promise.all([
         supabase
           .from("recipient_profiles")
-          .select("id, name, relationship, is_self")
+          .select("id, name, relationship, is_self, avatar_url, avatar_icon")
           .eq("user_id", userId)
           .order("name", { ascending: true }),
         supabase
@@ -551,9 +582,7 @@ export function GiftHistoryTable() {
       title: formState.title.trim(),
       url: formState.url.trim() || null,
       price: formState.price ? Number(formState.price) : null,
-      purchased_at: formState.purchased_at
-        ? new Date(formState.purchased_at).toISOString()
-        : null,
+      purchased_at: toNoonIso(formState.purchased_at),
       notes: formState.notes.trim() || null,
       user_id: userId,
     };
@@ -571,6 +600,11 @@ export function GiftHistoryTable() {
         if (error) throw error;
         setGifts((prev) => [data, ...prev]);
         closeForm();
+        if (loggedFromSaved) {
+          setShowSavedLogToast(true);
+          setActiveTab("saved");
+        }
+        setLoggedFromSaved(false);
       } else if (formMode === "edit" && activeGift) {
         const { data, error } = await supabase
           .from("gift_history")
@@ -584,6 +618,7 @@ export function GiftHistoryTable() {
           prev.map((gift) => (gift.id === data.id ? data : gift))
         );
         closeForm();
+        setLoggedFromSaved(false);
       }
     } catch (err) {
       const message =
@@ -594,28 +629,33 @@ export function GiftHistoryTable() {
     }
   };
 
-  const handleDeleteGift = async (gift: GiftHistoryEntry) => {
+  const handleDeleteGift = (gift: GiftHistoryEntry) => {
     setDeleteError("");
-    if (!userId) {
+    setGiftToDelete(gift);
+  };
+
+  const confirmDeleteGift = async () => {
+    if (!giftToDelete || !userId) {
       setDeleteError("You must be signed in to delete gifts.");
+      setGiftToDelete(null);
       return;
     }
-    const confirmDelete = window.confirm(
-      `Remove "${gift.title}" from gift history?`
-    );
-    if (!confirmDelete) return;
+    setIsDeletingGift(true);
     try {
       const { error } = await supabase
         .from("gift_history")
         .delete()
-        .eq("id", gift.id)
+        .eq("id", giftToDelete.id)
         .eq("user_id", userId);
       if (error) throw error;
-      setGifts((prev) => prev.filter((entry) => entry.id !== gift.id));
+      setGifts((prev) => prev.filter((entry) => entry.id !== giftToDelete.id));
+      setGiftToDelete(null);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to delete gift.";
       setDeleteError(message);
+    } finally {
+      setIsDeletingGift(false);
     }
   };
 
@@ -624,6 +664,7 @@ export function GiftHistoryTable() {
     setActiveGift(null);
     setFormError("");
     setFormSaving(false);
+    setLoggedFromSaved(true);
     setFormState({
       recipient_id: idea.recipient_id,
       title: idea.title,
@@ -892,6 +933,28 @@ export function GiftHistoryTable() {
         </div>
       ) : (
         <div className="space-y-3">
+          {showSavedLogToast ? (
+            <div className="flex items-start justify-between rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
+              <div className="space-y-1">
+                <p className="font-semibold">Gift logged</p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 font-semibold text-emerald-900 underline-offset-4 hover:underline"
+                  onClick={() => setActiveTab("history")}
+                >
+                  View here →
+                </button>
+              </div>
+              <button
+                type="button"
+                aria-label="Dismiss gift logged"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-semibold text-emerald-800 shadow-sm transition hover:scale-105"
+                onClick={() => setShowSavedLogToast(false)}
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm md:flex-row md:items-end md:justify-between">
             <label className="flex flex-1 flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Recipient
@@ -971,6 +1034,51 @@ export function GiftHistoryTable() {
         onChange={setFormState}
         onSubmit={handleFormSubmit}
       />
+
+      {giftToDelete ? (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-4 rounded-2xl bg-gp-cream p-6 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+                  Delete gift
+                </p>
+                <h2 className="text-xl font-semibold text-gp-evergreen">
+                  Remove “{giftToDelete.title}”?
+                </h2>
+                <p className="mt-1 text-sm text-gp-evergreen/70">
+                  This will delete the logged gift from your history. This action cannot be undone.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setGiftToDelete(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
+                aria-label="Close delete confirmation"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="gp-secondary-button"
+                onClick={() => setGiftToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteGift}
+                disabled={isDeletingGift}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {isDeletingGift ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
