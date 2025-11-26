@@ -407,8 +407,6 @@ export function GiftHistoryTable() {
   const [error, setError] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [activeGift, setActiveGift] = useState<GiftHistoryEntry | null>(null);
@@ -417,7 +415,6 @@ export function GiftHistoryTable() {
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [initializedFilter, setInitializedFilter] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"history" | "saved">("history");
   const [savedIdeas, setSavedIdeas] = useState<SavedIdeaAggregated[]>([]);
   const [savedLoading, setSavedLoading] = useState(false);
@@ -524,19 +521,9 @@ export function GiftHistoryTable() {
         if (!matchTitle && !matchNotes) return false;
       }
 
-      if (dateFrom) {
-        if (!gift.purchased_at) return false;
-        if (new Date(gift.purchased_at) < new Date(dateFrom)) return false;
-      }
-
-      if (dateTo) {
-        if (!gift.purchased_at) return false;
-        if (new Date(gift.purchased_at) > new Date(dateTo)) return false;
-      }
-
       return true;
     });
-  }, [gifts, recipientFilter, search, dateFrom, dateTo]);
+  }, [gifts, recipientFilter, search]);
 
   const openCreateForm = () => {
     setFormMode("create");
