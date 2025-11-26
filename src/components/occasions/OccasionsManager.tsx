@@ -642,13 +642,15 @@ export function OccasionsManager() {
             >
               ×
             </button>
-            <div className="space-y-2 rounded-t-3xl bg-gp-evergreen px-6 py-4 shadow-inner">
-              <p className="text-xs uppercase tracking-[0.2em] text-gp-cream">
-                Add occasion
-              </p>
-              <p className="text-sm text-white">
-                Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
-              </p>
+            <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-gp-cream/80">
+                  Add occasion
+                </p>
+                <h2 className="text-2xl font-semibold text-gp-cream">
+                  Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
+                </h2>
+              </div>
             </div>
             <div className="p-6 space-y-4">
 
