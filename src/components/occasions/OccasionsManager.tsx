@@ -633,8 +633,12 @@ export function OccasionsManager() {
           role="dialog"
           aria-modal="true"
           aria-label="Add occasion"
+          onClick={() => setShowAddModal(false)}
         >
-          <div className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-0 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div
+            className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-0 shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(event) => event.stopPropagation()}
+          >
             <button
               type="button"
               className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
