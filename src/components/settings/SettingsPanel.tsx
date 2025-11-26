@@ -883,7 +883,7 @@ export function SettingsPanel() {
                 Affiliate performance (Admin Option)
               </p>
               <p className="text-xs text-gp-evergreen/70">
-                Weekly snapshot of clicks and conversions from shared links. Only available for jasonconklin64@gmail.com and giftperch@gmail.com.
+                Weekly snapshot of clicks and conversions from shared links. (This option is only visible for jasonconklin64@gmail.com and giftperch@gmail.com)
               </p>
             </div>
           </label>

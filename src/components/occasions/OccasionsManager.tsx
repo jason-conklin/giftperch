@@ -634,7 +634,7 @@ export function OccasionsManager() {
           aria-modal="true"
           aria-label="Add occasion"
         >
-          <div className="relative w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               className="absolute right-4 top-4 text-lg font-semibold text-gp-evergreen/70 hover:text-gp-evergreen"
@@ -656,7 +656,7 @@ export function OccasionsManager() {
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Recipient
                   <select
-                    className="gp-input cursor-pointer"
+                    className="gp-input cursor-pointer bg-white"
                     value={newRecipientId}
                     onChange={(event) => setNewRecipientId(event.target.value)}
                     required
@@ -674,7 +674,7 @@ export function OccasionsManager() {
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Occasion name
                   <input
-                    className="gp-input"
+                    className="gp-input bg-white"
                     value={newTitle}
                     onChange={(event) => setNewTitle(event.target.value)}
                     placeholder="Maya's birthday brunch"
@@ -684,7 +684,7 @@ export function OccasionsManager() {
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Occasion type
                   <select
-                    className="gp-input cursor-pointer"
+                    className="gp-input cursor-pointer bg-white"
                     value={newEventType}
                     onChange={(event) => setNewEventType(event.target.value)}
                   >
@@ -756,7 +756,7 @@ export function OccasionsManager() {
                   Event date
                   <input
                     type="date"
-                    className="gp-input cursor-pointer"
+                    className="gp-input cursor-pointer bg-white"
                     value={newEventDate}
                     onChange={(event) => setNewEventDate(event.target.value)}
                     required
@@ -766,7 +766,7 @@ export function OccasionsManager() {
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Notes
                   <textarea
-                    className="gp-input min-h-[90px] resize-none"
+                    className="gp-input min-h-[90px] resize-none bg-white"
                     value={newNotes}
                     onChange={(event) => setNewNotes(event.target.value)}
                     placeholder="Prefers experience gifts, loves art supplies."
