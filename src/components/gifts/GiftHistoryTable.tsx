@@ -846,7 +846,7 @@ export function GiftHistoryTable() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
           <button
             type="button"
@@ -871,6 +871,15 @@ export function GiftHistoryTable() {
             Saved ideas
           </button>
         </div>
+        {activeTab === "history" ? (
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="gp-primary-button cursor-pointer rounded-full px-5 py-2 text-sm font-semibold"
+          >
+            Add gift
+          </button>
+        ) : null}
       </div>
 
       {error && (
