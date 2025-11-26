@@ -49,7 +49,7 @@ export default function GiftsPage() {
       <AuthGuard>
         <AppLayout>
           <PageShell
-            title="AI Gift Ideas"
+            title="Gift Ideas"
             subtitle="Chat with PerchPal and generate tailored gift suggestion lists for the people you shop for most."
           >
             <div className="space-y-6">
