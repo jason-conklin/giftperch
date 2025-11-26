@@ -494,7 +494,9 @@ export function SettingsPanel() {
     <div className="space-y-6">
       <section className="gp-card flex flex-col gap-5">
         <header>
-          <div className="gp-pill">Account profile</div>
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+                Account Profile
+          </p>
           <p className="mt-3 text-sm text-gp-evergreen/70">
             Update how PerchPal addresses you on dashboards and shareable guides.
           </p>
@@ -609,7 +611,9 @@ export function SettingsPanel() {
 
       <section className="gp-card flex flex-col gap-4">
         <header>
-          <div className="gp-pill">Your recipient profile</div>
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+              Your recipient profile
+          </p>
           <p className="mt-3 text-sm text-gp-evergreen/70">
             Share a recipient profile of yourself so friends can import you directly
             into their recipients list. Totally optional, but very handy.
@@ -785,7 +789,9 @@ export function SettingsPanel() {
 
       <section className="gp-card flex flex-col gap-3">
         <header>
-          <div className="gp-pill">Optional extras</div>
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            Optional extras
+          </p>
           <p className="mt-3 text-sm text-gp-evergreen/70">
             Wishlists live off to the side. Use them only if you want a personal
             registry for friends and family.
@@ -801,7 +807,9 @@ export function SettingsPanel() {
 
       <section className="gp-card flex flex-col gap-4">
         <header>
-          <div className="gp-pill">Notifications</div>
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            Notifications
+          </p>
           <p className="mt-3 text-sm text-gp-evergreen/70">
             Choose how PerchPal keeps you in the loop.
           </p>
