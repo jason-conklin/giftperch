@@ -1174,10 +1174,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     const baseUrl = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
     const url = `${baseUrl}&tag=${encodeURIComponent(partnerTag)}`;
     if (typeof window !== "undefined") {
-      const win = window.open(url, "_blank", "noopener,noreferrer");
-      if (!win) {
-        window.location.href = url;
-      }
+      window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
