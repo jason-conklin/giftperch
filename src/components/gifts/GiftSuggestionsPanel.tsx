@@ -1197,6 +1197,12 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       setError(message);
     } finally {
       setIsGenerating(false);
+      requestAnimationFrame(() => {
+        resultsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
       if (onFirstRunComplete) {
         onFirstRunComplete();
       }
