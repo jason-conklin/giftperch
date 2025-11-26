@@ -303,9 +303,11 @@ function GiftHistoryItem({
         </div>
         <p className="text-xs text-gp-evergreen/70">
           For: {recipient?.name ?? "Unknown"}
-          {recipient?.relationship ? ` (${recipient.relationship})` : ""}{" "}
-          {dateLabel ? `· ${dateLabel}` : ""}
+          {recipient?.relationship ? ` (${recipient.relationship})` : ""}
         </p>
+        {dateLabel ? (
+          <p className="text-xs text-gp-evergreen/70">Purchased: {dateLabel}</p>
+        ) : null}
         {gift.notes ? (
           <p className="text-xs text-gp-evergreen/80">{gift.notes}</p>
         ) : null}
