@@ -284,6 +284,7 @@ export async function POST(request: NextRequest) {
       top_p: 0.95,
       presence_penalty: 0.6,
       frequency_penalty: 0.4,
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
