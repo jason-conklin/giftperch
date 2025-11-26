@@ -634,7 +634,7 @@ export function OccasionsManager() {
           aria-modal="true"
           aria-label="Add occasion"
         >
-          <div className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-0 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
@@ -642,7 +642,7 @@ export function OccasionsManager() {
             >
               ×
             </button>
-            <div className="space-y-2 rounded-2xl bg-gp-gold/70 px-4 py-3 shadow-inner">
+            <div className="space-y-2 rounded-t-3xl bg-gp-gold/80 px-6 py-4 shadow-inner">
               <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/80">
                 Add occasion
               </p>
@@ -650,6 +650,7 @@ export function OccasionsManager() {
                 Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
               </p>
             </div>
+            <div className="p-6 space-y-4">
 
             {loadingRecipients ? (
               <p className="mt-4 text-sm text-gp-evergreen/70">Loading recipients...</p>
