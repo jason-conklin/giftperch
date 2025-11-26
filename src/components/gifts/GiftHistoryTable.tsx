@@ -834,16 +834,6 @@ export function GiftHistoryTable() {
             </div>
           </div>
         ) : null}
-
-        <div>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="gp-primary-button cursor-pointer rounded-full px-5 py-2 text-sm font-semibold"
-          >
-            Add gift
-          </button>
-        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
