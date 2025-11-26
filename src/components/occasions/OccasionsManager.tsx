@@ -647,7 +647,7 @@ export function OccasionsManager() {
                 <p className="text-sm uppercase tracking-wide text-gp-cream/80">
                   Add occasion
                 </p>
-                <h2 className="text-2xl font-semibold text-gp-cream">
+                <h2 className="text-lg font-semibold text-gp-cream">
                   Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
                 </h2>
               </div>
