@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import type { Metadata } from "next";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
@@ -11,10 +10,6 @@ import { FirstGenerationGuideBanner } from "@/components/gifts/FirstGenerationGu
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { useLocalFlag } from "@/hooks/useLocalFlag";
-
-export const metadata: Metadata = {
-  title: "GiftPerch - Gift Ideas",
-};
 
 export default function GiftsPage() {
   const { user, status } = useSupabaseSession();
