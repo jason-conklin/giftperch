@@ -431,33 +431,13 @@ export function OccasionsManager() {
         }}
       />
 
-      <section className="gp-card-soft flex flex-col gap-2 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-          PerchPal tip
-        </p>
-        <p className="text-sm text-gp-evergreen/80">
-          PerchPal uses these dates to prioritize reminders, queue fresh gift
-          ideas, and surface budgets for the next few weeks. The more birthdays
-          and milestones you log, the sharper your gifting radar becomes.
-        </p>
-      </section>
-
       <div className="grid gap-6 lg:grid-cols-[3fr,2fr]">
         <section className="gp-card flex flex-col gap-4">
-          <header className="flex items-center justify-between gap-3">
-            <div className="space-y-1">
-              <div className="gp-pill">Next big occasion</div>
-              <p className="text-sm text-gp-evergreen/70">
-                See what’s up next and jump into ideas before the rush.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="gp-secondary-button"
-            >
-              Add occasion
-            </button>
+          <header className="space-y-1">
+            <div className="gp-pill">Next big occasion</div>
+            <p className="text-sm text-gp-evergreen/70">
+              See what’s up next and jump into ideas before the rush.
+            </p>
           </header>
 
           {loading ? (
@@ -620,6 +600,17 @@ export function OccasionsManager() {
           )}
         </section>
       </div>
+
+      <section className="gp-card-soft flex flex-col gap-2 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
+        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+          PerchPal tip
+        </p>
+        <p className="text-sm text-gp-evergreen/80">
+          PerchPal uses these dates to prioritize reminders, queue fresh gift
+          ideas, and surface budgets for the next few weeks. The more birthdays
+          and milestones you log, the sharper your gifting radar becomes.
+        </p>
+      </section>
 
       {error ? (
         <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
