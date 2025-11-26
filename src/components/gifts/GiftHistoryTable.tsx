@@ -758,40 +758,6 @@ export function GiftHistoryTable() {
 
   return (
     <div className="space-y-6">
-      {activeTab === "history" ? (
-        <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-              Recipient
-              <select
-                value={recipientFilter}
-                onChange={(event) => setRecipientFilter(event.target.value)}
-                className="gp-input cursor-pointer"
-              >
-                <option value="all">All recipients</option>
-                {recipients.map((recipient) => (
-                  <option key={recipient.id} value={recipient.id}>
-                    {recipient.name}
-                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-              Search
-              <input
-                type="text"
-                placeholder="Search by gift title or notes..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="gp-input"
-              />
-            </label>
-          </div>
-        </div>
-      ) : null}
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
           <button
@@ -827,6 +793,40 @@ export function GiftHistoryTable() {
           </button>
         ) : null}
       </div>
+
+      {activeTab === "history" ? (
+        <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+              Recipient
+              <select
+                value={recipientFilter}
+                onChange={(event) => setRecipientFilter(event.target.value)}
+                className="gp-input cursor-pointer"
+              >
+                <option value="all">All recipients</option>
+                {recipients.map((recipient) => (
+                  <option key={recipient.id} value={recipient.id}>
+                    {recipient.name}
+                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+              Search
+              <input
+                type="text"
+                placeholder="Search by gift title or notes..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="gp-input"
+              />
+            </label>
+          </div>
+        </div>
+      ) : null}
 
       {error && (
         <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
