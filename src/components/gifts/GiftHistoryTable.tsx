@@ -876,15 +876,6 @@ export function GiftHistoryTable() {
         <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
           {savedError}
         </div>
-      ) : filteredSavedIdeas.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-gp-evergreen/15 bg-gp-cream/60 px-6 py-10 text-center text-sm text-gp-evergreen">
-          <p className="text-base font-semibold text-gp-evergreen">
-            No saved ideas yet
-          </p>
-          <p className="mt-2 text-sm text-gp-evergreen/70">
-            Try saving or liking suggestions from PerchPal on the Gift Ideas page. They’ll show up here so you can log them once you’ve gifted them.
-          </p>
-        </div>
       ) : (
         <div className="space-y-3">
           <div className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm md:flex-row md:items-end md:justify-between">
@@ -928,15 +919,30 @@ export function GiftHistoryTable() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {filteredSavedIdeas.map((idea) => (
-              <SavedIdeaItem
-                key={`${idea.status}-${idea.id}`}
-                idea={idea}
-                onLog={() => handleLogSavedIdea(idea)}
-              />
-            ))}
-          </div>
+          {filteredSavedIdeas.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-gp-evergreen/15 bg-gp-cream/60 px-6 py-10 text-center text-sm text-gp-evergreen">
+              <p className="text-base font-semibold text-gp-evergreen">
+                {savedIdeas.length === 0
+                  ? "No saved ideas yet"
+                  : "No saved ideas match your filters"}
+              </p>
+              <p className="mt-2 text-sm text-gp-evergreen/70">
+                {savedIdeas.length === 0
+                  ? "Try saving or liking suggestions from PerchPal on the Gift Ideas page. They’ll show up here so you can log them once you’ve gifted them."
+                  : "Adjust filters or clear them to see your saved, liked, and disliked ideas."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredSavedIdeas.map((idea) => (
+                <SavedIdeaItem
+                  key={`${idea.status}-${idea.id}`}
+                  idea={idea}
+                  onLog={() => handleLogSavedIdea(idea)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
