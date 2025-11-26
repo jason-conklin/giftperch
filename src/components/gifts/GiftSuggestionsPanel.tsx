@@ -513,7 +513,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [occasion, setOccasion] = useState("");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
-  const [numSuggestions, setNumSuggestions] = useState("5");
+  const [numSuggestions, setNumSuggestions] = useState("9");
 
   const [runs, setRuns] = useState<SuggestionRun[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -1166,70 +1166,15 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   };
 
   const handleFetchAmazonProducts = async (suggestion: GiftSuggestion) => {
-    const suggestionId = suggestion.id;
-    if (!suggestion.title.trim()) return;
+    const query = suggestion.title.trim();
+    if (!query) return;
 
-    setAmazonBySuggestion((prev) => ({
-      ...prev,
-      [suggestionId]: {
-        loading: true,
-        error: "",
-        products: prev[suggestionId]?.products ?? [],
-      },
-    }));
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-
-      const response = await fetch("/api/amazon/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          query: suggestion.title,
-          budgetMin: activeRun?.prompt_context?.budget_min ?? null,
-          budgetMax: activeRun?.prompt_context?.budget_max ?? null,
-          maxResults: 6,
-        }),
-      });
-
-      const json = (await response.json().catch(() => null)) as
-        | {
-            products?: AmazonProduct[];
-            error?: string;
-          }
-        | null;
-
-      if (!response.ok || !json) {
-        throw new Error(AMAZON_PLACEHOLDER_MESSAGE);
+    const url = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
+    if (typeof window !== "undefined") {
+      const win = window.open(url, "_blank", "noopener,noreferrer");
+      if (!win) {
+        window.location.href = url;
       }
-
-      const products = Array.isArray(json.products)
-        ? (json.products as AmazonProduct[])
-        : [];
-      const hasProducts = products.length > 0;
-
-      setAmazonBySuggestion((prev) => ({
-        ...prev,
-        [suggestionId]: {
-          loading: false,
-          error: hasProducts ? "" : AMAZON_PLACEHOLDER_MESSAGE,
-          products,
-        },
-      }));
-    } catch (err) {
-      console.warn("Amazon lookup failed", err);
-      setAmazonBySuggestion((prev) => ({
-        ...prev,
-        [suggestionId]: {
-          loading: false,
-          error: AMAZON_PLACEHOLDER_MESSAGE,
-          products: [],
-        },
-      }));
     }
   };
 

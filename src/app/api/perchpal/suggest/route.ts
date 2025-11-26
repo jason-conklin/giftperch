@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
   let numSuggestions =
     typeof body.numSuggestions === "number" && !Number.isNaN(body.numSuggestions)
       ? Math.round(body.numSuggestions)
-      : 5;
+      : 9;
   numSuggestions = Math.min(
     MAX_SUGGESTIONS,
     Math.max(MIN_SUGGESTIONS, numSuggestions),
