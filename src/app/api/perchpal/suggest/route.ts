@@ -304,6 +304,7 @@ export async function POST(request: NextRequest) {
       {
         model: SUGGESTION_MODEL,
           temperature: 0.9,
+          top_p: 0.95,
         messages: [
           {
           role: "system",
