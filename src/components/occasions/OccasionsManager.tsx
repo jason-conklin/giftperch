@@ -10,6 +10,7 @@ import {
 } from "@/components/occasions/OccasionsCalendar";
 import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
 import Link from "next/link";
+import { PerchPalFlyingAvatar } from "@/components/perchpal/PerchPalLoader";
 
 type RecipientOption = {
   id: string;
@@ -531,7 +532,7 @@ export function OccasionsManager() {
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="gp-secondary-button"
+              className="gp-secondary-button cursor-pointer"
             >
               Add occasion
             </button>
@@ -584,7 +585,7 @@ export function OccasionsManager() {
                     <button
                       type="button"
                       onClick={() => handleRemoveOccasion(occasion.id)}
-                      className="text-xs font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline disabled:opacity-60"
+                      className="cursor-pointer text-xs font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline disabled:opacity-60"
                       disabled={removingId === occasion.id}
                     >
                       {removingId === occasion.id ? "Removing..." : "Remove"}
@@ -601,15 +602,18 @@ export function OccasionsManager() {
         </section>
       </div>
 
-      <section className="gp-card-soft flex flex-col gap-2 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-          PerchPal tip
-        </p>
-        <p className="text-sm text-gp-evergreen/80">
-          PerchPal uses these dates to prioritize reminders, queue fresh gift
-          ideas, and surface budgets for the next few weeks. The more birthdays
-          and milestones you log, the sharper your gifting radar becomes.
-        </p>
+      <section className="gp-card-soft flex items-center gap-4 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
+        <PerchPalFlyingAvatar className="bg-white/80" size="md" />
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+            PerchPal tip
+          </p>
+          <p className="text-sm text-gp-evergreen/80">
+            PerchPal uses these dates to prioritize reminders, queue fresh gift
+            ideas, and surface budgets for the next few weeks. The more birthdays
+            and milestones you log, the sharper your gifting radar becomes.
+          </p>
+        </div>
       </section>
 
       {error ? (
