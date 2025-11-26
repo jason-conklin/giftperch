@@ -601,20 +601,19 @@ export function OccasionsManager() {
           )}
         </section>
       </div>
-
-      <section className="gp-card-soft flex items-center gap-4 rounded-3xl border border-gp-evergreen/15 bg-gp-cream/70 p-5">
-        <PerchPalFlyingAvatar className="bg-white/80" size="md" />
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-            PerchPal tip
-          </p>
-          <p className="text-sm text-gp-evergreen/80">
-            PerchPal uses these dates to prioritize reminders, queue fresh gift
+      <div className="gp-card-soft flex w-full items-center gap-4">
+          <PerchPalFlyingAvatar size="lg" className="shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-gp-evergreen">
+              PerchPal tip
+            </p>
+            <p className="text-xs text-gp-evergreen/70">
+              PerchPal uses these dates to prioritize reminders, queue fresh gift
             ideas, and surface budgets for the next few weeks. The more birthdays
             and milestones you log, the sharper your gifting radar becomes.
-          </p>
-        </div>
-      </section>
+            </p>
+          </div>
+      </div>
 
       {error ? (
         <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
