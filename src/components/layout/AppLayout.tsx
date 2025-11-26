@@ -146,8 +146,8 @@ const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
   { label: "Recipients", href: "/recipients", icon: RecipientsIcon },
   { label: "Gift Ideas", href: "/gifts", icon: SparkIcon },
-  { label: "History", href: "/history", icon: ClockIcon },
   { label: "Occasions", href: "/occasions", icon: CalendarIcon },
+  { label: "History", href: "/history", icon: ClockIcon },
   { label: "Settings", href: "/settings", icon: SettingsIcon },
 ];
 
