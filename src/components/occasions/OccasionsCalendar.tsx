@@ -26,6 +26,7 @@ export type OccasionEvent = {
   type: "birthday" | "anniversary" | "holiday" | "custom";
   recipientName?: string;
   isGlobal?: boolean;
+  iconKey?: string | null;
 };
 
 type CalendarDay = {
@@ -49,7 +50,15 @@ const getDateKey = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const normalizeIconKey = (iconKey?: string | null) => {
+  if (!iconKey) return null;
+  return iconKey.startsWith("/") ? iconKey : `/icons/occasions/${iconKey}`;
+};
+
 const getOccasionIcon = (event: OccasionEvent) => {
+  const override = normalizeIconKey(event.iconKey);
+  if (override) return override;
+
   const value = `${event.type ?? ""} ${event.title ?? ""}`.toLowerCase();
 
   if (value.includes("birthday")) return "/icons/occasions/icon-occasion-birthday.png";

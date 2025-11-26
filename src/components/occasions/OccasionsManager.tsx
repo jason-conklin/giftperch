@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -21,6 +22,7 @@ type Occasion = {
   label: string | null;
   event_type: string | null;
   event_date: string | null;
+  icon_key?: string | null;
   notes: string | null;
   recipient?: {
     name: string;
@@ -51,6 +53,7 @@ export function OccasionsManager() {
   const [newTitle, setNewTitle] = useState("");
   const [newEventType, setNewEventType] = useState("");
   const [newEventDate, setNewEventDate] = useState("");
+  const [newIconKey, setNewIconKey] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -150,6 +153,7 @@ export function OccasionsManager() {
       event_type: newEventType || "custom",
       label: newTitle || "Upcoming occasion",
       event_date: newEventDate,
+      icon_key: newIconKey || null,
       notes: newNotes || null,
     });
 
@@ -160,12 +164,13 @@ export function OccasionsManager() {
       setNewTitle("");
       setNewEventType("");
       setNewEventDate("");
+      setNewIconKey("");
       setNewRecipientId("");
       // refresh occasions
       const { data } = await supabase
         .from("recipient_events")
         .select(
-          "id, label, event_type, event_date, notes, recipient:recipient_profiles(name, relationship)"
+          "id, label, event_type, event_date, icon_key, notes, recipient:recipient_profiles(name, relationship)"
         )
         .eq("recipient_profiles.user_id", user.id)
         .eq("recipient_profiles.is_self", false)
@@ -192,14 +197,15 @@ export function OccasionsManager() {
                 }
               : null;
 
-          return {
-            id: occasion.id as string,
-            label: (occasion as { label?: string }).label ?? null,
-            event_type: (occasion as { event_type?: string }).event_type ?? null,
-            event_date: (occasion as { event_date?: string }).event_date ?? null,
-            notes: (occasion as { notes?: string }).notes ?? null,
-            recipient: resolvedRecipient,
-          } as Occasion;
+            return {
+              id: occasion.id as string,
+              label: (occasion as { label?: string }).label ?? null,
+              event_type: (occasion as { event_type?: string }).event_type ?? null,
+              event_date: (occasion as { event_date?: string }).event_date ?? null,
+              icon_key: (occasion as { icon_key?: string | null }).icon_key ?? null,
+              notes: (occasion as { notes?: string }).notes ?? null,
+              recipient: resolvedRecipient,
+            } as Occasion;
         }) ?? [];
       setOccasions(normalized);
     }
@@ -260,6 +266,7 @@ export function OccasionsManager() {
         title: occasion.label ?? "Upcoming occasion",
         type: normalizedType,
         recipientName: occasion.recipient?.name ?? undefined,
+        iconKey: occasion.icon_key ?? null,
       });
     });
 
@@ -433,6 +440,52 @@ export function OccasionsManager() {
                 <option value="just_because">Just because / No special occasion</option>
               </select>
             </label>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-gp-evergreen">Icon</p>
+              <p className="text-xs text-gp-evergreen/70">
+                Pick an icon for this occasion. This will show on the gifting calendar.
+              </p>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {[
+                  { key: "icon-occasion-birthday.png", label: "Birthday" },
+                  { key: "icon-occasion-christmas.png", label: "Christmas" },
+                  { key: "icon-occasion-anniversary.png", label: "Anniversary" },
+                  { key: "icon-occasion-graduation.png", label: "Graduation" },
+                  { key: "icon-occasion-gift.png", label: "Gift" },
+                  { key: "icon-occasion-valentines.png", label: "Valentine's" },
+                  { key: "icon-occasion-mothersday.png", label: "Mother's Day" },
+                  { key: "icon-occasion-fathersday.png", label: "Father's Day" },
+                  { key: "icon-occasion-newyears.png", label: "New Year's" },
+                  { key: "icon-occasion-thanksgiving.png", label: "Thanksgiving" },
+                  { key: "icon-occasion-halloween.png", label: "Halloween" },
+                  { key: "icon-occasion-day.png", label: "Everyday" },
+                ].map((option) => {
+                  const selected = newIconKey === option.key;
+                  return (
+                    <button
+                      type="button"
+                      key={option.key}
+                      onClick={() => setNewIconKey(option.key)}
+                      className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition ${
+                        selected
+                          ? "border-gp-evergreen bg-gp-cream shadow-sm"
+                          : "border-gp-evergreen/15 bg-white hover:border-gp-evergreen/40"
+                      }`}
+                    >
+                      <Image
+                        src={`/icons/occasions/${option.key}`}
+                        alt={option.label}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 object-contain"
+                      />
+                      <span className="text-gp-evergreen">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Event date
