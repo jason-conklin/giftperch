@@ -637,14 +637,16 @@ export function OccasionsManager() {
           <div className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
-              className="absolute right-4 top-4 text-lg font-semibold text-gp-evergreen/70 hover:text-gp-evergreen"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
               onClick={() => setShowAddModal(false)}
             >
               ×
             </button>
-            <div className="space-y-1">
-              <div className="gp-pill w-fit">Add occasion</div>
-              <p className="text-sm text-gp-evergreen/70">
+            <div className="space-y-2 rounded-2xl bg-gp-gold/70 px-4 py-3 shadow-inner">
+              <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/80">
+                Add occasion
+              </p>
+              <p className="text-sm text-gp-evergreen">
                 Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
               </p>
             </div>
@@ -732,7 +734,7 @@ export function OccasionsManager() {
                           type="button"
                           key={option.key}
                           onClick={() => setNewIconKey(option.key)}
-                          className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition ${
+                          className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-2 text-center text-xs font-semibold transition cursor-pointer ${
                             selected
                               ? "border-gp-evergreen bg-gp-cream shadow-sm"
                               : "border-gp-evergreen/15 bg-white hover:border-gp-evergreen/40"
