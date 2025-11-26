@@ -218,7 +218,7 @@ export function SettingsPanel() {
     return () => {
       isMounted = false;
     };
-  }, [status, supabase, user?.id]);
+  }, [status, supabase, user?.id, isAffiliateAllowed]);
 
   const handleAvatarUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -880,10 +880,10 @@ export function SettingsPanel() {
             />
             <div>
               <p className="text-sm font-semibold text-gp-evergreen">
-                Affiliate performance
+                Affiliate performance (Admin Option)
               </p>
               <p className="text-xs text-gp-evergreen/70">
-                Weekly snapshot of clicks and conversions from shared links.
+                Weekly snapshot of clicks and conversions from shared links. Only available for jasonconklin64@gmail.com and giftperch@gmail.com.
               </p>
             </div>
           </label>
