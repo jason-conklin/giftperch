@@ -39,8 +39,8 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta
-          name="impact-site-verification"
-          content="79003bc0-36ca-4bc9-a140-88d70ffbb3d9"
+          name='impact-site-verification'
+          content='5835ce5a-9ee4-4f16-a691-f56255eceaaa'
         />
       </head>
       <body className="bg-gp-cream text-gp-evergreen font-sans antialiased">
