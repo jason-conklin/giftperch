@@ -358,7 +358,7 @@ function SavedIdeaItem({
         <button
           type="button"
           onClick={onLog}
-          className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132]"
+          className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
         >
           Log this gift
         </button>
@@ -704,7 +704,7 @@ export function GiftHistoryTable() {
         <button
           type="button"
           onClick={() => setFiltersOpen((prev) => !prev)}
-          className="gp-card flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/10 bg-white/90 px-4 py-3 text-sm text-gp-evergreen transition hover:border-gp-evergreen/30"
+          className="gp-card flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/10 bg-white/90 px-4 py-3 text-sm text-gp-evergreen transition hover:border-gp-evergreen/30 cursor-pointer"
         >
           <span className="font-semibold text-gp-evergreen">Filter gifts</span>
           <svg
@@ -793,7 +793,7 @@ export function GiftHistoryTable() {
           <button
             type="button"
             onClick={() => setActiveTab("history")}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition cursor-pointer ${
               activeTab === "history"
                 ? "bg-gp-gold text-gp-evergreen shadow-sm"
                 : "text-gp-evergreen/60 hover:text-gp-evergreen"
@@ -804,7 +804,7 @@ export function GiftHistoryTable() {
           <button
             type="button"
             onClick={() => setActiveTab("saved")}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition cursor-pointer ${
               activeTab === "saved"
                 ? "bg-gp-gold text-gp-evergreen shadow-sm"
                 : "text-gp-evergreen/60 hover:text-gp-evergreen"
@@ -901,7 +901,7 @@ export function GiftHistoryTable() {
                   key={type}
                   type="button"
                   onClick={() => setSavedTypeFilter(type)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
                     savedTypeFilter === type
                       ? "bg-gp-gold text-gp-evergreen shadow-sm"
                       : "bg-gp-cream/70 text-gp-evergreen/70 hover:bg-gp-cream"
