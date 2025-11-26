@@ -655,7 +655,7 @@ export function OccasionsManager() {
             {loadingRecipients ? (
               <p className="mt-4 text-sm text-gp-evergreen/70">Loading recipients...</p>
             ) : hasRecipients ? (
-              <form id="add-occasion-form" className="mt-4 space-y-4" onSubmit={handleAddOccasion}>
+              <form id="add-occasion-form" className="mt-2 space-y-4" onSubmit={handleAddOccasion}>
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Recipient
                   <select
