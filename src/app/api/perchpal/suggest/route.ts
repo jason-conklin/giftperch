@@ -397,11 +397,15 @@ export async function POST(request: NextRequest) {
       suggestions?: GiftSuggestion[];
     };
 
-  const previousTitleSet = new Set(
-    previousSuggestions.map((title) => title.toLowerCase()),
-  );
+    const previousTitleSet = new Set(
+      previousSuggestions.map((title) => title.toLowerCase()),
+    );
 
-    const normalizedSuggestions = (parsed.suggestions ?? [])
+    const parsedSuggestions = Array.isArray(parsed.suggestions)
+      ? parsed.suggestions
+      : [];
+
+    const normalizedSuggestions = parsedSuggestions
       .filter((item): item is GiftSuggestion => typeof item === "object")
       .map((item, index) => normalizeSuggestion(item, index))
       .filter((item) => {
@@ -424,12 +428,27 @@ export async function POST(request: NextRequest) {
         return true;
       });
 
-    const uniqueByTitle = new Map<string, GiftSuggestion>();
-    normalizedSuggestions.forEach((item) => {
-      const key = item.title.toLowerCase();
-      if (!uniqueByTitle.has(key)) uniqueByTitle.set(key, item);
-    });
-    let finalSuggestions = Array.from(uniqueByTitle.values());
+    const dedupeByTitle = (items: GiftSuggestion[]) => {
+      const map = new Map<string, GiftSuggestion>();
+      items.forEach((item) => {
+        const key = item.title?.toLowerCase();
+        if (key && !map.has(key)) {
+          map.set(key, item);
+        }
+      });
+      return Array.from(map.values());
+    };
+
+    let finalSuggestions = dedupeByTitle(normalizedSuggestions);
+
+    // Fallback: if filtering removed everything, allow the raw parsed suggestions (deduped) to avoid empty runs.
+    if (finalSuggestions.length === 0 && parsedSuggestions.length) {
+      finalSuggestions = dedupeByTitle(
+        parsedSuggestions
+          .filter((item): item is GiftSuggestion => typeof item === "object")
+          .map((item, index) => normalizeSuggestion(item, index)),
+      );
+    }
 
     if (finalSuggestions.length > numSuggestions) {
       finalSuggestions = finalSuggestions.slice(0, numSuggestions);
