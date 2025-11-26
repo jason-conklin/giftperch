@@ -1094,7 +1094,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       }, 220);
     } else {
       setRequestProgress((prev) => (prev > 0 && prev < 100 ? 100 : prev));
-      timeout = setTimeout(() => setRequestProgress(0), 600);
+      timeout = setTimeout(() => setRequestProgress(0), 700);
     }
 
     return () => {
@@ -1519,7 +1519,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
             </div>
 
             <div className="flex justify-center">
-              {isRequesting ? (
+              {isRequesting || requestProgress > 0 ? (
                 <div className="flex w-full max-w-sm flex-col items-center justify-center gap-2 text-sm text-gp-evergreen/80">
                   <PerchPalLoader
                     variant="inline"
@@ -1538,7 +1538,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
               ) : (
                 <button
                   type="submit"
-                  disabled={!selectedRecipientId}
+                  disabled={!selectedRecipientId || isRequesting || requestProgress > 0}
                   className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
                 >
                   Ask PerchPal for suggestions
