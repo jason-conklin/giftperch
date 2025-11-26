@@ -1083,12 +1083,15 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
     if (isRequesting) {
-      setRequestProgress((prev) => (prev > 0 ? prev : 5));
+      setRequestProgress((prev) => (prev > 0 ? prev : 3));
       interval = setInterval(() => {
         setRequestProgress((prev) => {
-          const target = 92;
+          const target = 98;
           if (prev >= target) return prev;
-          const increment = Math.max(0.3, (target - prev) * 0.05);
+          const increment = Math.min(
+            0.8,
+            Math.max(0.12, (target - prev) * 0.03),
+          );
           return Math.min(target, prev + increment);
         });
       }, 220);
