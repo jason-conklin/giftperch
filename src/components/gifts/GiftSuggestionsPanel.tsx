@@ -528,7 +528,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
   const [isLoadingRecipients, setIsLoadingRecipients] = useState(true);
   const [isLoadingRuns, setIsLoadingRuns] = useState(false);
-  const [isRequesting, setIsRequesting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [requestProgress, setRequestProgress] = useState(0);
   const [error, setError] = useState("");
   const [copiedSuggestionId, setCopiedSuggestionId] = useState<string | null>(
@@ -575,6 +575,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [dismissedFeedbackByKey, setDismissedFeedbackByKey] = useState<
     Record<string, boolean>
   >({});
+  const resultsSectionRef = useRef<HTMLDivElement | null>(null);
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
@@ -1082,7 +1083,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     let interval: ReturnType<typeof setInterval> | null = null;
     let timeout: ReturnType<typeof setTimeout> | null = null;
 
-    if (isRequesting) {
+    if (isGenerating) {
       setRequestProgress((prev) => (prev > 0 ? prev : 3));
       interval = setInterval(() => {
         setRequestProgress((prev) => {
@@ -1104,7 +1105,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       if (interval) clearInterval(interval);
       if (timeout) clearTimeout(timeout);
     };
-  }, [isRequesting]);
+  }, [isGenerating]);
 
   const handleRequestSuggestions = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1114,7 +1115,11 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     }
 
     setError("");
-    setIsRequesting(true);
+    setIsGenerating(true);
+    resultsSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -1191,7 +1196,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           : PERCHPAL_ERROR_MESSAGE;
       setError(message);
     } finally {
-      setIsRequesting(false);
+      setIsGenerating(false);
       if (onFirstRunComplete) {
         onFirstRunComplete();
       }
@@ -1522,222 +1527,228 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
             </div>
 
             <div className="flex justify-center">
-              {isRequesting || requestProgress > 0 ? (
-                <div className="flex w-full max-w-sm flex-col items-center justify-center gap-2 text-sm text-gp-evergreen/80">
-                  <PerchPalLoader
-                    variant="inline"
-                    size="md"
-                    message={null}
-                    ariaLabel="Asking PerchPal for suggestions"
-                  />
-                  <span>Retrieving gifts...</span>
-                  <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white shadow-inner border border-black/40">
-                    <div
-                      className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
-                      style={{ width: `${Math.min(100, requestProgress)}%` }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!selectedRecipientId || isRequesting || requestProgress > 0}
-                  className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                >
-                  Ask PerchPal for suggestions
-                </button>
-              )}
+              <button
+                type="submit"
+                disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
+                aria-disabled={isGenerating || requestProgress > 0}
+                className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              >
+                {isGenerating ? "Asking PerchPal…" : "Ask PerchPal for suggestions"}
+              </button>
             </div>
           </form>
 
-          {selectedRecipient?.name ? (
-            <div className="mt-4">
-              <p className="text-base font-semibold text-gp-evergreen sm:text-lg">
-                Gift ideas for {selectedRecipient.name}
-              </p>
-            </div>
-          ) : null}
+          <div ref={resultsSectionRef}>
+            {selectedRecipient?.name ? (
+              <div className="mt-4">
+                <p className="text-base font-semibold text-gp-evergreen sm:text-lg">
+                  Gift ideas for {selectedRecipient.name}
+                </p>
+              </div>
+            ) : null}
 
-          {runs.length > 0 && (
-            <div className="mt-4 flex flex-col gap-3 text-gp-evergreen">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex-1 max-w-md">
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                    Previous runs
-                  </label>
-                  <select
-                    value={activeRunId ?? ""}
-                    onChange={(e) =>
-                      setActiveRunId(e.target.value || null)
-                    }
-                    className="w-full rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer"
+            {runs.length > 0 && (
+              <div className="mt-4 flex flex-col gap-3 text-gp-evergreen">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex-1 max-w-md">
+                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+                      Previous runs
+                    </label>
+                    <select
+                      value={activeRunId ?? ""}
+                      onChange={(e) =>
+                        setActiveRunId(e.target.value || null)
+                      }
+                      className="w-full rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer"
+                    >
+                      {runs.map((run) => (
+                        <option key={run.id} value={run.id}>
+                          {formatRunLabel(run)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!activeRunId}
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
                   >
-                    {runs.map((run) => (
-                      <option key={run.id} value={run.id}>
-                        {formatRunLabel(run)}
-                      </option>
-                    ))}
-                  </select>
+                    Delete run
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  disabled={!activeRunId}
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
+              </div>
+            )}
+
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="md:col-span-1">
+                <label
+                  htmlFor="search-suggestions"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
                 >
-                  Delete run
-                </button>
+                  Search ideas
+                </label>
+                <input
+                  id="search-suggestions"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search by title or rationale"
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="tier-filter"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Filter by tier
+                </label>
+                <select
+                  id="tier-filter"
+                  value={tierFilter}
+                  onChange={(event) =>
+                    setTierFilter(event.target.value as TierFilter)
+                  }
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                >
+                  <option value="all">All tiers</option>
+                  <option value="safe">Safe favorites</option>
+                  <option value="thoughtful">Thoughtful</option>
+                  <option value="experience">Experiences</option>
+                  <option value="splurge">Splurges</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="sort-option"
+                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                >
+                  Sort by
+                </label>
+                <select
+                  id="sort-option"
+                  value={sortOption}
+                  onChange={(event) =>
+                    setSortOption(event.target.value as SortOption)
+                  }
+                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                >
+                  <option value="relevance">Model order</option>
+                  <option value="price-asc">Price: Low to high</option>
+                  <option value="price-desc">Price: High to low</option>
+                  <option value="tier">Tier</option>
+                </select>
               </div>
             </div>
-          )}
 
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="md:col-span-1">
-              <label
-                htmlFor="search-suggestions"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Search ideas
-              </label>
-              <input
-                id="search-suggestions"
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search by title or rationale"
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="tier-filter"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Filter by tier
-              </label>
-              <select
-                id="tier-filter"
-                value={tierFilter}
-                onChange={(event) =>
-                  setTierFilter(event.target.value as TierFilter)
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              >
-                <option value="all">All tiers</option>
-                <option value="safe">Safe favorites</option>
-                <option value="thoughtful">Thoughtful</option>
-                <option value="experience">Experiences</option>
-                <option value="splurge">Splurges</option>
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="sort-option"
-                className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-              >
-                Sort by
-              </label>
-              <select
-                id="sort-option"
-                value={sortOption}
-                onChange={(event) =>
-                  setSortOption(event.target.value as SortOption)
-                }
-                className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-              >
-                <option value="relevance">Model order</option>
-                <option value="price-asc">Price: Low to high</option>
-                <option value="price-desc">Price: High to low</option>
-                <option value="tier">Tier</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            {isLoadingRuns ? (
-              <PerchPalLoader
-                variant="block"
-                size="md"
-                message="PerchPal is gathering previous suggestion runs..."
-              />
-            ) : !activeRun ? (
-              <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-6 text-center text-sm text-gp-evergreen">
-                Ask PerchPal for suggestions to see curated gift ideas here.
-              </div>
-            ) : visibleSuggestions.length === 0 ? (
-              <div className="rounded-2xl border border-gp-evergreen/20 bg-white/90 p-6 text-sm text-gp-evergreen">
-                No suggestions match your filters. Clear the filters to see all
-                ideas from this run.
-              </div>
-            ) : (
-              <>
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gp-evergreen/70">
-                  <span>
-                    Generated {new Date(activeRun.created_at).toLocaleString()}{" "}
-                    for {activeRun.prompt_context.recipient_name}
-                    {activeRun.prompt_context.occasion
-                      ? ` - ${activeRun.prompt_context.occasion}`
-                      : ""}
-                  </span>
-                  <FirstSuggestionsTipBanner hasSuggestionsThisSession={showTipBanner} />
-                  {activeRun.prompt_context.budget_min ||
-                  activeRun.prompt_context.budget_max ? (
+            <div className="mt-4">
+              {isLoadingRuns ? (
+                <PerchPalLoader
+                  variant="block"
+                  size="md"
+                  message="PerchPal is gathering previous suggestion runs..."
+                />
+              ) : isGenerating ? (
+                <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-6 text-center text-sm text-gp-evergreen shadow-sm">
+                  <div className="flex flex-col items-center gap-3">
+                    <PerchPalLoader
+                      variant="inline"
+                      size="md"
+                      message="Retrieving gifts..."
+                      ariaLabel="Asking PerchPal for suggestions"
+                    />
+                    <div className="mt-1 h-2 w-full max-w-xs overflow-hidden rounded-full border border-black/40 bg-white shadow-inner">
+                      <div
+                        className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
+                        style={{ width: `${Math.min(100, requestProgress)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : !activeRun ? (
+                <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-6 text-center text-sm text-gp-evergreen">
+                  Ask PerchPal for suggestions to see curated gift ideas here.
+                </div>
+              ) : visibleSuggestions.length === 0 ? (
+                <div className="rounded-2xl border border-gp-evergreen/20 bg-white/90 p-6 text-sm text-gp-evergreen">
+                  No suggestions match your filters. Clear the filters to see all
+                  ideas from this run.
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gp-evergreen/70">
                     <span>
-                      Budget:{" "}
-                      {formatBudgetRange(
-                        activeRun.prompt_context.budget_min,
-                        activeRun.prompt_context.budget_max,
-                      )}
+                      Generated {new Date(activeRun.created_at).toLocaleString()}{" "}
+                      for {activeRun.prompt_context.recipient_name}
+                      {activeRun.prompt_context.occasion
+                        ? ` - ${activeRun.prompt_context.occasion}`
+                        : ""}
                     </span>
-                  ) : null}
+                    <FirstSuggestionsTipBanner hasSuggestionsThisSession={showTipBanner} />
+                    {activeRun.prompt_context.budget_min ||
+                    activeRun.prompt_context.budget_max ? (
+                      <span>
+                        Budget:{" "}
+                        {formatBudgetRange(
+                          activeRun.prompt_context.budget_min,
+                          activeRun.prompt_context.budget_max,
+                        )}
+                      </span>
+                    ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {visibleSuggestions.map((suggestion, idx) => {
                     const suggestionKey = getSuggestionIdentity(suggestion);
                     return (
-                  <GiftSuggestionCard
-                    key={suggestionKey}
-                    suggestionKey={suggestionKey}
-                    suggestion={suggestion}
-                    amazonState={amazonBySuggestion[suggestion.id]}
-                      copiedSuggestionId={copiedSuggestionId}
-                      onCopy={handleCopySuggestion}
-                      onFetchAmazon={handleFetchAmazonProducts}
-                      onSaveGift={handleSaveGift}
-                      onUnsaveGift={handleUnsaveGift}
-                      isSaved={!!savedMap[suggestionKey]}
-                      isLiked={!!likedMap[suggestionKey]}
-                      isDisliked={!!dislikedMap[suggestionKey]}
-                      lastSavedId={lastSavedId}
-                      lastUnsavedId={lastUnsavedId}
-                      saveState={saveStates[suggestionKey]}
-                    onOpenSaved={() => {
-                      if (selectedRecipient) {
-                        setSavedGiftsRecipientId(selectedRecipient.id);
-                        setSavedGiftsRecipientName(selectedRecipient.name);
-                        setSavedGiftsOpen(true);
-                      }
-                    }}
-                    onDismissSave={() => handleDismissSave(suggestionKey)}
-                    onClearAmazon={() => handleClearAmazon(suggestion.id)}
-                    feedback={feedbackById[suggestionKey] ?? null}
-                    feedbackError={feedbackErrorById[suggestionKey] ?? null}
-                    dismissedFeedback={!!dismissedFeedbackByKey[suggestionKey]}
-                    onDismissFeedback={() =>
-                      setDismissedFeedbackByKey((prev) => ({
-                        ...prev,
-                        [suggestionKey]: true,
-                      }))
-                    }
-                    onToggleFeedback={(next) =>
-                      toggleFeedback(suggestionKey, suggestion, idx, next)
-                    }
-                  />
-                );
-              })}
-              </div>
-            </>
-          )}
+                        <GiftSuggestionCard
+                          key={suggestionKey}
+                          suggestionKey={suggestionKey}
+                          suggestion={suggestion}
+                          amazonState={amazonBySuggestion[suggestion.id]}
+                          copiedSuggestionId={copiedSuggestionId}
+                          onCopy={handleCopySuggestion}
+                          onFetchAmazon={handleFetchAmazonProducts}
+                          onSaveGift={handleSaveGift}
+                          onUnsaveGift={handleUnsaveGift}
+                          isSaved={!!savedMap[suggestionKey]}
+                          isLiked={!!likedMap[suggestionKey]}
+                          isDisliked={!!dislikedMap[suggestionKey]}
+                          lastSavedId={lastSavedId}
+                          lastUnsavedId={lastUnsavedId}
+                          saveState={saveStates[suggestionKey]}
+                          onOpenSaved={() => {
+                            if (selectedRecipient) {
+                              setSavedGiftsRecipientId(selectedRecipient.id);
+                              setSavedGiftsRecipientName(
+                                selectedRecipient.name,
+                              );
+                              setSavedGiftsOpen(true);
+                            }
+                          }}
+                          onDismissSave={() => handleDismissSave(suggestionKey)}
+                          onClearAmazon={() => handleClearAmazon(suggestion.id)}
+                          feedback={feedbackById[suggestionKey] ?? null}
+                          feedbackError={feedbackErrorById[suggestionKey] ?? null}
+                          dismissedFeedback={
+                            !!dismissedFeedbackByKey[suggestionKey]
+                          }
+                          onDismissFeedback={() =>
+                            setDismissedFeedbackByKey((prev) => ({
+                              ...prev,
+                              [suggestionKey]: true,
+                            }))
+                          }
+                          onToggleFeedback={(next) =>
+                            toggleFeedback(suggestionKey, suggestion, idx, next)
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </>
       )}
