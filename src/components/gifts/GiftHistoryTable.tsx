@@ -759,82 +759,36 @@ export function GiftHistoryTable() {
   return (
     <div className="space-y-6">
       {activeTab === "history" ? (
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setFiltersOpen((prev) => !prev)}
-            className="gp-card flex w-full items-center justify-between rounded-2xl border border-gp-evergreen/10 bg-white/90 px-4 py-3 text-sm text-gp-evergreen transition hover:border-gp-evergreen/30 cursor-pointer"
-          >
-            <span className="font-semibold text-gp-evergreen">Filter gifts</span>
-            <svg
-              aria-hidden="true"
-              className={`h-4 w-4 transition ${filtersOpen ? "rotate-180" : ""}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </button>
+        <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+              Recipient
+              <select
+                value={recipientFilter}
+                onChange={(event) => setRecipientFilter(event.target.value)}
+                className="gp-input cursor-pointer"
+              >
+                <option value="all">All recipients</option>
+                {recipients.map((recipient) => (
+                  <option key={recipient.id} value={recipient.id}>
+                    {recipient.name}
+                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          {filtersOpen ? (
-            <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-                  Recipient
-                  <select
-                    value={recipientFilter}
-                    onChange={(event) => setRecipientFilter(event.target.value)}
-                    className="gp-input cursor-pointer"
-                  >
-                    <option value="all">All recipients</option>
-                    {recipients.map((recipient) => (
-                      <option key={recipient.id} value={recipient.id}>
-                        {recipient.name}
-                        {recipient.relationship ? ` (${recipient.relationship})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-                  Search
-                  <input
-                    type="text"
-                    placeholder="Search by gift title or notes..."
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    className="gp-input"
-                  />
-                </label>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-                  Date from
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(event) => setDateFrom(event.target.value)}
-                    className="gp-input cursor-pointer"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-                  Date to
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(event) => setDateTo(event.target.value)}
-                    className="gp-input cursor-pointer"
-                  />
-                </label>
-              </div>
-            </div>
-          ) : null}
+            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
+              Search
+              <input
+                type="text"
+                placeholder="Search by gift title or notes..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="gp-input"
+              />
+            </label>
+          </div>
         </div>
       ) : null}
 
