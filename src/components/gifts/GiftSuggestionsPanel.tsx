@@ -160,7 +160,11 @@ const formatRunLabel = (run: SuggestionRun) => {
         .replace(/_/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase())) ||
     "No occasion";
-  return `${dateStr} • ${timeStr} • ${occasion}`;
+  const ideaCount = Array.isArray(run.suggestions)
+    ? run.suggestions.length
+    : 0;
+  const ideaLabel = ideaCount === 1 ? "idea" : "ideas";
+  return `${dateStr} • ${timeStr} • ${occasion} • ${ideaCount} ${ideaLabel}`;
 };
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
