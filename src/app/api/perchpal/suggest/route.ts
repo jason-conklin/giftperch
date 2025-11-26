@@ -87,6 +87,7 @@ const normalize = (str: string | null | undefined) =>
   (str ?? "").trim().toLowerCase();
 const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
+const OPENAI_TIMEOUT_MS = 45_000;
 
 function buildPriceGuidance(
   min?: number | null,
@@ -280,7 +281,8 @@ export async function POST(request: NextRequest) {
 
     let completion;
     try {
-      completion = await openai.chat.completions.create({
+      completion = await openai.chat.completions.create(
+      {
         model: SUGGESTION_MODEL,
         temperature: 1.2,
         top_p: 0.95,
@@ -356,8 +358,9 @@ export async function POST(request: NextRequest) {
         },
         { role: "user", content: JSON.stringify(userMessageContent) },
         ],
-        timeout: OPENAI_TIMEOUT_MS,
-      });
+      },
+      { timeout: OPENAI_TIMEOUT_MS },
+    );
     } catch (err) {
       console.error("OpenAI suggestion generation failed", err);
       return NextResponse.json(
