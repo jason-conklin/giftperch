@@ -1531,7 +1531,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 type="submit"
                 disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
                 aria-disabled={isGenerating || requestProgress > 0}
-                className="inline-flex w-full max-w-sm items-center justify-center rounded-full bg-gp-evergreen px-6 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                className="inline-flex w-full max-w-md items-center justify-center rounded-full bg-gp-evergreen px-8 py-3.5 text-lg font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
                 {isGenerating ? "Asking PerchPal…" : "Ask PerchPal for suggestions"}
               </button>
@@ -1572,7 +1572,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     type="button"
                     disabled={!activeRunId}
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
+                    className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
                   >
                     Delete run
                   </button>
@@ -1787,21 +1787,21 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
               history. This action can’t be undone.
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-gp-evergreen border border-gp-evergreen/20 hover:bg-gp-cream/80"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteRun}
-                disabled={isDeletingRun}
-                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
-              >
-                {isDeletingRun ? "Deleting..." : "Delete"}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-gp-evergreen border border-gp-evergreen/20 hover:bg-gp-cream/80 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteRun}
+                  disabled={isDeletingRun}
+                  className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isDeletingRun ? "Deleting..." : "Delete"}
+                </button>
             </div>
           </div>
         </div>
