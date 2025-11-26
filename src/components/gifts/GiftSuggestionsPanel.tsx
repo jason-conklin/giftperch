@@ -1080,28 +1080,26 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
 
     if (isRequesting) {
       setRequestProgress((prev) => (prev > 0 ? prev : 5));
       interval = setInterval(() => {
         setRequestProgress((prev) => {
-          const target = 85;
+          const target = 92;
           if (prev >= target) return prev;
-          const increment = Math.max(0.5, (target - prev) * 0.08);
+          const increment = Math.max(0.3, (target - prev) * 0.05);
           return Math.min(target, prev + increment);
         });
-      }, 200);
+      }, 220);
     } else {
-      // Complete and reset after a brief delay
       setRequestProgress((prev) => (prev > 0 && prev < 100 ? 100 : prev));
-      const timeout = setTimeout(() => setRequestProgress(0), 500);
-      return () => {
-        if (timeout) clearTimeout(timeout);
-      };
+      timeout = setTimeout(() => setRequestProgress(0), 600);
     }
 
     return () => {
       if (interval) clearInterval(interval);
+      if (timeout) clearTimeout(timeout);
     };
   }, [isRequesting]);
 
