@@ -789,6 +789,7 @@ export function OccasionsManager() {
                 You need at least one recipient profile before you can plan occasions. Head to the Recipients page to add a person.
               </div>
             )}
+            </div>
           </div>
         </div>
       ) : null}
