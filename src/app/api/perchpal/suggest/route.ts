@@ -303,7 +303,7 @@ export async function POST(request: NextRequest) {
       completion = await openai.chat.completions.create(
       {
         model: SUGGESTION_MODEL,
-          temperature: 0.6,
+          temperature: 0.9,
         messages: [
           {
           role: "system",
