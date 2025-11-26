@@ -88,7 +88,6 @@ const normalize = (str: string | null | undefined) =>
 const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
 const OPENAI_TIMEOUT_MS = 90_000;
-const SUGGESTION_MAX_TOKENS = 2800;
 
 const tryParseJsonObject = (raw: string): { suggestions?: unknown } => {
   try {
@@ -304,12 +303,7 @@ export async function POST(request: NextRequest) {
       completion = await openai.chat.completions.create(
       {
         model: SUGGESTION_MODEL,
-          temperature: 1.2,
-          top_p: 0.95,
-          presence_penalty: 0.6,
-          frequency_penalty: 0.4,
-          max_tokens: SUGGESTION_MAX_TOKENS,
-          response_format: { type: "json_object" },
+          temperature: 0.6,
         messages: [
           {
           role: "system",
