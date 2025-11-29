@@ -15,6 +15,12 @@ export const metadata: Metadata = {
 
 const actions = [
   {
+    href: "/history",
+    title: "View gift history",
+    description:
+      "Review past gifts so you don’t repeat yourself and can level them up next time.",
+  },
+  {
     href: "/recipients",
     title: "Create a new recipient profile",
     description:
@@ -25,12 +31,6 @@ const actions = [
     title: "Ask PerchPal for a gift idea",
     description:
       "Choose a recipient and let your AI co-pilot suggest thoughtful gift ideas.",
-  },
-  {
-    href: "/history",
-    title: "View gift history",
-    description:
-      "Review past gifts so you don’t repeat yourself and can level them up next time.",
   },
 ];
 
