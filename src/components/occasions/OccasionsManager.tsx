@@ -808,18 +808,18 @@ export function OccasionsManager() {
                   </p>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                     {[
-                      { key: "icon-occasion-day.png", label: "Everyday" },
+                      { key: "icon-occasion-day.png", label: "Sun" },
                       { key: "icon-occasion-gift.png", label: "Gift" },
-                      { key: "icon-occasion-birthday.png", label: "Birthday" },
-                      { key: "icon-occasion-christmas.png", label: "Christmas" },
-                      { key: "icon-occasion-anniversary.png", label: "Anniversary" },
+                      { key: "icon-occasion-birthday.png", label: "Cake" },
+                      { key: "icon-occasion-christmas.png", label: "Tree" },
+                      { key: "icon-occasion-anniversary.png", label: "Ring" },
                       { key: "icon-occasion-graduation.png", label: "Graduation" },
-                      { key: "icon-occasion-valentines.png", label: "Valentine's" },
-                      { key: "icon-occasion-mothersday.png", label: "Mother's Day" },
-                      { key: "icon-occasion-fathersday.png", label: "Father's Day" },
-                      { key: "icon-occasion-newyears.png", label: "New Year's" },
-                      { key: "icon-occasion-thanksgiving.png", label: "Thanksgiving" },
-                      { key: "icon-occasion-halloween.png", label: "Halloween" },
+                      { key: "icon-occasion-valentines.png", label: "Love" },
+                      { key: "icon-occasion-mothersday.png", label: "Flowers" },
+                      { key: "icon-occasion-fathersday.png", label: "Tie" },
+                      { key: "icon-occasion-newyears.png", label: "Fireworks" },
+                      { key: "icon-occasion-thanksgiving.png", label: "Turkey" },
+                      { key: "icon-occasion-halloween.png", label: "Pumpkin" },
                     ].map((option) => {
                       const selected = newIconKey === option.key;
                       return (
