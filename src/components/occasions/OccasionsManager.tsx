@@ -26,6 +26,7 @@ type Occasion = {
   event_date: string | null;
   icon_key?: string | null;
   notes: string | null;
+  occurs_every_year?: boolean | null;
   recipient?: {
     name: string;
     relationship: string | null;
@@ -146,6 +147,7 @@ export function OccasionsManager() {
   const [newIconKey, setNewIconKey] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [occursEveryYear, setOccursEveryYear] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
 
@@ -154,7 +156,7 @@ export function OccasionsManager() {
     const { data, error } = await supabase
       .from("recipient_events")
       .select(
-        "id, label, event_type, event_date, icon_key, notes, recipient:recipient_profiles(name, relationship)"
+        "id, label, event_type, event_date, icon_key, notes, occurs_every_year, recipient:recipient_profiles(name, relationship)"
       )
       .eq("recipient_profiles.user_id", user.id)
       .eq("recipient_profiles.is_self", false)
@@ -191,6 +193,9 @@ export function OccasionsManager() {
           event_date: (occasion as { event_date?: string }).event_date ?? null,
           icon_key: (occasion as { icon_key?: string | null }).icon_key ?? null,
           notes: (occasion as { notes?: string }).notes ?? null,
+          occurs_every_year:
+            (occasion as { occurs_every_year?: boolean | null }).occurs_every_year ??
+            null,
           recipient: resolvedRecipient,
         } as Occasion;
       }) ?? []
@@ -263,6 +268,7 @@ export function OccasionsManager() {
       event_date: newEventDate,
       icon_key: newIconKey || null,
       notes: newNotes || null,
+      occurs_every_year: occursEveryYear,
     });
 
     if (error) {
@@ -274,6 +280,7 @@ export function OccasionsManager() {
       setNewEventDate("");
       setNewIconKey("");
       setNewRecipientId("");
+      setOccursEveryYear(false);
       try {
         const normalized = await fetchOccasions();
         setOccasions(normalized);
@@ -335,14 +342,32 @@ export function OccasionsManager() {
           ? "birthday"
           : "custom";
 
-      mapped.push({
-        id: `occasion-${occasion.id}`,
-        date: occasion.event_date,
-        title: occasion.label ?? "Upcoming occasion",
-        type: normalizedType,
-        recipientName: occasion.recipient?.name ?? undefined,
-        iconKey: occasion.icon_key ?? null,
-      });
+      const baseDate = parseDateSafe(occasion.event_date);
+      if (!baseDate) return;
+
+      if (occasion.occurs_every_year) {
+        const month = baseDate.getMonth() + 1;
+        const day = baseDate.getDate();
+        years.forEach((year) => {
+          mapped.push({
+            id: `occasion-${occasion.id}-${year}`,
+            date: makeLocalIso(year, month, day),
+            title: occasion.label ?? "Upcoming occasion",
+            type: normalizedType,
+            recipientName: occasion.recipient?.name ?? undefined,
+            iconKey: occasion.icon_key ?? null,
+          });
+        });
+      } else {
+        mapped.push({
+          id: `occasion-${occasion.id}`,
+          date: occasion.event_date,
+          title: occasion.label ?? "Upcoming occasion",
+          type: normalizedType,
+          recipientName: occasion.recipient?.name ?? undefined,
+          iconKey: occasion.icon_key ?? null,
+        });
+      }
     });
 
     return mapped.sort(
@@ -428,6 +453,7 @@ export function OccasionsManager() {
         onAddDate={(iso) => {
           const dateOnly = iso.split("T")[0] ?? iso;
           setNewEventDate(dateOnly);
+          setOccursEveryYear(false);
           setShowAddModal(true);
         }}
       />
@@ -535,7 +561,10 @@ export function OccasionsManager() {
             </div>
             <button
               type="button"
-              onClick={() => setShowAddModal(true)}
+              onClick={() => {
+                setOccursEveryYear(false);
+                setShowAddModal(true);
+              }}
               className="gp-secondary-button cursor-pointer"
             >
               Add occasion
@@ -775,12 +804,22 @@ export function OccasionsManager() {
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Event date
                   <input
-                    type="date"
-                    className="gp-input cursor-pointer bg-white"
-                    value={newEventDate}
-                    onChange={(event) => setNewEventDate(event.target.value)}
-                    required
+              type="date"
+              className="gp-input cursor-pointer bg-white"
+              value={newEventDate}
+              onChange={(event) => setNewEventDate(event.target.value)}
+              required
+            />
+          </label>
+
+                <label className="mt-1 flex items-center gap-2 text-sm text-gp-evergreen/80">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gp-evergreen/30 text-gp-evergreen focus:ring-gp-evergreen"
+                    checked={occursEveryYear}
+                    onChange={(event) => setOccursEveryYear(event.target.checked)}
                   />
+                  <span>Every year</span>
                 </label>
 
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
