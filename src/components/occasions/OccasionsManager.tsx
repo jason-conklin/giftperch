@@ -21,6 +21,7 @@ type RecipientOption = {
 
 type Occasion = {
   id: string;
+  recipient_id?: string | null;
   label: string | null;
   event_type: string | null;
   event_date: string | null;
@@ -150,13 +151,14 @@ export function OccasionsManager() {
   const [occursEveryYear, setOccursEveryYear] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [editingOccasion, setEditingOccasion] = useState<Occasion | null>(null);
 
   const fetchOccasions = useCallback(async (): Promise<Occasion[]> => {
     if (!user?.id) return [];
     const { data, error } = await supabase
       .from("recipient_events")
       .select(
-        "id, label, event_type, event_date, icon_key, notes, occurs_every_year, recipient:recipient_profiles(name, relationship)"
+        "id, recipient_id, label, event_type, event_date, icon_key, notes, occurs_every_year, recipient:recipient_profiles(name, relationship)"
       )
       .eq("recipient_profiles.user_id", user.id)
       .eq("recipient_profiles.is_self", false)
@@ -188,6 +190,7 @@ export function OccasionsManager() {
 
         return {
           id: occasion.id as string,
+          recipient_id: (occasion as { recipient_id?: string | null }).recipient_id ?? null,
           label: (occasion as { label?: string }).label ?? null,
           event_type: (occasion as { event_type?: string }).event_type ?? null,
           event_date: (occasion as { event_date?: string }).event_date ?? null,
@@ -255,13 +258,23 @@ export function OccasionsManager() {
     };
   }, [status, supabase, user?.id, fetchOccasions]);
 
-  const handleAddOccasion = async (event: React.FormEvent<HTMLFormElement>) => {
+  const resetForm = () => {
+    setNewRecipientId("");
+    setNewTitle("");
+    setNewEventType("");
+    setNewEventDate("");
+    setNewIconKey("");
+    setNewNotes("");
+    setOccursEveryYear(false);
+  };
+
+  const handleSubmitOccasion = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user?.id || !newRecipientId || !newEventDate) return;
     setSaving(true);
     setError("");
 
-    const { error } = await supabase.from("recipient_events").insert({
+    const payload = {
       recipient_id: newRecipientId,
       event_type: newEventType || "custom",
       label: newTitle || "Upcoming occasion",
@@ -269,18 +282,19 @@ export function OccasionsManager() {
       icon_key: newIconKey || null,
       notes: newNotes || null,
       occurs_every_year: occursEveryYear,
-    });
+    };
+
+    const { error } = editingOccasion
+      ? await supabase
+          .from("recipient_events")
+          .update(payload)
+          .eq("id", editingOccasion.id)
+      : await supabase.from("recipient_events").insert(payload);
 
     if (error) {
       setError(error.message);
     } else {
-      setNewNotes("");
-      setNewTitle("");
-      setNewEventType("");
-      setNewEventDate("");
-      setNewIconKey("");
-      setNewRecipientId("");
-      setOccursEveryYear(false);
+      resetForm();
       try {
         const normalized = await fetchOccasions();
         setOccasions(normalized);
@@ -288,6 +302,7 @@ export function OccasionsManager() {
         const message = err instanceof Error ? err.message : "Unable to refresh occasions.";
         setError(message);
       }
+      setEditingOccasion(null);
       setShowAddModal(false);
     }
     setSaving(false);
@@ -438,6 +453,26 @@ export function OccasionsManager() {
     setRemovingId(null);
   };
 
+  const startEditingOccasion = (occasion: Occasion) => {
+    setEditingOccasion(occasion);
+    setNewRecipientId(occasion.recipient_id ?? "");
+    setNewTitle(occasion.label ?? "");
+    setNewEventType(occasion.event_type ?? "");
+    setNewEventDate(
+      occasion.event_date ? occasion.event_date.split("T")[0] ?? occasion.event_date : ""
+    );
+    setNewIconKey(occasion.icon_key ?? "");
+    setNewNotes(occasion.notes ?? "");
+    setOccursEveryYear(Boolean(occasion.occurs_every_year));
+    setShowAddModal(true);
+  };
+
+  const closeModal = () => {
+    setShowAddModal(false);
+    setEditingOccasion(null);
+    resetForm();
+  };
+
   const calendarEmptyMessage = calendarEvents.length
     ? undefined
     : hasRecipients
@@ -451,8 +486,10 @@ export function OccasionsManager() {
         emptyMessage={calendarEmptyMessage}
         isLoading={loading || loadingRecipients}
         onAddDate={(iso) => {
+          resetForm();
           const dateOnly = iso.split("T")[0] ?? iso;
           setNewEventDate(dateOnly);
+          setEditingOccasion(null);
           setOccursEveryYear(false);
           setShowAddModal(true);
         }}
@@ -562,7 +599,8 @@ export function OccasionsManager() {
             <button
               type="button"
               onClick={() => {
-                setOccursEveryYear(false);
+                setEditingOccasion(null);
+                resetForm();
                 setShowAddModal(true);
               }}
               className="gp-secondary-button cursor-pointer"
@@ -619,6 +657,13 @@ export function OccasionsManager() {
                     </Link>
                     <button
                       type="button"
+                      onClick={() => startEditingOccasion(occasion)}
+                      className="text-xs font-semibold text-gp-evergreen/80 underline-offset-4 hover:text-gp-evergreen hover:underline cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleRemoveOccasion(occasion.id)}
                       className="cursor-pointer text-xs font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline disabled:opacity-60"
                       disabled={removingId === occasion.id}
@@ -661,8 +706,8 @@ export function OccasionsManager() {
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label="Add occasion"
-          onClick={() => setShowAddModal(false)}
+          aria-label={editingOccasion ? "Edit occasion" : "Add occasion"}
+          onClick={closeModal}
         >
           <div
             className="relative w-full max-w-3xl rounded-3xl bg-gp-cream p-0 shadow-2xl max-h-[90vh] overflow-y-auto"
@@ -671,7 +716,7 @@ export function OccasionsManager() {
             <button
               type="button"
               className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
-              onClick={() => setShowAddModal(false)}
+              onClick={closeModal}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -689,7 +734,7 @@ export function OccasionsManager() {
             <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
               <div>
                 <p className="text-base uppercase tracking-wide text-gp-cream/80">
-                  Add occasion
+                  {editingOccasion ? "Edit occasion" : "Add occasion"}
                 </p>
                 <h2 className="text-sm font-semibold text-gp-cream">
                   Tie a date to a recipient so their history, preferences, and budget appear in Gift Ideas instantly.
@@ -701,7 +746,7 @@ export function OccasionsManager() {
             {loadingRecipients ? (
               <p className="mt-4 text-sm text-gp-evergreen/70">Loading recipients...</p>
             ) : hasRecipients ? (
-              <form id="add-occasion-form" className="mt-0 space-y-4" onSubmit={handleAddOccasion}>
+              <form id="add-occasion-form" className="mt-0 space-y-4" onSubmit={handleSubmitOccasion}>
                 <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
                   Recipient
                   <select
@@ -837,7 +882,13 @@ export function OccasionsManager() {
                   className="w-full cursor-pointer rounded-full bg-gp-gold px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-[#d8ba6c] disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={saving}
                 >
-                  {saving ? "Saving..." : "Save occasion"}
+                  {saving
+                    ? editingOccasion
+                      ? "Updating..."
+                      : "Saving..."
+                    : editingOccasion
+                    ? "Update occasion"
+                    : "Save occasion"}
                 </button>
               </form>
             ) : (
