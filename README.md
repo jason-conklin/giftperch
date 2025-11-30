@@ -1,4 +1,4 @@
-🎁 GiftPerch — Thoughtful Gifting, Reimagined with AI
+<img width="2235" height="469" alt="giftperch_banner_github" src="https://github.com/user-attachments/assets/7e781345-22e5-4d12-98b1-17ca7363abe6" />
 <img width="1533" height="908" alt="Screenshot 2025-11-28 171701" src="https://github.com/user-attachments/assets/b8a98fbb-a752-49cb-a605-f36bdec25297" />
 
 GiftPerch is an AI-powered gifting platform that helps people remember the important people in their lives — their interests, personalities, occasions, budgets, and gift history — and delivers deeply personalized gift recommendations using PerchPal, your friendly AI gifting assistant.
