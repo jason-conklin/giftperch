@@ -36,8 +36,8 @@ type Occasion = {
 
 const formatDisplayDate = (iso: string | null) => {
   if (!iso) return "No date";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
+  const date = parseDateSafe(iso);
+  if (!date) return iso;
   return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -52,6 +52,13 @@ const startOfDay = (value: Date) => {
 
 const parseDateSafe = (value: string | null | undefined) => {
   if (!value) return null;
+  const isoDateOnly = /^\d{4}-\d{2}-\d{2}$/;
+  if (isoDateOnly.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    const parsedLocal = new Date(year, month - 1, day, 12, 0, 0);
+    if (Number.isNaN(parsedLocal.getTime())) return null;
+    return parsedLocal;
+  }
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   parsed.setHours(12, 0, 0, 0);
@@ -361,13 +368,15 @@ export function OccasionsManager() {
       const baseDate = parseDateSafe(occasion.event_date);
       if (!baseDate) return;
 
+      const baseMonth = baseDate.getMonth() + 1;
+      const baseDay = baseDate.getDate();
+      const baseYear = baseDate.getFullYear();
+
       if (occasion.occurs_every_year) {
-        const month = baseDate.getMonth() + 1;
-        const day = baseDate.getDate();
         years.forEach((year) => {
           mapped.push({
             id: `occasion-${occasion.id}-${year}`,
-            date: makeLocalIso(year, month, day),
+            date: makeLocalIso(year, baseMonth, baseDay),
             title: occasion.label ?? "Upcoming occasion",
             type: normalizedType,
             recipientName: occasion.recipient?.name ?? undefined,
@@ -377,7 +386,7 @@ export function OccasionsManager() {
       } else {
         mapped.push({
           id: `occasion-${occasion.id}`,
-          date: occasion.event_date,
+          date: makeLocalIso(baseYear, baseMonth, baseDay),
           title: occasion.label ?? "Upcoming occasion",
           type: normalizedType,
           recipientName: occasion.recipient?.name ?? undefined,
