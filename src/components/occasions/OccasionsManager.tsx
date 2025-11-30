@@ -152,6 +152,7 @@ export function OccasionsManager() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [editingOccasion, setEditingOccasion] = useState<Occasion | null>(null);
+  const [occasionToDelete, setOccasionToDelete] = useState<Occasion | null>(null);
 
   const fetchOccasions = useCallback(async (): Promise<Occasion[]> => {
     if (!user?.id) return [];
@@ -664,7 +665,7 @@ export function OccasionsManager() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveOccasion(occasion.id)}
+                      onClick={() => setOccasionToDelete(occasion)}
                       className="cursor-pointer text-xs font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline disabled:opacity-60"
                       disabled={removingId === occasion.id}
                     >
@@ -896,6 +897,44 @@ export function OccasionsManager() {
                 You need at least one recipient profile before you can plan occasions. Head to the Recipients page to add a person.
               </div>
             )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {occasionToDelete ? (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-gp-cream p-5 shadow-xl">
+            <p className="text-sm font-semibold text-gp-evergreen">
+              Delete this occasion?
+            </p>
+            <p className="mt-2 text-sm text-gp-evergreen/80">
+              This will remove the occasion from your calendar. This action can’t be undone.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOccasionToDelete(null);
+                  setRemovingId(null);
+                }}
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-gp-evergreen border border-gp-evergreen/20 hover:bg-gp-cream/80 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (occasionToDelete?.id) {
+                    void handleRemoveOccasion(occasionToDelete.id);
+                  }
+                  setOccasionToDelete(null);
+                }}
+                disabled={!!removingId}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {removingId ? "Removing..." : "Delete"}
+              </button>
             </div>
           </div>
         </div>
