@@ -1539,7 +1539,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 aria-disabled={isGenerating || requestProgress > 0}
                 className="inline-flex w-full max-w-md items-center justify-center rounded-full bg-gp-evergreen px-7 py-3 text-base font-semibold text-gp-cream transition hover:bg-[#0c3132] hover:-translate-y-0.5 hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
-                {isGenerating ? "Asking PerchPal…" : "Ask PerchPal for suggestions"}
+                {isGenerating ? "Asking PerchPal…" : "Generate Gift Ideas"}
               </button>
             </div>
           </form>
