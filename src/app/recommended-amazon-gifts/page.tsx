@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "GiftPerch — Recommended Amazon Gifts",
@@ -47,7 +49,61 @@ const products = [
 
 export default function RecommendedAmazonGiftsPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
+    <div className="min-h-screen bg-gp-cream/80 text-gp-evergreen">
+      <header className="border-b border-gp-evergreen/25 bg-gp-evergreen">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-0">
+          <Link
+            href="/"
+            className="flex items-center gap-3 rounded-full bg-white/90 px-4 py-2 text-gp-evergreen shadow-sm sm:gap-4 sm:px-5 sm:py-3"
+          >
+            <Image
+              src="/giftperch_logo_background.png"
+              alt="GiftPerch logo"
+              width={64}
+              height={64}
+              className="h-12 w-12 rounded-full border border-gp-cream/30 object-cover sm:h-14 sm:w-14"
+              priority
+            />
+            <div className="text-gp-evergreen">
+              <p className="text-xl font-semibold leading-tight sm:text-2xl">
+                GiftPerch
+              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-gp-evergreen/70 sm:text-xs">
+                Thoughtful gifting, reimagined
+              </p>
+            </div>
+          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <nav className="flex items-center gap-4 text-sm font-semibold text-gp-cream">
+              <Link
+                href="/about"
+                className="rounded-full px-3 py-1 transition hover:underline hover:underline-offset-4"
+              >
+                About
+              </Link>
+              <Link
+                href="/blog"
+                className="rounded-full px-3 py-1 transition hover:underline hover:underline-offset-4"
+              >
+                Blog
+              </Link>
+            </nav>
+            <Link
+              href="/auth/login"
+              className="rounded-full border border-gp-cream/40 bg-white/90 px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+            >
+              Login
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="rounded-full bg-gp-gold px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
+            >
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-evergreen/60">
           Recommended Amazon Gifts
@@ -94,6 +150,7 @@ export default function RecommendedAmazonGiftsPage() {
           </article>
         ))}
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
