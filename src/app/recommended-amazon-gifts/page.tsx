@@ -12,37 +12,37 @@ const products = [
   {
     name: "Sage Green Fleece Throw Blanket",
     description:
-      "A linen-bound journal paired with a smooth-writing pen. Ideal for reflective writers, new grads, or anyone starting a fresh chapter and needing a calm space to capture ideas and gratitude.",
+      "A soft, cozy fleece throw that adds warmth and style to any living room or bedroom. Great for movie nights, reading sessions, or gifting to someone who loves comfort and homey touches.",
     url: "https://amzn.to/4pA4ixk",
   },
   {
     name: "Temperature-Controlled, Self-Heating Coffee Mug",
     description:
-      "A soft, breathable throw that layers well on a sofa or reading chair. Great for movie nights, chilly offices, or sending warmth to someone recovering or settling into a new home.",
+      "Keeps coffee or tea at the perfect sip-ready temperature for hours. Ideal for remote workers, busy students, or anyone who gets distracted and hates cold coffee.",
     url: "https://amzn.to/3XvEFlh",
   },
   {
     name: "LED Desk Lamp for Home Office",
     description:
-      "Keeps coffee or tea at a perfect sip temperature without overheating. A practical desk companion for remote workers, avid readers, or anyone who multitasks and forgets their mug.",
+      "A slim, adjustable LED lamp that brightens your workspace without glare. Perfect for late-night work, studying, or creating a clean, modern desk setup.",
     url: "https://amzn.to/4pHmcOv",
   },
   {
     name: "Waterless Essential Oil Diffuser",
     description:
-      "A beautifully illustrated puzzle with a wooden tray for building and displaying. Great for mindful breaks, creative friends, or family coffee tables where people gather and unwind together.",
+      "A compact, waterless diffuser that releases pure essential oils for a clean, consistent scent. Great for bedrooms, offices, or anyone who enjoys aromatherapy without the mess of water tanks.",
     url: "https://amzn.to/4pMS9Fr",
   },
   {
     name: "Lined Leather Journal Notebook and Pen Set",
     description:
-      "A shatter-resistant bottle with a built-in infuser for fruit or herbs. Perfect for walkers, commuters, or anyone building a healthier hydration habit with flavor variety.",
+      "A premium leather-bound journal paired with a smooth-writing pen. Ideal for writers, students, professionals, or anyone who enjoys planning, reflection, or daily journaling.",
     url: "https://amzn.to/4pbNJrD",
   },
   {
     name: "Aluminum Metal Adjustable Cell Phone Stand Desk",
     description:
-      "A compact, quiet diffuser that adds a gentle scent and calm light to small rooms. Suits dorms, apartments, or bedside tables for those who enjoy a relaxing evening wind-down.",
+      "A sturdy, adjustable aluminum phone stand that keeps your device upright for calls, videos, or multitasking. Great for desks, nightstands, or improving posture during long sessions.",
     url: "https://amzn.to/48qWpmJ",
   },
 ];
@@ -137,7 +137,7 @@ export default function RecommendedAmazonGiftsPage() {
               <a
                 href={product.url}
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="noopener noreferrer sponsored"
                 className="gp-primary-button inline-flex items-center justify-center"
               >
                 View on Amazon

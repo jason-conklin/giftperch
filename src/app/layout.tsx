@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Link from "next/link";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 
 const title = "GiftPerch";
@@ -35,6 +36,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const year = new Date().getFullYear();
+
   return (
     <html lang="en">
       <head>
@@ -49,6 +52,42 @@ export default function RootLayout({
             Skip to main content
           </a>
           {children}
+          <footer className="mt-16 border-t border-gp-cream/40 py-8">
+            <div className="mx-auto max-w-4xl space-y-2 text-center text-sm text-gp-evergreen/70">
+              <p>
+                © {year} GiftPerch. Built by{" "}
+                <Link
+                  href="https://jasonconklin.dev"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                >
+                  Jason Conklin
+                </Link>
+                .
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 text-xs uppercase tracking-wide">
+                <Link href="/privacy" className="hover:text-gp-evergreen">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="hover:text-gp-evergreen">
+                  Terms
+                </Link>
+                <Link href="/contact" className="hover:text-gp-evergreen">
+                  Contact
+                </Link>
+              </div>
+              <p className="text-xs text-gp-evergreen/70">
+                As an Amazon Associate, I earn from qualifying purchases.
+              </p>
+              <Link
+                href="/recommended-amazon-gifts"
+                className="text-xs text-gp-evergreen/70 hover:text-gp-evergreen hover:underline"
+              >
+                Curated Amazon gift ideas
+              </Link>
+            </div>
+          </footer>
         </SupabaseProvider>
       </body>
     </html>

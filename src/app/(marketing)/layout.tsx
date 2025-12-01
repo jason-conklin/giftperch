@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 
 const navItems = [
   { label: "About", href: "/about" },
@@ -139,9 +138,6 @@ export default function MarketingLayout({
       >
         {children}
       </main>
-      <div className="mx-auto w-full max-w-5xl px-4 pb-10 sm:px-6 lg:px-6">
-        <SiteFooter />
-      </div>
     </div>
   );
 }
