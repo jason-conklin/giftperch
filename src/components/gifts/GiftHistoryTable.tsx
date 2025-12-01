@@ -390,13 +390,15 @@ function SavedIdeaItem({
         </a>
       ) : null}
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={onLog}
-          className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
-        >
-          Log this gift
-        </button>
+        {idea.status !== "disliked" ? (
+          <button
+            type="button"
+            onClick={onLog}
+            className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+          >
+            Log this gift
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onRemove}
@@ -431,6 +433,8 @@ export function GiftHistoryTable() {
   const [activeTab, setActiveTab] = useState<"history" | "saved">("history");
   const [savedIdeas, setSavedIdeas] = useState<SavedIdeaAggregated[]>([]);
   const [isRemovingSaved, setIsRemovingSaved] = useState<string | null>(null);
+  const [savedIdeaToDelete, setSavedIdeaToDelete] =
+    useState<SavedIdeaAggregated | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState("");
   const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
@@ -787,6 +791,7 @@ export function GiftHistoryTable() {
         throw new Error(body.error || "Failed to remove saved idea");
       }
       setSavedIdeas((prev) => prev.filter((item) => item.id !== idea.id));
+      setSavedIdeaToDelete(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unable to remove saved idea.";
       setSavedError(message);
@@ -1013,7 +1018,7 @@ export function GiftHistoryTable() {
                   key={`${idea.status}-${idea.id}`}
                   idea={idea}
                   onLog={() => handleLogSavedIdea(idea)}
-                  onRemove={() => handleRemoveSavedIdea(idea)}
+                  onRemove={() => setSavedIdeaToDelete(idea)}
                   isRemoving={isRemovingSaved === idea.id}
                 />
               ))}
@@ -1033,6 +1038,53 @@ export function GiftHistoryTable() {
         onChange={setFormState}
         onSubmit={handleFormSubmit}
       />
+
+      {savedIdeaToDelete ? (
+        <div className="fixed inset-0 z-[205] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md space-y-4 rounded-2xl bg-gp-cream p-6 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
+                  Remove saved idea
+                </p>
+                <h2 className="text-xl font-semibold text-gp-evergreen">
+                  Remove “{savedIdeaToDelete.title}”?
+                </h2>
+                <p className="mt-1 text-sm text-gp-evergreen/70">
+                  This will remove the idea from your saved list. You can still regenerate ideas with PerchPal later.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSavedIdeaToDelete(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-semibold text-gp-evergreen/70 shadow-sm transition hover:scale-105 hover:text-gp-evergreen cursor-pointer"
+                aria-label="Close remove confirmation"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                className="gp-secondary-button"
+                onClick={() => setSavedIdeaToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  savedIdeaToDelete ? handleRemoveSavedIdea(savedIdeaToDelete) : null
+                }
+                disabled={isRemovingSaved === savedIdeaToDelete.id}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {isRemovingSaved === savedIdeaToDelete.id ? "Removing..." : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {giftToDelete ? (
         <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
