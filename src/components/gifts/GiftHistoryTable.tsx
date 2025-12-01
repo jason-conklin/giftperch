@@ -8,6 +8,21 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 
+const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
+  key: string;
+  label: string;
+  image: string;
+}> = [
+  { key: "babyboy", label: "Baby boy", image: "/babyboy_icon.png" },
+  { key: "babygirl", label: "Baby girl", image: "/babygirl_icon.png" },
+  { key: "boy", label: "Boy", image: "/boy_icon.png" },
+  { key: "girl", label: "Girl", image: "/girl_icon.png" },
+  { key: "man", label: "Man", image: "/man_icon.png" },
+  { key: "woman", label: "Woman", image: "/woman_icon.png" },
+  { key: "dog", label: "Dog", image: "/dog_icon.png" },
+  { key: "cat", label: "Cat", image: "/cat_icon.png" },
+];
+
 export type GiftHistoryEntry = {
   id: string;
   user_id: string;
@@ -58,6 +73,14 @@ const getInitials = (value: string) => {
   const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
   const initials = `${first}${last}`.toUpperCase();
   return initials || "GP";
+};
+
+const buildAmazonSearchUrl = (query: string) => {
+  const partner =
+    process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
+  return `https://www.amazon.com/s?k=${encodeURIComponent(
+    query || "",
+  )}&tag=${encodeURIComponent(partner)}`;
 };
 
 const toNoonIso = (dateStr: string | null | undefined) => {
@@ -316,14 +339,14 @@ function GiftHistoryItem({
           <button
             type="button"
             onClick={() => onEdit(gift)}
-            className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70"
+            className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70 cursor-pointer"
           >
             Edit
           </button>
           <button
             type="button"
             onClick={() => onDelete(gift)}
-            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:underline"
+            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:underline cursor-pointer"
           >
             Delete
           </button>
@@ -338,11 +361,13 @@ function SavedIdeaItem({
   onLog,
   onRemove,
   isRemoving,
+  recipientMap,
 }: {
   idea: SavedIdeaAggregated;
   onLog: () => void;
   onRemove: () => void;
   isRemoving: boolean;
+  recipientMap: Record<string, RecipientSummary>;
 }) {
   const badgeStyles =
     idea.status === "saved"
@@ -366,47 +391,86 @@ function SavedIdeaItem({
       })
     : null;
 
+  const amazonUrl = buildAmazonSearchUrl(idea.title);
+
   return (
-    <div className="gp-card flex flex-col gap-1 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-gp-evergreen">{idea.title}</p>
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeStyles}`}>
-          {savedLabel}
-        </span>
+    <div className="gp-card flex items-start gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold text-gp-evergreen">
+        {idea.recipient_id &&
+        recipientMap[idea.recipient_id]?.avatar_url ? (
+          <Image
+            src={recipientMap[idea.recipient_id]?.avatar_url || ""}
+            alt={idea.recipient_name}
+            width={48}
+            height={48}
+            className="h-full w-full object-cover"
+            unoptimized
+          />
+        ) : idea.recipient_id &&
+          recipientMap[idea.recipient_id]?.avatar_icon ? (
+          <Image
+            src={
+              PRESET_AVATAR_OPTIONS.find(
+                (opt) =>
+                  opt.key === recipientMap[idea.recipient_id]?.avatar_icon,
+              )?.image || "/gift_placeholder_img.png"
+            }
+            alt={idea.recipient_name}
+            width={40}
+            height={40}
+            className="h-10 w-10 object-contain"
+            unoptimized
+          />
+        ) : (
+          getInitials(idea.recipient_name)
+        )}
       </div>
-      <p className="text-xs text-gp-evergreen/70">
-        For: {idea.recipient_name}
-        {idea.recipient_relationship ? ` (${idea.recipient_relationship})` : ""}{" "}
-        {dateLabel ? `· ${dateLabel}` : ""}
-      </p>
-      {idea.url ? (
-        <a
-          href={idea.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          Open link
-        </a>
-      ) : null}
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        {idea.status !== "disliked" ? (
+
+      <div className="flex flex-1 flex-col gap-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-semibold text-gp-evergreen">{idea.title}</p>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeStyles}`}
+          >
+            {savedLabel}
+          </span>
+        </div>
+        <p className="text-xs text-gp-evergreen/70">
+          For: {idea.recipient_name}
+          {idea.recipient_relationship
+            ? ` (${idea.recipient_relationship})`
+            : ""}{" "}
+          {dateLabel ? `· ${dateLabel}` : ""}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={onLog}
-            className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+            onClick={() => {
+              if (typeof window === "undefined") return;
+              window.open(amazonUrl, "_blank", "noopener,noreferrer");
+            }}
+            className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
           >
-            Log this gift
+            Find on Amazon
           </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={onRemove}
-          disabled={isRemoving}
-          className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isRemoving ? "Removing..." : "Remove"}
-        </button>
+          {idea.status !== "disliked" ? (
+            <button
+              type="button"
+              onClick={onLog}
+              className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+            >
+              Log this gift
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={isRemoving}
+            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isRemoving ? "Removing..." : "Remove"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1020,6 +1084,7 @@ export function GiftHistoryTable() {
                   onLog={() => handleLogSavedIdea(idea)}
                   onRemove={() => setSavedIdeaToDelete(idea)}
                   isRemoving={isRemovingSaved === idea.id}
+                  recipientMap={recipientMap}
                 />
               ))}
             </div>
@@ -1066,7 +1131,7 @@ export function GiftHistoryTable() {
             <div className="flex justify-end gap-3">
               <button
                 type="button"
-                className="gp-secondary-button"
+                className="gp-secondary-button cursor-pointer"
                 onClick={() => setSavedIdeaToDelete(null)}
               >
                 Cancel
@@ -1077,7 +1142,7 @@ export function GiftHistoryTable() {
                   savedIdeaToDelete ? handleRemoveSavedIdea(savedIdeaToDelete) : null
                 }
                 disabled={isRemovingSaved === savedIdeaToDelete.id}
-                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isRemovingSaved === savedIdeaToDelete.id ? "Removing..." : "Remove"}
               </button>
