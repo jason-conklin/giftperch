@@ -536,7 +536,7 @@ const NOTES_PLACEHOLDER = `Example:
 - Hates loud noises, has smelly feet (needs breathable/washable items), loses things often
 - Favorite brands: Patagonia, Le Labo, Stanley, or anything handmade
 
-The more notes you add, the better PerchPal's recommendations will be.`;
+Use any format you want. The more notes you add, the better PerchPal's recommendations will be.`;
 
 const toNumberOrNull = (value: string): number | null => {
   if (!value.trim()) return null;
