@@ -530,10 +530,11 @@ const PET_RELATIONSHIP = "Pet";
 const OTHER_RELATIONSHIP = "Other";
 
 const NOTES_PLACEHOLDER = `Example:
-- Likes: cozy reading, coffee, candles
-- Dislikes: clutter, gag gifts
-- Sizes: M tops, 8 shoe
-- Wishlist hints: prefers experiences over stuff
+- Likes cozy reading, coffee, candles
+- Dislikes clutter, gag gifts
+- Hobbies: hiking, drawing, gardening, video games
+- Hates loud noises, has smelly feet (needs breathable/washable items), loses things often
+- Favorite brands: Patagonia, Le Labo, Stanley, or anything handmade
 
 The more notes you add, the better PerchPal's recommendations will be.`;
 
