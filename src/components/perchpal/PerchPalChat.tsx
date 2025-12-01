@@ -238,7 +238,10 @@ export function PerchPalChat() {
     );
   };
 
-  const renderMessagesArea = (wrapperClass = "", ref?: React.RefObject<HTMLDivElement>) => (
+  const renderMessagesArea = (
+    wrapperClass = "",
+    ref?: React.RefObject<HTMLDivElement | null>
+  ) => (
     <div
       ref={ref}
       className={`gp-card-soft space-y-4 overflow-y-auto p-4 sm:p-5 ${wrapperClass}`}
