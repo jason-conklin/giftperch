@@ -1765,9 +1765,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           </div>
         </>
       )}
-      <p className="mt-6 text-center text-xs text-gp-evergreen/55">
-        As an Amazon Associate, I earn from qualifying purchases.
-      </p>
       <p className="text-center text-xs text-gp-evergreen/70">
         Want to browse Amazon directly?{" "}
         <a
