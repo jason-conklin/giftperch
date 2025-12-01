@@ -763,6 +763,8 @@ export function GiftHistoryTable() {
     setSavedError("");
     setIsRemovingSaved(idea.id);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       const params = new URLSearchParams();
       params.set("id", idea.id);
       if (idea.suggestion_id) {
@@ -776,6 +778,7 @@ export function GiftHistoryTable() {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
           },
         },
       );
