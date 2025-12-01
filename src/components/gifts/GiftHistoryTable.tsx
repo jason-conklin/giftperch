@@ -199,14 +199,17 @@ function AddGiftModal({
 
           <div className="grid gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-              URL
+              Purchased date
               <input
-                type="url"
-                value={formState.url}
+                type="date"
+                value={formState.purchased_at}
                 onChange={(event) =>
-                  onChange((prev) => ({ ...prev, url: event.target.value }))
+                  onChange((prev) => ({
+                    ...prev,
+                    purchased_at: event.target.value,
+                  }))
                 }
-                className="gp-input bg-white"
+                className="gp-input cursor-pointer bg-white"
               />
             </label>
             <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
@@ -225,17 +228,16 @@ function AddGiftModal({
           </div>
 
           <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-            Purchased date
+            URL
             <input
-              type="date"
-              value={formState.purchased_at}
+              type="text"
+              inputMode="url"
+              placeholder="https://www.amazon.com or www.amazon.com"
+              value={formState.url}
               onChange={(event) =>
-                onChange((prev) => ({
-                  ...prev,
-                  purchased_at: event.target.value,
-                }))
+                onChange((prev) => ({ ...prev, url: event.target.value }))
               }
-              className="gp-input cursor-pointer bg-white"
+              className="gp-input bg-white"
             />
           </label>
 
@@ -262,7 +264,11 @@ function AddGiftModal({
             className="gp-primary-button w-full cursor-pointer disabled:opacity-70"
             disabled={formSaving}
           >
-            {formSaving ? "Saving..." : "Log gift"}
+            {formSaving
+              ? "Saving..."
+              : mode === "edit"
+              ? "Update Log"
+              : "Log gift"}
           </button>
         </form>
       </div>
