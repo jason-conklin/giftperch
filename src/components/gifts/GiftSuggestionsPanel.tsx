@@ -1276,7 +1276,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       className="space-y-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm"
     >
       <header className="space-y-1">
-        <p className="text-lg uppercase font-semibold tracking-[0.2em] text-gp-evergreen/60">
+        <p className="text-lg uppercase font-semibold tracking-[0.2em] text-gp-evergreen">
           Smart Gift Suggestions
         </p>
         <p className="text-sm text-gp-evergreen/70">
