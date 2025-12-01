@@ -529,14 +529,13 @@ const GENDER_OPTIONS = [
 const PET_RELATIONSHIP = "Pet";
 const OTHER_RELATIONSHIP = "Other";
 
-const NOTES_PLACEHOLDER = `Example:
+const NOTES_PLACEHOLDER = `Use any format you want. The more notes you add, the better PerchPal's recommendations will be.
+Example:
 - Likes cozy reading, coffee, candles
 - Dislikes clutter, gag gifts
 - Hobbies: hiking, drawing, gardening, video games
 - Hates loud noises, has smelly feet (needs breathable/washable items), loses things often
-- Favorite brands: Patagonia, Le Labo, Stanley, or anything handmade
-
-Use any format you want. The more notes you add, the better PerchPal's recommendations will be.`;
+- Favorite brands: Patagonia, Le Labo, Stanley, or anything handmade`;
 
 const toNumberOrNull = (value: string): number | null => {
   if (!value.trim()) return null;
