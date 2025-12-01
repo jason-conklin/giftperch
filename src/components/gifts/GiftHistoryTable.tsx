@@ -443,16 +443,18 @@ function SavedIdeaItem({
           {dateLabel ? `· ${dateLabel}` : ""}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window === "undefined") return;
-              window.open(amazonUrl, "_blank", "noopener,noreferrer");
-            }}
-            className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
-          >
-            Find on Amazon
-          </button>
+          {idea.status !== "disliked" ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window === "undefined") return;
+                window.open(amazonUrl, "_blank", "noopener,noreferrer");
+              }}
+              className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
+            >
+              Find on Amazon
+            </button>
+          ) : null}
           {idea.status !== "disliked" ? (
             <button
               type="button"
