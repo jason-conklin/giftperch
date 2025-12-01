@@ -66,10 +66,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Load the user's recipient profiles so chat can ground answers in their people
+    const { data: recipientProfiles } = await supabase
+      .from("recipient_profiles")
+      .select(
+        "id, name, relationship, age_hint, gender_hint, notes, birthday"
+      )
+      .eq("user_id", user.id)
+      .eq("is_self", false);
+
+    const recipientIds =
+      recipientProfiles?.map((profile) => profile.id).filter(Boolean) ?? [];
+
+    const { data: recipientInterests } =
+      recipientIds.length > 0
+        ? await supabase
+            .from("recipient_interests")
+            .select("recipient_id, label")
+            .in("recipient_id", recipientIds)
+        : { data: [] as { recipient_id: string; label: string }[] | null };
+
+    const interestsByRecipient: Record<string, string[]> = {};
+    (recipientInterests ?? []).forEach((interest) => {
+      if (!interest.recipient_id) return;
+      interestsByRecipient[interest.recipient_id] = [
+        ...(interestsByRecipient[interest.recipient_id] ?? []),
+        interest.label,
+      ];
+    });
+
+    const recipientContextLines =
+      recipientProfiles?.map((profile) => {
+        const details: string[] = [];
+        if (profile.relationship) details.push(`relationship: ${profile.relationship}`);
+        if (profile.gender_hint) details.push(`gender: ${profile.gender_hint}`);
+        if (profile.age_hint) details.push(`age hint: ${profile.age_hint}`);
+        if (profile.birthday)
+          details.push(
+            `birthday: ${new Date(profile.birthday).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}`
+          );
+        const interestLabels = interestsByRecipient[profile.id] ?? [];
+        if (interestLabels.length) {
+          details.push(`interests: ${interestLabels.join(", ")}`);
+        }
+        if (profile.notes) details.push(`notes: ${profile.notes}`);
+        const summary = details.length ? ` — ${details.join("; ")}` : "";
+        return `- ${profile.name}${summary}`;
+      }) ?? [];
+
     const systemMessage: ChatMessage = {
       role: "system",
-      content:
-        "You are PerchPal, a warm but efficient AI gifting assistant inside the GiftPerch app. Focus on concrete, thoughtful gift suggestions based on the user's description, budgets, interests, and occasions. Prefer 2-4 suggestions per reply, each with a short name, rough price range, and 1-2 sentence rationale. Be concise and avoid emoji.",
+      content: [
+        "You are PerchPal, a warm but efficient AI gifting assistant inside the GiftPerch app.",
+        "Focus on concrete, thoughtful gift suggestions based on the user's description, budgets, interests, and occasions.",
+        "Prefer 2-4 suggestions per reply, each with a short name, rough price range, and 1-2 sentence rationale. Be concise and avoid emoji.",
+        "You have access to the user's saved recipient profiles below. When the user references someone by name, match them to these profiles first and tailor suggestions using their details.",
+        "Only ask for more info if no profile clearly matches.",
+        recipientContextLines.length
+          ? `Recipient profiles:\n${recipientContextLines.join("\n")}`
+          : "Recipient profiles: none provided.",
+      ].join("\n"),
     };
 
     const trimmedHistory: ChatMessage[] = history
