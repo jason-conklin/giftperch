@@ -174,6 +174,9 @@ const AMAZON_PLACEHOLDER_MESSAGE =
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
   suggestion.id?.trim() || "";
 
+const isUuid = (value: string | null | undefined) =>
+  typeof value === "string" && /^[0-9a-fA-F-]{32,36}$/.test(value);
+
 type SuggestionCardProps = {
   suggestionKey: string;
   suggestion: GiftSuggestion;
@@ -544,6 +547,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [savedGiftsOpen, setSavedGiftsOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [savedMap, setSavedMap] = useState<Record<string, boolean>>({});
+  const [savedIdMap, setSavedIdMap] = useState<Record<string, string>>({});
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [dislikedMap, setDislikedMap] = useState<Record<string, boolean>>({});
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
@@ -706,12 +710,26 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         },
       );
 
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Failed to save gift idea");
       }
 
+      const savedId =
+        body &&
+        typeof body === "object" &&
+        body !== null &&
+        "savedGift" in body &&
+        body.savedGift &&
+        typeof (body as { savedGift?: { id?: string } }).savedGift?.id ===
+          "string"
+          ? (body as { savedGift: { id: string } }).savedGift.id
+          : null;
+
       setSavedMap((prev) => ({ ...prev, [suggestionKey]: true }));
+      if (savedId) {
+        setSavedIdMap((prev) => ({ ...prev, [suggestionKey]: savedId }));
+      }
       setLastSavedId(suggestionKey);
       setLastUnsavedId(null);
       setSaveStates((prev) => ({
@@ -741,6 +759,30 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const handleUnsaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) return;
     const suggestionKey = getSuggestionIdentity(suggestion);
+    const savedId = savedIdMap[suggestionKey];
+
+    const params = new URLSearchParams();
+    if (savedId) {
+      params.set("id", savedId);
+    } else if (isUuid(suggestion.id)) {
+      params.set("suggestionId", suggestion.id);
+    } else if (suggestion.title) {
+      params.set("title", suggestion.title);
+    }
+
+    if ([...params.keys()].length === 0) {
+      setSaveStates((prev) => ({
+        ...prev,
+        [suggestionKey]: {
+          saving: false,
+          success: false,
+          error: "Unable to unsave this idea.",
+          ts: Date.now(),
+        },
+      }));
+      return;
+    }
+
     setSaveStates((prev) => ({
       ...prev,
       [suggestionKey]: {
@@ -752,9 +794,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     }));
     try {
       const res = await fetch(
-        `/api/recipients/${selectedRecipient.id}/saved-gifts?suggestionId=${encodeURIComponent(
-          suggestion.id,
-        )}`,
+        `/api/recipients/${selectedRecipient.id}/saved-gifts?${params.toString()}`,
         {
           method: "DELETE",
           headers: {
@@ -768,6 +808,11 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         throw new Error(body.error || "Failed to unsave gift idea");
       }
       setSavedMap((prev) => {
+        const next = { ...prev };
+        delete next[suggestionKey];
+        return next;
+      });
+      setSavedIdMap((prev) => {
         const next = { ...prev };
         delete next[suggestionKey];
         return next;

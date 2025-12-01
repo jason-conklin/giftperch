@@ -202,9 +202,14 @@ export async function DELETE(
   if (!trimmedRecipientId) return badRequest("recipientId is required");
 
   const savedIdeaId = request.nextUrl.searchParams.get("id");
-  const suggestionId = request.nextUrl.searchParams.get("suggestionId");
-  if (!savedIdeaId && !suggestionId) {
-    return badRequest("id or suggestionId query param is required");
+  const suggestionIdRaw = request.nextUrl.searchParams.get("suggestionId");
+  const titleParam = request.nextUrl.searchParams.get("title");
+  const suggestionId =
+    suggestionIdRaw && /^[0-9a-fA-F-]{32,36}$/.test(suggestionIdRaw)
+      ? suggestionIdRaw
+      : null;
+  if (!savedIdeaId && !suggestionId && !titleParam) {
+    return badRequest("id, suggestionId, or title query param is required");
   }
 
   // Ownership of the recipient is still enforced to prevent cross-account deletes.
@@ -226,6 +231,9 @@ export async function DELETE(
   }
   if (suggestionId) {
     deleteQuery.eq("suggestion_id", suggestionId);
+  }
+  if (titleParam) {
+    deleteQuery.eq("title", titleParam);
   }
 
   const { error } = await deleteQuery;
