@@ -178,8 +178,6 @@ type SuggestionCardProps = {
   suggestionKey: string;
   suggestion: GiftSuggestion;
   amazonState: AmazonSuggestionState | undefined;
-  copiedSuggestionId: string | null;
-  onCopy: (suggestion: GiftSuggestion) => void;
   onFetchAmazon: (suggestion: GiftSuggestion) => void;
   onSaveGift: (suggestion: GiftSuggestion) => void;
   onUnsaveGift: (suggestion: GiftSuggestion) => void;
@@ -207,8 +205,6 @@ function GiftSuggestionCard({
   suggestionKey,
   suggestion,
   amazonState,
-  copiedSuggestionId,
-  onCopy,
   onFetchAmazon,
   onSaveGift,
   onUnsaveGift,
@@ -312,22 +308,36 @@ function GiftSuggestionCard({
             suggestion.price_hint,
             suggestion.price_guidance,
           );
-          return priceDisplay ? (
-            <div className="text-sm text-gp-evergreen/80">
-              <p className="font-semibold text-gp-evergreen">Price range</p>
-              <p className="text-sm">{priceDisplay}</p>
-              {suggestion.suggested_url ? (
-                <a
-                  href={suggestion.suggested_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                >
-                  View link
-                </a>
-              ) : null}
+          return (
+            <div className="flex flex-wrap items-start justify-between gap-3 text-sm text-gp-evergreen/80">
+              <div className="min-w-[180px]">
+                <p className="font-semibold text-gp-evergreen">Price range</p>
+                <p className="text-sm">
+                  {priceDisplay ? priceDisplay : "Not specified"}
+                </p>
+                {suggestion.suggested_url ? (
+                  <a
+                    href={suggestion.suggested_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                  >
+                    View link
+                  </a>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
+                }
+                disabled={saveState?.saving}
+                className="rounded-full border border-gp-evergreen/30 px-4 py-2 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+              >
+                {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
+              </button>
             </div>
-          ) : null;
+          );
         })()}
 
         <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
@@ -337,30 +347,13 @@ function GiftSuggestionCard({
           <p>{suggestion.why_it_fits}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => onCopy(suggestion)}
-            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
-          >
-            {copiedSuggestionId === suggestion.id ? "Copied!" : "Copy idea"}
-          </button>
+        <div className="flex justify-center">
           <button
             type="button"
             onClick={() => onFetchAmazon(suggestion)}
-            className="flex-1 rounded-full border border-gp-gold/50 bg-gp-gold/20 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-gold/30 cursor-pointer"
+            className="w-full max-w-xs rounded-full border border-gp-gold/50 bg-gp-gold/20 px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/30 cursor-pointer"
           >
             {amazonState?.loading ? "Searching Amazon..." : "Find on Amazon"}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
-            }
-            disabled={saveState?.saving}
-            className="flex-1 rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-          >
-            {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
           </button>
         </div>
 
@@ -531,9 +524,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [isGenerating, setIsGenerating] = useState(false);
   const [requestProgress, setRequestProgress] = useState(0);
   const [error, setError] = useState("");
-  const [copiedSuggestionId, setCopiedSuggestionId] = useState<string | null>(
-    null,
-  );
   const [amazonBySuggestion, setAmazonBySuggestion] = useState<
     Record<string, AmazonSuggestionState>
   >({});
@@ -1222,32 +1212,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     }
   };
 
-  const handleCopySuggestion = async (suggestion: GiftSuggestion) => {
-    const text = [
-      suggestion.title,
-      suggestion.short_description,
-      suggestion.why_it_fits,
-      suggestion.price_hint ||
-        buildPriceDisplay(
-          suggestion.price_min,
-          suggestion.price_max,
-          suggestion.price_hint,
-          suggestion.price_guidance,
-        ),
-      suggestion.suggested_url,
-    ]
-      .filter(Boolean)
-      .join(" - ");
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedSuggestionId(suggestion.id);
-      setTimeout(() => setCopiedSuggestionId(null), 2000);
-    } catch {
-      setError("Unable to copy idea to clipboard.");
-    }
-  };
-
   if (isInitialLoading) {
     return (
       <section className="rounded-3xl border border-gp-evergreen/15 bg-white/95 p-6">
@@ -1704,16 +1668,14 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {visibleSuggestions.map((suggestion, idx) => {
-                    const suggestionKey = getSuggestionIdentity(suggestion);
-                    return (
+                    {visibleSuggestions.map((suggestion, idx) => {
+                      const suggestionKey = getSuggestionIdentity(suggestion);
+                      return (
                         <GiftSuggestionCard
                           key={suggestionKey}
                           suggestionKey={suggestionKey}
                           suggestion={suggestion}
                           amazonState={amazonBySuggestion[suggestion.id]}
-                          copiedSuggestionId={copiedSuggestionId}
-                          onCopy={handleCopySuggestion}
                           onFetchAmazon={handleFetchAmazonProducts}
                           onSaveGift={handleSaveGift}
                           onUnsaveGift={handleUnsaveGift}
