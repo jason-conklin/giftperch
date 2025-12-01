@@ -48,6 +48,7 @@ type SavedIdeaAggregated = {
   url: string | null;
   status: "saved" | "liked" | "disliked";
   created_at: string;
+  suggestion_id?: string | null;
 };
 
 const getInitials = (value: string) => {
@@ -335,9 +336,13 @@ function GiftHistoryItem({
 function SavedIdeaItem({
   idea,
   onLog,
+  onRemove,
+  isRemoving,
 }: {
   idea: SavedIdeaAggregated;
   onLog: () => void;
+  onRemove: () => void;
+  isRemoving: boolean;
 }) {
   const badgeStyles =
     idea.status === "saved"
@@ -384,13 +389,21 @@ function SavedIdeaItem({
           Open link
         </a>
       ) : null}
-      <div className="mt-2">
+      <div className="mt-2 flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={onLog}
           className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
         >
           Log this gift
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={isRemoving}
+          className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isRemoving ? "Removing..." : "Remove"}
         </button>
       </div>
     </div>
@@ -417,6 +430,7 @@ export function GiftHistoryTable() {
   const [initializedFilter, setInitializedFilter] = useState(false);
   const [activeTab, setActiveTab] = useState<"history" | "saved">("history");
   const [savedIdeas, setSavedIdeas] = useState<SavedIdeaAggregated[]>([]);
+  const [isRemovingSaved, setIsRemovingSaved] = useState<string | null>(null);
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState("");
   const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
@@ -709,7 +723,7 @@ export function GiftHistoryTable() {
           };
 
           const mapItem = (
-            item: { id: string; title: string; product_url: string | null; created_at: string },
+            item: { id: string; title: string; product_url: string | null; created_at: string; suggestion_id?: string | null },
             status: "saved" | "liked" | "disliked",
           ): SavedIdeaAggregated => ({
             id: item.id,
@@ -720,6 +734,7 @@ export function GiftHistoryTable() {
             url: item.product_url,
             status,
             created_at: item.created_at,
+            suggestion_id: item.suggestion_id ?? null,
           });
 
           return [
@@ -731,17 +746,51 @@ export function GiftHistoryTable() {
 
         const results = await Promise.all(fetches);
         const flattened = results.flat().sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        setSavedIdeas(flattened);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unable to load saved ideas.";
-        setSavedError(message);
-      } finally {
-        setSavedLoading(false);
-      }
-    };
+      setSavedIdeas(flattened);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to load saved ideas.";
+      setSavedError(message);
+    } finally {
+      setSavedLoading(false);
+    }
+  };
 
-    loadSavedIdeas();
+  loadSavedIdeas();
   }, [activeTab, recipients, supabase, userId]);
+
+  const handleRemoveSavedIdea = async (idea: SavedIdeaAggregated) => {
+    if (!userId) return;
+    setSavedError("");
+    setIsRemovingSaved(idea.id);
+    try {
+      const params = new URLSearchParams();
+      params.set("id", idea.id);
+      if (idea.suggestion_id) {
+        params.set("suggestionId", idea.suggestion_id);
+      }
+      params.set("title", idea.title);
+
+      const res = await fetch(
+        `/api/recipients/${idea.recipient_id}/saved-gifts?${params.toString()}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.error || "Failed to remove saved idea");
+      }
+      setSavedIdeas((prev) => prev.filter((item) => item.id !== idea.id));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unable to remove saved idea.";
+      setSavedError(message);
+    } finally {
+      setIsRemovingSaved(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -961,6 +1010,8 @@ export function GiftHistoryTable() {
                   key={`${idea.status}-${idea.id}`}
                   idea={idea}
                   onLog={() => handleLogSavedIdea(idea)}
+                  onRemove={() => handleRemoveSavedIdea(idea)}
+                  isRemoving={isRemovingSaved === idea.id}
                 />
               ))}
             </div>
