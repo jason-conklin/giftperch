@@ -42,6 +42,8 @@ export function PerchPalChat() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesWrapperRef = useRef<HTMLDivElement | null>(null);
+  const messagesWrapperExpandedRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated" || !user?.id) return;
@@ -85,10 +87,16 @@ export function PerchPalChat() {
   }, [status, supabase, user?.id]);
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    const wrapper = isExpanded
+      ? messagesWrapperExpandedRef.current
+      : messagesWrapperRef.current;
+    if (wrapper) {
+      wrapper.scrollTo({
+        top: wrapper.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [messages]);
+  }, [messages, isExpanded]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -230,8 +238,11 @@ export function PerchPalChat() {
     );
   };
 
-  const renderMessagesArea = (wrapperClass = "") => (
-    <div className={`gp-card-soft space-y-4 overflow-y-auto p-4 sm:p-5 ${wrapperClass}`}>
+  const renderMessagesArea = (wrapperClass = "", ref?: React.RefObject<HTMLDivElement>) => (
+    <div
+      ref={ref}
+      className={`gp-card-soft space-y-4 overflow-y-auto p-4 sm:p-5 ${wrapperClass}`}
+    >
       {isLoadingHistory ? (
         <div className="flex justify-center">
           <PerchPalLoader variant="inline" size="sm" message="PerchPal is warming up..." />
@@ -350,7 +361,7 @@ export function PerchPalChat() {
     <>
       <section className="gp-card flex flex-col gap-5">
         <HeaderContent showExpand />
-        {renderMessagesArea("max-h-[480px]")}
+        {renderMessagesArea("max-h-[480px]", messagesWrapperRef)}
         {renderInputArea("perchpal-input")}
         {error && (
           <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
@@ -405,7 +416,10 @@ export function PerchPalChat() {
               </div>
 
               <div className="flex flex-1 min-h-0 flex-col gap-4 px-4 pb-4 pt-2 sm:px-6 sm:pb-6">
-                {renderMessagesArea("flex-1 min-h-0 overscroll-y-contain overflow-y-auto")}
+                {renderMessagesArea(
+                  "flex-1 min-h-0 overscroll-y-contain overflow-y-auto",
+                  messagesWrapperExpandedRef
+                )}
                 {renderInputArea(
                   "perchpal-input-expanded",
                   "border-t border-gp-evergreen/10 pt-3",

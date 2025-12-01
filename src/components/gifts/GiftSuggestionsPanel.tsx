@@ -1276,9 +1276,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       className="space-y-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm"
     >
       <header className="space-y-1">
-        <h2 className="text-lg font-semibold text-gp-evergreen">
+        <p className="text-lg uppercase tracking-[0.2em] text-gp-evergreen/60">
           Smart Gift Suggestions
-        </h2>
+        </p>
         <p className="text-sm text-gp-evergreen/70">
           Choose a recipient, set a budget or occasion, and PerchPal will craft
           tailored gift ideas with clear reasoning.
