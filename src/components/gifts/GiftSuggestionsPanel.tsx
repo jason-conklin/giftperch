@@ -241,13 +241,13 @@ function GiftSuggestionCard({
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
-      <div className="flex items-center justify-center bg-gp-evergreen/5 px-6 py-8">
+      <div className="relative h-40 w-full overflow-hidden bg-gp-evergreen/5">
         <Image
           src={previewIcon}
           alt={suggestion.title ? `${suggestion.title} preview icon` : "Gift preview icon"}
-          width={120}
-          height={120}
-          className="h-24 w-24 object-contain"
+          fill
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-contain"
         />
       </div>
 
