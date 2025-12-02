@@ -47,8 +47,8 @@ const SAMPLE_PROFILES = [
       "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
     ideasLabel: "Gift ideas for Mocha",
     ideas: [
-      { text: "Interactive treat puzzle toy", icon: "/icons/previews/preview-dog-toy.png" },
-      { text: "Plush “heartbeat” cuddle buddy", icon: "/icons/previews/preview-paw.png" },
+      { text: "Interactive jerky treat puzzle toy", icon: "/icons/previews/preview-dog-toy.png" },
+      { text: "Plush Rabbit Animatronic Dog Toy", icon: "/icons/previews/preview-paw.png" },
       { text: "Automatic ball launcher for indoor fetch", icon: "/icons/previews/preview-sports.png" },
     ],
   },
