@@ -354,7 +354,7 @@ function GiftSuggestionCard({
           <button
             type="button"
             onClick={() => onFetchAmazon(suggestion)}
-            className="w-full max-w-xs rounded-full border border-gp-gold/50 bg-gp-gold/20 px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/30 cursor-pointer"
+            className="w-full max-w-xs rounded-full border border-gp-gold bg-gp-gold px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90 cursor-pointer"
           >
             {amazonState?.loading ? "Searching Amazon..." : "Find on Amazon"}
           </button>
