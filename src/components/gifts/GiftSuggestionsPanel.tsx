@@ -177,6 +177,16 @@ const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
 const isUuid = (value: string | null | undefined) =>
   typeof value === "string" && /^[0-9a-fA-F-]{32,36}$/.test(value);
 
+const AMAZON_PARTNER_TAG =
+  process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
+
+const buildAmazonSearchUrl = (title: string) => {
+  const safeTitle = title?.trim() || "gift ideas";
+  return `https://www.amazon.com/s?k=${encodeURIComponent(
+    safeTitle,
+  )}&tag=${encodeURIComponent(AMAZON_PARTNER_TAG)}`;
+};
+
 type SuggestionCardProps = {
   suggestionKey: string;
   suggestion: GiftSuggestion;
@@ -319,12 +329,9 @@ function GiftSuggestionCard({
                   {priceDisplay ? priceDisplay : "Not specified"}
                 </p>
                 <a
-                  href={buildAmazonAffiliateUrl({
-                    title: suggestion.title,
-                    productUrl: suggestion.suggested_url || undefined,
-                  })}
+                  href={buildAmazonSearchUrl(suggestion.title)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener noreferrer sponsored"
                   className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
                 >
                   View link
@@ -1249,10 +1256,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     const query = suggestion.title.trim();
     if (!query) return;
 
-    const partnerTag =
-      process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
-    const baseUrl = `https://www.amazon.com/s?k=${encodeURIComponent(query)}`;
-    const url = `${baseUrl}&tag=${encodeURIComponent(partnerTag)}`;
+    const url = buildAmazonSearchUrl(query);
     if (typeof window !== "undefined") {
       window.open(url, "_blank", "noopener,noreferrer");
     }
