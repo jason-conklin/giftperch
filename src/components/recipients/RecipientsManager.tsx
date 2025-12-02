@@ -501,9 +501,11 @@ const emptyFormState: FormState = {
 const RELATIONSHIP_OPTIONS = [
   "Mother",
   "Father",
-  "Parent",
   "Sister",
   "Brother",
+  "Cousin",
+  "Aunt",
+  "Uncle",
   "Daughter",
   "Son",
   "Boyfriend",
