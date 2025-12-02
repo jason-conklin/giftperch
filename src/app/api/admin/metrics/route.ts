@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
-const ADMIN_EMAILS = new Set(["jasonconklin64@gmail.com", "giftperch@gmail.com"]);
+const ADMIN_EMAILS = new Set(["giftperch@gmail.com"]);
 
 export const dynamic = "force-dynamic";
 

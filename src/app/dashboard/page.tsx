@@ -75,8 +75,6 @@ export default async function DashboardHome() {
   const onboardingCompletedByData =
     recipientCountValue > 0 && (suggestionCountValue > 0 || engagementCountValue > 0);
 
-  const hideAdminMetrics = user?.email === "jasonconklin64@gmail.com";
-
   const heroBanner = (
     <div className="overflow-hidden rounded-3xl">
       <Image
@@ -133,7 +131,7 @@ export default async function DashboardHome() {
             </p>
           </div>
         </div>
-        {!hideAdminMetrics ? <AdminMetrics /> : null}
+        <AdminMetrics />
       </section>
     </PageShell>
   );
