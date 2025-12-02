@@ -848,6 +848,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       next[suggestionId] = { ...next[suggestionId], success: false };
       return next;
     });
+    setLastUnsavedId((prev) => (prev === suggestionId ? null : prev));
   };
 
   const handleClearAmazon = (suggestionId: string) => {
