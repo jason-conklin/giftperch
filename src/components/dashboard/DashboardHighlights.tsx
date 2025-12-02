@@ -12,6 +12,7 @@ type RecipientSummary = {
   id: string;
   name: string;
   relationship: string | null;
+  pet_type?: string | null;
   avatar_url: string | null;
   birthday: string | null;
 };
@@ -185,7 +186,7 @@ export function DashboardHighlights() {
       try {
         const { data: recipientData, error: recipientError } = await supabase
           .from("recipient_profiles")
-          .select("id, name, relationship, avatar_url, birthday")
+          .select("id, name, relationship, pet_type, avatar_url, birthday")
           .eq("user_id", user.id)
           .eq("is_self", false)
           .order("created_at", { ascending: true });
@@ -443,7 +444,9 @@ export function DashboardHighlights() {
                   {recipientsHighlight.name}
                 </p>
                 <p className="text-[12px] uppercase tracking-wide text-gp-evergreen/60">
-                  {recipientsHighlight.relationship ?? "Relationship TBD"}
+                  {recipientsHighlight.relationship === "Pet" && recipientsHighlight.pet_type
+                    ? `Pet (${recipientsHighlight.pet_type})`
+                    : recipientsHighlight.relationship ?? "Relationship TBD"}
                 </p>
               </div>
             </div>
