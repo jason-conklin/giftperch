@@ -318,16 +318,17 @@ function GiftSuggestionCard({
                 <p className="text-sm">
                   {priceDisplay ? priceDisplay : "Not specified"}
                 </p>
-                {suggestion.suggested_url ? (
-                  <a
-                    href={suggestion.suggested_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                  >
-                    View link
-                  </a>
-                ) : null}
+                <a
+                  href={buildAmazonAffiliateUrl({
+                    title: suggestion.title,
+                    productUrl: suggestion.suggested_url || undefined,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+                >
+                  View link
+                </a>
               </div>
               <button
                 type="button"
