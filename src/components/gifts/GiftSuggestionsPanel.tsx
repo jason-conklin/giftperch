@@ -11,6 +11,7 @@ import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
+import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
 
 type AvatarIconKey =
   | "babyboy"
@@ -142,8 +143,6 @@ type GiftSuggestionsPanelProps = {
   onFirstRunComplete?: () => void;
 };
 
-const DEFAULT_GIFT_IMAGE = "/gift_placeholder_img.png";
-
 const formatRunLabel = (run: SuggestionRun) => {
   const date = new Date(run.created_at);
   const dateStr = date.toLocaleDateString("en-US", {
@@ -236,28 +235,19 @@ function GiftSuggestionCard({
   feedbackError,
   dismissedFeedback,
 }: SuggestionCardProps) {
-  const [imageSrc, setImageSrc] = useState(DEFAULT_GIFT_IMAGE);
-
-  const handleImageError = () => {
-    if (imageSrc !== DEFAULT_GIFT_IMAGE) {
-      setImageSrc(DEFAULT_GIFT_IMAGE);
-    }
-  };
-
   const isLiked = isLikedProp ?? feedback === "liked";
   const isDisliked = isDislikedProp ?? feedback === "disliked";
+  const previewIcon = getGiftPreviewIcon(suggestion);
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
-      <div className="relative h-40 w-full overflow-hidden bg-gp-cream/70">
+      <div className="flex items-center justify-center bg-gp-evergreen/5 px-6 py-8">
         <Image
-          src={imageSrc}
-          alt={suggestion.title || "Gift idea preview"}
-          fill
-          unoptimized
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, 33vw"
-          onError={handleImageError}
+          src={previewIcon}
+          alt={suggestion.title ? `${suggestion.title} preview icon` : "Gift preview icon"}
+          width={120}
+          height={120}
+          className="h-24 w-24 object-contain"
         />
       </div>
 
