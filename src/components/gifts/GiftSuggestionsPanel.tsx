@@ -30,6 +30,8 @@ type RecipientOption = {
   pet_type: string | null;
   avatar_url: string | null;
   avatar_icon: AvatarIconKey | null;
+  budget_per_gift?: number | null;
+  budget_annual?: number | null;
 };
 
 const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
@@ -509,8 +511,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [recipients, setRecipients] = useState<RecipientOption[]>([]);
   const [selectedRecipientId, setSelectedRecipientId] = useState("");
   const [occasion, setOccasion] = useState("");
-  const [budgetMin, setBudgetMin] = useState("");
-  const [budgetMax, setBudgetMax] = useState("");
   const [numSuggestions, setNumSuggestions] = useState("9");
 
   const [runs, setRuns] = useState<SuggestionRun[]>([]);
@@ -584,7 +584,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       const { data, error } = await supabase
         .from("recipient_profiles")
         .select(
-          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self",
+          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self, budget_per_gift, budget_annual",
         )
         .eq("user_id", user.id)
         .eq("is_self", false)
@@ -1158,11 +1158,26 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
+      const budgetPerGift = selectedRecipient?.budget_per_gift;
+      const budgetAnnual = selectedRecipient?.budget_annual;
+      const parsedBudgetMin =
+        typeof budgetPerGift === "number"
+          ? budgetPerGift
+          : budgetPerGift
+          ? Number(budgetPerGift)
+          : null;
+      const parsedBudgetMax =
+        typeof budgetAnnual === "number"
+          ? budgetAnnual
+          : budgetAnnual
+          ? Number(budgetAnnual)
+          : null;
+
       const payload = {
         recipientId: selectedRecipientId,
         occasion: occasion.trim() || null,
-        budgetMin: budgetMin ? Number(budgetMin) : null,
-        budgetMax: budgetMax ? Number(budgetMax) : null,
+        budgetMin: parsedBudgetMin,
+        budgetMax: parsedBudgetMax,
         numSuggestions: numSuggestions ? Number(numSuggestions) : undefined,
       };
 
@@ -1205,8 +1220,8 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           recipient_name: selectedRecipient?.name ?? "Recipient",
           relationship: selectedRecipient?.relationship ?? null,
           occasion: occasion || null,
-          budget_min: budgetMin ? Number(budgetMin) : null,
-          budget_max: budgetMax ? Number(budgetMax) : null,
+          budget_min: parsedBudgetMin,
+          budget_max: parsedBudgetMax,
           notes_summary: null,
           interests_summary: null,
           last_gifts_summary: null,
@@ -1439,7 +1454,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 {showPrefilledHint ? (
                   <p className="text-xs text-gp-evergreen/70">
                     Ready to generate ideas for {selectedRecipient.name}. Adjust
-                    budget or occasion, then click &quot;Ask PerchPal for
+                    the occasion if you like, then click &quot;Ask PerchPal for
                     suggestions&quot;.
                   </p>
                 ) : null}
@@ -1494,43 +1509,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   max={10}
                   value={numSuggestions}
                   onChange={(event) => setNumSuggestions(event.target.value)}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="budget-min-input"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Min budget (optional)
-                </label>
-                <input
-                  id="budget-min-input"
-                  type="number"
-                  min={0}
-                  placeholder="Min"
-                  value={budgetMin}
-                  onChange={(event) => setBudgetMin(event.target.value)}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="budget-max-input"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Max budget (optional)
-                </label>
-                <input
-                  id="budget-max-input"
-                  type="number"
-                  min={0}
-                  placeholder="Max"
-                  value={budgetMax}
-                  onChange={(event) => setBudgetMax(event.target.value)}
                   className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
                 />
               </div>
