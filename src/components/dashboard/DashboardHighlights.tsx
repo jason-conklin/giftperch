@@ -405,7 +405,7 @@ export function DashboardHighlights() {
 
       <article className="gp-card flex flex-col gap-3">
         <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-          Your recipients
+          Your recipient profiles
         </p>
         <h3 className="text-3xl font-semibold text-gp-evergreen">
           {recipients.length}
