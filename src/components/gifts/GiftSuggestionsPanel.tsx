@@ -1754,6 +1754,12 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         <SavedGiftIdeasModal
           recipientId={savedGiftsRecipientId}
           recipientName={savedGiftsRecipientName}
+          recipientAvatarUrl={selectedRecipient?.avatar_url ?? null}
+          recipientAvatarIcon={
+            selectedRecipient?.avatar_icon
+              ? `/icons/recipients/${selectedRecipient.avatar_icon}_icon.png`
+              : null
+          }
           isOpen={savedGiftsOpen}
           onClose={() => setSavedGiftsOpen(false)}
           authToken={authToken}

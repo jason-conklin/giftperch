@@ -2170,6 +2170,12 @@ export function RecipientsManager() {
         <SavedGiftIdeasModal
           recipientId={savedGiftsRecipient.id}
           recipientName={savedGiftsRecipient.name}
+          recipientAvatarUrl={savedGiftsRecipient.avatar_url}
+          recipientAvatarIcon={
+            savedGiftsRecipient.avatar_icon
+              ? `/icons/recipients/${savedGiftsRecipient.avatar_icon}_icon.png`
+              : null
+          }
           isOpen={!!savedGiftsRecipient}
           onClose={() => setSavedGiftsRecipient(null)}
           authToken={authToken}
