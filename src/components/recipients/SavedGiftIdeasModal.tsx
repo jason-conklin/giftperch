@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type { Database } from "@/lib/database.types";
+import type { GiftSuggestion } from "@/components/gifts/GiftSuggestionsPanel";
+import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
 
 type SavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -53,6 +55,37 @@ export function SavedGiftIdeasModal({
     "saved",
   );
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  const mapToSuggestionShape = (gift: CombinedGift): GiftSuggestion => ({
+    id: gift.id,
+    title: gift.title,
+    short_description: "",
+    tier:
+      (gift as { tier?: string | null }).tier === "experience"
+        ? "experience"
+        : (gift as { tier?: string | null }).tier === "splurge"
+        ? "splurge"
+        : (gift as { tier?: string | null }).tier === "safe"
+        ? "safe"
+        : "thoughtful",
+    price_min:
+      "estimated_price_min" in gift ? gift.estimated_price_min : null,
+    price_max:
+      "estimated_price_max" in gift ? gift.estimated_price_max : null,
+    price_hint: null,
+    price_guidance: null,
+    why_it_fits:
+      "rationale" in gift && gift.rationale
+        ? gift.rationale
+        : "",
+    suggested_url:
+      "product_url" in gift ? gift.product_url ?? null : null,
+    image_url:
+      "image_url" in gift ? gift.image_url ?? null : null,
+    initialSaved: true,
+    initialPreference:
+      "preference" in gift ? (gift.preference as "liked" | "disliked") : null,
+  });
 
   const headers = useMemo(() => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -301,6 +334,7 @@ export function SavedGiftIdeasModal({
                   "estimated_price_min" in gift ? gift.estimated_price_min : null;
                 const priceMax =
                   "estimated_price_max" in gift ? gift.estimated_price_max : null;
+                const previewIcon = getGiftPreviewIcon(mapToSuggestionShape(gift));
                 return (
                   <div
                     key={gift.id}
@@ -308,7 +342,7 @@ export function SavedGiftIdeasModal({
                   >
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
                       <Image
-                        src={FALLBACK_IMAGE}
+                        src={previewIcon}
                         alt={gift.title}
                         fill
                         sizes="80px"
@@ -412,4 +446,3 @@ function formatPriceRange(
   if (min !== null) return `From $${min}`;
   return `Up to $${max}`;
 }
-const FALLBACK_IMAGE = "/gift_placeholder_img.png";
