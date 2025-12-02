@@ -33,9 +33,9 @@ const SAMPLE_PROFILES = [
       "Loves scented candles, nature hikes, and makeup. Appreciates small, meaningful things.",
     ideasLabel: "Gift ideas for Maya",
     ideas: [
-      "Essential oils candle set",
-      "Lightweight Hiking Backpack",
-      "Clean Beauty Essentials Kit",
+      { text: "Essential oils candle set", icon: "/icons/previews/preview-candle.png" },
+      { text: "Lightweight Hiking Backpack", icon: "/icons/previews/preview-backpack.png" },
+      { text: "Clean Beauty Essentials Kit", icon: "/icons/previews/preview-makeup.png" },
     ],
   },
   {
@@ -47,9 +47,9 @@ const SAMPLE_PROFILES = [
       "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
     ideasLabel: "Gift ideas for Mocha",
     ideas: [
-      "Interactive treat puzzle toy",
-      "Plush “heartbeat” cuddle buddy",
-      "Automatic ball launcher for indoor fetch",
+      { text: "Interactive treat puzzle toy", icon: "/icons/previews/preview-dog-toy.png" },
+      { text: "Plush “heartbeat” cuddle buddy", icon: "/icons/previews/preview-paw.png" },
+      { text: "Automatic ball launcher for indoor fetch", icon: "/icons/previews/preview-sports.png" },
     ],
   },
   {
@@ -61,9 +61,9 @@ const SAMPLE_PROFILES = [
       "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
     ideasLabel: "Gift ideas for Dad",
     ideas: [
-      "Personalized grill tool set",
-      "Cozy game-day throw blanket",
-      "Compact multi-tool for everyday fixes",
+      { text: "Personalized grill tool set", icon: "/icons/previews/preview-diy.png" },
+      { text: "Cozy game-day throw blanket", icon: "/icons/previews/preview-blanket.png" },
+      { text: "Father/Son Game day tickets", icon: "/icons/previews/preview-ticket.png" },
     ],
   },
 ] as const;
@@ -158,26 +158,32 @@ function LandingSampleProfiles() {
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
             {SAMPLE_PROFILES[activeIndex].ideasLabel}
           </p>
-          <div className="relative mt-0 min-h-[90px]">
+          <div className="relative mt-0 min-h-[130px] md:min-h-[130px]">
             {SAMPLE_PROFILES.map((profile, index) => (
-              <ul
+              <div
                 key={`${profile.id}-ideas`}
-                className={`space-y-1.5 transition-opacity duration-500 ${
+                className={`space-y-2 transition-opacity duration-500 ${
                   activeIndex === index
                     ? "opacity-100"
                     : "pointer-events-none opacity-0"
                 } absolute inset-0`}
               >
                 {profile.ideas.map((idea) => (
-                  <li
-                    key={idea}
-                    className="flex items-center gap-2 text-sm text-gp-evergreen"
-                  >
-                    <span className="inline-flex h-2 w-2 rounded-full bg-gp-gold" />
-                    {idea}
-                  </li>
+                  <div key={idea.text} className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
+                      <Image
+                        src={idea.icon}
+                        alt="Gift idea preview"
+                        width={80}
+                        height={80}
+                        className="h-8 w-8 object-cover"
+                        unoptimized
+                      />
+                    </div>
+                    <p className="text-sm text-gp-evergreen">{idea.text}</p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ))}
           </div>
         </div>
