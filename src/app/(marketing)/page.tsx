@@ -158,7 +158,7 @@ function LandingSampleProfiles() {
           <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
             {SAMPLE_PROFILES[activeIndex].ideasLabel}
           </p>
-          <div className="relative mt-0 min-h-[130px] md:min-h-[130px]">
+          <div className="relative mt-0 min-h-[140px] md:min-h-[140px]">
             {SAMPLE_PROFILES.map((profile, index) => (
               <div
                 key={`${profile.id}-ideas`}
@@ -170,13 +170,13 @@ function LandingSampleProfiles() {
               >
                 {profile.ideas.map((idea) => (
                   <div key={idea.text} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
+                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
                       <Image
                         src={idea.icon}
                         alt="Gift idea preview"
-                        width={80}
-                        height={80}
-                        className="h-8 w-8 object-cover"
+                        width={96}
+                        height={96}
+                        className="h-9 w-9 object-cover"
                         unoptimized
                       />
                     </div>
