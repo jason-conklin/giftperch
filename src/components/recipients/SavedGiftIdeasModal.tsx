@@ -23,6 +23,8 @@ type CombinedGift = SavedGiftIdea | FeedbackIdea;
 type Props = {
   recipientId: string;
   recipientName: string;
+  recipientAvatarUrl?: string | null;
+  recipientAvatarIcon?: string | null;
   isOpen: boolean;
   onClose: () => void;
   authToken?: string | null;
@@ -42,6 +44,8 @@ type FetchState =
 export function SavedGiftIdeasModal({
   recipientId,
   recipientName,
+  recipientAvatarUrl,
+  recipientAvatarIcon,
   isOpen,
   onClose,
   authToken,
@@ -257,13 +261,40 @@ export function SavedGiftIdeasModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gp-cream/80">
-              Saved gifts
-            </p>
-            <h2 className="text-xl font-semibold text-gp-cream">
-              Saved ideas for {recipientName}
-            </h2>
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-cream/40 bg-white/90">
+              {recipientAvatarUrl ? (
+                <Image
+                  src={recipientAvatarUrl}
+                  alt={recipientName}
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
+              ) : recipientAvatarIcon ? (
+                <Image
+                  src={recipientAvatarIcon}
+                  alt={recipientName}
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-contain"
+                  unoptimized
+                />
+              ) : (
+                <span className="text-base font-semibold text-gp-evergreen">
+                  {recipientName?.[0]?.toUpperCase() ?? "G"}
+                </span>
+              )}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gp-cream/80">
+                Saved gifts
+              </p>
+              <h2 className="text-xl font-semibold text-gp-cream">
+                Saved ideas for {recipientName}
+              </h2>
+            </div>
           </div>
           <button
             type="button"
