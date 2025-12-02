@@ -88,7 +88,7 @@ export function AdminMetrics() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Stat label="Registered users" value={metrics.users} />
           <Stat label="Recipient profiles" value={metrics.recipientProfiles} />
-          <Stat label="Gift suggestion Sets" value={metrics.giftSuggestions} />
+          <Stat label="Gift suggestion Runs" value={metrics.giftSuggestions} />
           <Stat label="Wishlist items" value={metrics.wishlistItems} />
         </div>
       ) : null}
