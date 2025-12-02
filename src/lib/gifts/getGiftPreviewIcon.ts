@@ -8,6 +8,29 @@ const keywordMap: { icon: string; keywords: string[] }[] = [
   { icon: "preview-dog-toy.png", keywords: ["dog toy", "chew", "tug", "fetch", "dog treat"] },
   { icon: "preview-cat-toy.png", keywords: ["cat toy", "scratcher", "catnip", "feather wand"] },
   { icon: "preview-paw.png", keywords: ["dog", "puppy", "cat", "pet", "pet bed", "pet collar"] },
+  // Fitness & Wellness
+  {
+    icon: "preview-fitness.png",
+    keywords: [
+      "fitness",
+      "workout",
+      "exercise",
+      "gym",
+      "training",
+      "yoga",
+      "resistance band",
+      "dumbbell",
+      "weights",
+      "activewear",
+      "foam roller",
+      "muscle recovery",
+      "athletic",
+      "athletic gear",
+      "sport bottle",
+      "hydration",
+      "protein shaker",
+    ],
+  },
   // Fishing & Sports
   { icon: "preview-fishing.png", keywords: ["fishing", "tackle", "rod", "lure", "fly fishing"] },
   {
