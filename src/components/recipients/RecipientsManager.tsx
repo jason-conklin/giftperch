@@ -1904,6 +1904,7 @@ export function RecipientsManager() {
                 <input
                   id="recipient-name"
                   type="text"
+                  maxLength={15}
                   required
                   value={formState.name}
                   onChange={(event) =>
