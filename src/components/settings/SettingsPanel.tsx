@@ -88,7 +88,7 @@ export function SettingsPanel() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const router = useRouter();
   const isAffiliateAllowed = useMemo(() => {
-    const allowedEmails = ["giftperch@gmail.com"];
+    const allowedEmails = ["giftperch@gmail.com", "jasonconklin64@gmail.com"];
     const email = user?.email?.toLowerCase();
     return email ? allowedEmails.includes(email) : false;
   }, [user?.email]);

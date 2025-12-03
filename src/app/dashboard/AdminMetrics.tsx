@@ -12,7 +12,7 @@ type Metrics = {
   wishlistItems: number;
 };
 
-const ADMIN_EMAILS = new Set(["giftperch@gmail.com"]);
+const ADMIN_EMAILS = new Set(["giftperch@gmail.com", "jasonconklin64@gmail.com"]);
 
 export function AdminMetrics() {
   const { user, status } = useSupabaseSession();
