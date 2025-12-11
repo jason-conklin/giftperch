@@ -359,6 +359,13 @@ async function signedPaapiRequest({
   const json = parsed as PaapiResponse;
 
   if (!response.ok || json.Errors) {
+    // Log detailed error information (no secrets) to help diagnose PAAPI issues.
+    console.error("[amazon] PAAPI error response", {
+      status: response.status,
+      statusText: response.statusText,
+      errors: json.Errors ?? null,
+    });
+
     throw new Error(
       `PAAPI error: ${json.Errors?.[0]?.Message || response.status}`,
     );
