@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { AmazonProduct } from "@/lib/amazonPaapi";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
@@ -109,6 +108,15 @@ export type GiftSuggestion = {
   why_it_fits: string;
   suggested_url?: string | null;
   image_url?: string | null;
+  amazonProduct?: {
+    asin: string;
+    title: string;
+    imageUrl: string | null;
+    detailPageUrl: string | null;
+    priceDisplay: string | null;
+    currency?: string | null;
+    primeEligible?: boolean | null;
+  } | null;
   initialSaved?: boolean;
   initialPreference?: "liked" | "disliked" | null;
 };
@@ -134,12 +142,6 @@ type SuggestionRun = {
 
 type TierFilter = "all" | GiftSuggestion["tier"];
 type SortOption = "relevance" | "price-asc" | "price-desc" | "tier";
-
-type AmazonSuggestionState = {
-  loading: boolean;
-  error: string;
-  products: AmazonProduct[];
-};
 
 type GiftSuggestionsPanelProps = {
   onFirstRunComplete?: () => void;
@@ -169,8 +171,6 @@ const formatRunLabel = (run: SuggestionRun) => {
 };
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
-const AMAZON_PLACEHOLDER_MESSAGE =
-  "No product matches found yet. Product previews will appear here when available.";
 
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
   suggestion.id?.trim() || "";
@@ -178,21 +178,9 @@ const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
 const isUuid = (value: string | null | undefined) =>
   typeof value === "string" && /^[0-9a-fA-F-]{32,36}$/.test(value);
 
-const AMAZON_PARTNER_TAG =
-  process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
-
-const buildAmazonSearchUrl = (title: string) => {
-  const safeTitle = title?.trim() || "gift ideas";
-  return `https://www.amazon.com/s?k=${encodeURIComponent(
-    safeTitle,
-  )}&tag=${encodeURIComponent(AMAZON_PARTNER_TAG)}`;
-};
-
 type SuggestionCardProps = {
   suggestionKey: string;
   suggestion: GiftSuggestion;
-  amazonState: AmazonSuggestionState | undefined;
-  onFetchAmazon: (suggestion: GiftSuggestion) => void;
   onSaveGift: (suggestion: GiftSuggestion) => void;
   onUnsaveGift: (suggestion: GiftSuggestion) => void;
   isSaved: boolean;
@@ -208,7 +196,6 @@ type SuggestionCardProps = {
   onOpenSaved?: () => void;
   onDismissSave?: () => void;
   onDismissFeedback?: () => void;
-  onClearAmazon?: () => void;
   feedback?: "liked" | "disliked" | null;
   feedbackError?: string | null;
   onToggleFeedback: (next: "liked" | "disliked") => void;
@@ -218,8 +205,6 @@ type SuggestionCardProps = {
 function GiftSuggestionCard({
   suggestionKey,
   suggestion,
-  amazonState,
-  onFetchAmazon,
   onSaveGift,
   onUnsaveGift,
   isSaved,
@@ -231,7 +216,6 @@ function GiftSuggestionCard({
   onOpenSaved,
   onDismissSave,
   onDismissFeedback,
-  onClearAmazon,
   feedback,
   onToggleFeedback,
   feedbackError,
@@ -240,13 +224,36 @@ function GiftSuggestionCard({
   const isLiked = isLikedProp ?? feedback === "liked";
   const isDisliked = isDislikedProp ?? feedback === "disliked";
   const previewIcon = getGiftPreviewIcon(suggestion);
+  const amazon = suggestion.amazonProduct;
+
+  const headerHasAmazonImage = !!amazon?.imageUrl;
+
+  const basePriceDisplay = buildPriceDisplay(
+    suggestion.price_min,
+    suggestion.price_max,
+    suggestion.price_hint,
+    suggestion.price_guidance,
+  );
+  const priceDisplay =
+    amazon?.priceDisplay || basePriceDisplay || "Not specified";
+
+  const amazonHref = buildAmazonAffiliateUrl({
+    productUrl: amazon?.detailPageUrl ?? undefined,
+    title: suggestion.title,
+  });
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
       <div className="relative h-40 w-full overflow-hidden bg-gp-evergreen/5">
         <Image
-          src={previewIcon}
-          alt={suggestion.title ? `${suggestion.title} preview icon` : "Gift preview icon"}
+          src={headerHasAmazonImage ? (amazon?.imageUrl as string) : previewIcon}
+          alt={
+            headerHasAmazonImage
+              ? amazon?.title || suggestion.title || "Amazon product image"
+              : suggestion.title
+              ? `${suggestion.title} preview icon`
+              : "Gift preview icon"
+          }
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-contain"
@@ -306,42 +313,22 @@ function GiftSuggestionCard({
           </div>
         </div>
 
-        {(() => {
-          const priceDisplay = buildPriceDisplay(
-            suggestion.price_min,
-            suggestion.price_max,
-            suggestion.price_hint,
-            suggestion.price_guidance,
-          );
-          return (
-            <div className="flex flex-wrap items-start justify-between gap-3 text-sm text-gp-evergreen/80">
-              <div className="min-w-[180px]">
-                <p className="font-semibold text-gp-evergreen">Price range</p>
-                <p className="text-sm">
-                  {priceDisplay ? priceDisplay : "Not specified"}
-                </p>
-                <a
-                  href={buildAmazonSearchUrl(suggestion.title)}
-                  target="_blank"
-                  rel="noopener noreferrer sponsored"
-                  className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                >
-                  View link
-                </a>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
-                }
-                disabled={saveState?.saving}
-                className="rounded-full border border-gp-evergreen/30 px-4 py-2 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-              >
-                {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
-              </button>
-            </div>
-          );
-        })()}
+        <div className="flex flex-wrap items-start justify-between gap-3 text-sm text-gp-evergreen/80">
+          <div className="min-w-[180px]">
+            <p className="font-semibold text-gp-evergreen">Price</p>
+            <p className="text-sm">{priceDisplay}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
+            }
+            disabled={saveState?.saving}
+            className="rounded-full border border-gp-evergreen/30 px-4 py-2 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
+          </button>
+        </div>
 
         <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
@@ -351,13 +338,14 @@ function GiftSuggestionCard({
         </div>
 
         <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => onFetchAmazon(suggestion)}
-            className="w-full max-w-xs rounded-full border border-gp-gold bg-gp-gold px-4 py-2 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90 cursor-pointer"
+          <a
+            href={amazonHref}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="w-full max-w-xs rounded-full border border-gp-gold bg-gp-gold px-4 py-2 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90 cursor-pointer"
           >
-            {amazonState?.loading ? "Searching Amazon..." : "Find on Amazon"}
-          </button>
+            View on Amazon
+          </a>
         </div>
 
         {(() => {
@@ -426,79 +414,6 @@ function GiftSuggestionCard({
           </div>
         ) : null}
 
-        {amazonState && (
-          <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/40 p-3 text-sm text-gp-evergreen">
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                Amazon finds
-              </p>
-              <button
-                type="button"
-                className="h-6 w-6 shrink-0 rounded-full border border-gp-evergreen/20 text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
-                aria-label="Close Amazon finds"
-                onClick={onClearAmazon}
-              >
-                ×
-              </button>
-            </div>
-            {amazonState.loading ? (
-              <div className="flex justify-center">
-                <PerchPalLoader
-                  variant="inline"
-                  size="sm"
-                  message="Searching Amazon for matches..."
-                />
-              </div>
-            ) : amazonState.error ? (
-              <p className="text-xs text-gp-evergreen/70">
-                {amazonState.error}
-              </p>
-            ) : amazonState.products.length === 0 ? (
-              <p className="text-xs text-gp-evergreen/70">
-                {AMAZON_PLACEHOLDER_MESSAGE}
-              </p>
-            ) : (
-              <div className="mt-2 space-y-3">
-                {amazonState.products.map((product) => {
-                  const href = buildAmazonAffiliateUrl({
-                    productUrl: product.detailPageUrl,
-                    title: product.title,
-                  });
-                  return (
-                    <a
-                      key={product.asin}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/80 p-2 text-xs text-gp-evergreen transition hover:bg-gp-cream/70"
-                    >
-                      {product.imageUrl ? (
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.title}
-                          width={48}
-                          height={48}
-                          className="h-12 w-12 rounded-xl object-cover"
-                          unoptimized
-                        />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gp-evergreen/20 bg-gp-cream text-[10px] font-semibold">
-                          No image
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold">{product.title}</p>
-                        <p className="text-gp-evergreen/70">
-                          {product.priceDisplay ?? "Price unavailable"}
-                        </p>
-                      </div>
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </article>
   );
@@ -525,9 +440,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [isGenerating, setIsGenerating] = useState(false);
   const [requestProgress, setRequestProgress] = useState(0);
   const [error, setError] = useState("");
-  const [amazonBySuggestion, setAmazonBySuggestion] = useState<
-    Record<string, AmazonSuggestionState>
-  >({});
   const searchParams = useSearchParams();
   const recipientIdFromQuery = searchParams?.get("recipientId") ?? "";
   const suggestionsCardRef = useRef<HTMLDivElement | null>(null);
@@ -851,14 +763,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     setLastUnsavedId((prev) => (prev === suggestionId ? null : prev));
   };
 
-  const handleClearAmazon = (suggestionId: string) => {
-    setAmazonBySuggestion((prev) => {
-      const next = { ...prev };
-      delete next[suggestionId];
-      return next;
-    });
-  };
-
   const handleDeleteRun = async () => {
     if (!activeRunId || !user?.id) return;
     try {
@@ -875,9 +779,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         const remaining = prev.filter((run) => run.id !== activeRunId);
         const next = remaining[0];
         setActiveRunId(next ? next.id : null);
-        if (!next) {
-          setAmazonBySuggestion({});
-        }
         return remaining;
       });
 
@@ -1016,7 +917,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   );
 
   useEffect(() => {
-    setAmazonBySuggestion({});
     setFeedbackById({});
     setFeedbackErrorById({});
   }, [activeRunId]);
@@ -1255,16 +1155,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       if (onFirstRunComplete) {
         onFirstRunComplete();
       }
-    }
-  };
-
-  const handleFetchAmazonProducts = async (suggestion: GiftSuggestion) => {
-    const query = suggestion.title.trim();
-    if (!query) return;
-
-    const url = buildAmazonSearchUrl(query);
-    if (typeof window !== "undefined") {
-      window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -1694,8 +1584,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                           key={suggestionKey}
                           suggestionKey={suggestionKey}
                           suggestion={suggestion}
-                          amazonState={amazonBySuggestion[suggestion.id]}
-                          onFetchAmazon={handleFetchAmazonProducts}
                           onSaveGift={handleSaveGift}
                           onUnsaveGift={handleUnsaveGift}
                           isSaved={!!savedMap[suggestionKey]}
@@ -1714,7 +1602,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                             }
                           }}
                           onDismissSave={() => handleDismissSave(suggestionKey)}
-                          onClearAmazon={() => handleClearAmazon(suggestion.id)}
                           feedback={feedbackById[suggestionKey] ?? null}
                           feedbackError={feedbackErrorById[suggestionKey] ?? null}
                           dismissedFeedback={

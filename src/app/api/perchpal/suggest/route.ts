@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import {
+  AmazonProduct,
+  searchAmazonProductForSuggestion,
+} from "@/lib/amazonPaapi";
 
 type SuggestRequestBody = {
   recipientId?: string;
@@ -24,6 +28,7 @@ type GiftSuggestion = {
   suggested_url?: string | null;
   image_url?: string | null;
   imageUrl?: string | null;
+  amazonProduct?: AmazonProduct | null;
   initialSaved?: boolean;
   initialPreference?: "liked" | "disliked" | null;
 };
@@ -462,6 +467,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const enrichedSuggestions: GiftSuggestion[] = await Promise.all(
+      finalSuggestions.map(async (suggestion) => {
+        const title = suggestion.title?.trim();
+        if (!title) {
+          return {
+            ...suggestion,
+            amazonProduct: null,
+          };
+        }
+
+        try {
+          const amazonProduct = await searchAmazonProductForSuggestion({
+            query: title,
+            minPriceCents:
+              typeof suggestion.price_min === "number"
+                ? Math.round(suggestion.price_min * 100)
+                : undefined,
+            maxPriceCents:
+              typeof suggestion.price_max === "number"
+                ? Math.round(suggestion.price_max * 100)
+                : undefined,
+          });
+
+          return {
+            ...suggestion,
+            amazonProduct,
+          };
+        } catch (error) {
+          console.warn(
+            "[perchpal] Amazon enrichment failed for suggestion",
+            title,
+            error,
+          );
+          return {
+            ...suggestion,
+            amazonProduct: null,
+          };
+        }
+      }),
+    );
+
     const { data: inserted, error: insertError } = await supabase
       .from("gift_suggestions")
       .insert({
@@ -469,7 +515,7 @@ export async function POST(request: NextRequest) {
         recipient_id: recipient.id,
         model: SUGGESTION_MODEL,
         prompt_context: promptContext,
-        suggestions: finalSuggestions,
+        suggestions: enrichedSuggestions,
       })
       .select()
       .single();
@@ -482,7 +528,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const suggestionsWithFlags = finalSuggestions.map((s) => {
+    const suggestionsWithFlags = enrichedSuggestions.map((s) => {
       const identity = makeIdentity(s.title, s.tier);
       return {
         ...s,

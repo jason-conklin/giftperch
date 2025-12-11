@@ -1,5 +1,3 @@
-import { serverEnv, isProd } from "@/lib/env";
-
 const AFFILIATE_FALLBACK_TAG = "giftperch-20";
 let warnedMissingTag = false;
 
@@ -8,19 +6,32 @@ export type AmazonAffiliateUrlOptions = {
   title?: string | null;
 };
 
-export function buildAmazonAffiliateUrl({
-  productUrl,
-  title,
-}: AmazonAffiliateUrlOptions): string {
-  const partnerTag = serverEnv.amazonPaPartnerTag || AFFILIATE_FALLBACK_TAG;
+function getAffiliateTag(): string {
+  const tag =
+    process.env.NEXT_PUBLIC_AMAZON_PARTNER_TAG ||
+    process.env.AMAZON_PAAPI_PARTNER_TAG ||
+    process.env.AMAZON_PA_PARTNER_TAG ||
+    AFFILIATE_FALLBACK_TAG;
 
-  if (!serverEnv.amazonPaPartnerTag && !isProd && !warnedMissingTag) {
+  if (
+    tag === AFFILIATE_FALLBACK_TAG &&
+    process.env.NODE_ENV !== "production" &&
+    !warnedMissingTag
+  ) {
     console.warn(
-      "[amazon] AMAZON_PA_PARTNER_TAG not configured; falling back to 'giftperch-20'."
+      "[amazon] Amazon partner tag env not configured; falling back to 'giftperch-20'.",
     );
     warnedMissingTag = true;
   }
 
+  return tag;
+}
+
+export function buildAmazonAffiliateUrl({
+  productUrl,
+  title,
+}: AmazonAffiliateUrlOptions): string {
+  const partnerTag = getAffiliateTag();
   const safeTitle = title?.trim() || "gift ideas";
 
   const looksLikeAmazon =

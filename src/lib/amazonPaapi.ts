@@ -48,13 +48,21 @@ type PaapiResponse = {
   Errors?: Array<{ Message?: string }>;
 };
 
-const {
-  AMAZON_PA_ACCESS_KEY,
-  AMAZON_PA_SECRET_KEY,
-  AMAZON_PA_PARTNER_TAG,
-  AMAZON_PA_REGION,
-  NEXT_PUBLIC_AMAZON_PARTNER_TAG,
-} = process.env;
+// Support both the original AMAZON_PA_* env vars and the newer AMAZON_PAAPI_* names.
+const AMAZON_PA_ACCESS_KEY =
+  process.env.AMAZON_PAAPI_ACCESS_KEY || process.env.AMAZON_PA_ACCESS_KEY;
+const AMAZON_PA_SECRET_KEY =
+  process.env.AMAZON_PAAPI_SECRET_KEY || process.env.AMAZON_PA_SECRET_KEY;
+const AMAZON_PA_PARTNER_TAG =
+  process.env.AMAZON_PAAPI_PARTNER_TAG || process.env.AMAZON_PA_PARTNER_TAG;
+const AMAZON_PA_REGION =
+  process.env.AMAZON_PAAPI_REGION || process.env.AMAZON_PA_REGION;
+const AMAZON_PA_MARKETPLACE =
+  process.env.AMAZON_PAAPI_MARKETPLACE || process.env.AMAZON_PA_MARKETPLACE;
+const AMAZON_PA_HOST =
+  process.env.AMAZON_PAAPI_HOST || process.env.AMAZON_PA_HOST;
+const NEXT_PUBLIC_AMAZON_PARTNER_TAG =
+  process.env.NEXT_PUBLIC_AMAZON_PARTNER_TAG;
 
 const AMAZON_PARTNER_TAG =
   AMAZON_PA_PARTNER_TAG ||
@@ -98,11 +106,11 @@ const SERVICE = "ProductAdvertisingAPI";
 const TARGET =
   "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems";
 
+// In environments without valid PAAPI credentials we fall back to
+// lightweight mock products, but if keys are configured we always
+// call the real API (even in development).
 const shouldMock =
-  !AMAZON_PA_ACCESS_KEY ||
-  !AMAZON_PA_SECRET_KEY ||
-  !AMAZON_PA_REGION ||
-  process.env.NODE_ENV !== "production";
+  !AMAZON_PA_ACCESS_KEY || !AMAZON_PA_SECRET_KEY || !AMAZON_PA_REGION;
 
 export async function searchAmazonProducts(params: {
   query: string;
@@ -119,9 +127,12 @@ export async function searchAmazonProducts(params: {
   }
 
   try {
-    const region = AMAZON_PA_REGION as string;
-    const config =
-      HOST_BY_REGION[region] ?? HOST_BY_REGION["us-east-1"];
+    const region = (AMAZON_PA_REGION as string) || "us-east-1";
+    const defaultConfig = HOST_BY_REGION[region] ?? HOST_BY_REGION["us-east-1"];
+    const config = {
+      host: AMAZON_PA_HOST || defaultConfig.host,
+      marketplace: AMAZON_PA_MARKETPLACE || defaultConfig.marketplace,
+    };
     const body = buildRequestBody({
       query: params.query,
       budgetMin: params.budgetMin,
@@ -145,6 +156,7 @@ export async function searchAmazonProducts(params: {
         if (!item?.ASIN) return null;
         const listing = item.Offers?.Listings?.[0];
         const price = listing?.Price;
+        const rawDetailUrl = item.DetailPageURL ?? null;
         return {
           asin: item.ASIN,
           title:
@@ -156,7 +168,7 @@ export async function searchAmazonProducts(params: {
             item.Images?.Primary?.Large?.URL ??
             item.Images?.Primary?.Small?.URL ??
             null,
-          detailPageUrl: item.DetailPageURL ?? null,
+          detailPageUrl: ensureAmazonAffiliateTag(rawDetailUrl),
           priceDisplay: price?.DisplayAmount ?? null,
           currency: price?.Currency ?? null,
           primeEligible: listing?.DeliveryInfo?.IsPrimeEligible ?? null,
@@ -192,6 +204,45 @@ function buildMockProducts(query: string): AmazonProduct[] {
     title: `${prefix}${product.title}`,
     asin: `${product.asin}-${index}`,
   }));
+}
+
+export async function searchAmazonProductForSuggestion(params: {
+  query: string;
+  minPriceCents?: number;
+  maxPriceCents?: number;
+}): Promise<AmazonProduct | null> {
+  const query = params.query?.trim();
+  if (!query) return null;
+
+  try {
+    const products = await searchAmazonProducts({
+      query,
+      budgetMin:
+        typeof params.minPriceCents === "number"
+          ? params.minPriceCents / 100
+          : undefined,
+      budgetMax:
+        typeof params.maxPriceCents === "number"
+          ? params.maxPriceCents / 100
+          : undefined,
+      maxResults: 5,
+    });
+
+    if (!products.length) return null;
+
+    const candidate = products.find(
+      (product) => product.detailPageUrl && product.title,
+    );
+
+    return candidate ?? null;
+  } catch (error) {
+    console.warn(
+      "[amazon] searchAmazonProductForSuggestion failed",
+      query,
+      error,
+    );
+    return null;
+  }
 }
 
 function buildRequestBody(args: {
