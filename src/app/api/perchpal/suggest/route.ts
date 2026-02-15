@@ -5,6 +5,10 @@ import {
   AmazonProduct,
   searchAmazonProductForSuggestion,
 } from "@/lib/amazonPaapi";
+import {
+  canonicalizeGiftSuggestionText,
+  getGiftSuggestionCanonicalKey,
+} from "@/lib/giftSuggestionCanonical";
 
 type SuggestRequestBody = {
   recipientId?: string;
@@ -72,6 +76,25 @@ type GiftHistoryItem = {
   notes: string | null;
 };
 
+type FeedbackRow = {
+  preference: "liked" | "disliked";
+  suggestion_id: string | null;
+  suggestion_index: number | null;
+  title?: string | null;
+  tier?: string | null;
+};
+
+type GiftSuggestionRunRow = {
+  id: string;
+  created_at: string;
+  suggestions: unknown;
+};
+
+type GiftSuggestionFromRun = {
+  title?: string | null;
+  tier?: string | null;
+};
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -85,6 +108,14 @@ const PERCHPAL_UNAVAILABLE =
 const TIER_FALLBACK: GiftSuggestion["tier"] = "thoughtful";
 const MIN_SUGGESTIONS = 3;
 const MAX_SUGGESTIONS = 10;
+const MAX_EXTRA_GENERATION_PASSES = 3;
+const TOP_UP_BUFFER = 2;
+const RECENT_RUN_LOOKBACK_DAYS = 90;
+const RECENT_RUN_LIMIT = 24;
+const SAVED_IDEA_LIMIT = 200;
+const FEEDBACK_LIMIT = 250;
+const SUGGESTIONS_PER_RUN_CAP = 20;
+const PROMPT_EXCLUSION_LIMIT = 30;
 
 const PRICE_REGEX = /\$/;
 const DIGIT_REGEX = /\d/;
@@ -214,11 +245,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const recentRunCutoffIso = new Date(
+      Date.now() - RECENT_RUN_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     const [
       { data: interestsData },
       { data: giftsData },
       { data: savedData },
       { data: feedbackData },
+      { data: recentRunsData },
     ] = await Promise.all([
       supabase
         .from("recipient_interests")
@@ -235,39 +271,182 @@ export async function POST(request: NextRequest) {
         .from("recipient_saved_gift_ideas")
         .select("title, tier")
         .eq("recipient_id", recipientId)
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(SAVED_IDEA_LIMIT),
       supabase
         .from("recipient_gift_feedback")
-        .select("preference, title, tier")
+        .select("preference, suggestion_id, suggestion_index, title, tier")
         .eq("recipient_id", recipientId)
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(FEEDBACK_LIMIT),
+      supabase
+        .from("gift_suggestions")
+        .select("id, created_at, suggestions")
+        .eq("recipient_id", recipientId)
+        .eq("user_id", user.id)
+        .gte("created_at", recentRunCutoffIso)
+        .order("created_at", { ascending: false })
+        .limit(RECENT_RUN_LIMIT),
     ]);
 
     const interests = (interestsData ?? []) as RecipientInterest[];
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
-    const savedByIdentity: Record<string, boolean> = {};
-    const preferenceByIdentity: Record<string, "liked" | "disliked"> = {};
-    const previouslySavedTitles: string[] = [];
-    (savedData ?? []).forEach((row) => {
-      const key = makeIdentity(row.title ?? "", row.tier ?? null);
-      if (!key) return;
-      savedByIdentity[key] = true;
-      if (row.title) previouslySavedTitles.push(row.title.trim());
-    });
+    const recentRuns = (recentRunsData ?? []) as GiftSuggestionRunRow[];
+    const feedbackRows = ((feedbackData ?? []) as FeedbackRow[]).filter(
+      (row) => row.preference === "liked" || row.preference === "disliked",
+    );
 
+    const savedByIdentity: Record<string, boolean> = {};
+    const savedByCanonical: Record<string, boolean> = {};
+    const preferenceByIdentity: Record<string, "liked" | "disliked"> = {};
+    const preferenceByCanonical: Record<string, "liked" | "disliked"> = {};
+
+    const previouslySavedTitles: string[] = [];
     const likedTitles: string[] = [];
     const dislikedTitles: string[] = [];
-    (feedbackData ?? []).forEach((row) => {
-      const key = makeIdentity(row.title ?? "", row.tier ?? null);
-      if (!key) return;
+    const recentSuggestionTitles: string[] = [];
+
+    const suggestionsByRunId = new Map<string, GiftSuggestionFromRun[]>();
+    recentRuns.forEach((run) => {
+      const runSuggestions = extractSuggestionPayloads(
+        run.suggestions,
+        SUGGESTIONS_PER_RUN_CAP,
+      );
+      suggestionsByRunId.set(run.id, runSuggestions);
+      runSuggestions.forEach((item) => {
+        if (typeof item.title === "string" && item.title.trim().length > 0) {
+          recentSuggestionTitles.push(item.title.trim());
+        }
+      });
+    });
+
+    const feedbackSuggestionIds = Array.from(
+      new Set(
+        feedbackRows
+          .map((row) =>
+            typeof row.suggestion_id === "string" ? row.suggestion_id.trim() : "",
+          )
+          .filter(Boolean),
+      ),
+    );
+    const missingFeedbackSuggestionIds = feedbackSuggestionIds.filter(
+      (id) => !suggestionsByRunId.has(id),
+    );
+
+    if (missingFeedbackSuggestionIds.length > 0) {
+      const { data: feedbackRunsData } = await supabase
+        .from("gift_suggestions")
+        .select("id, suggestions")
+        .eq("recipient_id", recipientId)
+        .eq("user_id", user.id)
+        .in("id", missingFeedbackSuggestionIds);
+
+      (feedbackRunsData ?? []).forEach((run) => {
+        if (typeof run.id !== "string") return;
+        suggestionsByRunId.set(
+          run.id,
+          extractSuggestionPayloads(run.suggestions, SUGGESTIONS_PER_RUN_CAP),
+        );
+      });
+    }
+
+    (savedData ?? []).forEach((row) => {
+      const title = typeof row.title === "string" ? row.title.trim() : "";
+      if (!title) return;
+      const tier =
+        typeof row.tier === "string" && row.tier.trim().length > 0
+          ? row.tier.trim()
+          : null;
+
+      const identity = makeIdentity(title, tier);
+      savedByIdentity[identity] = true;
+
+      const canonicalKey = getGiftSuggestionCanonicalKey(title);
+      if (canonicalKey) {
+        savedByCanonical[canonicalKey] = true;
+      }
+
+      previouslySavedTitles.push(title);
+    });
+
+    feedbackRows.forEach((row) => {
+      const suggestionId =
+        typeof row.suggestion_id === "string" ? row.suggestion_id.trim() : "";
+      const hasExplicitSuggestionIndex =
+        typeof row.suggestion_index === "number" &&
+        Number.isInteger(row.suggestion_index) &&
+        row.suggestion_index >= 0;
+      const suggestionIndex =
+        hasExplicitSuggestionIndex
+          ? (row.suggestion_index as number)
+          : 0;
+
+      const runSuggestions = suggestionId ? suggestionsByRunId.get(suggestionId) : null;
+      const fromRun =
+        runSuggestions?.[suggestionIndex] ??
+        (!hasExplicitSuggestionIndex ? runSuggestions?.[0] ?? null : null);
+      const resolvedTitle =
+        typeof fromRun?.title === "string" && fromRun.title.trim().length > 0
+          ? fromRun.title.trim()
+          : typeof row.title === "string" && row.title.trim().length > 0
+            ? row.title.trim()
+            : "";
+      const resolvedTier =
+        typeof fromRun?.tier === "string" && fromRun.tier.trim().length > 0
+          ? fromRun.tier.trim()
+          : typeof row.tier === "string" && row.tier.trim().length > 0
+            ? row.tier.trim()
+            : null;
+
+      if (!resolvedTitle) return;
+
+      const identity = makeIdentity(resolvedTitle, resolvedTier);
+      if (!preferenceByIdentity[identity]) {
+        preferenceByIdentity[identity] = row.preference;
+      }
+
+      const canonicalKey = getGiftSuggestionCanonicalKey(resolvedTitle);
+      if (canonicalKey && !preferenceByCanonical[canonicalKey]) {
+        preferenceByCanonical[canonicalKey] = row.preference;
+      }
+
       if (row.preference === "liked") {
-        preferenceByIdentity[key] = "liked";
-        if (row.title) likedTitles.push(row.title.trim());
+        likedTitles.push(resolvedTitle);
       } else if (row.preference === "disliked") {
-        preferenceByIdentity[key] = "disliked";
-        if (row.title) dislikedTitles.push(row.title.trim());
+        dislikedTitles.push(resolvedTitle);
       }
     });
+
+    const uniqueSavedTitles = uniqueTrimmedValues(previouslySavedTitles);
+    const uniqueLikedTitles = uniqueTrimmedValues(likedTitles);
+    const uniqueDislikedTitles = uniqueTrimmedValues(dislikedTitles);
+    const uniqueRecentSuggestionTitles = uniqueTrimmedValues(recentSuggestionTitles);
+
+    const historicalExclusionKeys = new Set<string>();
+    [
+      ...cappedPreviousSuggestions,
+      ...uniqueSavedTitles,
+      ...uniqueLikedTitles,
+      ...uniqueDislikedTitles,
+      ...uniqueRecentSuggestionTitles,
+    ].forEach((title) => {
+      const key = canonicalizeGiftSuggestionText(title);
+      if (key) {
+        historicalExclusionKeys.add(key);
+      }
+    });
+
+    logSuggestionDedupeDebug("loaded recipient exclusions", {
+      recipientId,
+      savedIdeaCount: uniqueSavedTitles.length,
+      likedIdeaCount: uniqueLikedTitles.length,
+      dislikedIdeaCount: uniqueDislikedTitles.length,
+      recentSuggestionCount: uniqueRecentSuggestionTitles.length,
+      canonicalExclusionCount: historicalExclusionKeys.size,
+    });
+
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
     const last_gifts_summary = summarizeGifts(gifts);
@@ -290,165 +469,221 @@ export async function POST(request: NextRequest) {
       last_gifts_summary,
     };
 
-    const userMessageContent = {
-      recipient,
-      occasion,
-      budget_min: resolvedBudgetMin,
-      budget_max: resolvedBudgetMax,
-      annual_budget: resolvedAnnualBudget,
-      interests,
-      recent_gifts: gifts,
-      num_suggestions: numSuggestions,
-      previously_saved_titles: previouslySavedTitles,
-      previous_suggestions: cappedPreviousSuggestions,
-    };
+    const requestSuggestionPass = async (
+      requestedCount: number,
+      doNotSuggestCanonical: string[],
+    ): Promise<GiftSuggestion[]> => {
+      const userMessageContent = {
+        recipient,
+        occasion,
+        budget_min: resolvedBudgetMin,
+        budget_max: resolvedBudgetMax,
+        annual_budget: resolvedAnnualBudget,
+        interests,
+        recent_gifts: gifts,
+        num_suggestions: requestedCount,
+        previously_saved_titles: uniqueSavedTitles.slice(0, 25),
+        previous_suggestions: cappedPreviousSuggestions,
+        do_not_suggest_canonical: doNotSuggestCanonical,
+      };
 
-    let completion;
-    try {
-      completion = await openai.chat.completions.create(
-      {
-        model: SUGGESTION_MODEL,
+      const completion = await openai.chat.completions.create(
+        {
+          model: SUGGESTION_MODEL,
           temperature: 0.9,
           top_p: 0.95,
-        messages: [
-          {
-          role: "system",
-          content: [
-            "You are PerchPal, an AI gifting assistant inside the GiftPerch app.",
-            "You generate concrete gift ideas tailored to the recipient’s profile, interests, budget, and gift history.",
-            "",
-            "Follow this staged process before you answer:",
-            "1) Interpret the recipient and notes deeply.",
-            "2) Create at least 5 diverse thematic angles (e.g., creative experiences, sentimental keepsakes, tech + hobbies, subscriptions, DIY/handmade, etc.).",
-            "3) Brainstorm many internal candidate ideas (at least 2–3× the requested count N).",
-            "4) Select the most unique, surprising, and recipient-aligned ideas.",
-            "",
-            "Generation rules:",
-            ` - Generate exactly ${numSuggestions} distinct gift ideas. Assume N can vary; always respect the requested count.`,
-            " - Each batch must span multiple categories: physical items, personalized items, experience-based gifts, digital/AI gifts, subscription-type gifts, and sentimental/DIY gifts. Use at least min(4, N) distinct categories in each batch.",
-            " - Avoid generic, overused gifts like “cozy blanket”, “spa set”, “scented candles”, “generic gift card”, or anything very similar unless the context makes them unusually specific and personalized.",
-            " - You will receive previous gift ideas. Treat them as ALREADY USED. Do not repeat or closely mimic any of them. If an idea feels even moderately similar, discard it and generate a different one.",
-            "You must respond ONLY as JSON, with no extra prose, using this exact TypeScript-like structure:",
-            "",
-            "type GiftSuggestion = {",
-            '  id: string;',
-            '  title: string;',
-            '  short_description: string;',
-            '  tier: \"safe\" | \"thoughtful\" | \"experience\" | \"splurge\";',
-            "  price_min?: number | null;",
-            "  price_max?: number | null;",
-            "  price_hint?: string | null;",
-            '  price_guidance?: string | null; // SHORT price text only, e.g., \"$25–$50\", \"$50+\", \"Under $25\". If unknown, set null.',
-            "  why_it_fits: string;",
-            "  suggested_url?: string | null;",
-            "  image_url?: string | null; // REQUIRED: real, publicly accessible HTTPS product/inspiration image (never example.com)",
-            "};",
-            "",
-            "Expectations:",
-            '- price_guidance MUST be price-only text. Do NOT include descriptions. Examples: \"$25–$50\", \"$50+\", \"Under $25\". If no good price guess, use null.',
-            "- Every suggestion should include image_url whenever possible.",
-            "- Use reputable sources (brand CDN, Amazon images, Unsplash, etc.).",
-            "- Never invent unreachable URLs or placeholders.",
-            "",
-              "Return an object: { suggestions: GiftSuggestion[] }.",
-              "Do not include code fences or any text outside JSON.",
-              "",
-              `Requested count N: ${numSuggestions}. Generate exactly this many suggestions.`,
-              cappedPreviousSuggestions.length
-                ? [
-                    "Previously suggested (DO NOT REPEAT OR IMITATE):",
-                    ...cappedPreviousSuggestions.map((idea) => `- ${idea}`),
-                  ].join("\n")
-                : "",
-            likedTitles.length
-              ? `The user has previously liked these gift ideas for this recipient: ${likedTitles.join(
-                  "; ",
-                )}. Favor ideas with similar qualities or vibe.`
-              : "",
-            dislikedTitles.length
-              ? `The user has previously disliked these gift ideas: ${dislikedTitles.join(
-                  "; ",
-                )}. Avoid repeating or closely matching these items.`
-              : "",
-            previouslySavedTitles.length
-              ? `The user has already saved these gift ideas for this recipient: ${previouslySavedTitles.join(
-                  "; ",
-                )}. Do NOT repeat these exact ideas. Prefer novel, distinct recommendations.`
-              : "",
-          ].join("\n"),
+          messages: [
+            {
+              role: "system",
+              content: [
+                "You are PerchPal, an AI gifting assistant inside the GiftPerch app.",
+                "You generate concrete gift ideas tailored to the recipient's profile, interests, budget, and gift history.",
+                "",
+                "Follow this staged process before you answer:",
+                "1) Interpret the recipient and notes deeply.",
+                "2) Create at least 5 diverse thematic angles (e.g., creative experiences, sentimental keepsakes, tech + hobbies, subscriptions, DIY/handmade, etc.).",
+                "3) Brainstorm many internal candidate ideas (at least 2-3x the requested count N).",
+                "4) Select the most unique, surprising, and recipient-aligned ideas.",
+                "",
+                "Generation rules:",
+                ` - Generate exactly ${requestedCount} distinct gift ideas. Assume N can vary; always respect the requested count.`,
+                " - Each batch must span multiple categories: physical items, personalized items, experience-based gifts, digital/AI gifts, subscription-type gifts, and sentimental/DIY gifts. Use at least min(4, N) distinct categories in each batch.",
+                " - Avoid generic, overused gifts like cozy blanket, spa set, scented candles, or generic gift cards unless the context makes them unusually specific and personalized.",
+                " - You will receive previous gift ideas. Treat them as ALREADY USED. Do not repeat or closely mimic any of them.",
+                " - You will receive a DO NOT SUGGEST canonical list. Do not return any of those ideas, and avoid close variants with different casing, punctuation, or minor phrasing.",
+                "You must respond ONLY as JSON, with no extra prose, using this exact TypeScript-like structure:",
+                "",
+                "type GiftSuggestion = {",
+                '  id: string;',
+                '  title: string;',
+                '  short_description: string;',
+                '  tier: "safe" | "thoughtful" | "experience" | "splurge";',
+                "  price_min?: number | null;",
+                "  price_max?: number | null;",
+                "  price_hint?: string | null;",
+                '  price_guidance?: string | null; // SHORT price text only, e.g., "$25-$50", "$50+", "Under $25". If unknown, set null.',
+                "  why_it_fits: string;",
+                "  suggested_url?: string | null;",
+                "  image_url?: string | null; // REQUIRED: real, publicly accessible HTTPS product/inspiration image (never example.com)",
+                "};",
+                "",
+                "Expectations:",
+                '- price_guidance MUST be price-only text. Do NOT include descriptions. Examples: "$25-$50", "$50+", "Under $25". If no good price guess, use null.',
+                "- Every suggestion should include image_url whenever possible.",
+                "- Use reputable sources (brand CDN, Amazon images, Unsplash, etc.).",
+                "- Never invent unreachable URLs or placeholders.",
+                "",
+                "Return an object: { suggestions: GiftSuggestion[] }.",
+                "Do not include code fences or any text outside JSON.",
+                "",
+                `Requested count N: ${requestedCount}. Generate exactly this many suggestions.`,
+                cappedPreviousSuggestions.length
+                  ? [
+                      "Previously suggested (DO NOT REPEAT OR IMITATE):",
+                      ...cappedPreviousSuggestions.map((idea) => `- ${idea}`),
+                    ].join("\n")
+                  : "",
+                doNotSuggestCanonical.length
+                  ? [
+                      "DO NOT SUGGEST (canonical ideas):",
+                      ...doNotSuggestCanonical.map((idea) => `- ${idea}`),
+                    ].join("\n")
+                  : "",
+                uniqueLikedTitles.length
+                  ? `The user has previously liked these gift ideas for this recipient: ${uniqueLikedTitles
+                      .slice(0, 20)
+                      .join("; ")}. Favor ideas with similar qualities or vibe.`
+                  : "",
+                uniqueDislikedTitles.length
+                  ? `The user has previously disliked these gift ideas: ${uniqueDislikedTitles
+                      .slice(0, 20)
+                      .join("; ")}. Avoid repeating or closely matching these items.`
+                  : "",
+                uniqueSavedTitles.length
+                  ? `The user has already saved these gift ideas for this recipient: ${uniqueSavedTitles
+                      .slice(0, 20)
+                      .join("; ")}. Do not repeat these ideas. Prefer novel, distinct recommendations.`
+                  : "",
+              ].join("\n"),
+            },
+            { role: "user", content: JSON.stringify(userMessageContent) },
+          ],
         },
-        { role: "user", content: JSON.stringify(userMessageContent) },
-        ],
-      },
-      { timeout: OPENAI_TIMEOUT_MS },
-    );
-    } catch (err) {
-      console.error("OpenAI suggestion generation failed", err);
-      return NextResponse.json(
-        { error: PERCHPAL_UNAVAILABLE },
-        { status: 504 },
+        { timeout: OPENAI_TIMEOUT_MS },
       );
-    }
 
-    const rawContent =
-      completion.choices[0]?.message?.content?.trim() ?? '{"suggestions":[]}';
+      const rawContent =
+        completion.choices[0]?.message?.content?.trim() ?? '{"suggestions":[]}';
+      const parsed = tryParseJsonObject(rawContent) as {
+        suggestions?: GiftSuggestion[];
+      };
 
-    const parsed = tryParseJsonObject(rawContent) as {
-      suggestions?: GiftSuggestion[];
+      const parsedSuggestions = Array.isArray(parsed.suggestions)
+        ? parsed.suggestions
+        : [];
+
+      return parsedSuggestions
+        .filter(
+          (item): item is GiftSuggestion =>
+            typeof item === "object" && item !== null,
+        )
+        .map((item, index) => normalizeSuggestion(item, index));
     };
 
-    const previousTitleSet = new Set(
-      previousSuggestions.map((title) => title.toLowerCase()),
-    );
+    const exclusionSet = new Set(historicalExclusionKeys);
+    let finalSuggestions: GiftSuggestion[] = [];
+    let filteredByExclusion = 0;
+    let filteredAsPlaceholder = 0;
+    let filteredWithoutCanonicalKey = 0;
+    let totalGenerationPasses = 0;
+    let topUpPassesUsed = 0;
 
-    const parsedSuggestions = Array.isArray(parsed.suggestions)
-      ? parsed.suggestions
-      : [];
+    for (
+      let pass = 0;
+      pass <= MAX_EXTRA_GENERATION_PASSES &&
+      finalSuggestions.length < numSuggestions;
+      pass += 1
+    ) {
+      const remaining = numSuggestions - finalSuggestions.length;
+      const requestedCountForPass = Math.min(
+        MAX_SUGGESTIONS,
+        Math.max(MIN_SUGGESTIONS, remaining + TOP_UP_BUFFER),
+      );
 
-    const normalizedSuggestions = parsedSuggestions
-      .filter((item): item is GiftSuggestion => typeof item === "object")
-      .map((item, index) => normalizeSuggestion(item, index))
-      .filter((item) => {
+      const doNotSuggestForPrompt = Array.from(exclusionSet).slice(
+        0,
+        PROMPT_EXCLUSION_LIMIT,
+      );
+
+      let normalizedSuggestions: GiftSuggestion[] = [];
+      try {
+        normalizedSuggestions = await requestSuggestionPass(
+          requestedCountForPass,
+          doNotSuggestForPrompt,
+        );
+      } catch (err) {
+        if (pass === 0) {
+          console.error("OpenAI suggestion generation failed", err);
+          return NextResponse.json(
+            { error: PERCHPAL_UNAVAILABLE },
+            { status: 504 },
+          );
+        }
+        console.warn("OpenAI top-up suggestion generation failed", err);
+        break;
+      }
+
+      totalGenerationPasses += 1;
+      if (pass > 0) {
+        topUpPassesUsed += 1;
+      }
+
+      normalizedSuggestions.forEach((item) => {
+        if (finalSuggestions.length >= numSuggestions) return;
         const title = item.title?.trim();
-        if (!title) return false;
+        if (!title) {
+          filteredWithoutCanonicalKey += 1;
+          return;
+        }
+
         const titleLower = title.toLowerCase();
-        const isPlaceholder = /^idea\s*\d+/i.test(titleLower) || titleLower === "placeholder";
+        const isPlaceholder =
+          /^idea\s*\d+/i.test(titleLower) || titleLower === "placeholder";
         const isGenericStub =
-          item.short_description?.toLowerCase().includes("thoughtful gift idea") &&
-          titleLower.startsWith("idea ");
-        if (
-          dislikedTitles.some((d) => d.toLowerCase() === titleLower) ||
-          previouslySavedTitles.some((saved) => saved.toLowerCase() === titleLower) ||
-          previousTitleSet.has(titleLower) ||
-          isPlaceholder ||
-          isGenericStub
-        ) {
-          return false;
+          item.short_description
+            ?.toLowerCase()
+            .includes("thoughtful gift idea") && titleLower.startsWith("idea ");
+
+        if (isPlaceholder || isGenericStub) {
+          filteredAsPlaceholder += 1;
+          return;
         }
-        return true;
-      });
 
-    const dedupeByTitle = (items: GiftSuggestion[]) => {
-      const map = new Map<string, GiftSuggestion>();
-      items.forEach((item) => {
-        const key = item.title?.toLowerCase();
-        if (key && !map.has(key)) {
-          map.set(key, item);
+        const canonicalKey = getGiftSuggestionCanonicalKey(title);
+        if (!canonicalKey) {
+          filteredWithoutCanonicalKey += 1;
+          return;
         }
+        if (exclusionSet.has(canonicalKey)) {
+          filteredByExclusion += 1;
+          return;
+        }
+
+        exclusionSet.add(canonicalKey);
+        finalSuggestions.push(item);
       });
-      return Array.from(map.values());
-    };
-
-    let finalSuggestions = dedupeByTitle(normalizedSuggestions);
-
-    // Fallback: if filtering removed everything, allow the raw parsed suggestions (deduped) to avoid empty runs.
-    if (finalSuggestions.length === 0 && parsedSuggestions.length) {
-      finalSuggestions = dedupeByTitle(
-        parsedSuggestions
-          .filter((item): item is GiftSuggestion => typeof item === "object")
-          .map((item, index) => normalizeSuggestion(item, index)),
-      );
     }
+
+    logSuggestionDedupeDebug("suggestion filtering summary", {
+      recipientId,
+      requestedCount: numSuggestions,
+      returnedCount: finalSuggestions.length,
+      filteredByExclusion,
+      filteredAsPlaceholder,
+      filteredWithoutCanonicalKey,
+      totalGenerationPasses,
+      topUpPassesUsed,
+    });
 
     if (finalSuggestions.length > numSuggestions) {
       finalSuggestions = finalSuggestions.slice(0, numSuggestions);
@@ -456,7 +691,7 @@ export async function POST(request: NextRequest) {
 
     if (finalSuggestions.length < numSuggestions) {
       console.warn(
-        `AI returned ${finalSuggestions.length}/${numSuggestions} suggestions after filtering; sending partial list.`,
+        `AI returned ${finalSuggestions.length}/${numSuggestions} suggestions after filtering and top-up passes.`,
       );
     }
 
@@ -530,10 +765,17 @@ export async function POST(request: NextRequest) {
 
     const suggestionsWithFlags = enrichedSuggestions.map((s) => {
       const identity = makeIdentity(s.title, s.tier);
+      const canonicalKey = getGiftSuggestionCanonicalKey(s.title);
+      const canonicalPreference = canonicalKey
+        ? preferenceByCanonical[canonicalKey]
+        : null;
       return {
         ...s,
-        initialSaved: !!savedByIdentity[identity],
-        initialPreference: preferenceByIdentity[identity] ?? null,
+        initialSaved:
+          !!savedByIdentity[identity] ||
+          (!!canonicalKey && !!savedByCanonical[canonicalKey]),
+        initialPreference:
+          preferenceByIdentity[identity] ?? canonicalPreference ?? null,
       };
     });
 
@@ -691,4 +933,40 @@ function normalizeSuggestion(
         : null,
     image_url,
   };
+}
+
+function extractSuggestionPayloads(
+  rawSuggestions: unknown,
+  cap: number,
+): GiftSuggestionFromRun[] {
+  if (!Array.isArray(rawSuggestions)) return [];
+  return rawSuggestions
+    .slice(0, Math.max(1, cap))
+    .filter(
+    (item): item is GiftSuggestionFromRun =>
+      !!item && typeof item === "object",
+  );
+}
+
+function uniqueTrimmedValues(values: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  values.forEach((value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    if (seen.has(trimmed)) return;
+    seen.add(trimmed);
+    unique.push(trimmed);
+  });
+
+  return unique;
+}
+
+function logSuggestionDedupeDebug(
+  message: string,
+  details: Record<string, unknown>,
+) {
+  if (process.env.NODE_ENV === "production") return;
+  console.info(`[perchpal][dedupe] ${message}`, details);
 }
