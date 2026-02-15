@@ -506,7 +506,7 @@ export function SettingsPanel() {
                 Account Profile
           </p>
           <p className="mt-3 text-sm text-gp-evergreen/70">
-            Update how PerchPal addresses you on dashboards and shareable guides.
+            Update account information and how PerchPal addresses you.
           </p>
         </header>
         <form className="space-y-4" onSubmit={handleProfileSave}>

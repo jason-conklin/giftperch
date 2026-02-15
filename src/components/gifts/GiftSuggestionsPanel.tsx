@@ -582,6 +582,13 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     });
   }, [supabase]);
 
+  const openSavedIdeasModal = () => {
+    if (!selectedRecipient) return;
+    setSavedGiftsRecipientId(selectedRecipient.id);
+    setSavedGiftsRecipientName(selectedRecipient.name);
+    setSavedGiftsOpen(true);
+  };
+
   const handleSaveGift = async (suggestion: GiftSuggestion) => {
     if (!selectedRecipient) {
       setError("Please select a recipient before saving gift ideas.");
@@ -1419,10 +1426,17 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
           <div ref={resultsSectionRef}>
             {selectedRecipient?.name ? (
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
                 <p className="text-base font-semibold text-gp-evergreen sm:text-lg">
                   Gift ideas for {selectedRecipient.name}
                 </p>
+                <button
+                  type="button"
+                  onClick={openSavedIdeasModal}
+                  className="inline-flex items-center rounded-full border border-gp-evergreen/20 bg-white/80 px-3 py-1 text-xs font-semibold text-gp-evergreen/80 transition hover:border-gp-gold/70 hover:bg-gp-cream hover:text-gp-evergreen focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer"
+                >
+                  View saved ideas
+                </button>
               </div>
             ) : null}
 
@@ -1592,15 +1606,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                           lastSavedId={lastSavedId}
                           lastUnsavedId={lastUnsavedId}
                           saveState={saveStates[suggestionKey]}
-                          onOpenSaved={() => {
-                            if (selectedRecipient) {
-                              setSavedGiftsRecipientId(selectedRecipient.id);
-                              setSavedGiftsRecipientName(
-                                selectedRecipient.name,
-                              );
-                              setSavedGiftsOpen(true);
-                            }
-                          }}
+                          onOpenSaved={openSavedIdeasModal}
                           onDismissSave={() => handleDismissSave(suggestionKey)}
                           feedback={feedbackById[suggestionKey] ?? null}
                           feedbackError={feedbackErrorById[suggestionKey] ?? null}
