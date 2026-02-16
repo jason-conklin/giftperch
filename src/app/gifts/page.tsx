@@ -46,13 +46,13 @@ export default function GiftsPage() {
         </div>
       }
     >
-      <AuthGuard>
-        <AppLayout>
+      <AppLayout>
+        <AuthGuard>
           <PageShell
             title="Gift Ideas"
             subtitle="Chat with PerchPal and generate tailored gift suggestion lists for the people you shop for most."
           >
-            <div id="smart-gift-suggestions" className="space-y-6 2xl:pr-[26rem]">
+            <div id="smart-gift-suggestions" className="space-y-6">
               <FirstGenerationGuideBanner
                 hasRecipients={hasRecipients}
                 onScrollToForm={() => {
@@ -65,8 +65,8 @@ export default function GiftsPage() {
             </div>
           </PageShell>
           <PerchPalChatPanel userId={user?.id ?? null} />
-        </AppLayout>
-      </AuthGuard>
+        </AuthGuard>
+      </AppLayout>
     </Suspense>
   );
 }
