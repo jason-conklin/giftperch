@@ -107,7 +107,7 @@ const PERCHPAL_UNAVAILABLE =
 
 const TIER_FALLBACK: GiftSuggestion["tier"] = "thoughtful";
 const MIN_SUGGESTIONS = 3;
-const MAX_SUGGESTIONS = 10;
+const MAX_SUGGESTIONS = 12;
 const MAX_EXTRA_GENERATION_PASSES = 3;
 const TOP_UP_BUFFER = 2;
 const RECENT_RUN_LOOKBACK_DAYS = 90;

@@ -1398,13 +1398,13 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   htmlFor="num-suggestions-input"
                   className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
                 >
-                  # of ideas (3-10)
+                  Number of ideas (3-12)
                 </label>
                 <input
                   id="num-suggestions-input"
                   type="number"
                   min={3}
-                  max={10}
+                  max={12}
                   value={numSuggestions}
                   onChange={(event) => setNumSuggestions(event.target.value)}
                   className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
