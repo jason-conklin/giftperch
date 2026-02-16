@@ -140,7 +140,6 @@ type SuggestionRun = {
   suggestions: GiftSuggestion[];
 };
 
-type TierFilter = "all" | GiftSuggestion["tier"];
 type SortOption = "relevance" | "price-asc" | "price-desc" | "tier";
 
 type GiftSuggestionsPanelProps = {
@@ -431,9 +430,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [runs, setRuns] = useState<SuggestionRun[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
-  const [tierFilter, setTierFilter] = useState<TierFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("relevance");
-  const [searchTerm, setSearchTerm] = useState("");
 
   const [isLoadingRecipients, setIsLoadingRecipients] = useState(true);
   const [isLoadingRuns, setIsLoadingRuns] = useState(false);
@@ -930,19 +927,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
   const visibleSuggestions = useMemo(() => {
     if (!activeRun) return [];
-    let suggestions = [...(activeRun.suggestions ?? [])];
-
-    if (tierFilter !== "all") {
-      suggestions = suggestions.filter((sugg) => sugg.tier === tierFilter);
-    }
-
-    const term = searchTerm.trim().toLowerCase();
-    if (term) {
-      suggestions = suggestions.filter((sugg) => {
-        const haystack = `${sugg.title} ${sugg.short_description} ${sugg.why_it_fits}`.toLowerCase();
-        return haystack.includes(term);
-      });
-    }
+    const suggestions = [...(activeRun.suggestions ?? [])];
 
     suggestions.sort((a, b) => {
       if (sortOption === "price-asc" || sortOption === "price-desc") {
@@ -968,7 +953,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     });
 
     return suggestions;
-  }, [activeRun, tierFilter, searchTerm, sortOption]);
+  }, [activeRun, sortOption]);
   const visibleSuggestionsKey = visibleSuggestions
     .map((s) => getSuggestionIdentity(s))
     .join("|");
@@ -1422,11 +1407,11 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   type="submit"
                   disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
                   aria-disabled={isGenerating || requestProgress > 0}
-                  className="inline-flex h-16 w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gp-evergreen px-12 text-xl font-semibold text-gp-cream shadow-lg transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#0c3132] hover:shadow-xl hover:ring-2 hover:ring-gp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-lg disabled:hover:ring-0"
+                  className="inline-flex h-14 w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gp-evergreen px-10 text-lg font-semibold text-gp-cream shadow-lg transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#0c3132] hover:shadow-xl hover:ring-2 hover:ring-gp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-lg disabled:hover:ring-0"
                 >
                   <svg
                     viewBox="0 0 20 20"
-                    className="h-5 w-5 opacity-90"
+                    className="h-4 w-4 opacity-90"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={1.7}
@@ -1459,9 +1444,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
             ) : null}
 
             {runs.length > 0 && (
-              <div className="mt-4 flex flex-col gap-3 text-gp-evergreen">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="flex-1 max-w-md">
+              <div className="mt-4 flex flex-col gap-3 text-gp-evergreen sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+                <div className="flex items-end gap-2 sm:gap-3">
+                  <div className="min-w-0 flex-1 sm:min-w-[20rem]">
                     <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
                       Previous runs
                     </label>
@@ -1483,75 +1468,34 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     type="button"
                     disabled={!activeRunId}
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="mt-2 inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 sm:mt-6"
+                    className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Delete run
                   </button>
                 </div>
+                <div className="flex items-end gap-2 sm:ml-auto">
+                  <label
+                    htmlFor="sort-option"
+                    className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                  >
+                    Sort by
+                  </label>
+                  <select
+                    id="sort-option"
+                    value={sortOption}
+                    onChange={(event) =>
+                      setSortOption(event.target.value as SortOption)
+                    }
+                    className="w-full min-w-[11rem] rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer sm:w-auto"
+                  >
+                    <option value="relevance">Model order</option>
+                    <option value="price-asc">Price: Low to high</option>
+                    <option value="price-desc">Price: High to low</option>
+                    <option value="tier">Tier</option>
+                  </select>
+                </div>
               </div>
             )}
-
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="md:col-span-1">
-                <label
-                  htmlFor="search-suggestions"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Search ideas
-                </label>
-                <input
-                  id="search-suggestions"
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search by title or rationale"
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="tier-filter"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Filter by tier
-                </label>
-                <select
-                  id="tier-filter"
-                  value={tierFilter}
-                  onChange={(event) =>
-                    setTierFilter(event.target.value as TierFilter)
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  <option value="all">All tiers</option>
-                  <option value="safe">Safe favorites</option>
-                  <option value="thoughtful">Thoughtful</option>
-                  <option value="experience">Experiences</option>
-                  <option value="splurge">Splurges</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="sort-option"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                >
-                  Sort by
-                </label>
-                <select
-                  id="sort-option"
-                  value={sortOption}
-                  onChange={(event) =>
-                    setSortOption(event.target.value as SortOption)
-                  }
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                >
-                  <option value="relevance">Model order</option>
-                  <option value="price-asc">Price: Low to high</option>
-                  <option value="price-desc">Price: High to low</option>
-                  <option value="tier">Tier</option>
-                </select>
-              </div>
-            </div>
 
             <div className="mt-4">
               {isLoadingRuns ? (
@@ -1583,8 +1527,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 </div>
               ) : visibleSuggestions.length === 0 ? (
                 <div className="rounded-2xl border border-gp-evergreen/20 bg-white/90 p-6 text-sm text-gp-evergreen">
-                  No suggestions match your filters. Clear the filters to see all
-                  ideas from this run.
+                  No suggestions were found in this run.
                 </div>
               ) : (
                 <>
