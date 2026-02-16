@@ -91,7 +91,7 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
     <>
       <aside className="hidden lg:block">
         {desktopCollapsed ? (
-          <div className="gp-card fixed right-6 top-8 z-40 flex h-56 w-20 flex-col items-center justify-between px-2 py-4">
+          <div className="gp-card fixed right-4 top-8 z-40 flex w-20 flex-col items-center justify-start gap-3 px-2 py-3">
             <div className="flex flex-col items-center gap-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70 shadow-sm">
                 <Image
@@ -116,7 +116,7 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
             </button>
           </div>
         ) : (
-          <div className="fixed right-6 top-8 z-40 w-[24rem]">
+          <div className="fixed right-4 top-8 z-40 w-[24rem]">
             <div className="gp-card flex h-[calc(100vh-4rem)] min-h-[560px] max-h-[calc(100vh-4rem)] flex-col gap-3 p-4">
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/80 px-3 py-2">
                 <div className="flex items-center gap-2.5">
