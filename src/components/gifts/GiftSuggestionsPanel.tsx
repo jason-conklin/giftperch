@@ -1413,13 +1413,29 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
             </div>
 
             <div className="mt-4 rounded-xl border border-gp-gold/20 bg-gp-cream/40 px-4 py-4">
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-center text-sm text-gp-evergreen/70">
+                  Ready to generate tailored ideas for{" "}
+                  {selectedRecipient?.name ?? "your recipient"}?
+                </p>
                 <button
                   type="submit"
                   disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
                   aria-disabled={isGenerating || requestProgress > 0}
-                  className="inline-flex h-14 w-full items-center justify-center rounded-full bg-gp-evergreen px-10 text-lg font-semibold text-gp-cream shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#0c3132] hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/40 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-md sm:w-auto"
+                  className="inline-flex h-16 w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gp-evergreen px-12 text-xl font-semibold text-gp-cream shadow-lg transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#0c3132] hover:shadow-xl hover:ring-2 hover:ring-gp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-lg disabled:hover:ring-0"
                 >
+                  <svg
+                    viewBox="0 0 20 20"
+                    className="h-5 w-5 opacity-90"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.7}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m10 2 1.7 3.8L16 7.5l-3.2 2.7.9 4.3L10 12.3 6.3 14.5l.9-4.3L4 7.5l4.3-1.7L10 2Z" />
+                  </svg>
                   {isGenerating ? "Generating…" : "Generate Gift Ideas"}
                 </button>
               </div>
