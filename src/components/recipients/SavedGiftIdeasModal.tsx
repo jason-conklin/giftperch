@@ -249,6 +249,15 @@ export function SavedGiftIdeasModal({
   }, [isOpen, selectedRecipientId]);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen || !isRecipientMenuOpen) return;
     const onMouseDown = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -389,14 +398,14 @@ export function SavedGiftIdeasModal({
 
   return (
     <div
-      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4"
       role="dialog"
       aria-modal="true"
       onClick={onClose}
     >
       <div
         ref={dialogRef}
-        className="flex w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-2xl"
+        className="flex max-h-[calc(100vh-1rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-2xl sm:max-h-[calc(100vh-2rem)] lg:max-h-[calc(100vh-4rem)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
@@ -572,150 +581,155 @@ export function SavedGiftIdeasModal({
           </button>
         </div>
 
-        <div className="flex flex-col gap-3 px-5 py-4 sm:px-6">
-          <div className="inline-flex w-full rounded-full bg-white p-1 text-sm font-semibold text-gp-evergreen shadow-sm border border-gp-evergreen/15">
-            {(["saved", "liked", "disliked"] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              const label =
-                tab === "saved"
-                  ? `Saved (${savedCount})`
-                  : tab === "liked"
-                  ? `Liked (${likedCount})`
-                  : `Disliked (${dislikedCount})`;
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex-1 rounded-full px-3 py-2 transition ${
-                    isActive
-                      ? "bg-gp-gold text-gp-evergreen shadow-sm"
-                      : "bg-white text-gp-evergreen/80 hover:bg-gp-cream/70"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          <div ref={listRef} className="flex-1 overflow-y-auto">
-          {state.status === "loading" && (
-            <p className="text-sm text-gp-evergreen/70">Loading saved gifts…</p>
-          )}
-          {state.status === "error" && (
-            <p className="text-sm text-red-700">{state.message}</p>
-          )}
-          {state.status === "success" && activeList.length === 0 && (
-            <p className="text-sm text-gp-evergreen/70">
-              No saved gift ideas yet. Save ideas from AI suggestions to see them
-              here.
-            </p>
-          )}
-          {state.status === "success" && activeList.length > 0 && (
-            <div className="space-y-3">
-              {activeList.map((gift) => {
-                const isFeedback = "preference" in gift;
-                const priceMin =
-                  "estimated_price_min" in gift ? gift.estimated_price_min : null;
-                const priceMax =
-                  "estimated_price_max" in gift ? gift.estimated_price_max : null;
-                const previewIcon = getGiftPreviewIcon(mapToSuggestionShape(gift));
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 border-b border-gp-evergreen/10 px-5 py-4 sm:px-6">
+            <div className="inline-flex w-full rounded-full border border-gp-evergreen/15 bg-white p-1 text-sm font-semibold text-gp-evergreen shadow-sm">
+              {(["saved", "liked", "disliked"] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                const label =
+                  tab === "saved"
+                    ? `Saved (${savedCount})`
+                    : tab === "liked"
+                    ? `Liked (${likedCount})`
+                    : `Disliked (${dislikedCount})`;
                 return (
-                  <div
-                    key={gift.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 rounded-full px-3 py-2 transition ${
+                      isActive
+                        ? "bg-gp-gold text-gp-evergreen shadow-sm"
+                        : "bg-white text-gp-evergreen/80 hover:bg-gp-cream/70"
+                    }`}
                   >
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
-                      <Image
-                        src={previewIcon}
-                        alt={gift.title}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-
-                    <div className="flex-1 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-base font-semibold text-gp-evergreen">
-                          {gift.title}
-                        </p>
-                        {gift.tier ? (
-                          <span className="rounded-full bg-gp-gold/30 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen">
-                            {gift.tier}
-                          </span>
-                        ) : null}
-                        {isFeedback ? (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                              gift.preference === "liked"
-                                ? "bg-blue-50 text-blue-700"
-                                : "bg-red-50 text-red-700"
-                            }`}
-                          >
-                            {gift.preference === "liked" ? "Liked" : "Disliked"}
-                          </span>
-                        ) : null}
-                      </div>
-                      {gift.rationale ? (
-                        <p className="text-sm text-gp-evergreen/80 line-clamp-2">
-                          {gift.rationale}
-                        </p>
-                      ) : null}
-                      <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
-                        {priceMin !== null || priceMax !== null ? (
-                          <span>{formatPriceRange(priceMin, priceMax)}</span>
-                        ) : null}
-                        {gift.product_url ? (
-                          <a
-                            href={gift.product_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="underline underline-offset-4 hover:text-gp-evergreen"
-                          >
-                            Open on Amazon
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
-                      {isFeedback ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleRemoveFeedback(
-                              gift.id,
-                              gift.preference === "liked"
-                                ? "liked"
-                                : "disliked",
-                            )
-                          }
-                          disabled={removingFeedbackId === gift.id}
-                          className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          {removingFeedbackId === gift.id
-                            ? "Removing…"
-                            : "Remove"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(gift.id)}
-                          disabled={removingId === gift.id}
-                          className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          {removingId === gift.id ? "Removing…" : "Remove"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    {label}
+                  </button>
                 );
               })}
             </div>
-          )}
+          </div>
+
+          <div
+            ref={listRef}
+            className="min-h-[12rem] flex-1 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6"
+          >
+            {state.status === "loading" && (
+              <p className="text-sm text-gp-evergreen/70">Loading saved gifts…</p>
+            )}
+            {state.status === "error" && (
+              <p className="text-sm text-red-700">{state.message}</p>
+            )}
+            {state.status === "success" && activeList.length === 0 && (
+              <p className="text-sm text-gp-evergreen/70">
+                No saved gift ideas yet. Save ideas from AI suggestions to see them
+                here.
+              </p>
+            )}
+            {state.status === "success" && activeList.length > 0 && (
+              <div className="space-y-3">
+                {activeList.map((gift) => {
+                  const isFeedback = "preference" in gift;
+                  const priceMin =
+                    "estimated_price_min" in gift ? gift.estimated_price_min : null;
+                  const priceMax =
+                    "estimated_price_max" in gift ? gift.estimated_price_max : null;
+                  const previewIcon = getGiftPreviewIcon(mapToSuggestionShape(gift));
+                  return (
+                    <div
+                      key={gift.id}
+                      className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
+                    >
+                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
+                        <Image
+                          src={previewIcon}
+                          alt={gift.title}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+
+                      <div className="flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-base font-semibold text-gp-evergreen">
+                            {gift.title}
+                          </p>
+                          {gift.tier ? (
+                            <span className="rounded-full bg-gp-gold/30 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen">
+                              {gift.tier}
+                            </span>
+                          ) : null}
+                          {isFeedback ? (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                                gift.preference === "liked"
+                                  ? "bg-blue-50 text-blue-700"
+                                  : "bg-red-50 text-red-700"
+                              }`}
+                            >
+                              {gift.preference === "liked" ? "Liked" : "Disliked"}
+                            </span>
+                          ) : null}
+                        </div>
+                        {gift.rationale ? (
+                          <p className="text-sm text-gp-evergreen/80 line-clamp-2">
+                            {gift.rationale}
+                          </p>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
+                          {priceMin !== null || priceMax !== null ? (
+                            <span>{formatPriceRange(priceMin, priceMax)}</span>
+                          ) : null}
+                          {gift.product_url ? (
+                            <a
+                              href={gift.product_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline underline-offset-4 hover:text-gp-evergreen"
+                            >
+                              Open on Amazon
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
+                        {isFeedback ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemoveFeedback(
+                                gift.id,
+                                gift.preference === "liked"
+                                  ? "liked"
+                                  : "disliked",
+                              )
+                            }
+                            disabled={removingFeedbackId === gift.id}
+                            className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            {removingFeedbackId === gift.id
+                              ? "Removing…"
+                              : "Remove"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(gift.id)}
+                            disabled={removingId === gift.id}
+                            className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            {removingId === gift.id ? "Removing…" : "Remove"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
