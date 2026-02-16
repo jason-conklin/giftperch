@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { PerchPalChat } from "@/components/perchpal/PerchPalChat";
+import { PerchPalChatPanel } from "@/components/perchpal/PerchPalChatPanel";
 import { GiftSuggestionsPanel } from "@/components/gifts/GiftSuggestionsPanel";
 import { FirstGenerationGuideBanner } from "@/components/gifts/FirstGenerationGuideBanner";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -52,16 +52,20 @@ export default function GiftsPage() {
             title="Gift Ideas"
             subtitle="Chat with PerchPal and generate tailored gift suggestion lists for the people you shop for most."
           >
-            <div className="space-y-6">
-              <FirstGenerationGuideBanner
-                hasRecipients={hasRecipients}
-                onScrollToForm={() => {
-                  const el = document.getElementById("perchpal-input");
-                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              />
-              <PerchPalChat />
-              <GiftSuggestionsPanel onFirstRunComplete={handleFirstRunComplete} />
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+              <div id="smart-gift-suggestions" className="space-y-6">
+                <FirstGenerationGuideBanner
+                  hasRecipients={hasRecipients}
+                  onScrollToForm={() => {
+                    const el = document.getElementById("smart-gift-suggestions");
+                    if (el)
+                      el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                />
+                <GiftSuggestionsPanel onFirstRunComplete={handleFirstRunComplete} />
+              </div>
+
+              <PerchPalChatPanel userId={user?.id ?? null} />
             </div>
           </PageShell>
         </AppLayout>

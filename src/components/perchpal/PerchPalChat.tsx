@@ -30,7 +30,21 @@ type ChatMessage = {
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 
-export function PerchPalChat() {
+type PerchPalChatProps = {
+  showHeader?: boolean;
+  allowExpand?: boolean;
+  inputId?: string;
+  rootClassName?: string;
+  messagesWrapperClassName?: string;
+};
+
+export function PerchPalChat({
+  showHeader = true,
+  allowExpand = true,
+  inputId = "perchpal-input",
+  rootClassName = "",
+  messagesWrapperClassName = "max-h-[480px]",
+}: PerchPalChatProps = {}) {
   const { user, status } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
@@ -362,10 +376,10 @@ export function PerchPalChat() {
 
   return (
     <>
-      <section className="gp-card flex flex-col gap-5">
-        <HeaderContent showExpand />
-        {renderMessagesArea("max-h-[480px]", messagesWrapperRef)}
-        {renderInputArea("perchpal-input")}
+      <section className={`gp-card flex flex-col gap-5 ${rootClassName}`}>
+        {showHeader ? <HeaderContent showExpand={allowExpand} /> : null}
+        {renderMessagesArea(messagesWrapperClassName, messagesWrapperRef)}
+        {renderInputArea(inputId)}
         {error && (
           <p className="rounded-2xl bg-red-50 px-4 py-2 text-xs text-red-700">
             {error}
@@ -373,7 +387,7 @@ export function PerchPalChat() {
         )}
       </section>
 
-      {isExpanded ? (
+      {allowExpand && isExpanded ? (
         <div
           className="fixed inset-0 z-[80] flex min-h-dvh w-full flex-col overflow-y-auto bg-gp-cream transition-opacity duration-200 md:bg-black/40 md:backdrop-blur-sm"
           onClick={() => setIsExpanded(false)}
