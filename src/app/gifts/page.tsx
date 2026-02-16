@@ -52,22 +52,19 @@ export default function GiftsPage() {
             title="Gift Ideas"
             subtitle="Chat with PerchPal and generate tailored gift suggestion lists for the people you shop for most."
           >
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-              <div id="smart-gift-suggestions" className="space-y-6">
-                <FirstGenerationGuideBanner
-                  hasRecipients={hasRecipients}
-                  onScrollToForm={() => {
-                    const el = document.getElementById("smart-gift-suggestions");
-                    if (el)
-                      el.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                />
-                <GiftSuggestionsPanel onFirstRunComplete={handleFirstRunComplete} />
-              </div>
-
-              <PerchPalChatPanel userId={user?.id ?? null} />
+            <div id="smart-gift-suggestions" className="space-y-6 2xl:pr-[26rem]">
+              <FirstGenerationGuideBanner
+                hasRecipients={hasRecipients}
+                onScrollToForm={() => {
+                  const el = document.getElementById("smart-gift-suggestions");
+                  if (el)
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              />
+              <GiftSuggestionsPanel onFirstRunComplete={handleFirstRunComplete} />
             </div>
           </PageShell>
+          <PerchPalChatPanel userId={user?.id ?? null} />
         </AppLayout>
       </AuthGuard>
     </Suspense>

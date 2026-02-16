@@ -90,77 +90,75 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
   return (
     <>
       <aside className="hidden lg:block">
-        <div className="sticky top-6">
-          {desktopCollapsed ? (
-            <div className="gp-card flex h-[calc(100vh-8.5rem)] min-h-[360px] w-[5.25rem] flex-col items-center justify-between px-2 py-4">
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70 shadow-sm">
-                  <Image
-                    src="/giftperch_perchpal_front.png"
-                    alt="PerchPal"
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 object-contain"
-                  />
-                </div>
-                <span className="text-xs font-semibold tracking-wide text-gp-evergreen/75">
-                  Chat
-                </span>
+        {desktopCollapsed ? (
+          <div className="gp-card fixed right-6 top-8 z-40 flex h-56 w-20 flex-col items-center justify-between px-2 py-4">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70 shadow-sm">
+                <Image
+                  src="/giftperch_perchpal_front.png"
+                  alt="PerchPal"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 object-contain"
+                />
               </div>
-              <button
-                type="button"
-                aria-label="Expand PerchPal chat panel"
-                onClick={() => setDesktopCollapsed(false)}
-                className="gp-secondary-button h-9 w-9 p-0 text-base cursor-pointer"
-              >
-                →
-              </button>
+              <span className="text-xs font-semibold tracking-wide text-gp-evergreen/75">
+                Chat
+              </span>
             </div>
-          ) : (
-            <div className="w-[23rem]">
-              <div className="gp-card flex h-[calc(100vh-8.5rem)] min-h-[540px] flex-col gap-3 p-4">
-                <div className="flex items-center justify-between gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/80 px-3 py-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70">
-                      <Image
-                        src="/giftperch_perchpal_front.png"
-                        alt="PerchPal"
-                        width={30}
-                        height={30}
-                        className="h-7 w-7 object-contain"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gp-evergreen">
-                        PerchPal Chat
-                      </p>
-                      <p className="text-xs text-gp-evergreen/70">
-                        Quick assistant
-                      </p>
-                    </div>
+            <button
+              type="button"
+              aria-label="Expand PerchPal chat panel"
+              onClick={() => setDesktopCollapsed(false)}
+              className="gp-secondary-button h-9 w-9 p-0 text-base cursor-pointer"
+            >
+              →
+            </button>
+          </div>
+        ) : (
+          <div className="fixed right-6 top-8 z-40 w-[24rem]">
+            <div className="gp-card flex h-[calc(100vh-4rem)] min-h-[560px] max-h-[calc(100vh-4rem)] flex-col gap-3 p-4">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/80 px-3 py-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70">
+                    <Image
+                      src="/giftperch_perchpal_front.png"
+                      alt="PerchPal"
+                      width={30}
+                      height={30}
+                      className="h-7 w-7 object-contain"
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setDesktopCollapsed(true)}
-                    className="gp-secondary-button px-3 py-1.5 text-xs cursor-pointer"
-                  >
-                    Collapse
-                  </button>
+                  <div>
+                    <p className="text-sm font-semibold text-gp-evergreen">
+                      PerchPal Chat
+                    </p>
+                    <p className="text-xs text-gp-evergreen/70">
+                      Quick assistant
+                    </p>
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setDesktopCollapsed(true)}
+                  className="gp-secondary-button px-3 py-1.5 text-xs cursor-pointer"
+                >
+                  Collapse
+                </button>
+              </div>
 
-                <div className="min-h-0 flex-1">
-                  <PerchPalChat
-                    showHeader={false}
-                    allowExpand={false}
-                    inputId="perchpal-input-desktop"
-                    rootClassName="h-full min-h-0 gap-3 border-0 bg-transparent p-0 shadow-none"
-                    messagesWrapperClassName="flex-1 min-h-0 overscroll-y-contain"
-                  />
-                </div>
+              <div className="min-h-0 flex-1">
+                <PerchPalChat
+                  showHeader={false}
+                  allowExpand={false}
+                  inputId="perchpal-input-desktop"
+                  rootClassName="h-full min-h-0 gap-3 border-0 bg-transparent p-0 shadow-none"
+                  messagesWrapperClassName="flex-1 min-h-0 overscroll-y-contain"
+                />
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
 
       <div className="lg:hidden">
