@@ -201,25 +201,6 @@ const heroBenefits = [
   "Stay ahead of birthdays and key occasions with budget-ready ideas.",
 ] as const;
 
-const featureHighlights = [
-  {
-    title: "Recipient Profiles",
-    description: "Interests, budgets, and personal details in one place.",
-  },
-  {
-    title: "Gift History",
-    description: "Log past gifts and reactions to guide future picks.",
-  },
-  {
-    title: "Occasions Calendar",
-    description: "Track birthdays and events before deadlines hit.",
-  },
-  {
-    title: "Smart Suggestions",
-    description: "PerchPal generates ideas grounded in saved context.",
-  },
-] as const;
-
 const faqs = [
   {
     question: "What is GiftPerch?",
@@ -504,15 +485,6 @@ export default function MarketingHome() {
             <LandingSampleProfiles />
           </div>
         </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {featureHighlights.map((feature) => (
-          <article key={feature.title} className="gp-card-soft p-4 sm:p-5">
-            <h2 className="text-base font-semibold text-gp-evergreen">{feature.title}</h2>
-            <p className="mt-1 text-sm text-gp-evergreen/75">{feature.description}</p>
-          </article>
-        ))}
       </section>
 
       <section id="product-tour" className="space-y-5 scroll-mt-28">
