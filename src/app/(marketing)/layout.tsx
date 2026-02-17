@@ -26,6 +26,7 @@ export default function MarketingLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const year = new Date().getFullYear();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -59,7 +60,7 @@ export default function MarketingLayout({
   };
 
   return (
-    <div className="gp-marketing-bg-animated relative flex min-h-screen w-full flex-col text-gp-evergreen">
+    <div className="gp-marketing-shell gp-marketing-bg-animated relative flex min-h-screen w-full flex-col text-gp-evergreen">
       <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-2">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-2 sm:px-6 lg:px-0 lg:pb-3">
           <Link
@@ -132,12 +133,50 @@ export default function MarketingLayout({
           </div>
         ) : null}
       </header>
-      <main
-        id="gp-main-content"
-        className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"
-      >
-        {children}
-      </main>
+      <div className="gp-marketing-bottom-fade flex flex-1 flex-col">
+        <main
+          id="gp-main-content"
+          className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"
+        >
+          {children}
+        </main>
+        <footer className="bg-transparent px-4 pb-8 sm:px-6 lg:px-6">
+          <div className="mx-auto w-full max-w-4xl space-y-2 rounded-3xl border border-gp-evergreen/12 bg-white/42 px-5 py-5 text-center text-sm text-gp-evergreen/70 backdrop-blur-sm">
+            <p>
+              © {year} GiftPerch. Built by{" "}
+              <Link
+                href="https://jasonconklin.dev"
+                target="_blank"
+                rel="noreferrer"
+                className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+              >
+                Jason Conklin
+              </Link>
+              .
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-xs uppercase tracking-wide">
+              <Link href="/privacy" className="hover:text-gp-evergreen">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-gp-evergreen">
+                Terms
+              </Link>
+              <Link href="/contact" className="hover:text-gp-evergreen">
+                Contact
+              </Link>
+            </div>
+            <p className="text-xs text-gp-evergreen/70">
+              As an Amazon Associate, I earn from qualifying purchases.
+            </p>
+            <Link
+              href="/recommended-amazon-gifts"
+              className="text-xs text-gp-evergreen/70 hover:text-gp-evergreen hover:underline"
+            >
+              Curated Amazon gift ideas
+            </Link>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
