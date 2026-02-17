@@ -499,9 +499,6 @@ export default function MarketingHome() {
         <div className="grid gap-4 md:grid-cols-3">
           {workflowSteps.map((step) => (
             <article key={step.title} className="gp-card h-full space-y-2 p-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                Step
-              </p>
               <div className="flex items-start gap-3">
                 <WorkflowStepBadge stepId={step.id} />
                 <div className="space-y-2">
