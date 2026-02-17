@@ -60,49 +60,49 @@ export default function MarketingLayout({
 
   return (
     <div className="gp-marketing-bg-animated relative flex min-h-screen w-full flex-col text-gp-evergreen">
-      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-3">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-3 sm:px-6 lg:px-0 lg:pb-5">
+      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-2">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-2 sm:px-6 lg:px-0 lg:pb-3">
           <Link
             href="/"
-            className="flex items-center gap-3 rounded-full bg-white/90 px-4 py-2 text-gp-evergreen shadow-sm sm:gap-4 sm:px-6 sm:py-3"
+            className="flex items-center gap-2.5 rounded-full bg-white/90 px-3.5 py-1.5 text-gp-evergreen shadow-sm sm:gap-3 sm:px-5 sm:py-2"
           >
             <Image
               src="/giftperch_logo_background.png"
               alt="GiftPerch logo"
               width={68}
               height={68}
-              className="h-12 w-12 rounded-full border border-gp-cream/30 object-cover sm:h-14 sm:w-14 lg:h-16 lg:w-16"
+              className="h-10 w-10 rounded-full border border-gp-cream/30 object-cover sm:h-11 sm:w-11 lg:h-12 lg:w-12"
               priority
             />
             <div className="text-gp-evergreen">
-              <p className="text-2xl font-semibold text-gp-evergreen leading-tight sm:text-3xl">
+              <p className="text-xl font-semibold leading-tight text-gp-evergreen sm:text-2xl">
                 GiftPerch
               </p>
-              <p className="max-w-[180px] text-[10px] font-semibold uppercase tracking-[0.35em] text-gp-evergreen/70 sm:max-w-none sm:text-xs sm:tracking-[0.4em]">
+              <p className="max-w-[170px] text-[9px] font-semibold uppercase tracking-[0.3em] text-gp-evergreen/70 sm:max-w-none sm:text-[10px] sm:tracking-[0.35em]">
                 Thoughtful gifting, reimagined
               </p>
             </div>
           </Link>
-          <div className="hidden items-center gap-3 sm:flex">
-            <nav className="flex items-center gap-5">
+          <div className="hidden items-center gap-2.5 sm:flex">
+            <nav className="flex items-center gap-4">
               {navItems.map((item) => renderNavLink(item, "desktop"))}
             </nav>
             <Link
               href="/auth/login"
-              className="rounded-full border border-gp-cream/40 bg-white/90 px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+              className="rounded-full border border-gp-cream/40 bg-white/90 px-4 py-1.5 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-cream"
             >
               Login
             </Link>
             <Link
               href="/auth/signup"
-              className="rounded-full bg-gp-gold px-5 py-2 text-base font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
+              className="rounded-full bg-gp-gold px-4 py-1.5 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
             >
               Sign Up
             </Link>
           </div>
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-full border border-gp-cream/40 bg-gp-cream/90 px-3 py-2 text-gp-evergreen shadow-sm transition hover:bg-gp-cream sm:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/40 bg-gp-cream/90 text-gp-evergreen shadow-sm transition hover:bg-gp-cream sm:hidden"
             aria-expanded={mobileNavOpen}
             aria-label="Toggle navigation menu"
             onClick={() => setMobileNavOpen((prev) => !prev)}
@@ -111,7 +111,7 @@ export default function MarketingLayout({
           </button>
         </div>
         {mobileNavOpen ? (
-          <div className="border-t border-gp-cream/20 bg-gp-evergreen px-4 py-4 text-sm text-gp-cream sm:hidden">
+          <div className="border-t border-gp-cream/20 bg-gp-evergreen px-4 py-3 text-sm text-gp-cream sm:hidden">
             <div className="flex flex-col gap-3">
               {navItems.map((item) => renderNavLink(item, "mobile"))}
               <Link

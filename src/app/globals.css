@@ -25,35 +25,37 @@ body {
 }
 
 @layer components {
-  .gp-marketing-bg-animated {
+  .gp-marketing-bg-animated,
+  .gp-marketing-bg-animated + .gp-global-footer {
     position: relative;
     z-index: 0;
     isolation: isolate;
     background-image:
       radial-gradient(
-        circle at 20% 10%,
-        rgba(232, 201, 120, 0.28),
+        circle at 20% 15%,
+        rgba(232, 201, 120, 0.32),
         transparent 55%
       ),
       radial-gradient(
-        circle at 80% 30%,
-        rgba(255, 255, 255, 0.85),
+        circle at 80% 25%,
+        rgba(255, 255, 255, 0.88),
         transparent 55%
       ),
       linear-gradient(
         180deg,
         #ffffff 0%,
-        #fff9ee 35%,
-        #f6ead6 70%,
-        #eedcbd 100%
+        #fff7ea 30%,
+        #f3e1c5 65%,
+        #e9d0ad 100%
       );
     background-size: 160% 160%, 160% 160%, 100% 100%;
     background-position: 10% 10%, 85% 20%, 50% 0%;
     background-repeat: no-repeat, no-repeat, no-repeat;
-    animation: gp-bg-blobs 16s ease-in-out infinite;
+    animation: gp-bg-blobs 14s ease-in-out infinite;
   }
 
-  .gp-marketing-bg-animated::before {
+  .gp-marketing-bg-animated::before,
+  .gp-marketing-bg-animated + .gp-global-footer::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -62,11 +64,19 @@ body {
     background-image: url("/textures/noise.svg");
     background-repeat: repeat;
     background-size: 180px 180px;
-    opacity: 0.015;
+    opacity: 0.01;
   }
 
   .gp-marketing-bg-animated + .gp-global-footer {
-    background-color: #ffffff;
+    background-color: transparent;
+  }
+
+  .gp-marketing-bg-animated + .gp-global-footer > div {
+    border: 1px solid rgba(15, 61, 62, 0.12);
+    border-radius: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(4px);
+    padding: 1rem 1.25rem;
   }
 }
 
@@ -76,7 +86,7 @@ body {
   }
 
   50% {
-    background-position: 40% 25%, 60% 10%, 50% 0%;
+    background-position: 48% 28%, 58% 10%, 50% 0%;
   }
 
   100% {
@@ -131,7 +141,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-marketing-bg-animated {
+  .gp-marketing-bg-animated,
+  .gp-marketing-bg-animated + .gp-global-footer {
     animation: none;
   }
 
