@@ -25,19 +25,20 @@ body {
 }
 
 @layer components {
-  .gp-marketing-bg-animated {
+  .gp-marketing-bg-animated,
+  .gp-marketing-bg-animated + .gp-global-footer {
     position: relative;
     z-index: 0;
     isolation: isolate;
     background-image:
       radial-gradient(
         circle at 20% 10%,
-        rgba(232, 201, 120, 0.22),
+        rgba(232, 201, 120, 0.28),
         transparent 55%
       ),
       radial-gradient(
         circle at 80% 30%,
-        rgba(255, 255, 255, 0.65),
+        rgba(255, 255, 255, 0.85),
         transparent 55%
       ),
       linear-gradient(
@@ -45,15 +46,16 @@ body {
         #ffffff 0%,
         #fff9ee 35%,
         #f6ead6 70%,
-        #f1e3c9 100%
+        #eedcbd 100%
       );
-    background-size: 140% 140%, 140% 140%, 100% 140%;
-    background-position: 40% 0%, 60% 0%, 50% 0%;
+    background-size: 160% 160%, 160% 160%, 100% 100%;
+    background-position: 10% 10%, 85% 20%, 50% 0%;
     background-repeat: no-repeat, no-repeat, no-repeat;
-    animation: gp-bg-drift-strong 18s ease-in-out infinite;
+    animation: gp-bg-blobs 16s ease-in-out infinite;
   }
 
-  .gp-marketing-bg-animated::before {
+  .gp-marketing-bg-animated::before,
+  .gp-marketing-bg-animated + .gp-global-footer::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -66,17 +68,17 @@ body {
   }
 }
 
-@keyframes gp-bg-drift-strong {
+@keyframes gp-bg-blobs {
   0% {
-    background-position: 40% 0%, 60% 0%, 50% 0%;
+    background-position: 10% 10%, 85% 20%, 50% 0%;
   }
 
   50% {
-    background-position: 55% 12%, 45% 10%, 50% 10%;
+    background-position: 40% 25%, 60% 10%, 50% 0%;
   }
 
   100% {
-    background-position: 40% 0%, 60% 0%, 50% 0%;
+    background-position: 10% 10%, 85% 20%, 50% 0%;
   }
 }
 
@@ -127,7 +129,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-marketing-bg-animated {
+  .gp-marketing-bg-animated,
+  .gp-marketing-bg-animated + .gp-global-footer {
     animation: none;
   }
 

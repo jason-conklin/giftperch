@@ -256,7 +256,7 @@ export default function MarketingHome() {
             alt="GiftPerch banner"
             width={1200}
             height={400}
-            className="h-28 w-full object-cover sm:h-36 lg:h-40"
+            className="h-auto w-full object-contain"
             priority
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gp-evergreen/15 via-transparent to-gp-gold/20" />
