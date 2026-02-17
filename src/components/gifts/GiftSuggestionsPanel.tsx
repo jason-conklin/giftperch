@@ -1407,7 +1407,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   type="submit"
                   disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
                   aria-disabled={isGenerating || requestProgress > 0}
-                  className="inline-flex h-14 w-full max-w-xl items-center justify-center gap-2 rounded-full bg-gp-evergreen px-10 text-lg font-semibold text-gp-cream shadow-lg transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#0c3132] hover:shadow-xl hover:ring-2 hover:ring-gp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-lg disabled:hover:ring-0"
+                  className="gp-btn gp-btn--primary gp-btn--lg h-14 w-full max-w-xl px-10 text-lg disabled:cursor-not-allowed"
                 >
                   <svg
                     viewBox="0 0 20 20"
@@ -1468,7 +1468,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     type="button"
                     disabled={!activeRunId}
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    className="gp-btn gp-btn--danger gp-btn--sm disabled:cursor-not-allowed"
                   >
                     Delete run
                   </button>
@@ -1704,4 +1704,3 @@ function formatBudgetRange(
   const display = buildPriceDisplay(min, max, undefined, undefined);
   return display ? display : "Not specified";
 }
-

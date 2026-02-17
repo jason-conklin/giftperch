@@ -90,13 +90,13 @@ export default function MarketingLayout({
             </nav>
             <Link
               href="/auth/login"
-              className="rounded-full border border-gp-cream/40 bg-white/90 px-4 py-1.5 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+              className="gp-btn gp-btn--secondary gp-btn--sm px-4"
             >
               Login
             </Link>
             <Link
               href="/auth/signup"
-              className="rounded-full bg-gp-gold px-4 py-1.5 text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90"
+              className="gp-btn gp-btn--gold gp-btn--sm px-4"
             >
               Sign Up
             </Link>
@@ -117,14 +117,14 @@ export default function MarketingLayout({
               {navItems.map((item) => renderNavLink(item, "mobile"))}
               <Link
                 href="/auth/login"
-                className="rounded-full border border-gp-cream/40 px-3 py-2 text-center font-semibold text-gp-cream"
+                className="gp-btn gp-btn--secondary w-full justify-center"
                 onClick={() => setMobileNavOpen(false)}
               >
                 Sign in
               </Link>
               <Link
                 href="/auth/signup"
-                className="rounded-full bg-gp-gold px-4 py-2 text-center font-semibold text-gp-evergreen hover:bg-gp-gold/90"
+                className="gp-btn gp-btn--gold w-full justify-center"
                 onClick={() => setMobileNavOpen(false)}
               >
                 Get started

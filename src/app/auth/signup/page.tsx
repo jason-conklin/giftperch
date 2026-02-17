@@ -148,7 +148,7 @@ function SignupContent() {
 
         <button
           type="submit"
-          className="w-full rounded-2xl bg-gp-gold px-4 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+          className="gp-btn gp-btn--gold gp-btn--md w-full disabled:cursor-not-allowed"
           disabled={isLoading}
         >
           Sign Up

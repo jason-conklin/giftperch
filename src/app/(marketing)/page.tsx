@@ -468,13 +468,13 @@ export default function MarketingHome() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link
                   href="/auth/signup"
-                  className="inline-flex items-center justify-center rounded-full bg-gp-gold px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
+                  className="gp-btn gp-btn--primary gp-btn--lg px-7"
                 >
                   Get started free
                 </Link>
                 <a
                   href="#product-tour"
-                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 bg-gp-cream/70 px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+                  className="gp-btn gp-btn--secondary gp-btn--lg px-7"
                 >
                   See how it works
                 </a>
@@ -601,13 +601,13 @@ export default function MarketingHome() {
         <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/auth/signup"
-            className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-7 py-3 text-base font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
+            className="gp-btn gp-btn--primary gp-btn--lg px-7"
           >
             Get started free
           </Link>
           <a
             href="#product-tour"
-            className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 bg-white/90 px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+            className="gp-btn gp-btn--secondary gp-btn--lg px-7"
           >
             See how it works
           </a>

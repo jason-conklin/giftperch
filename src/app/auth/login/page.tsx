@@ -145,7 +145,7 @@ function LoginContent() {
 
         <button
           type="submit"
-          className="w-full rounded-2xl bg-gp-evergreen px-4 py-3 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+          className="gp-btn gp-btn--primary gp-btn--md w-full disabled:cursor-not-allowed"
           disabled={isLoading}
         >
           {mode === "password" ? "Log In" : "Send Magic Link"}
