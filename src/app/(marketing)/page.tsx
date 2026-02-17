@@ -470,7 +470,7 @@ export default function MarketingHome() {
                   href="/auth/signup"
                   className="gp-btn gp-btn--primary gp-btn--lg px-7"
                 >
-                  Get started free
+                  Login/Get started free
                 </Link>
                 <a
                   href="#product-tour"
@@ -603,7 +603,7 @@ export default function MarketingHome() {
             href="/auth/signup"
             className="gp-btn gp-btn--primary gp-btn--lg px-7"
           >
-            Get started free
+            Login/Get started free
           </Link>
           <a
             href="#product-tour"
