@@ -7,21 +7,102 @@ import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 const workflowSteps = [
   {
+    id: "profiles",
     title: "Capture recipient profiles",
     description:
       "Save interests, budgets, occasions, and notes so every person has a living gift profile.",
   },
   {
+    id: "perchpal",
     title: "Ask PerchPal for suggestions",
     description:
       "Give PerchPal a vibe, budget, or event and get context-aware ideas with rationale.",
   },
   {
+    id: "history",
     title: "Track wins and avoid repeats",
     description:
       "Record what you bought and how it landed so every next gift is more personal.",
   },
 ] as const;
+
+type WorkflowStepId = (typeof workflowSteps)[number]["id"];
+
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
+      <path
+        d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM4.5 20.4a7.5 7.5 0 0 1 15 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function GiftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5">
+      <path
+        d="M4.5 9.5h15v10h-15zM12 9.5v10M4.5 13h15M4 9.5h16M9.6 7.1c0 1-1 2.4-2.4 2.4S5 8.1 5 7.1c0-1.1.9-2 2-2 1.4 0 2.6 1 3.1 2.4m1.3-.4c.4-1.3 1.7-2.3 3.1-2.3 1.1 0 2 .9 2 2 0 1-1 2.4-2.2 2.4-1.4 0-2.4-1.4-2.4-2.4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
+      <circle
+        cx="12"
+        cy="12"
+        r="8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      />
+      <path
+        d="M12 7.5v4.8l3.1 1.9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
+  return (
+    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gp-gold/30 bg-gp-cream/60 text-gp-evergreen">
+      {stepId === "profiles" ? <ProfileIcon /> : null}
+      {stepId === "history" ? <ClockIcon /> : null}
+      {stepId === "perchpal" ? (
+        <>
+          <Image
+            src="/giftperch_perchpal_front.png"
+            alt=""
+            width={30}
+            height={30}
+            className="h-7 w-7 rounded-full object-contain"
+            aria-hidden="true"
+          />
+          <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gp-gold/40 bg-white text-gp-evergreen shadow-sm">
+            <GiftIcon />
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+}
 
 const heroBenefits = [
   "Remember preferences and sizes across every recipient.",
@@ -332,8 +413,13 @@ export default function MarketingHome() {
               <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
                 Step
               </p>
-              <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
-              <p className="text-sm text-gp-evergreen/80">{step.description}</p>
+              <div className="flex items-start gap-3">
+                <WorkflowStepBadge stepId={step.id} />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
+                  <p className="text-sm text-gp-evergreen/80">{step.description}</p>
+                </div>
+              </div>
             </article>
           ))}
         </div>
