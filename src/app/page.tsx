@@ -1,4 +1,5 @@
 import MarketingHome from "./(marketing)/page";
+import MarketingLayout from "./(marketing)/layout";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,5 +11,9 @@ export const metadata: Metadata = {
  * so that https://giftperch.com immediately showcases the public landing page.
  */
 export default function Home() {
-  return <MarketingHome />;
+  return (
+    <MarketingLayout>
+      <MarketingHome />
+    </MarketingLayout>
+  );
 }

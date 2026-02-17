@@ -5,23 +5,75 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
-const steps = [
+const workflowSteps = [
   {
     title: "Capture recipient profiles",
     description:
-      "Build a reusable Gift CRM with interests, budgets, occasions, and preferences.",
+      "Save interests, budgets, occasions, and notes so every person has a living gift profile.",
   },
   {
-    title: "Ask PerchPal for Gift Ideas",
+    title: "Ask PerchPal for suggestions",
     description:
-      "Give PerchPal a vibe, budget, or occasion and get curated suggestions with rationale.",
+      "Give PerchPal a vibe, budget, or event and get context-aware ideas with rationale.",
   },
   {
-    title: "Track every gift",
+    title: "Track wins and avoid repeats",
     description:
-      "Log past gifts, wishlists, and affiliate-ready ideas so you never scramble last minute.",
+      "Record what you bought and how it landed so every next gift is more personal.",
   },
-];
+] as const;
+
+const heroBenefits = [
+  "Remember preferences and sizes across every recipient.",
+  "Use real gift history to avoid repeats and misses.",
+  "Stay ahead of birthdays and key occasions with budget-ready ideas.",
+] as const;
+
+const featureHighlights = [
+  {
+    title: "Recipient Profiles",
+    description: "Interests, budgets, and personal details in one place.",
+  },
+  {
+    title: "Gift History",
+    description: "Log past gifts and reactions to guide future picks.",
+  },
+  {
+    title: "Occasions Calendar",
+    description: "Track birthdays and events before deadlines hit.",
+  },
+  {
+    title: "Smart Suggestions",
+    description: "PerchPal generates ideas grounded in saved context.",
+  },
+] as const;
+
+const faqs = [
+  {
+    question: "What is GiftPerch?",
+    answer:
+      "GiftPerch is a gifting workspace that combines recipient profiles, gift history, occasions, and PerchPal AI suggestions.",
+  },
+  {
+    question: "Who is GiftPerch for?",
+    answer:
+      "Anyone who shops for family, friends, partners, or teams and wants gifting to feel thoughtful without last-minute stress.",
+  },
+  {
+    question: "How does PerchPal make suggestions better?",
+    answer:
+      "PerchPal uses the context you save, like budgets, preferences, occasions, and prior gifts, to generate more relevant ideas.",
+  },
+  {
+    question: "Can I track spending ranges?",
+    answer:
+      "Yes. Recipient profiles support budget context so your suggestions stay practical for each person and occasion.",
+  },
+  {
+    question: "Do I need a credit card to start?",
+    answer: "No. You can create an account and start organizing gifts right away.",
+  },
+] as const;
 
 const SAMPLE_PROFILES = [
   {
@@ -193,56 +245,86 @@ function LandingSampleProfiles() {
 }
 
 export default function MarketingHome() {
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-16 px-4 py-10 sm:px-6 lg:px-8">
-      <section className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-        <div className="space-y-9">
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-center text-xs font-medium uppercase tracking-wide text-gp-evergreen">
-            <span className="whitespace-nowrap">Introducing PerchPal,</span>
-            <span className="whitespace-nowrap">Your AI gifting assistant</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Image
-              src="/giftperch_logo_only.png"
-              alt="GiftPerch"
-              width={96}
-              height={96}
-              className="h-28 w-28"
-              priority
-            />
-            <p className="text-5xl font-bold tracking-wide text-gp-evergreen">
-              GiftPerch
-            </p>
-          </div>
-          <h1 className="mt-1 text-4xl font-semibold leading-tight text-gp-evergreen">
-            Thoughtful gifting, reimagined with AI
-          </h1>
-          <p className="text-base text-gp-evergreen/80">
-            Create living recipient profiles, maintain your wishlist identity,
-            and lean on PerchPal—the AI gifting copilot that surfaces
-            Amazon/affiliate-ready suggestions with genuine context.
-          </p>
-          <div className="mt-20 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Link
-              href="/auth/signup"
-              className="rounded-full bg-gp-gold px-14 py-4 text-center text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
-            >
-              Sign Up / Login
-            </Link>
-            <Link
-              href="/about"
-              className="rounded-full bg-gp-evergreen px-10 py-4 text-center text-base font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
-            >
-              More Info ➞
-            </Link>
-          </div>
+    <div className="space-y-12">
+      <section className="space-y-8">
+        <div className="relative overflow-hidden rounded-3xl border border-gp-evergreen/20 bg-white/95 shadow-sm">
+          <Image
+            src="/GiftPerch_custom_banner.png"
+            alt="GiftPerch banner"
+            width={1200}
+            height={400}
+            className="h-28 w-full object-cover sm:h-36 lg:h-40"
+            priority
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gp-evergreen/15 via-transparent to-gp-gold/20" />
         </div>
-        <div className="mt-6 lg:mt-2">
-          <LandingSampleProfiles />
+
+        <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
+          <div className="space-y-6">
+            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen">
+              Built for thoughtful gifting at scale
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl lg:text-5xl">
+              Stop guessing and start giving better gifts.
+            </h1>
+            <p className="text-base text-gp-evergreen/80">
+              GiftPerch combines recipient profiles, gift history, occasions, and
+              budget context in one workspace. PerchPal then turns that memory
+              into personalized suggestions you can act on fast.
+            </p>
+            <ul className="space-y-2">
+              {heroBenefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2 text-sm text-gp-evergreen/85">
+                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gp-gold/40 text-xs font-semibold text-gp-evergreen">
+                    ✓
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center justify-center rounded-full bg-gp-gold px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-[#bda775]"
+                >
+                  Get started free
+                </Link>
+                <a
+                  href="#product-tour"
+                  className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 bg-gp-cream/70 px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+                >
+                  See how it works
+                </a>
+              </div>
+              <p className="text-xs text-gp-evergreen/70">No credit card required</p>
+              <Link
+                href="/about"
+                className="inline-flex text-sm font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-evergreen/80"
+              >
+                More info
+              </Link>
+            </div>
+          </div>
+          <div className="lg:pt-1">
+            <LandingSampleProfiles />
+          </div>
         </div>
       </section>
 
-      <section className="space-y-6">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {featureHighlights.map((feature) => (
+          <article key={feature.title} className="gp-card-soft p-4 sm:p-5">
+            <h2 className="text-base font-semibold text-gp-evergreen">{feature.title}</h2>
+            <p className="mt-1 text-sm text-gp-evergreen/75">{feature.description}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="product-tour" className="space-y-5 scroll-mt-28">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
             Product tour
@@ -250,62 +332,115 @@ export default function MarketingHome() {
           <h2 className="text-2xl font-semibold text-gp-evergreen">
             How GiftPerch works
           </h2>
-          <p className="text-base text-gp-evergreen/80">
-            From profiles to personalized ideas
-          </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {steps.map((step) => (
-            <div key={step.title} className="gp-card h-full space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-wide text-gp-evergreen/60">
+        <div className="grid gap-4 md:grid-cols-3">
+          {workflowSteps.map((step) => (
+            <article key={step.title} className="gp-card h-full space-y-2 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
                 Step
               </p>
-              <h3 className="text-lg font-semibold text-gp-evergreen">
-                {step.title}
-              </h3>
-              <p className="text-sm text-gp-evergreen/80">
-                {step.description}
-              </p>
-            </div>
+              <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
+              <p className="text-sm text-gp-evergreen/80">{step.description}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      <div className="mt-8 mb-4 md:hidden">
-        <div className="flex items-center gap-3 rounded-2xl border border-gp-gold/40 bg-gp-cream/95 px-4 py-3 shadow-sm">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-gp-cream">
-            <Image
-              src="/giftperch_favicon.png"
-              alt="GiftPerch app icon"
-              width={40}
-              height={40}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gp-evergreen">
-              Mobile app coming soon!
-            </p>
-            <p className="mt-0.5 text-xs text-gp-evergreen/80">
-              Optimized for phones today. Native app experience planned as GiftPerch
-              grows.
-            </p>
-          </div>
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+            Why GiftPerch is different
+          </p>
+          <h2 className="text-2xl font-semibold text-gp-evergreen">
+            Memory + context beats one-off idea generators
+          </h2>
         </div>
-      </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <article className="gp-card-soft p-5">
+            <h3 className="text-lg font-semibold text-gp-evergreen">
+              Typical gift generators
+            </h3>
+            <ul className="mt-3 space-y-2 text-sm text-gp-evergreen/75">
+              <li>One-off prompts with no long-term memory.</li>
+              <li>Repetitive ideas that miss personality details.</li>
+              <li>No gift history to prevent duplicates.</li>
+            </ul>
+          </article>
+          <article className="gp-card border-gp-gold/40 bg-white p-5">
+            <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gp-evergreen/80">
+              <li>Recipient profiles + budgets + occasion context.</li>
+              <li>Saved history and feedback that improves future picks.</li>
+              <li>Calendar-aware planning with PerchPal suggestions.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
 
-      <section className="gp-card border-dashed border-gp-gold/50 bg-gp-cream/70 text-center text-sm text-gp-evergreen/80">
-        Coming soon: success stories and favorite gift combinations from real
-        GiftPerch families, couples, and teams.
-        <br />
-        Want updates?{" "}
-        <Link
-          href="/blog"
-          className="font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          Visit the GiftPerch Journal
-        </Link>
-        .
+      <section aria-labelledby="homepage-faq-title" className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+            FAQ
+          </p>
+          <h2 id="homepage-faq-title" className="text-2xl font-semibold text-gp-evergreen">
+            Common questions
+          </h2>
+        </div>
+        <div className="gp-card divide-y divide-gp-evergreen/10">
+          {faqs.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div key={faq.question} className="py-4 first:pt-0 last:pb-0">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${index}`}
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                >
+                  <span className="text-base font-semibold text-gp-evergreen">
+                    {faq.question}
+                  </span>
+                  <span
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gp-evergreen/20 bg-gp-cream/70 text-lg leading-none text-gp-evergreen"
+                    aria-hidden="true"
+                  >
+                    {isOpen ? "-" : "+"}
+                  </span>
+                </button>
+                {isOpen ? (
+                  <p id={`faq-answer-${index}`} className="mt-3 pr-9 text-sm text-gp-evergreen/80">
+                    {faq.answer}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-gp-gold/50 bg-gp-gold/20 p-6 text-center sm:p-8">
+        <h2 className="text-2xl font-semibold text-gp-evergreen">
+          Start your gifting workspace today
+        </h2>
+        <p className="mt-2 text-sm text-gp-evergreen/80">
+          Organize every recipient once, then let PerchPal help with better ideas
+          all year.
+        </p>
+        <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center justify-center rounded-full bg-gp-evergreen px-7 py-3 text-base font-semibold text-gp-cream transition hover:bg-gp-evergreen/90"
+          >
+            Get started free
+          </Link>
+          <a
+            href="#product-tour"
+            className="inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 bg-white/90 px-7 py-3 text-base font-semibold text-gp-evergreen transition hover:bg-gp-cream"
+          >
+            See how it works
+          </a>
+        </div>
       </section>
     </div>
   );
