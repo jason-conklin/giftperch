@@ -341,7 +341,7 @@ function GiftSuggestionCard({
             href={amazonHref}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="w-full max-w-xs rounded-full border border-gp-gold bg-gp-gold px-4 py-2 text-center text-sm font-semibold text-gp-evergreen transition hover:bg-gp-gold/90 cursor-pointer"
+            className="gp-btn gp-btn--gold gp-btn--md w-full max-w-xs text-sm"
           >
             View on Amazon
           </a>

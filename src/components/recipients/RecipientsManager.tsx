@@ -1296,7 +1296,7 @@ export function RecipientsManager() {
         <button
           type="button"
           onClick={openCreateForm}
-          className="rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+          className="gp-btn gp-btn--primary gp-btn--md px-5 text-sm"
         >
           Add Recipient
         </button>
@@ -1438,14 +1438,14 @@ export function RecipientsManager() {
                   <button
                     type="button"
                     onClick={() => setSelectedRecipient(recipient)}
-                    className="flex-1 min-w-[150px] inline-flex items-center justify-center rounded-full border border-gp-evergreen/30 px-4 py-1.5 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                    className="gp-btn gp-btn--secondary gp-btn--sm min-w-[150px] flex-1 text-xs"
                   >
                     Show details
                   </button>
                   <button
                     type="button"
                     onClick={() => setSavedGiftsRecipient(recipient)}
-                    className="flex-1 min-w-[150px] inline-flex items-center justify-center rounded-full bg-gp-evergreen px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+                    className="gp-btn gp-btn--primary gp-btn--sm min-w-[150px] flex-1 text-xs"
                   >
                     View Saved Gifts
                   </button>
@@ -1455,7 +1455,7 @@ export function RecipientsManager() {
                   onClick={() =>
                     router.push(`/gifts?recipientId=${recipient.id}`)
                   }
-                  className="inline-flex w-full items-center justify-center rounded-full bg-gp-gold px-5 py-2 text-sm font-semibold text-gp-evergreen animate-gp-gift-glow transition hover:scale-[1.04] hover:bg-[#d9c585] hover:shadow-[0_0_24px_rgba(217,193,137,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                  className="gp-btn gp-btn--gold gp-btn--md w-full"
                 >
                   Get gift ideas
                 </button>

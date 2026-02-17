@@ -287,14 +287,14 @@ export function OccasionsCalendar({
           </select>
           <button
             type="button"
-            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+            className="gp-btn gp-btn--primary gp-btn--sm px-3 text-sm"
             onClick={() => changeMonth("prev")}
           >
             Previous
           </button>
           <button
             type="button"
-            className="rounded-full bg-gp-evergreen px-3 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+            className="gp-btn gp-btn--primary gp-btn--sm px-3 text-sm"
             onClick={() => changeMonth("next")}
           >
             Next
