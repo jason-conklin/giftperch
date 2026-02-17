@@ -300,13 +300,6 @@ export default function MarketingHome() {
                   See how it works
                 </a>
               </div>
-              <p className="text-xs text-gp-evergreen/70">No credit card required</p>
-              <Link
-                href="/about"
-                className="inline-flex text-sm font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-evergreen/80"
-              >
-                More info
-              </Link>
             </div>
           </div>
           <div className="lg:pt-1">
