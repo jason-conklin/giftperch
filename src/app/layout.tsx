@@ -52,7 +52,7 @@ export default function RootLayout({
             Skip to main content
           </a>
           {children}
-          <footer className="gp-global-footer border-t border-gp-cream/40 bg-white pt-16 pb-8">
+          <footer className="gp-global-footer border-t border-gp-cream/40 bg-gp-cream pt-16 pb-8">
             <div className="mx-auto max-w-4xl space-y-2 text-center text-sm text-gp-evergreen/70">
               <p>
                 © {year} GiftPerch. Built by{" "}
