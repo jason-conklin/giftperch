@@ -345,11 +345,11 @@ export default function MarketingHome() {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
           <div className="space-y-6">
-            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen">
+            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-gp-evergreen sm:px-5 sm:py-2 sm:text-base">
               Your AI-powered gifting workspace.
             </p>
             <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl lg:text-5xl">
-              Create recipient profiles, track past gifts, and let PerchPal generate ideas that actually fit.
+              Create recipient profiles, track past gifts, and generate ideas that truly fit.
             </h1>
             <p className="text-base text-gp-evergreen/80">
               GiftPerch combines recipient profiles, gift history, occasions, and
