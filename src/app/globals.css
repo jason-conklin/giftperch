@@ -25,11 +25,17 @@ body {
 }
 
 @layer components {
-  .gp-marketing-bg-animated,
-  .gp-marketing-bg-animated + .gp-global-footer {
+  .gp-marketing-bg-animated {
     position: relative;
+    z-index: 1;
+  }
+
+  .gp-marketing-bg-animated::before {
+    content: "";
+    position: fixed;
+    inset: 0;
     z-index: 0;
-    isolation: isolate;
+    pointer-events: none;
     background-image:
       radial-gradient(
         circle at 20% 15%,
@@ -54,27 +60,22 @@ body {
     animation: gp-bg-blobs 14s ease-in-out infinite;
   }
 
-  .gp-marketing-bg-animated::before,
-  .gp-marketing-bg-animated + .gp-global-footer::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image: url("/textures/noise.svg");
-    background-repeat: repeat;
-    background-size: 180px 180px;
-    opacity: 0.01;
+  .gp-marketing-bg-animated > * {
+    position: relative;
+    z-index: 1;
   }
 
   .gp-marketing-bg-animated + .gp-global-footer {
+    position: relative;
+    z-index: 1;
     background-color: transparent;
+    border-top-color: transparent;
   }
 
   .gp-marketing-bg-animated + .gp-global-footer > div {
-    border: 1px solid rgba(15, 61, 62, 0.12);
+    border: 1px solid rgba(15, 61, 62, 0.1);
     border-radius: 1.5rem;
-    background-color: rgba(255, 255, 255, 0.42);
+    background-color: rgba(255, 255, 255, 0.36);
     backdrop-filter: blur(4px);
     padding: 1rem 1.25rem;
   }
@@ -141,8 +142,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-marketing-bg-animated,
-  .gp-marketing-bg-animated + .gp-global-footer {
+  .gp-marketing-bg-animated::before {
     animation: none;
   }
 
