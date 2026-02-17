@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const features = [
   {
     id: "profiles",
-    title: "Capture recipient profiles",
+    title: "Set up recipient profiles",
     description:
       "Log interests, budgets, sizes, and occasions so every person has a living gift CRM.",
   },

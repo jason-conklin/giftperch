@@ -8,7 +8,7 @@ import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 const workflowSteps = [
   {
     id: "profiles",
-    title: "Capture recipient profiles",
+    title: "Set up recipient profiles",
     description:
       "Save interests, budgets, occasions, and notes so every person has a living gift profile.",
   },
