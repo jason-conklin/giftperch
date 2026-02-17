@@ -25,6 +25,52 @@ body {
 }
 
 @layer components {
+  .gp-marketing-bg {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+    background: linear-gradient(
+      180deg,
+      #f6f1e6 0%,
+      #f3ebdc 50%,
+      rgba(15, 61, 62, 0.035) 100%
+    );
+  }
+
+  .gp-marketing-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("/textures/noise.svg");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+    opacity: 0.02;
+  }
+
+  .gp-hero-glow {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+  }
+
+  .gp-hero-glow::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -2rem;
+    height: clamp(220px, 42vw, 420px);
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at 30% 15%,
+      rgba(232, 201, 120, 0.14),
+      transparent 55%
+    );
+  }
+
   .gp-card {
     @apply rounded-3xl border border-gp-evergreen/15 bg-white/95 p-6 shadow-sm;
   }

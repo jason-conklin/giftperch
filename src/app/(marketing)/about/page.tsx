@@ -141,7 +141,7 @@ export default function AboutPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {features.map((feature) => (
-            <article key={feature.title} className="gp-card-soft h-full p-5">
+            <article key={feature.title} className="gp-card h-full p-5">
               <div className="flex items-start gap-3">
                 <FeatureBadge featureId={feature.id} />
                 <div className="space-y-2">
