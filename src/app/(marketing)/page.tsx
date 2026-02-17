@@ -27,6 +27,7 @@ const workflowSteps = [
 ] as const;
 
 type WorkflowStepId = (typeof workflowSteps)[number]["id"];
+type ComparisonIconKey = "profile" | "repeat" | "history" | "calendar";
 
 function ProfileIcon() {
   return (
@@ -101,6 +102,82 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
         </>
       ) : null}
     </div>
+  );
+}
+
+function ComparisonBulletIcon({ icon }: { icon: ComparisonIconKey }) {
+  if (icon === "profile") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+        <path
+          d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM4.5 20.4a7.5 7.5 0 0 1 15 0"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "repeat") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+        <path
+          d="M7 7h9l-2-2m2 14H7l2 2M5 16a5 5 0 0 1 0-8m14 0a5 5 0 0 1 0 8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  if (icon === "history") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+        <circle
+          cx="12"
+          cy="12"
+          r="8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+        />
+        <path
+          d="M12 7.5v4.7l3 1.8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+      <rect
+        x="3.5"
+        y="4.5"
+        width="17"
+        height="16"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      />
+      <path
+        d="M8 2.8v3.4M16 2.8v3.4M3.5 9.5h17"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -327,6 +404,32 @@ function LandingSampleProfiles() {
 
 export default function MarketingHome() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const comparisonRows: ReadonlyArray<{
+    icon: ComparisonIconKey;
+    typical: string;
+    giftperch: string;
+  }> = [
+    {
+      icon: "profile",
+      typical: "One-off prompts (no memory)",
+      giftperch: "Recipient profiles with preferences + budgets",
+    },
+    {
+      icon: "repeat",
+      typical: "Repeats ideas across searches",
+      giftperch: "Gift history + feedback to avoid repeats",
+    },
+    {
+      icon: "history",
+      typical: "No gift history or context",
+      giftperch: "Occasion context (birthday, holiday, etc.)",
+    },
+    {
+      icon: "calendar",
+      typical: "Hard to plan for upcoming occasions",
+      giftperch: "Plan ahead with a calendar view",
+    },
+  ];
 
   return (
     <div className="space-y-12">
@@ -345,7 +448,7 @@ export default function MarketingHome() {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
           <div className="space-y-6">
-            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-4 py-1.5 text-sm font-semibold uppercase tracking-wide text-gp-evergreen sm:px-5 sm:py-2 sm:text-base">
+            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen">
               Your AI-powered gifting workspace.
             </p>
             <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl lg:text-5xl">
@@ -427,30 +530,36 @@ export default function MarketingHome() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-            Why GiftPerch is different
+          <h2 className="text-2xl font-semibold text-gp-evergreen">Why GiftPerch is different</h2>
+          <p className="mt-1 text-sm text-gp-evergreen/75">
+            A gifting workspace that remembers — not a one-off idea generator.
           </p>
-          <h2 className="text-2xl font-semibold text-gp-evergreen">
-            Memory + context beats one-off idea generators
-          </h2>
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <article className="gp-card-soft p-5">
-            <h3 className="text-lg font-semibold text-gp-evergreen">
-              Typical gift generators
-            </h3>
-            <ul className="mt-3 space-y-2 text-sm text-gp-evergreen/75">
-              <li>One-off prompts with no long-term memory.</li>
-              <li>Repetitive ideas that miss personality details.</li>
-              <li>No gift history to prevent duplicates.</li>
+        <div className="grid gap-4 md:grid-cols-2">
+          <article className="gp-card-soft border-gp-evergreen/15 p-5">
+            <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators</h3>
+            <ul className="mt-4 space-y-3">
+              {comparisonRows.map((row) => (
+                <li key={`typical-${row.typical}`} className="flex items-start gap-3 text-sm text-gp-evergreen/70">
+                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
+                    <ComparisonBulletIcon icon={row.icon} />
+                  </span>
+                  <span>{row.typical}</span>
+                </li>
+              ))}
             </ul>
           </article>
-          <article className="gp-card border-gp-gold/40 bg-white p-5">
+          <article className="gp-card-soft border-gp-gold/40 bg-white/70 p-5">
             <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gp-evergreen/80">
-              <li>Recipient profiles + budgets + occasion context.</li>
-              <li>Saved history and feedback that improves future picks.</li>
-              <li>Calendar-aware planning with PerchPal suggestions.</li>
+            <ul className="mt-4 space-y-3">
+              {comparisonRows.map((row) => (
+                <li key={`giftperch-${row.giftperch}`} className="flex items-start gap-3 text-sm text-gp-evergreen/85">
+                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
+                    <ComparisonBulletIcon icon={row.icon} />
+                  </span>
+                  <span>{row.giftperch}</span>
+                </li>
+              ))}
             </ul>
           </article>
         </div>
