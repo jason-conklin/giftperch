@@ -10,11 +10,11 @@ const workflowSteps = [
     id: "profiles",
     title: "Set up recipient profiles",
     description:
-      "Save interests, budgets, occasions, and notes so every person has a living gift profile.",
+      "Save interests, hobbies, and notes so every person has a gift profile you can reuse again and again.",
   },
   {
     id: "perchpal",
-    title: "Ask PerchPal for suggestions",
+    title: "PerchPal will generate gift ideas.",
     description:
       "Give PerchPal a vibe, budget, or event and get context-aware ideas with rationale.",
   },
