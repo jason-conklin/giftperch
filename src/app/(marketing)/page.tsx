@@ -181,6 +181,20 @@ function ComparisonBulletIcon({ icon }: { icon: ComparisonIconKey }) {
   );
 }
 
+function ComparisonXIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+      <path
+        d="M8 8l8 8M16 8l-8 8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const heroBenefits = [
   "Remember preferences and sizes across every recipient.",
   "Use real gift history to avoid repeats and misses.",
@@ -537,12 +551,12 @@ export default function MarketingHome() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <article className="gp-card-soft border-gp-evergreen/15 p-5">
-            <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators</h3>
+            <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators:</h3>
             <ul className="mt-4 space-y-3">
               {comparisonRows.map((row) => (
                 <li key={`typical-${row.typical}`} className="flex items-start gap-3 text-sm text-gp-evergreen/70">
-                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
-                    <ComparisonBulletIcon icon={row.icon} />
+                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 text-red-600">
+                    <ComparisonXIcon />
                   </span>
                   <span>{row.typical}</span>
                 </li>
@@ -550,7 +564,7 @@ export default function MarketingHome() {
             </ul>
           </article>
           <article className="gp-card-soft border-gp-gold/40 bg-white/70 p-5">
-            <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch</h3>
+            <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch offers:</h3>
             <ul className="mt-4 space-y-3">
               {comparisonRows.map((row) => (
                 <li key={`giftperch-${row.giftperch}`} className="flex items-start gap-3 text-sm text-gp-evergreen/85">
