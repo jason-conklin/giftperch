@@ -31,20 +31,26 @@ body {
     isolation: isolate;
     background-image:
       radial-gradient(
-        circle at 30% 12%,
-        rgba(232, 201, 120, 0.18),
+        circle at 20% 10%,
+        rgba(232, 201, 120, 0.22),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 80% 30%,
+        rgba(255, 255, 255, 0.65),
         transparent 55%
       ),
       linear-gradient(
         180deg,
         #ffffff 0%,
-        #fbf7ef 25%,
-        #f3ebdc 60%,
-        rgba(15, 61, 62, 0.06) 100%
+        #fff9ee 35%,
+        #f6ead6 70%,
+        #f1e3c9 100%
       );
-    background-size: 120% 120%;
-    background-position: 50% 0%;
-    animation: gp-bg-drift 22s ease-in-out infinite;
+    background-size: 140% 140%, 140% 140%, 100% 140%;
+    background-position: 40% 0%, 60% 0%, 50% 0%;
+    background-repeat: no-repeat, no-repeat, no-repeat;
+    animation: gp-bg-drift-strong 18s ease-in-out infinite;
   }
 
   .gp-marketing-bg-animated::before {
@@ -56,22 +62,21 @@ body {
     background-image: url("/textures/noise.svg");
     background-repeat: repeat;
     background-size: 180px 180px;
-    opacity: 0.04;
-    mix-blend-mode: soft-light;
+    opacity: 0.015;
   }
 }
 
-@keyframes gp-bg-drift {
+@keyframes gp-bg-drift-strong {
   0% {
-    background-position: 50% 0%;
+    background-position: 40% 0%, 60% 0%, 50% 0%;
   }
 
   50% {
-    background-position: 50% 12%;
+    background-position: 55% 12%, 45% 10%, 50% 10%;
   }
 
   100% {
-    background-position: 50% 0%;
+    background-position: 40% 0%, 60% 0%, 50% 0%;
   }
 }
 
