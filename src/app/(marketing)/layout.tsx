@@ -59,7 +59,7 @@ export default function MarketingLayout({
   };
 
   return (
-    <div className="gp-marketing-bg flex min-h-screen flex-col text-gp-evergreen">
+    <div className="gp-marketing-bg-animated flex min-h-screen flex-col text-gp-evergreen">
       <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-3 sm:px-6 lg:px-0 lg:pb-5">
           <Link

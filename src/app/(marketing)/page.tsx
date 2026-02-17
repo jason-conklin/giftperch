@@ -249,7 +249,7 @@ export default function MarketingHome() {
 
   return (
     <div className="space-y-12">
-      <section className="gp-hero-glow space-y-8">
+      <section className="space-y-8">
         <div className="relative overflow-hidden rounded-3xl border border-gp-evergreen/20 bg-white/95 shadow-sm">
           <Image
             src="/GiftPerch_custom_banner.png"
