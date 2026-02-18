@@ -523,7 +523,7 @@ export default function MarketingHome() {
     },
     {
       icon: "calendar",
-      typical: "Hard to plan for upcoming occasions",
+      typical: "No built-in planning for upcoming occasions",
       giftperch: "Plan ahead with a calendar view",
     },
   ];
