@@ -567,7 +567,7 @@ export default function MarketingHome() {
         <div>
           <h2 className="text-2xl font-semibold text-gp-evergreen">Why GiftPerch is different</h2>
           <p className="mt-1 text-sm text-gp-evergreen/75">
-            A gifting workspace that remembers — not a one-off idea generator.
+            Powered by memory and context — not guesswork.
           </p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
