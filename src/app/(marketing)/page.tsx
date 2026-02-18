@@ -304,9 +304,6 @@ const SAMPLE_PROFILES = [
 function LandingSampleProfiles() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [previewFeedback, setPreviewFeedback] = useState<
-    Record<string, "liked" | "disliked" | null>
-  >({});
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const firstCycleRef = useRef(true);
 
@@ -316,16 +313,6 @@ function LandingSampleProfiles() {
       timerRef.current = null;
     }
   }, []);
-
-  const handlePreviewFeedbackToggle = useCallback(
-    (key: string, next: "liked" | "disliked") => {
-      setPreviewFeedback((prev) => ({
-        ...prev,
-        [key]: prev[key] === next ? null : next,
-      }));
-    },
-    [],
-  );
 
   useEffect(() => {
     if (isHovered) {
@@ -430,62 +417,13 @@ function LandingSampleProfiles() {
                       <p className="min-w-0 truncate text-sm font-medium text-gp-evergreen/90">
                         {idea.text}
                       </p>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        {(() => {
-                          const feedbackKey = `${profile.id}:${idea.text}`;
-                          const feedback = previewFeedback[feedbackKey];
-                          const isLiked = feedback === "liked";
-                          const isDisliked = feedback === "disliked";
-
-                          return (
-                            <>
-                              <button
-                                type="button"
-                                aria-label={`Like ${idea.text}`}
-                                aria-pressed={isLiked}
-                                onClick={() =>
-                                  handlePreviewFeedbackToggle(
-                                    feedbackKey,
-                                    "liked",
-                                  )
-                                }
-                                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 ${
-                                  isLiked
-                                    ? "border-gp-evergreen bg-gp-evergreen text-white"
-                                    : "border-gp-evergreen/15 bg-white/70 text-gp-evergreen/70 hover:border-gp-gold/40 hover:bg-gp-cream"
-                                }`}
-                              >
-                                <ThumbUpIcon
-                                  className={`h-4 w-4 stroke-current ${
-                                    isLiked ? "fill-current" : "fill-none"
-                                  }`}
-                                />
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={`Dislike ${idea.text}`}
-                                aria-pressed={isDisliked}
-                                onClick={() =>
-                                  handlePreviewFeedbackToggle(
-                                    feedbackKey,
-                                    "disliked",
-                                  )
-                                }
-                                className={`inline-flex h-8 w-8 items-center justify-center rounded-full border transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/50 ${
-                                  isDisliked
-                                    ? "border-gp-gold bg-gp-gold/70 text-gp-evergreen"
-                                    : "border-gp-evergreen/15 bg-white/70 text-gp-evergreen/70 hover:border-gp-gold/40 hover:bg-gp-cream"
-                                }`}
-                              >
-                                <ThumbDownIcon
-                                  className={`h-4 w-4 stroke-current ${
-                                    isDisliked ? "fill-current" : "fill-none"
-                                  }`}
-                                />
-                              </button>
-                            </>
-                          );
-                        })()}
+                      <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600">
+                          <ThumbUpIcon className="h-4 w-4 fill-current stroke-current" />
+                        </span>
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600">
+                          <ThumbDownIcon className="h-4 w-4 fill-current stroke-current" />
+                        </span>
                       </div>
                     </div>
                   </div>
