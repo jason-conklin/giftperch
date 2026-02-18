@@ -16,7 +16,7 @@ const workflowSteps = [
     id: "perchpal",
     title: "PerchPal will generate gift ideas.",
     description:
-      "Give PerchPal a vibe, budget, or event and get context-aware ideas with rationale.",
+      'Select a recipient and click "Generate Gift Ideas" for suggestions.',
   },
   {
     id: "history",
