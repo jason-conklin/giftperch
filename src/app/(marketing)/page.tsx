@@ -14,7 +14,7 @@ const workflowSteps = [
   },
   {
     id: "perchpal",
-    title: "PerchPal will generate gift ideas.",
+    title: "PerchPal will generate gift ideas",
     description:
       'Select a recipient and click "Generate Gift Ideas" for personalized suggestions.',
   },
@@ -22,7 +22,7 @@ const workflowSteps = [
     id: "history",
     title: "Smarter ideas with every click",
     description:
-      "Like or dislike suggestions so future gift ideas get smarter and more personalized.",
+      "Like or dislike suggestions so future gift ideas get better and more personalized.",
   },
 ] as const;
 
@@ -311,7 +311,7 @@ function LandingSampleProfiles() {
     >
       <div className="space-y-4">
         <p className="text-lg font-semibold text-gp-evergreen">
-          Create & Save Recipient Profiles
+          From Profile to Perfect Gift
         </p>
 
         <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
