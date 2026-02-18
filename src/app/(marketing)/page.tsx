@@ -9,19 +9,19 @@ import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 const workflowSteps = [
   {
     id: "profiles",
-    title: "Set up recipient profiles",
+    title: "Set up Recipient Profiles",
     description:
       "Save interests, hobbies, and notes so every person has a gift profile you can reuse again and again.",
   },
   {
     id: "perchpal",
-    title: "PerchPal will generate gift ideas",
+    title: "PerchPal will Generate Gift Ideas",
     description:
       'Select a recipient and click "Generate Gift Ideas" for personalized suggestions.',
   },
   {
     id: "history",
-    title: "Smarter ideas with every click",
+    title: "Smarter Ideas with Every Click",
     description:
       "Like or dislike suggestions so future gift ideas get better and more personalized.",
   },
@@ -191,6 +191,33 @@ function ComparisonXIcon() {
         stroke="currentColor"
         strokeWidth={2}
         strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function StepFlowArrow() {
+  return (
+    <svg
+      viewBox="0 0 68 20"
+      aria-hidden="true"
+      className="h-5 w-12 text-gp-gold/60 drop-shadow-[0_1px_2px_rgba(217,193,137,0.35)] lg:w-14"
+    >
+      <path
+        d="M2 10h52"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        opacity={0.8}
+      />
+      <path
+        d="m48 6 6 4-6 4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -571,9 +598,12 @@ export default function MarketingHome() {
             How GiftPerch works
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {workflowSteps.map((step) => (
-            <article key={step.title} className="gp-card h-full space-y-2 p-5">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] md:items-stretch md:gap-3">
+          {workflowSteps.flatMap((step, index) => [
+            <article key={`${step.id}-card`} className="gp-card h-full space-y-3 p-5">
+              <p className="inline-flex w-fit items-center rounded-full border border-gp-gold/30 bg-gp-cream/45 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen/65">
+                Step {index + 1}
+              </p>
               <div className="flex items-start gap-3">
                 <WorkflowStepBadge stepId={step.id} />
                 <div className="space-y-2">
@@ -581,8 +611,17 @@ export default function MarketingHome() {
                   <p className="text-sm text-gp-evergreen/80">{step.description}</p>
                 </div>
               </div>
-            </article>
-          ))}
+            </article>,
+            index < workflowSteps.length - 1 ? (
+              <div
+                key={`${step.id}-arrow`}
+                className="hidden md:flex items-center justify-center"
+                aria-hidden="true"
+              >
+                <StepFlowArrow />
+              </div>
+            ) : null,
+          ])}
         </div>
       </section>
 
