@@ -447,7 +447,7 @@ export default function MarketingHome() {
     {
       icon: "profile",
       typical: "One-time prompts with no memory between searches",
-      giftperch: "Recipient profiles with preferences + budgets",
+      giftperch: "Saved recipient profiles with preferences",
     },
     {
       icon: "repeat",
