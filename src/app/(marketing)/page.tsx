@@ -447,7 +447,7 @@ export default function MarketingHome() {
               Your AI-powered gifting workspace.
             </p>
             <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl lg:text-5xl">
-              Create recipient profiles, track past gifts, and generate ideas that truly fit.
+              Create recipient profiles and generate ideas that truly fit.
             </h1>
             <p className="text-base text-gp-evergreen/80">
               GiftPerch combines recipient profiles, gift history, occasions, and
