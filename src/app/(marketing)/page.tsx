@@ -201,21 +201,21 @@ function StepFlowArrow() {
     <svg
       viewBox="0 0 68 20"
       aria-hidden="true"
-      className="h-5 w-12 text-gp-gold/60 drop-shadow-[0_1px_2px_rgba(217,193,137,0.35)] lg:w-14"
+      className="h-5 w-12 text-gp-evergreen/70 drop-shadow-[0_1px_2px_rgba(15,61,62,0.22)] lg:w-14"
     >
       <path
         d="M2 10h52"
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.8}
+        strokeWidth={2.5}
         strokeLinecap="round"
-        opacity={0.8}
+        opacity={0.9}
       />
       <path
         d="m48 6 6 4-6 4"
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.8}
+        strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -508,12 +508,12 @@ export default function MarketingHome() {
   }> = [
     {
       icon: "profile",
-      typical: "One-off prompts (no memory)",
+      typical: "One-time prompts with no memory between searches",
       giftperch: "Recipient profiles with preferences + budgets",
     },
     {
       icon: "repeat",
-      typical: "Repeats ideas across searches",
+      typical: "Repeats gift suggestions with no feedback loop",
       giftperch: "Gift history + feedback to avoid repeats",
     },
     {
