@@ -418,10 +418,10 @@ function LandingSampleProfiles() {
                         {idea.text}
                       </p>
                       <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600">
+                        <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-px hover:border-blue-400/90 hover:bg-blue-100 hover:shadow-[0_2px_6px_rgba(37,99,235,0.2)]">
                           <ThumbUpIcon className="h-4 w-4 fill-none stroke-current" />
                         </span>
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600">
+                        <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-px hover:border-red-400/90 hover:bg-red-100 hover:shadow-[0_2px_6px_rgba(220,38,38,0.2)]">
                           <ThumbDownIcon className="h-4 w-4 fill-none stroke-current" />
                         </span>
                       </div>
