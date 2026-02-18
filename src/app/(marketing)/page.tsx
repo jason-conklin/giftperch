@@ -207,15 +207,15 @@ function StepFlowArrow() {
         d="M2 10h52"
         fill="none"
         stroke="currentColor"
-        strokeWidth={2.5}
+        strokeWidth={3.8}
         strokeLinecap="round"
         opacity={0.9}
       />
       <path
-        d="m48 6 6 4-6 4"
+        d="m46 5 8 5-8 5"
         fill="none"
         stroke="currentColor"
-        strokeWidth={2.5}
+        strokeWidth={5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -419,10 +419,10 @@ function LandingSampleProfiles() {
                       </p>
                       <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
                         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600">
-                          <ThumbUpIcon className="h-4 w-4 fill-current stroke-current" />
+                          <ThumbUpIcon className="h-4 w-4 fill-none stroke-current" />
                         </span>
                         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600">
-                          <ThumbDownIcon className="h-4 w-4 fill-current stroke-current" />
+                          <ThumbDownIcon className="h-4 w-4 fill-none stroke-current" />
                         </span>
                       </div>
                     </div>
