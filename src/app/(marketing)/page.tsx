@@ -91,13 +91,13 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
       {stepId === "history" ? <ClockIcon /> : null}
       {stepId === "perchpal" ? (
         <>
-          <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-gp-gold/25 bg-white/85">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gp-gold/25 bg-white/85">
             <Image
               src="/giftperch_perchpal_front.png"
               alt=""
-              width={32}
-              height={32}
-              className="h-full w-full scale-[1.45] object-cover"
+              width={36}
+              height={36}
+              className="h-[1.85rem] w-[1.85rem] object-contain"
               aria-hidden="true"
             />
           </span>
@@ -381,20 +381,20 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="relative space-y-3">
+    <ol className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-3 lg:gap-3 lg:space-y-0">
       <span
-        className="pointer-events-none absolute bottom-8 left-6 top-8 w-px bg-gp-evergreen/15"
+        className="pointer-events-none absolute bottom-10 left-6 top-10 w-px bg-gp-evergreen/15 lg:bottom-8 lg:top-8"
         aria-hidden="true"
       />
       {steps.map((step, index) => {
         const isActive = index === activeStep;
         return (
-          <li key={`${step.id}-timeline`} className="relative">
+          <li key={`${step.id}-timeline`} className="relative lg:h-full">
             <button
               type="button"
               onClick={() => onSelectStep(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
+              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 lg:h-full ${
                 isActive
                   ? "border-gp-gold/50 bg-white/80 shadow-sm"
                   : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
@@ -492,12 +492,12 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   }, []);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] lg:items-start lg:gap-8">
-      <div className="space-y-3">
+    <div className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] lg:items-stretch lg:gap-8">
+      <div className="space-y-3 lg:flex lg:h-full lg:flex-col">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gp-evergreen/55">
           Step-by-step timeline
         </p>
-        <div className="lg:pt-[4.5rem]">
+        <div className="lg:flex-1">
           <ProductTourTimeline
             steps={steps}
             activeStep={activeStep}
@@ -642,7 +642,7 @@ export default function MarketingHome() {
                 </span>
                 <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                  Private by design
+                  Secure data storage
                 </span>
               </div>
             </div>
