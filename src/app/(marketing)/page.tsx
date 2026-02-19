@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BadgeCheck, RefreshCcw, ShieldCheck } from "lucide-react";
+import { BadgeCheck, ChevronRight, RefreshCcw, Sparkles, ShieldCheck } from "lucide-react";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
@@ -31,6 +31,9 @@ const workflowSteps = [
 type WorkflowStepId = (typeof workflowSteps)[number]["id"];
 type WorkflowStep = (typeof workflowSteps)[number];
 type ComparisonIconKey = "profile" | "repeat" | "history" | "calendar";
+
+const DEMO_VISIBLE_IDEAS = 3;
+const DEMO_TOTAL_IDEAS = 12;
 
 function ProfileIcon() {
   return (
@@ -93,7 +96,7 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
         <>
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gp-gold/25 bg-white/85">
             <Image
-              src="/giftperch_flying_animation1.PNG"
+              src="/giftperch_perchpal_front.png"
               alt=""
               width={34}
               height={34}
@@ -323,12 +326,14 @@ function ProductTourLoaderSlice() {
 }
 
 function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
+  const remaining = Math.max(0, DEMO_TOTAL_IDEAS - DEMO_VISIBLE_IDEAS);
+
   return (
     <div className="h-full rounded-2xl border border-gp-evergreen/15 bg-white p-4">
       <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
         {SAMPLE_PROFILES[activeIndex].ideasLabel}
       </p>
-      <div className="relative mt-3 min-h-[140px]">
+      <div className="relative mt-3 min-h-[196px]">
         {SAMPLE_PROFILES.map((profile, index) => (
           <div
             key={`${profile.id}-ideas`}
@@ -338,7 +343,7 @@ function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
                 : "pointer-events-none opacity-0"
             }`}
           >
-            {profile.ideas.map((idea) => (
+            {profile.ideas.slice(0, DEMO_VISIBLE_IDEAS).map((idea) => (
               <div key={idea.text} className="flex items-center gap-3">
                 <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
                   <Image
@@ -365,6 +370,25 @@ function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
                 </div>
               </div>
             ))}
+            {remaining > 0 ? (
+              <div className="mt-1 flex items-center justify-between rounded-lg border border-gp-evergreen/10 bg-white/60 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/60 text-gp-evergreen/75"
+                    aria-hidden="true"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="text-sm font-medium text-gp-evergreen/80">
+                    +{remaining} more ideas
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-gp-evergreen/70">
+                  View more
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>
