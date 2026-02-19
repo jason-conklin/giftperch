@@ -382,7 +382,7 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_1fr_auto_1fr_auto] lg:gap-0 lg:space-y-0">
+    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.95fr)_auto_minmax(0,0.7fr)_auto] lg:gap-0 lg:space-y-0">
       {steps.flatMap((step, index) => {
         const isActive = index === activeStep;
         const stepItem = (
@@ -525,18 +525,15 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 pb-3">
-            <div>
+          <div className="border-b border-gp-evergreen/10 pb-3">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="text-lg font-semibold text-gp-evergreen">
                 From Profile to Perfect Gift
               </p>
-              <p className="mt-0.5 text-xs uppercase tracking-[0.2em] text-gp-evergreen/55">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-evergreen/55">
                 A quick walkthrough
               </p>
             </div>
-            <p className="rounded-full border border-gp-gold/40 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-gp-evergreen">
-              Step {activeStep + 1}
-            </p>
           </div>
 
           <div className="mt-4 space-y-3">
