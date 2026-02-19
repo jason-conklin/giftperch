@@ -198,24 +198,6 @@ function ComparisonXIcon() {
   );
 }
 
-function StepFlowArrow() {
-  return (
-    <span className="inline-flex items-center gap-1 text-gp-evergreen/50" aria-hidden="true">
-      <span className="h-px w-7 bg-current/65" />
-      <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 text-current">
-        <path
-          d="M4 2.5 8 6l-4 3.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}
-
 const faqs = [
   {
     question: "What is GiftPerch?",
@@ -287,29 +269,6 @@ const SAMPLE_PROFILES = [
     ],
   },
 ] as const;
-
-function ProductTourStepCard({
-  step,
-  index,
-}: {
-  step: WorkflowStep;
-  index: number;
-}) {
-  return (
-    <article className="gp-card h-full space-y-3 p-5">
-      <p className="inline-flex w-fit items-center rounded-full border border-gp-gold/30 bg-gp-cream/45 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen/65">
-        Step {index + 1}
-      </p>
-      <div className="flex items-start gap-3">
-        <WorkflowStepBadge stepId={step.id} />
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
-          <p className="text-sm text-gp-evergreen/80">{step.description}</p>
-        </div>
-      </div>
-    </article>
-  );
-}
 
 function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
   return (
@@ -410,29 +369,79 @@ function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
   );
 }
 
-function ProductTourDemoSlice({
-  stepIndex,
-  activeIndex,
+function ProductTourTimeline({
+  steps,
+  activeStep,
+  onSelectStep,
 }: {
-  stepIndex: number;
-  activeIndex: number;
+  steps: readonly WorkflowStep[];
+  activeStep: number;
+  onSelectStep: (stepIndex: number) => void;
 }) {
-  if (stepIndex === 0) {
-    return <ProductTourProfileSlice activeIndex={activeIndex} />;
-  }
-
-  if (stepIndex === 1) {
-    return <ProductTourLoaderSlice />;
-  }
-
-  return <ProductTourIdeasSlice activeIndex={activeIndex} />;
+  return (
+    <ol className="relative space-y-3">
+      <span
+        className="pointer-events-none absolute bottom-8 left-6 top-8 w-px bg-gp-evergreen/15"
+        aria-hidden="true"
+      />
+      {steps.map((step, index) => {
+        const isActive = index === activeStep;
+        return (
+          <li key={`${step.id}-timeline`} className="relative">
+            <button
+              type="button"
+              onClick={() => onSelectStep(index)}
+              aria-current={isActive ? "step" : undefined}
+              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
+                isActive
+                  ? "border-gp-gold/50 bg-white/80 shadow-sm"
+                  : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
+              }`}
+            >
+              <span
+                className={`relative z-10 inline-flex rounded-full transition-all duration-200 ${
+                  isActive ? "ring-2 ring-gp-gold/30 shadow-sm" : ""
+                }`}
+                aria-hidden="true"
+              >
+                <WorkflowStepBadge stepId={step.id} />
+              </span>
+              <span className="min-w-0 space-y-1.5">
+                <span
+                  className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                    isActive
+                      ? "border-gp-gold/40 bg-gp-gold/20 text-gp-evergreen"
+                      : "border-gp-evergreen/20 bg-gp-cream/45 text-gp-evergreen/65"
+                  }`}
+                >
+                  Step {index + 1}
+                </span>
+                <span
+                  className={`block text-base font-semibold ${
+                    isActive ? "text-gp-evergreen" : "text-gp-evergreen/85"
+                  }`}
+                >
+                  {step.title}
+                </span>
+                <span className="block text-sm text-gp-evergreen/75">
+                  {step.description}
+                </span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [manualPauseUntil, setManualPauseUntil] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const firstCycleRef = useRef(true);
+  const stepCount = steps.length > 0 ? steps.length : 1;
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -446,6 +455,17 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       clearTimer();
       return;
     }
+
+    const now = Date.now();
+    if (manualPauseUntil > now) {
+      clearTimer();
+      const resumeTimer = setTimeout(
+        () => setManualPauseUntil(0),
+        manualPauseUntil - now,
+      );
+      return () => clearTimeout(resumeTimer);
+    }
+
     const delay = firstCycleRef.current ? 3000 : 6000;
     clearTimer();
     timerRef.current = setTimeout(() => {
@@ -456,59 +476,78 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       });
     }, delay);
     return () => clearTimer();
-  }, [activeIndex, clearTimer, isHovered]);
+  }, [activeIndex, clearTimer, isHovered, manualPauseUntil]);
+
+  const activeStep = activeIndex % stepCount;
+
+  const handleStepSelect = useCallback((stepIndex: number) => {
+    const normalizedIndex =
+      ((stepIndex % SAMPLE_PROFILES.length) + SAMPLE_PROFILES.length) %
+      SAMPLE_PROFILES.length;
+    setActiveIndex(normalizedIndex);
+    firstCycleRef.current = false;
+    setManualPauseUntil(Date.now() + 8000);
+  }, []);
 
   return (
-    <div
-      className="space-y-4"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="space-y-4 lg:hidden">
-        {steps.map((step, index) => (
-          <div key={`${step.id}-mobile-flow`} className="space-y-3">
-            <ProductTourStepCard step={step} index={index} />
-            <ProductTourDemoSlice stepIndex={index} activeIndex={activeIndex} />
-          </div>
-        ))}
+    <div className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] lg:items-start lg:gap-8">
+      <div className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gp-evergreen/55">
+          Step-by-step timeline
+        </p>
+        <ProductTourTimeline
+          steps={steps}
+          activeStep={activeStep}
+          onSelectStep={handleStepSelect}
+        />
       </div>
 
-      <div className="hidden gap-4 lg:grid">
-        <div className="relative grid items-stretch gap-4 lg:grid-cols-3">
-          {steps.map((step, index) => (
-            <ProductTourStepCard key={`${step.id}-desktop-step`} step={step} index={index} />
-          ))}
-          <div
-            className="pointer-events-none absolute left-[calc(33.333%-0.5rem)] top-1/2 hidden -translate-y-1/2 lg:block"
-            aria-hidden="true"
-          >
-            <StepFlowArrow />
-          </div>
-          <div
-            className="pointer-events-none absolute left-[calc(66.666%-0.5rem)] top-1/2 hidden -translate-y-1/2 lg:block"
-            aria-hidden="true"
-          >
-            <StepFlowArrow />
-          </div>
-        </div>
-
-        <div className="gp-card p-5 sm:p-6">
+      <div className="lg:sticky lg:top-24 lg:self-start">
+        <div
+          className="gp-card p-5 sm:p-6"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 pb-3">
-            <p className="text-lg font-semibold text-gp-evergreen">
-              From Profile to Perfect Gift
-            </p>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gp-evergreen/50">
-              A quick walkthrough
+            <div>
+              <p className="text-lg font-semibold text-gp-evergreen">
+                From Profile to Perfect Gift
+              </p>
+              <p className="mt-0.5 text-xs uppercase tracking-[0.2em] text-gp-evergreen/55">
+                A quick walkthrough
+              </p>
+            </div>
+            <p className="rounded-full border border-gp-gold/40 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-gp-evergreen">
+              Now showing: Step {activeStep + 1}
             </p>
           </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3 lg:divide-x lg:divide-gp-evergreen/10">
-            <div className="lg:pr-4">
+
+          <div className="mt-4 space-y-3">
+            <div
+              className={`rounded-2xl transition-all duration-300 ${
+                activeStep === 0
+                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
+                  : "opacity-70 saturate-[0.88]"
+              }`}
+            >
               <ProductTourProfileSlice activeIndex={activeIndex} />
             </div>
-            <div className="lg:px-4">
+            <div
+              className={`rounded-2xl transition-all duration-300 ${
+                activeStep === 1
+                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
+                  : "opacity-70 saturate-[0.88]"
+              }`}
+            >
               <ProductTourLoaderSlice />
             </div>
-            <div className="lg:pl-4">
+            <div
+              className={`rounded-2xl transition-all duration-300 ${
+                activeStep === 2
+                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
+                  : "opacity-70 saturate-[0.88]"
+              }`}
+            >
               <ProductTourIdeasSlice activeIndex={activeIndex} />
             </div>
           </div>
