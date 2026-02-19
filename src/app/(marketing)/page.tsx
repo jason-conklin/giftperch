@@ -331,7 +331,7 @@ function ProductTourLoaderSlice() {
           size="lg"
           message="PerchPal is fetching gift ideas..."
         />
-        <div className="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full border border-black/40 bg-white shadow-inner">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full border border-black/40 bg-white shadow-inner">
           <div
             className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
             style={{ width: `${Math.min(100, demoProgress)}%` }}
@@ -423,7 +423,7 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.62fr)_auto_minmax(0,0.48fr)_auto] lg:gap-0 lg:space-y-0">
+    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.48fr)_auto] lg:gap-0 lg:space-y-0">
       {steps.flatMap((step, index) => {
         const isActive = index === activeStep;
         const stepItem = (
