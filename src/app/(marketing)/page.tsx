@@ -91,14 +91,16 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
       {stepId === "history" ? <ClockIcon /> : null}
       {stepId === "perchpal" ? (
         <>
-          <Image
-            src="/giftperch_perchpal_front.png"
-            alt=""
-            width={30}
-            height={30}
-            className="h-7 w-7 rounded-full object-contain"
-            aria-hidden="true"
-          />
+          <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-gp-gold/25 bg-white/85">
+            <Image
+              src="/giftperch_perchpal_front.png"
+              alt=""
+              width={32}
+              height={32}
+              className="h-full w-full scale-[1.45] object-cover"
+              aria-hidden="true"
+            />
+          </span>
           <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gp-gold/40 bg-white text-gp-evergreen shadow-sm">
             <GiftIcon />
           </span>
@@ -495,11 +497,13 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gp-evergreen/55">
           Step-by-step timeline
         </p>
-        <ProductTourTimeline
-          steps={steps}
-          activeStep={activeStep}
-          onSelectStep={handleStepSelect}
-        />
+        <div className="lg:pt-[4.5rem]">
+          <ProductTourTimeline
+            steps={steps}
+            activeStep={activeStep}
+            onSelectStep={handleStepSelect}
+          />
+        </div>
       </div>
 
       <div className="lg:sticky lg:top-24 lg:self-start">
