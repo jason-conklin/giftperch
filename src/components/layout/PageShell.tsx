@@ -21,7 +21,7 @@ export function PageShell({
     <main
       id="gp-main-content"
       role="main"
-      className="mx-auto flex w-full max-w-6xl flex-col gap-6 rounded-3xl bg-gp-cream/80 px-4 py-8 text-gp-evergreen shadow-sm sm:px-6 lg:px-8"
+      className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 text-gp-evergreen sm:px-6 lg:px-8"
     >
       {hero}
       {(title || subtitle || actions) && (

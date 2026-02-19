@@ -172,7 +172,11 @@ export default function MarketingLayout({
           </div>
         ) : null}
       </header>
-      <div className="gp-marketing-bottom-fade flex flex-1 flex-col">
+      <div
+        className={`gp-marketing-bottom-fade flex flex-1 flex-col ${
+          isLandingPage ? "gp-marketing-landing-arc" : ""
+        }`}
+      >
         <main
           id="gp-main-content"
           className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"

@@ -100,6 +100,20 @@ body {
     isolation: isolate;
   }
 
+  .gp-marketing-landing-arc::before {
+    content: "";
+    position: fixed;
+    left: 50%;
+    top: -660px;
+    width: min(2500px, 185vw);
+    height: 980px;
+    transform: translateX(-50%);
+    border-radius: 9999px;
+    pointer-events: none;
+    z-index: 0;
+    background: #0f3d3e;
+  }
+
   .gp-marketing-bottom-fade::after {
     content: "";
     position: absolute;
