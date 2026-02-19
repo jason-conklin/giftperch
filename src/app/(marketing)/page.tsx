@@ -29,6 +29,7 @@ const workflowSteps = [
 ] as const;
 
 type WorkflowStepId = (typeof workflowSteps)[number]["id"];
+type WorkflowStep = (typeof workflowSteps)[number];
 type ComparisonIconKey = "profile" | "repeat" | "history" | "calendar";
 
 function ProfileIcon() {
@@ -199,28 +200,19 @@ function ComparisonXIcon() {
 
 function StepFlowArrow() {
   return (
-    <svg
-      viewBox="0 0 68 20"
-      aria-hidden="true"
-      className="h-5 w-12 text-gp-evergreen/70 drop-shadow-[0_1px_2px_rgba(15,61,62,0.22)] lg:w-14"
-    >
-      <path
-        d="M2 10h52"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={3.8}
-        strokeLinecap="round"
-        opacity={0.9}
-      />
-      <path
-        d="m46 5 8 5-8 5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <span className="inline-flex items-center gap-1 text-gp-evergreen/50" aria-hidden="true">
+      <span className="h-px w-7 bg-current/65" />
+      <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 text-current">
+        <path
+          d="M4 2.5 8 6l-4 3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
   );
 }
 
@@ -296,7 +288,147 @@ const SAMPLE_PROFILES = [
   },
 ] as const;
 
-function LandingSampleProfiles() {
+function ProductTourStepCard({
+  step,
+  index,
+}: {
+  step: WorkflowStep;
+  index: number;
+}) {
+  return (
+    <article className="gp-card h-full space-y-3 p-5">
+      <p className="inline-flex w-fit items-center rounded-full border border-gp-gold/30 bg-gp-cream/45 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen/65">
+        Step {index + 1}
+      </p>
+      <div className="flex items-start gap-3">
+        <WorkflowStepBadge stepId={step.id} />
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
+          <p className="text-sm text-gp-evergreen/80">{step.description}</p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
+  return (
+    <div className="h-full rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
+      <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
+        Sample profile
+      </p>
+      <div className="relative mt-3 min-h-[110px]">
+        {SAMPLE_PROFILES.map((profile, index) => (
+          <div
+            key={profile.id}
+            className={`absolute inset-0 flex items-start gap-3 transition-opacity duration-500 ${
+              activeIndex === index
+                ? "opacity-100"
+                : "pointer-events-none opacity-0"
+            }`}
+          >
+            <Image
+              src={profile.avatarSrc}
+              alt={`${profile.name} avatar`}
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
+            />
+            <div className="space-y-1">
+              <p className="text-lg font-semibold text-gp-evergreen">{profile.name}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+                {profile.relationship}
+              </p>
+              <p className="text-sm text-gp-evergreen/80">{profile.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProductTourLoaderSlice() {
+  return (
+    <div className="flex h-full min-h-[170px] items-center rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
+      <PerchPalLoader
+        variant="inline"
+        size="lg"
+        message="PerchPal is fetching gift ideas..."
+      />
+    </div>
+  );
+}
+
+function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
+  return (
+    <div className="h-full rounded-2xl border border-gp-evergreen/15 bg-white p-4">
+      <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
+        {SAMPLE_PROFILES[activeIndex].ideasLabel}
+      </p>
+      <div className="relative mt-3 min-h-[140px]">
+        {SAMPLE_PROFILES.map((profile, index) => (
+          <div
+            key={`${profile.id}-ideas`}
+            className={`absolute inset-0 space-y-2 transition-opacity duration-500 ${
+              activeIndex === index
+                ? "opacity-100"
+                : "pointer-events-none opacity-0"
+            }`}
+          >
+            {profile.ideas.map((idea) => (
+              <div key={idea.text} className="flex items-center gap-3">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
+                  <Image
+                    src={idea.icon}
+                    alt="Gift idea preview"
+                    width={96}
+                    height={96}
+                    className="h-9 w-9 object-cover"
+                    unoptimized
+                  />
+                </div>
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-sm font-medium text-gp-evergreen/90">
+                    {idea.text}
+                  </p>
+                  <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+                    <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-px hover:border-blue-400/90 hover:bg-blue-100 hover:shadow-[0_2px_6px_rgba(37,99,235,0.2)]">
+                      <ThumbUpIcon className="h-4 w-4 fill-none stroke-current" />
+                    </span>
+                    <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-px hover:border-red-400/90 hover:bg-red-100 hover:shadow-[0_2px_6px_rgba(220,38,38,0.2)]">
+                      <ThumbDownIcon className="h-4 w-4 fill-none stroke-current" />
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProductTourDemoSlice({
+  stepIndex,
+  activeIndex,
+}: {
+  stepIndex: number;
+  activeIndex: number;
+}) {
+  if (stepIndex === 0) {
+    return <ProductTourProfileSlice activeIndex={activeIndex} />;
+  }
+
+  if (stepIndex === 1) {
+    return <ProductTourLoaderSlice />;
+  }
+
+  return <ProductTourIdeasSlice activeIndex={activeIndex} />;
+}
+
+function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -328,103 +460,57 @@ function LandingSampleProfiles() {
 
   return (
     <div
-      className="gp-card p-5 sm:p-7"
+      className="space-y-4"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="space-y-4">
-        <p className="text-lg font-semibold text-gp-evergreen">
-          From Profile to Perfect Gift
-        </p>
+      <div className="space-y-4 lg:hidden">
+        {steps.map((step, index) => (
+          <div key={`${step.id}-mobile-flow`} className="space-y-3">
+            <ProductTourStepCard step={step} index={index} />
+            <ProductTourDemoSlice stepIndex={index} activeIndex={activeIndex} />
+          </div>
+        ))}
+      </div>
 
-        <div className="rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
-          <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
-            Sample profile
-          </p>
-          <div className="relative mt-3 min-h-[110px]">
-            {SAMPLE_PROFILES.map((profile, index) => (
-              <div
-                key={profile.id}
-                className={`flex items-start gap-3 transition-opacity duration-500 ${
-                  activeIndex === index
-                    ? "opacity-100"
-                    : "pointer-events-none opacity-0"
-                } absolute inset-0`}
-              >
-                <Image
-                  src={profile.avatarSrc}
-                  alt={`${profile.name} avatar`}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
-                />
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold text-gp-evergreen">
-                    {profile.name}
-                  </p>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                    {profile.relationship}
-                  </p>
-                  <p className="text-sm text-gp-evergreen/80">
-                    {profile.description}
-                  </p>
-                </div>
-              </div>
-            ))}
+      <div className="hidden gap-4 lg:grid">
+        <div className="relative grid items-stretch gap-4 lg:grid-cols-3">
+          {steps.map((step, index) => (
+            <ProductTourStepCard key={`${step.id}-desktop-step`} step={step} index={index} />
+          ))}
+          <div
+            className="pointer-events-none absolute left-[calc(33.333%-0.5rem)] top-1/2 hidden -translate-y-1/2 lg:block"
+            aria-hidden="true"
+          >
+            <StepFlowArrow />
+          </div>
+          <div
+            className="pointer-events-none absolute left-[calc(66.666%-0.5rem)] top-1/2 hidden -translate-y-1/2 lg:block"
+            aria-hidden="true"
+          >
+            <StepFlowArrow />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
-          <PerchPalLoader
-            variant="inline"
-            size="lg"
-            message="PerchPal is fetching gift ideas..."
-          />
-        </div>
-
-        <div className="rounded-2xl border border-gp-evergreen/15 bg-white p-4">
-          <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
-            {SAMPLE_PROFILES[activeIndex].ideasLabel}
-          </p>
-          <div className="relative mt-0 min-h-[140px] md:min-h-[140px]">
-            {SAMPLE_PROFILES.map((profile, index) => (
-              <div
-                key={`${profile.id}-ideas`}
-                className={`space-y-2 transition-opacity duration-500 ${
-                  activeIndex === index
-                    ? "opacity-100"
-                    : "pointer-events-none opacity-0"
-                } absolute inset-0`}
-              >
-                {profile.ideas.map((idea) => (
-                  <div key={idea.text} className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
-                      <Image
-                        src={idea.icon}
-                        alt="Gift idea preview"
-                        width={96}
-                        height={96}
-                        className="h-9 w-9 object-cover"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                      <p className="min-w-0 truncate text-sm font-medium text-gp-evergreen/90">
-                        {idea.text}
-                      </p>
-                      <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-                        <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-px hover:border-blue-400/90 hover:bg-blue-100 hover:shadow-[0_2px_6px_rgba(37,99,235,0.2)]">
-                          <ThumbUpIcon className="h-4 w-4 fill-none stroke-current" />
-                        </span>
-                        <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-px hover:border-red-400/90 hover:bg-red-100 hover:shadow-[0_2px_6px_rgba(220,38,38,0.2)]">
-                          <ThumbDownIcon className="h-4 w-4 fill-none stroke-current" />
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+        <div className="gp-card p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-gp-evergreen/10 pb-3">
+            <p className="text-lg font-semibold text-gp-evergreen">
+              From Profile to Perfect Gift
+            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gp-evergreen/50">
+              A quick walkthrough
+            </p>
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-3 lg:divide-x lg:divide-gp-evergreen/10">
+            <div className="lg:pr-4">
+              <ProductTourProfileSlice activeIndex={activeIndex} />
+            </div>
+            <div className="lg:px-4">
+              <ProductTourLoaderSlice />
+            </div>
+            <div className="lg:pl-4">
+              <ProductTourIdeasSlice activeIndex={activeIndex} />
+            </div>
           </div>
         </div>
       </div>
@@ -501,8 +587,8 @@ export default function MarketingHome() {
                   See how it works
                 </a>
               </div>
-              <div className="mt-10 h-px w-full bg-gp-evergreen/10" />
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
+              <div className="mt-12 h-px w-full bg-gp-evergreen/10" />
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
                 <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
                   One-time setup
@@ -530,34 +616,7 @@ export default function MarketingHome() {
             How GiftPerch works
           </h2>
         </div>
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto_minmax(0,1fr)] md:items-stretch md:gap-3">
-          {workflowSteps.flatMap((step, index) => [
-            <article key={`${step.id}-card`} className="gp-card h-full space-y-3 p-5">
-              <p className="inline-flex w-fit items-center rounded-full border border-gp-gold/30 bg-gp-cream/45 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gp-evergreen/65">
-                Step {index + 1}
-              </p>
-              <div className="flex items-start gap-3">
-                <WorkflowStepBadge stepId={step.id} />
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-gp-evergreen">{step.title}</h3>
-                  <p className="text-sm text-gp-evergreen/80">{step.description}</p>
-                </div>
-              </div>
-            </article>,
-            index < workflowSteps.length - 1 ? (
-              <div
-                key={`${step.id}-arrow`}
-                className="hidden md:flex items-center justify-center"
-                aria-hidden="true"
-              >
-                <StepFlowArrow />
-              </div>
-            ) : null,
-          ])}
-        </div>
-        <div className="mx-auto w-full max-w-3xl">
-          <LandingSampleProfiles />
-        </div>
+        <LandingSampleProfiles steps={workflowSteps} />
       </section>
 
       <section className="space-y-4">
