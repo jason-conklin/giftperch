@@ -223,12 +223,6 @@ function StepFlowArrow() {
   );
 }
 
-const heroBenefits = [
-  "Remember preferences and sizes across every recipient.",
-  "Use real gift history to avoid repeats and misses.",
-  "Stay ahead of birthdays and key occasions with budget-ready ideas.",
-] as const;
-
 const faqs = [
   {
     question: "What is GiftPerch?",
@@ -468,63 +462,53 @@ export default function MarketingHome() {
 
   return (
     <div className="space-y-12">
-      <section className="space-y-8">
-        <div className="relative overflow-hidden rounded-3xl border border-gp-evergreen/20 bg-white/95 shadow-sm">
-          <Image
-            src="/GiftPerch_custom_banner.png"
-            alt="GiftPerch banner"
-            width={1200}
-            height={400}
-            className="h-auto w-full object-contain"
-            priority
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gp-evergreen/15 via-transparent to-gp-gold/20" />
+      <section className="flex min-h-[85vh] items-center justify-center">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 text-center">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/giftperch_logo_background.png"
+              alt="GiftPerch bird logo"
+              width={68}
+              height={68}
+              className="h-14 w-14 rounded-full border border-gp-evergreen/15 bg-white/85 object-cover shadow-sm"
+              priority
+            />
+            <p className="text-4xl font-semibold leading-none text-gp-evergreen drop-shadow-[0_2px_5px_rgba(15,61,62,0.16)] sm:text-5xl">
+              GiftPerch
+            </p>
+          </div>
+          <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gp-evergreen">
+            AI-powered gifting workspace
+          </p>
+          <h1 className="max-w-3xl text-4xl font-semibold leading-tight text-gp-evergreen sm:text-5xl lg:text-6xl">
+            Thoughtful gifting, organized for real life.
+          </h1>
+          <p className="max-w-2xl text-base text-gp-evergreen/75 sm:text-lg">
+            Create recipient profiles, track past gifts, and generate ideas that
+            actually fit — without starting from scratch every time.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href="/auth/signup"
+              className="gp-btn gp-btn--primary gp-btn--lg min-w-[220px] px-7"
+            >
+              Get started free →
+            </Link>
+            <a
+              href="#product-tour"
+              className="gp-btn gp-btn--secondary gp-btn--lg min-w-[220px] px-7"
+            >
+              See how it works →
+            </a>
+          </div>
+          <p className="text-sm text-gp-evergreen/60">
+            No credit card required • Free to start
+          </p>
         </div>
+      </section>
 
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-10">
-          <div className="space-y-6">
-            <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen">
-              Your AI-powered gifting workspace.
-            </p>
-            <h1 className="text-3xl font-semibold leading-tight text-gp-evergreen sm:text-4xl lg:text-5xl">
-              Create recipient profiles. Generate gifts that actually fit.
-            </h1>
-            <p className="text-base text-gp-evergreen/80">
-              GiftPerch combines recipient profiles, gift history, occasions, and
-              budget context in one workspace. PerchPal then turns that memory
-              into personalized suggestions you can act on fast.
-            </p>
-            <ul className="space-y-2">
-              {heroBenefits.map((benefit) => (
-                <li key={benefit} className="flex items-start gap-2 text-sm text-gp-evergreen/85">
-                  <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gp-gold/40 text-xs font-semibold text-gp-evergreen">
-                    ✓
-                  </span>
-                  <span>{benefit}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="space-y-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link
-                  href="/auth/signup"
-                  className="gp-btn gp-btn--primary gp-btn--lg px-7"
-                >
-                  Login/Get started free
-                </Link>
-                <a
-                  href="#product-tour"
-                  className="gp-btn gp-btn--secondary gp-btn--lg px-7"
-                >
-                  See how it works
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="lg:pt-1">
-            <LandingSampleProfiles />
-          </div>
-        </div>
+      <section className="mx-auto max-w-3xl">
+        <LandingSampleProfiles />
       </section>
 
       <section id="product-tour" className="space-y-5 scroll-mt-28">

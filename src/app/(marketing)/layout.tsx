@@ -60,7 +60,7 @@ export default function MarketingLayout({
   };
 
   return (
-    <div className="gp-marketing-shell gp-marketing-bg-animated relative flex min-h-screen w-full flex-col text-gp-evergreen">
+    <div className="gp-marketing-shell gp-marketing-hero-bg relative flex min-h-screen w-full flex-col text-gp-evergreen">
       <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-2">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-2 sm:px-6 lg:px-0 lg:pb-3">
           <Link
@@ -72,11 +72,11 @@ export default function MarketingLayout({
               alt="GiftPerch logo"
               width={68}
               height={68}
-              className="h-10 w-10 rounded-full border border-gp-cream/30 object-cover sm:h-11 sm:w-11 lg:h-12 lg:w-12"
+              className="h-9 w-9 rounded-full border border-gp-cream/30 object-cover sm:h-10 sm:w-10 lg:h-11 lg:w-11"
               priority
             />
             <div className="text-gp-evergreen">
-              <p className="text-xl font-semibold leading-tight text-gp-evergreen sm:text-2xl">
+              <p className="text-xl font-semibold leading-tight text-gp-evergreen drop-shadow-[0_1px_2px_rgba(15,61,62,0.2)] sm:text-2xl">
                 GiftPerch
               </p>
               <p className="max-w-[170px] text-[9px] font-semibold uppercase tracking-[0.3em] text-gp-evergreen/70 sm:max-w-none sm:text-[10px] sm:tracking-[0.35em]">

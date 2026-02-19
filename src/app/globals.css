@@ -25,41 +25,24 @@ body {
 }
 
 @layer components {
+  .gp-marketing-hero-bg,
   .gp-marketing-bg-animated {
     position: relative;
     z-index: 1;
+    background:
+      radial-gradient(
+        circle at 50% 28%,
+        rgba(232, 201, 120, 0.25),
+        transparent 60%
+      ),
+      linear-gradient(180deg, #ffffff 0%, #f6ead6 60%, #f1e3c9 100%);
+    background-size: 120% 120%;
+    background-position: 50% 0%;
+    background-repeat: no-repeat;
+    animation: gp-hero-drift 22s ease-in-out infinite;
   }
 
-  .gp-marketing-bg-animated::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image:
-      radial-gradient(
-        circle at 20% 15%,
-        rgba(232, 201, 120, 0.32),
-        transparent 55%
-      ),
-      radial-gradient(
-        circle at 80% 25%,
-        rgba(255, 255, 255, 0.88),
-        transparent 55%
-      ),
-      linear-gradient(
-        180deg,
-        #ffffff 0%,
-        #fff7ea 30%,
-        #f3e1c5 65%,
-        #e9d0ad 100%
-      );
-    background-size: 160% 160%, 160% 160%, 100% 100%;
-    background-position: 10% 10%, 85% 20%, 50% 0%;
-    background-repeat: no-repeat, no-repeat, no-repeat;
-    animation: gp-bg-blobs 14s ease-in-out infinite;
-  }
-
+  .gp-marketing-hero-bg > *,
   .gp-marketing-bg-animated > * {
     position: relative;
     z-index: 1;
@@ -98,17 +81,17 @@ body {
   }
 }
 
-@keyframes gp-bg-blobs {
+@keyframes gp-hero-drift {
   0% {
-    background-position: 10% 10%, 85% 20%, 50% 0%;
+    background-position: 50% 0%;
   }
 
   50% {
-    background-position: 48% 28%, 58% 10%, 50% 0%;
+    background-position: 50% 8%;
   }
 
   100% {
-    background-position: 10% 10%, 85% 20%, 50% 0%;
+    background-position: 50% 0%;
   }
 }
 
@@ -390,7 +373,8 @@ body {
     filter: none;
   }
 
-  .gp-marketing-bg-animated::before {
+  .gp-marketing-hero-bg,
+  .gp-marketing-bg-animated {
     animation: none;
   }
 
