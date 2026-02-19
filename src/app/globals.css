@@ -31,9 +31,9 @@ body {
     z-index: 1;
     background:
       radial-gradient(
-        130% 68% at 50% -16%,
-        #0f3d3e 62%,
-        rgba(15, 61, 62, 0) 63%
+        140% 52% at 50% -15%,
+        #0f3d3e 57%,
+        rgba(15, 61, 62, 0) 58%
       ),
       radial-gradient(
         circle at 50% 28%,
