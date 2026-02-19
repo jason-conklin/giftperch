@@ -28,6 +28,7 @@ export default function MarketingLayout({
 }) {
   const year = new Date().getFullYear();
   const pathname = usePathname();
+  const isLandingPage = pathname === "/";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const renderNavLink = (
@@ -37,10 +38,18 @@ export default function MarketingLayout({
     const active =
       pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-    const desktopClasses = active
+    const desktopClasses = isLandingPage
+      ? active
+        ? "text-gp-evergreen font-semibold underline underline-offset-4"
+        : "text-gp-evergreen/80 hover:text-gp-evergreen hover:underline underline-offset-4"
+      : active
       ? "text-gp-cream font-semibold underline underline-offset-4"
       : "text-gp-cream/90 hover:text-gp-cream hover:underline underline-offset-4";
-    const mobileClasses = active
+    const mobileClasses = isLandingPage
+      ? active
+        ? "text-gp-evergreen font-semibold"
+        : "text-gp-evergreen/80"
+      : active
       ? "text-gp-cream font-semibold"
       : "text-gp-cream/80";
 
@@ -61,8 +70,20 @@ export default function MarketingLayout({
 
   return (
     <div className="gp-marketing-shell gp-marketing-bg-premium relative flex min-h-screen w-full flex-col text-gp-evergreen">
-      <header className="sticky top-0 z-40 border-b border-gp-evergreen/30 bg-gp-evergreen pt-2">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-3 pb-2 sm:px-6 lg:px-0 lg:pb-3">
+      <header
+        className={`sticky top-0 z-40 ${
+          isLandingPage
+            ? "pt-3"
+            : "border-b border-gp-evergreen/30 bg-gp-evergreen pt-2"
+        }`}
+      >
+        <div
+          className={`mx-auto flex max-w-5xl items-center justify-between ${
+            isLandingPage
+              ? "rounded-[1.85rem] border border-gp-evergreen/15 bg-white/82 px-3 py-2 shadow-sm backdrop-blur-sm sm:px-5 lg:px-6"
+              : "px-3 pb-2 sm:px-6 lg:px-0 lg:pb-3"
+          }`}
+        >
           <Link
             href="/"
             className="flex items-center gap-2.5 rounded-full bg-white/90 px-3.5 py-1.5 text-gp-evergreen shadow-sm sm:gap-3 sm:px-5 sm:py-2"
@@ -103,7 +124,11 @@ export default function MarketingLayout({
           </div>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/40 bg-gp-cream/90 text-gp-evergreen shadow-sm transition hover:bg-gp-cream sm:hidden"
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-full border text-gp-evergreen shadow-sm transition sm:hidden ${
+              isLandingPage
+                ? "border-gp-evergreen/25 bg-white hover:bg-gp-cream/80"
+                : "border-gp-cream/40 bg-gp-cream/90 hover:bg-gp-cream"
+            }`}
             aria-expanded={mobileNavOpen}
             aria-label="Toggle navigation menu"
             onClick={() => setMobileNavOpen((prev) => !prev)}
@@ -112,19 +137,33 @@ export default function MarketingLayout({
           </button>
         </div>
         {mobileNavOpen ? (
-          <div className="border-t border-gp-cream/20 bg-gp-evergreen px-4 py-3 text-sm text-gp-cream sm:hidden">
+          <div
+            className={`px-4 py-3 text-sm sm:hidden ${
+              isLandingPage
+                ? "border-t border-gp-evergreen/12 bg-white/95 text-gp-evergreen"
+                : "border-t border-gp-cream/20 bg-gp-evergreen text-gp-cream"
+            }`}
+          >
             <div className="flex flex-col gap-3">
               {navItems.map((item) => renderNavLink(item, "mobile"))}
               <Link
                 href="/auth/login"
-                className="gp-btn gp-btn--secondary w-full justify-center"
+                className={`w-full justify-center ${
+                  isLandingPage
+                    ? "gp-btn gp-btn--ghost"
+                    : "gp-btn gp-btn--secondary"
+                }`}
                 onClick={() => setMobileNavOpen(false)}
               >
                 Sign in
               </Link>
               <Link
                 href="/auth/signup"
-                className="gp-btn gp-btn--gold w-full justify-center"
+                className={`w-full justify-center ${
+                  isLandingPage
+                    ? "gp-btn gp-btn--primary"
+                    : "gp-btn gp-btn--gold"
+                }`}
                 onClick={() => setMobileNavOpen(false)}
               >
                 Get started

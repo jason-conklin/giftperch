@@ -316,7 +316,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="relative min-h-screen bg-gp-cream/80 text-gp-evergreen">
+    <div className="gp-marketing-bg-premium relative min-h-screen text-gp-evergreen">
       <aside
         ref={sidebarRef}
         tabIndex={0}
