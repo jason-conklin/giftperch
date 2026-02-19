@@ -49,21 +49,6 @@ function ProfileIcon() {
   );
 }
 
-function GiftIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5">
-      <path
-        d="M4.5 9.5h15v10h-15zM12 9.5v10M4.5 13h15M4 9.5h16M9.6 7.1c0 1-1 2.4-2.4 2.4S5 8.1 5 7.1c0-1.1.9-2 2-2 1.4 0 2.6 1 3.1 2.4m1.3-.4c.4-1.3 1.7-2.3 3.1-2.3 1.1 0 2 .9 2 2 0 1-1 2.4-2.2 2.4-1.4 0-2.4-1.4-2.4-2.4Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function ClockIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
@@ -88,27 +73,27 @@ function ClockIcon() {
 }
 
 function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
+  const isPerchPal = stepId === "perchpal";
+
   return (
-    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-gp-gold/30 bg-gp-cream/60 text-gp-evergreen">
+    <div
+      className={`relative flex h-12 w-12 shrink-0 items-center justify-center text-gp-evergreen ${
+        isPerchPal
+          ? ""
+          : "rounded-full border border-gp-gold/30 bg-gp-cream/60"
+      }`}
+    >
       {stepId === "profiles" ? <ProfileIcon /> : null}
       {stepId === "history" ? <ClockIcon /> : null}
       {stepId === "perchpal" ? (
-        <>
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gp-gold/25 bg-white/85">
-            <Image
-              src="/giftperch_perchpal_front.png"
-              alt=""
-              width={34}
-              height={34}
-              unoptimized
-              className="h-7 w-7 object-contain"
-              aria-hidden="true"
-            />
-          </span>
-          <span className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-gp-gold/40 bg-white text-gp-evergreen shadow-sm">
-            <GiftIcon />
-          </span>
-        </>
+        <Image
+          src="/giftperch_perchpal_front.png"
+          alt="PerchPal"
+          width={56}
+          height={56}
+          className="h-12 w-12 rounded-full border border-gp-evergreen/10 bg-gp-cream/80 object-contain shadow-sm"
+          aria-hidden="true"
+        />
       ) : null}
     </div>
   );
@@ -314,13 +299,45 @@ function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
 }
 
 function ProductTourLoaderSlice() {
+  const [demoProgress, setDemoProgress] = useState(0);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setDemoProgress((prev) => {
+        if (prev >= 94) {
+          return 0;
+        }
+
+        if (prev < 65) {
+          return prev + 6;
+        }
+
+        if (prev < 85) {
+          return prev + 3;
+        }
+
+        return prev + 1;
+      });
+    }, 220);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
     <div className="flex h-full min-h-[170px] items-center rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
-      <PerchPalLoader
-        variant="inline"
-        size="lg"
-        message="PerchPal is fetching gift ideas..."
-      />
+      <div className="w-full">
+        <PerchPalLoader
+          variant="inline"
+          size="lg"
+          message="PerchPal is fetching gift ideas..."
+        />
+        <div className="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full border border-black/40 bg-white shadow-inner">
+          <div
+            className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
+            style={{ width: `${Math.min(100, demoProgress)}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -406,7 +423,7 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.95fr)_auto_minmax(0,0.7fr)_auto] lg:gap-0 lg:space-y-0">
+    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.62fr)_auto_minmax(0,0.48fr)_auto] lg:gap-0 lg:space-y-0">
       {steps.flatMap((step, index) => {
         const isActive = index === activeStep;
         const stepItem = (
