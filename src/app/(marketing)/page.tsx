@@ -463,47 +463,29 @@ export default function MarketingHome() {
   return (
     <div className="space-y-12">
       <section className="flex min-h-[85vh] items-center justify-center">
-        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 text-center">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/giftperch_logo_background.png"
-              alt="GiftPerch bird logo"
-              width={68}
-              height={68}
-              className="h-14 w-14 rounded-full border border-gp-evergreen/15 bg-white/85 object-cover shadow-sm"
-              priority
-            />
-            <p className="text-4xl font-semibold leading-none text-gp-evergreen drop-shadow-[0_2px_5px_rgba(15,61,62,0.16)] sm:text-5xl">
-              GiftPerch
-            </p>
-          </div>
-          <p className="inline-flex items-center rounded-full border border-gp-gold/60 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gp-evergreen">
-            AI-powered gifting workspace
-          </p>
-          <h1 className="max-w-3xl text-4xl font-semibold leading-tight text-gp-evergreen sm:text-5xl lg:text-6xl">
-            Thoughtful gifting, organized for real life.
-          </h1>
-          <p className="max-w-2xl text-base text-gp-evergreen/75 sm:text-lg">
-            Create recipient profiles, track past gifts, and generate ideas that
-            actually fit — without starting from scratch every time.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div className="mx-auto flex w-full flex-col items-center text-center">
+          <Image
+            src="/giftperch-home-page-no-bg.png"
+            alt="GiftPerch AI-Powered Gifting Workspace"
+            width={1600}
+            height={760}
+            className="h-auto w-full max-w-[70rem] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
+            priority
+          />
+          <div className="mt-8 flex w-full max-w-[44rem] flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4">
             <Link
               href="/auth/signup"
-              className="gp-btn gp-btn--primary gp-btn--lg min-w-[220px] px-7"
+              className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[20rem]"
             >
-              Get started free →
+              Login/Get started free
             </Link>
             <a
               href="#product-tour"
-              className="gp-btn gp-btn--secondary gp-btn--lg min-w-[220px] px-7"
+              className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[16.5rem]"
             >
-              See how it works →
+              See how it works
             </a>
           </div>
-          <p className="text-sm text-gp-evergreen/60">
-            No credit card required • Free to start
-          </p>
         </div>
       </section>
 

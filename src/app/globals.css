@@ -31,14 +31,19 @@ body {
     z-index: 1;
     background:
       radial-gradient(
+        130% 68% at 50% -16%,
+        #0f3d3e 62%,
+        rgba(15, 61, 62, 0) 63%
+      ),
+      radial-gradient(
         circle at 50% 28%,
         rgba(232, 201, 120, 0.25),
         transparent 60%
       ),
       linear-gradient(180deg, #ffffff 0%, #f6ead6 60%, #f1e3c9 100%);
-    background-size: 120% 120%;
-    background-position: 50% 0%;
-    background-repeat: no-repeat;
+    background-size: 100% 100%, 120% 120%, 100% 100%;
+    background-position: 50% 0%, 50% 0%, 50% 0%;
+    background-repeat: no-repeat, no-repeat, no-repeat;
     animation: gp-hero-drift 22s ease-in-out infinite;
   }
 
@@ -83,15 +88,15 @@ body {
 
 @keyframes gp-hero-drift {
   0% {
-    background-position: 50% 0%;
+    background-position: 50% 0%, 50% 0%, 50% 0%;
   }
 
   50% {
-    background-position: 50% 8%;
+    background-position: 50% 0%, 50% 8%, 50% 0%;
   }
 
   100% {
-    background-position: 50% 0%;
+    background-position: 50% 0%, 50% 0%, 50% 0%;
   }
 }
 
