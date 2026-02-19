@@ -104,9 +104,9 @@ body {
     content: "";
     position: absolute;
     left: 50%;
-    top: -560px;
-    width: min(2320px, 170vw);
-    height: 700px;
+    top: -500px;
+    width: min(1900px, 135vw);
+    height: 620px;
     transform: translateX(-50%);
     border-radius: 9999px;
     pointer-events: none;
