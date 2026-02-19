@@ -423,7 +423,7 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.48fr)_auto] lg:gap-0 lg:space-y-0">
+    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0">
       {steps.flatMap((step, index) => {
         const isActive = index === activeStep;
         const stepItem = (
