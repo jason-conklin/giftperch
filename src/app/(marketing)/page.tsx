@@ -521,10 +521,6 @@ export default function MarketingHome() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl">
-        <LandingSampleProfiles />
-      </section>
-
       <section id="product-tour" className="space-y-5 scroll-mt-28">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
@@ -558,6 +554,9 @@ export default function MarketingHome() {
               </div>
             ) : null,
           ])}
+        </div>
+        <div className="mx-auto w-full max-w-3xl">
+          <LandingSampleProfiles />
         </div>
       </section>
 

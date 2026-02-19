@@ -102,11 +102,11 @@ body {
 
   .gp-marketing-landing-arc::before {
     content: "";
-    position: fixed;
+    position: absolute;
     left: 50%;
-    top: -660px;
-    width: min(2500px, 185vw);
-    height: 980px;
+    top: -560px;
+    width: min(2320px, 170vw);
+    height: 700px;
     transform: translateX(-50%);
     border-radius: 9999px;
     pointer-events: none;
