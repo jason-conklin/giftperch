@@ -103,12 +103,12 @@ body {
   .gp-marketing-landing-arc::before {
     content: "";
     position: absolute;
-    left: 50%;
-    top: -500px;
-    width: min(1900px, 135vw);
-    height: 620px;
-    transform: translateX(-50%);
-    border-radius: 9999px;
+    left: 0;
+    right: 0;
+    top: -140px;
+    height: clamp(180px, 23vw, 250px);
+    border-bottom-left-radius: 62% 100%;
+    border-bottom-right-radius: 62% 100%;
     pointer-events: none;
     z-index: 0;
     background: #0f3d3e;
