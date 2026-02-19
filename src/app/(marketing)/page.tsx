@@ -432,12 +432,18 @@ function ProductTourTimeline({
               type="button"
               onClick={() => onSelectStep(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
+              className={`group relative flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
                 isActive
                   ? "border-gp-gold/50 bg-white/80 shadow-sm"
                   : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
               }`}
             >
+              {index < steps.length - 1 ? (
+                <span
+                  className="pointer-events-none absolute bottom-0 left-10 top-10 hidden w-px rounded-full bg-gp-evergreen/15 lg:block"
+                  aria-hidden="true"
+                />
+              ) : null}
               <span
                 className={`relative z-10 inline-flex rounded-full transition-all duration-200 ${
                   isActive ? "ring-2 ring-gp-gold/30 shadow-sm" : ""
@@ -481,7 +487,7 @@ function ProductTourTimeline({
             className="relative hidden lg:flex"
             aria-hidden="true"
           >
-            <span className="ml-10 block h-full w-px bg-gp-evergreen/15" />
+            <span className="ml-10 block h-full w-px rounded-full bg-gp-evergreen/15" />
           </li>
         );
 
