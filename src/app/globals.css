@@ -25,32 +25,74 @@ body {
 }
 
 @layer components {
-  .gp-marketing-hero-bg,
-  .gp-marketing-bg-animated {
+  .gp-marketing-bg-premium {
     position: relative;
     z-index: 1;
-    background:
-      radial-gradient(
-        2000px 520px at 50% -240px,
-        #0f3d3e 80%,
-        rgba(15, 61, 62, 0) 81%
-      ),
-      radial-gradient(
-        circle at 50% 28%,
-        rgba(232, 201, 120, 0.25),
-        transparent 60%
-      ),
-      linear-gradient(180deg, #ffffff 0%, #f6ead6 60%, #f1e3c9 100%);
-    background-size: 100% 100%, 120% 120%, 100% 100%;
-    background-position: 50% 0%, 50% 0%, 50% 0%;
-    background-repeat: no-repeat, no-repeat, no-repeat;
-    animation: gp-hero-drift 22s ease-in-out infinite;
+    isolation: isolate;
   }
 
-  .gp-marketing-hero-bg > *,
-  .gp-marketing-bg-animated > * {
+  .gp-marketing-bg-premium::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        circle at 50% 36%,
+        rgba(232, 201, 120, 0.22),
+        transparent 56%
+      ),
+      radial-gradient(
+        circle at 50% -10%,
+        rgba(15, 61, 62, 0.1),
+        transparent 44%
+      ),
+      linear-gradient(180deg, #ffffff 0%, #fff7ea 48%, #f3e6cf 100%),
+      radial-gradient(
+        circle at 1px 1px,
+        rgba(15, 61, 62, 0.035) 0.7px,
+        transparent 0.8px
+      );
+    background-size: 100% 100%, 100% 100%, 100% 100%, 3px 3px;
+    background-position: 50% 0, 50% 0, 50% 0, 0 0;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+  }
+
+  .gp-marketing-bg-premium::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 84% at 50% 45%,
+      rgba(15, 61, 62, 0) 58%,
+      rgba(15, 61, 62, 0.08) 100%
+    );
+  }
+
+  .gp-marketing-bg-premium > * {
     position: relative;
     z-index: 1;
+  }
+
+  .gp-hero-anim {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    will-change: opacity, transform;
+  }
+
+  .gp-hero-anim.is-mounted {
+    animation: gp-hero-enter 560ms cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+  }
+
+  .gp-hero-bob {
+    will-change: transform;
+  }
+
+  .gp-hero-anim.is-mounted .gp-hero-bob {
+    animation: gp-hero-bob 6s ease-in-out 700ms infinite;
   }
 
   .gp-marketing-bottom-fade {
@@ -86,17 +128,24 @@ body {
   }
 }
 
-@keyframes gp-hero-drift {
+@keyframes gp-hero-enter {
   0% {
-    background-position: 50% 0%, 50% 0%, 50% 0%;
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
   }
-
-  50% {
-    background-position: 50% 0%, 50% 8%, 50% 0%;
-  }
-
   100% {
-    background-position: 50% 0%, 50% 0%, 50% 0%;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes gp-hero-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
   }
 }
 
@@ -378,9 +427,13 @@ body {
     filter: none;
   }
 
-  .gp-marketing-hero-bg,
-  .gp-marketing-bg-animated {
+  .gp-hero-anim,
+  .gp-hero-anim.is-mounted,
+  .gp-hero-anim .gp-hero-bob,
+  .gp-hero-anim.is-mounted .gp-hero-bob {
     animation: none;
+    opacity: 1;
+    transform: none;
   }
 
   .animate-gp-gift-glow {

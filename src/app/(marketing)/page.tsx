@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BadgeCheck, RefreshCcw, ShieldCheck } from "lucide-react";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
@@ -433,6 +434,7 @@ function LandingSampleProfiles() {
 
 export default function MarketingHome() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [heroMounted, setHeroMounted] = useState(false);
   const comparisonRows: ReadonlyArray<{
     icon: ComparisonIconKey;
     typical: string;
@@ -460,31 +462,61 @@ export default function MarketingHome() {
     },
   ];
 
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setHeroMounted(true);
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
   return (
     <div className="space-y-12">
       <section className="flex min-h-[85vh] items-center justify-center">
-        <div className="mx-auto flex w-full flex-col items-center text-center">
-          <Image
-            src="/giftperch-home-page-no-bg.png"
-            alt="GiftPerch AI-Powered Gifting Workspace"
-            width={1600}
-            height={760}
-            className="h-auto w-full max-w-[70rem] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
-            priority
-          />
-          <div className="mt-8 flex w-full max-w-[44rem] flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4">
-            <Link
-              href="/auth/signup"
-              className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[20rem]"
-            >
-              Login/Get started free
-            </Link>
-            <a
-              href="#product-tour"
-              className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[16.5rem]"
-            >
-              See how it works
-            </a>
+        <div
+          className={`gp-hero-anim mx-auto w-full ${
+            heroMounted ? "is-mounted" : ""
+          }`}
+        >
+          <div className="gp-hero-bob flex w-full flex-col items-center text-center">
+            <Image
+              src="/giftperch-home-page-no-bg.png"
+              alt="GiftPerch AI-Powered Gifting Workspace"
+              width={1600}
+              height={760}
+              className="h-auto w-full max-w-[70rem] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
+              priority
+            />
+            <div className="mt-8 w-full max-w-[44rem] sm:mt-10">
+              <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <Link
+                  href="/auth/signup"
+                  className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[20rem]"
+                >
+                  Login/Get started free
+                </Link>
+                <a
+                  href="#product-tour"
+                  className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[16.5rem]"
+                >
+                  See how it works
+                </a>
+              </div>
+              <div className="mt-5 h-px w-full bg-gp-evergreen/10" />
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                  <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                  One-time setup
+                </span>
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                  <BadgeCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                  No credit card required
+                </span>
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                  <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                  Private by design
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
