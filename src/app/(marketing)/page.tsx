@@ -93,11 +93,12 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
         <>
           <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gp-gold/25 bg-white/85">
             <Image
-              src="/giftperch_perchpal_front.png"
+              src="/giftperch_flying_animation1.PNG"
               alt=""
-              width={36}
-              height={36}
-              className="h-[1.85rem] w-[1.85rem] object-contain"
+              width={34}
+              height={34}
+              unoptimized
+              className="h-7 w-7 object-contain"
               aria-hidden="true"
             />
           </span>
@@ -381,20 +382,16 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-3 lg:gap-3 lg:space-y-0">
-      <span
-        className="pointer-events-none absolute bottom-10 left-6 top-10 w-px bg-gp-evergreen/15 lg:bottom-8 lg:top-8"
-        aria-hidden="true"
-      />
-      {steps.map((step, index) => {
+    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_1fr_auto_1fr_auto] lg:gap-0 lg:space-y-0">
+      {steps.flatMap((step, index) => {
         const isActive = index === activeStep;
-        return (
-          <li key={`${step.id}-timeline`} className="relative lg:h-full">
+        const stepItem = (
+          <li key={`${step.id}-timeline`} className="relative">
             <button
               type="button"
               onClick={() => onSelectStep(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 lg:h-full ${
+              className={`group flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
                 isActive
                   ? "border-gp-gold/50 bg-white/80 shadow-sm"
                   : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
@@ -432,6 +429,22 @@ function ProductTourTimeline({
             </button>
           </li>
         );
+
+        if (index === steps.length - 1) {
+          return [stepItem];
+        }
+
+        const connectorItem = (
+          <li
+            key={`${step.id}-connector`}
+            className="relative hidden lg:flex"
+            aria-hidden="true"
+          >
+            <span className="ml-10 block h-full w-px bg-gp-evergreen/15" />
+          </li>
+        );
+
+        return [stepItem, connectorItem];
       })}
     </ol>
   );
@@ -522,7 +535,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               </p>
             </div>
             <p className="rounded-full border border-gp-gold/40 bg-gp-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-gp-evergreen">
-              Now showing: Step {activeStep + 1}
+              Step {activeStep + 1}
             </p>
           </div>
 
@@ -531,7 +544,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               className={`rounded-2xl transition-all duration-300 ${
                 activeStep === 0
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : "opacity-70 saturate-[0.88]"
+                  : ""
               }`}
             >
               <ProductTourProfileSlice activeIndex={activeIndex} />
@@ -540,7 +553,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               className={`rounded-2xl transition-all duration-300 ${
                 activeStep === 1
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : "opacity-70 saturate-[0.88]"
+                  : ""
               }`}
             >
               <ProductTourLoaderSlice />
@@ -549,7 +562,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               className={`rounded-2xl transition-all duration-300 ${
                 activeStep === 2
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : "opacity-70 saturate-[0.88]"
+                  : ""
               }`}
             >
               <ProductTourIdeasSlice activeIndex={activeIndex} />
