@@ -669,20 +669,20 @@ export default function MarketingHome() {
               alt="GiftPerch AI-Powered Gifting Workspace"
               width={1600}
               height={760}
-              className="h-auto w-full max-w-[70rem] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
+              className="h-auto w-full max-w-[min(88vw,62rem)] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
               priority
             />
             <div className="mt-8 w-full max-w-[44rem] sm:mt-10">
               <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link
                   href="/auth/signup"
-                  className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[20rem]"
+                  className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
                 >
                   Login/Get started free
                 </Link>
                 <a
                   href="#product-tour"
-                  className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[16.5rem]"
+                  className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
                 >
                   See how it works
                 </a>
