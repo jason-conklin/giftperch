@@ -113,10 +113,10 @@ body {
     position: absolute;
     left: 0;
     right: 0;
-    top: -140px;
-    height: clamp(180px, 23vw, 250px);
-    border-bottom-left-radius: 62% 100%;
-    border-bottom-right-radius: 62% 100%;
+    top: -172px;
+    height: clamp(140px, 18vw, 185px);
+    border-bottom-left-radius: 58% 82%;
+    border-bottom-right-radius: 58% 82%;
     pointer-events: none;
     z-index: 0;
   }
