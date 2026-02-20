@@ -657,7 +657,7 @@ export default function MarketingHome() {
 
   return (
     <div className="space-y-12">
-      <section className="flex min-h-[85vh] items-center justify-center">
+      <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
         <div
           className={`gp-hero-anim mx-auto w-full ${
             heroMounted ? "is-mounted" : ""
@@ -669,10 +669,10 @@ export default function MarketingHome() {
               alt="GiftPerch AI-Powered Gifting Workspace"
               width={1600}
               height={760}
-              className="h-auto w-full max-w-[min(88vw,62rem)] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
+              className="gp-landing-hero-art h-auto w-full max-w-[min(88vw,62rem)] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
               priority
             />
-            <div className="mt-8 w-full max-w-[44rem] sm:mt-10">
+            <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
               <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link
                   href="/auth/signup"
@@ -687,8 +687,8 @@ export default function MarketingHome() {
                   See how it works
                 </a>
               </div>
-              <div className="mt-12 h-px w-full bg-gp-evergreen/10" />
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
+              <div className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10" />
+              <div className="gp-landing-hero-trust mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
                 <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
                   One-time setup

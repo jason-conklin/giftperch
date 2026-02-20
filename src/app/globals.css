@@ -95,6 +95,14 @@ body {
     animation: gp-hero-bob 6s ease-in-out 700ms infinite;
   }
 
+  .gp-landing-hero-stage {
+    min-height: 85vh;
+  }
+
+  .gp-landing-hero-art {
+    max-width: min(88vw, 62rem);
+  }
+
   .gp-marketing-bottom-fade {
     position: relative;
     isolation: isolate;
@@ -158,6 +166,42 @@ body {
 
   .gp-marketing-shell + .gp-global-footer {
     display: none;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1400px) {
+  .gp-landing-hero-stage {
+    min-height: 80vh;
+  }
+
+  .gp-landing-hero-art {
+    max-width: min(84vw, 56rem);
+  }
+
+  .gp-landing-hero-cta {
+    max-width: min(90vw, 40rem);
+  }
+}
+
+@media (min-width: 981px) and (max-height: 860px) {
+  .gp-landing-hero-stage {
+    min-height: 74vh;
+  }
+
+  .gp-landing-hero-art {
+    max-width: min(82vw, 52rem);
+  }
+
+  .gp-landing-hero-cta {
+    margin-top: 1.5rem;
+  }
+
+  .gp-landing-hero-divider {
+    margin-top: 1.8rem;
+  }
+
+  .gp-landing-hero-trust {
+    margin-top: 1rem;
   }
 }
 
