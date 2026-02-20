@@ -7,6 +7,7 @@ import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 function SignupContent() {
   const router = useRouter();
@@ -135,10 +136,9 @@ function SignupContent() {
           >
             Password
           </label>
-          <input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}

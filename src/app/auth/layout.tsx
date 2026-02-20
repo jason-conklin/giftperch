@@ -12,7 +12,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="gp-marketing-bg-premium relative min-h-screen text-gp-evergreen">
+    <div className="gp-marketing-bg-premium gp-marketing-landing-arc gp-hero-arc relative min-h-screen text-gp-evergreen">
       <header className="sticky top-0 z-40 pt-3">
         <div className="mx-auto flex max-w-5xl items-center justify-between rounded-[1.85rem] border border-gp-evergreen/15 bg-white/82 px-3 py-2 shadow-sm backdrop-blur-sm sm:px-5 lg:px-6">
           <Link
