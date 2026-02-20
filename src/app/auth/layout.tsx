@@ -71,7 +71,7 @@ export default function AuthLayout({
       <div className="gp-marketing-bottom-fade gp-marketing-landing-arc gp-hero-arc flex flex-1 flex-col">
         <main
           id="gp-main-content"
-          className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-14 sm:px-6 sm:pt-16 lg:px-6"
+          className="mx-auto w-full max-w-5xl flex-1 px-4 pb-10 pt-16 sm:px-6 sm:pt-[4.5rem] lg:px-6"
         >
           {children}
         </main>
