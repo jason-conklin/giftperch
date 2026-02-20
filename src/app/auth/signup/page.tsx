@@ -18,7 +18,6 @@ function SignupContent() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +54,7 @@ function SignupContent() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ displayName }),
+          body: JSON.stringify({}),
         });
       }
 
@@ -93,24 +92,6 @@ function SignupContent() {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <label
-            htmlFor="displayName"
-            className="text-sm font-medium text-gp-evergreen"
-          >
-            Display name (optional)
-          </label>
-          <input
-            id="displayName"
-            name="displayName"
-            type="text"
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-            className="w-full rounded-2xl border border-gp-gold/50 bg-transparent px-4 py-2 text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-            placeholder="Demo User"
-          />
-        </div>
-
         <div className="space-y-2">
           <label
             htmlFor="email"
