@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BadgeCheck, ChevronRight, RefreshCcw, Sparkles, ShieldCheck } from "lucide-react";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { HeroBrandMark } from "@/components/marketing/HeroBrandMark";
 
 const workflowSteps = [
   {
@@ -620,8 +621,6 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 
 export default function MarketingHome() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [heroMounted, setHeroMounted] = useState(false);
-  const heroMotionRef = useRef<HTMLDivElement>(null);
   const comparisonRows: ReadonlyArray<{
     icon: ComparisonIconKey;
     typical: string;
@@ -649,169 +648,12 @@ export default function MarketingHome() {
     },
   ];
 
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      setHeroMounted(true);
-    });
-    return () => window.cancelAnimationFrame(frameId);
-  }, []);
-
-  useEffect(() => {
-    const motionEl = heroMotionRef.current;
-    if (!motionEl) return;
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    );
-    const desktopMotion = window.matchMedia("(min-width: 1024px)");
-    const clamp = (value: number, min: number, max: number) =>
-      Math.min(max, Math.max(min, value));
-
-    let frameId: number | null = null;
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-
-    const setMotionVars = (nx: number, ny: number) => {
-      motionEl.style.setProperty("--gp-tilt-x", `${(-ny * 4).toFixed(2)}deg`);
-      motionEl.style.setProperty("--gp-tilt-y", `${(nx * 6).toFixed(2)}deg`);
-      motionEl.style.setProperty("--gp-parallax-y", `${(-ny * 6).toFixed(1)}px`);
-    };
-
-    const shouldDisableMotion = () =>
-      prefersReducedMotion.matches || !desktopMotion.matches;
-
-    const stopAnimationLoop = () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-        frameId = null;
-      }
-    };
-
-    const animate = () => {
-      frameId = null;
-      currentX += (targetX - currentX) * 0.16;
-      currentY += (targetY - currentY) * 0.16;
-      setMotionVars(currentX, currentY);
-
-      if (
-        Math.abs(targetX - currentX) > 0.005 ||
-        Math.abs(targetY - currentY) > 0.005
-      ) {
-        frameId = window.requestAnimationFrame(animate);
-      } else if (targetX === 0 && targetY === 0) {
-        currentX = 0;
-        currentY = 0;
-        setMotionVars(0, 0);
-      }
-    };
-
-    const queueAnimation = () => {
-      if (frameId === null) {
-        frameId = window.requestAnimationFrame(animate);
-      }
-    };
-
-    const resetMotion = () => {
-      targetX = 0;
-      targetY = 0;
-
-      if (shouldDisableMotion()) {
-        currentX = 0;
-        currentY = 0;
-        stopAnimationLoop();
-        setMotionVars(0, 0);
-        return;
-      }
-
-      queueAnimation();
-    };
-
-    const handleMouseMove = (event: MouseEvent) => {
-      if (shouldDisableMotion()) return;
-
-      const rect = motionEl.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-
-      const nx = clamp(
-        (event.clientX - (rect.left + rect.width / 2)) / (rect.width / 2),
-        -1,
-        1,
-      );
-      const ny = clamp(
-        (event.clientY - (rect.top + rect.height / 2)) / (rect.height / 2),
-        -1,
-        1,
-      );
-
-      targetX = nx;
-      targetY = ny;
-      queueAnimation();
-    };
-
-    const handleMouseLeave = () => {
-      resetMotion();
-    };
-
-    const handleMediaChange = () => {
-      resetMotion();
-    };
-
-    motionEl.addEventListener("mousemove", handleMouseMove);
-    motionEl.addEventListener("mouseleave", handleMouseLeave);
-
-    if (typeof prefersReducedMotion.addEventListener === "function") {
-      prefersReducedMotion.addEventListener("change", handleMediaChange);
-      desktopMotion.addEventListener("change", handleMediaChange);
-    } else {
-      prefersReducedMotion.addListener(handleMediaChange);
-      desktopMotion.addListener(handleMediaChange);
-    }
-
-    resetMotion();
-
-    return () => {
-      stopAnimationLoop();
-      motionEl.removeEventListener("mousemove", handleMouseMove);
-      motionEl.removeEventListener("mouseleave", handleMouseLeave);
-
-      if (typeof prefersReducedMotion.removeEventListener === "function") {
-        prefersReducedMotion.removeEventListener("change", handleMediaChange);
-        desktopMotion.removeEventListener("change", handleMediaChange);
-      } else {
-        prefersReducedMotion.removeListener(handleMediaChange);
-        desktopMotion.removeListener(handleMediaChange);
-      }
-    };
-  }, []);
-
   return (
     <div className="space-y-12">
       <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
-        <div
-          className={`gp-hero-enter mx-auto w-full ${
-            heroMounted ? "is-mounted" : ""
-          }`}
-        >
+        <div className="mx-auto w-full">
           <div className="flex w-full flex-col items-center text-center">
-            <div className="gp-media-static w-full">
-              <div
-                ref={heroMotionRef}
-                className="gp-hero-motion-wrap gp-hero-float gp-hero-parallax mx-auto w-full"
-              >
-                <Image
-                  src="/giftperch-home-page-no-bg.png"
-                  alt="GiftPerch AI-Powered Gifting Workspace"
-                  width={1600}
-                  height={760}
-                  className="gp-media-static gp-landing-hero-art h-auto w-full max-w-[min(88vw,62rem)] object-contain"
-                  draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
-                  priority
-                />
-              </div>
-            </div>
+            <HeroBrandMark />
             <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
               <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link

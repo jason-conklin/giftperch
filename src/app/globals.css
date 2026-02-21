@@ -98,6 +98,35 @@ body {
     animation: gp-hero-enter 560ms cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
   }
 
+  .gp-hero-intro {
+    position: relative;
+    isolation: isolate;
+    animation: gp-hero-intro 900ms cubic-bezier(0.22, 0.76, 0.28, 1) both;
+  }
+
+  .gp-hero-intro::after {
+    content: "";
+    position: absolute;
+    top: -8%;
+    bottom: -8%;
+    left: -32%;
+    width: 28%;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    background: linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.22) 42%,
+      rgba(232, 201, 120, 0.24) 52%,
+      rgba(255, 255, 255, 0.14) 62%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    filter: blur(0.2px);
+    transform: translateX(0);
+    animation: gp-hero-sheen 700ms ease-out 150ms both;
+  }
+
   .gp-hero-motion-wrap {
     position: relative;
     --gp-tilt-x: 0deg;
@@ -116,6 +145,10 @@ body {
     will-change: transform, filter;
   }
 
+  .gp-hero-float {
+    animation: gp-hero-float-premium 6.5s ease-in-out 950ms infinite both;
+  }
+
   .gp-hero-parallax {
     transform: translate3d(
         0,
@@ -131,9 +164,8 @@ body {
     will-change: transform, filter;
   }
 
-  .gp-hero-enter.is-mounted .gp-hero-float,
   .gp-hero-anim.is-mounted .gp-hero-bob {
-    animation: gp-hero-float-premium 5.8s ease-in-out 700ms infinite;
+    animation: gp-hero-float-premium 6.5s ease-in-out 700ms infinite;
   }
 
   .gp-landing-hero-stage {
@@ -257,14 +289,46 @@ body {
   }
 }
 
+@keyframes gp-hero-intro {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes gp-hero-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  20% {
+    opacity: 0.28;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(520%);
+  }
+}
+
 @keyframes gp-hero-float-premium {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(-0.12deg) scale(1);
+    transform: translate3d(0, 0, 0) rotate(-0.1deg) scale(1);
     filter: drop-shadow(0 16px 28px rgba(15, 61, 62, 0.14));
   }
   50% {
-    transform: translate3d(0, -10px, 0) rotate(0.34deg) scale(1.012);
+    transform: translate3d(0, -10px, 0) rotate(0.3deg) scale(1.01);
     filter: drop-shadow(0 24px 38px rgba(15, 61, 62, 0.22));
   }
 }
@@ -547,6 +611,8 @@ body {
     filter: none;
   }
 
+  .gp-hero-intro,
+  .gp-hero-intro .gp-hero-float,
   .gp-hero-enter,
   .gp-hero-enter.is-mounted,
   .gp-hero-enter .gp-hero-float,
@@ -562,6 +628,12 @@ body {
     transform: none !important;
     filter: none !important;
     transition: none !important;
+  }
+
+  .gp-hero-intro::after {
+    animation: none !important;
+    opacity: 0 !important;
+    content: none;
   }
 
   .animate-gp-gift-glow {
