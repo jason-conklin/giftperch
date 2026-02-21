@@ -659,19 +659,23 @@ export default function MarketingHome() {
     <div className="space-y-12">
       <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
         <div
-          className={`gp-hero-anim mx-auto w-full ${
+          className={`gp-hero-enter mx-auto w-full ${
             heroMounted ? "is-mounted" : ""
           }`}
         >
-          <div className="gp-hero-bob flex w-full flex-col items-center text-center">
-            <Image
-              src="/giftperch-home-page-no-bg.png"
-              alt="GiftPerch AI-Powered Gifting Workspace"
-              width={1600}
-              height={760}
-              className="gp-landing-hero-art h-auto w-full max-w-[min(88vw,62rem)] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
-              priority
-            />
+          <div className="flex w-full flex-col items-center text-center">
+            <div className="gp-hero-float gp-media-static w-full">
+              <Image
+                src="/giftperch-home-page-no-bg.png"
+                alt="GiftPerch AI-Powered Gifting Workspace"
+                width={1600}
+                height={760}
+                className="gp-media-static gp-landing-hero-art h-auto w-full max-w-[min(88vw,62rem)] object-contain drop-shadow-[0_18px_32px_rgba(15,61,62,0.15)]"
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+                priority
+              />
+            </div>
             <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
               <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link
