@@ -80,7 +80,7 @@ function LoginContent() {
           Sign in to GiftPerch
         </h1>
         <p className="text-sm text-gp-evergreen/70">
-          Access your dashboard, recipient profiles, and PerchPal sessions.
+          Access your dashboard, recipient profiles, gift suggestions, and PerchPal sessions.
         </p>
       </div>
 
