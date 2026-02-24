@@ -80,7 +80,7 @@ function SignupContent() {
     <section className="mx-auto max-w-md space-y-6 rounded-3xl border border-gp-gold/30 bg-white/95 p-8 shadow-sm">
       <div className="space-y-2 text-center">
         <p className="text-sm uppercase tracking-wide text-gp-evergreen/60">
-          Welcome to GiftPerch!
+          Welcome to GiftPerch
         </p>
         <h1 className="text-3xl font-semibold text-gp-evergreen">
           Create your account
