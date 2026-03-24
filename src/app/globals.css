@@ -240,6 +240,32 @@ body {
   .gp-marketing-shell + .gp-global-footer {
     display: none;
   }
+
+  .gp-founder-note-glow {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .gp-founder-note-glow::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at 20% 20%,
+      rgba(232, 201, 120, 0.18),
+      rgba(232, 201, 120, 0.08) 40%,
+      transparent 70%
+    );
+    filter: blur(40px);
+    opacity: 0.58;
+  }
+
+  .gp-founder-note-glow > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 @media (min-width: 981px) and (max-width: 1400px) {
