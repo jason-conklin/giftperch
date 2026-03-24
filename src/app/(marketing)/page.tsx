@@ -423,11 +423,75 @@ function ProductTourTimeline({
   activeStep: number;
   onSelectStep: (stepIndex: number) => void;
 }) {
+  const timelineRef = useRef<HTMLOListElement | null>(null);
+  const connectorRef = useRef<HTMLSpanElement | null>(null);
+  const stepBadgeRefs = useRef<Array<HTMLSpanElement | null>>([]);
+
+  useEffect(() => {
+    const timelineEl = timelineRef.current;
+    const connectorEl = connectorRef.current;
+
+    if (!timelineEl || !connectorEl || steps.length < 2) return;
+
+    let frameId: number | null = null;
+
+    const updateConnector = () => {
+      const firstBadge = stepBadgeRefs.current[0];
+      const lastBadge = stepBadgeRefs.current[steps.length - 1];
+      if (!firstBadge || !lastBadge) return;
+
+      const timelineRect = timelineEl.getBoundingClientRect();
+      const firstRect = firstBadge.getBoundingClientRect();
+      const lastRect = lastBadge.getBoundingClientRect();
+
+      const top = firstRect.top + firstRect.height / 2 - timelineRect.top;
+      const bottom = lastRect.top + lastRect.height / 2 - timelineRect.top;
+      const height = Math.max(0, bottom - top);
+
+      connectorEl.style.top = `${top.toFixed(1)}px`;
+      connectorEl.style.height = `${height.toFixed(1)}px`;
+    };
+
+    const queueConnectorUpdate = () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      frameId = window.requestAnimationFrame(updateConnector);
+    };
+
+    queueConnectorUpdate();
+    window.addEventListener("resize", queueConnectorUpdate);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(queueConnectorUpdate);
+      resizeObserver.observe(timelineEl);
+      stepBadgeRefs.current.forEach((badgeEl) => {
+        if (badgeEl) {
+          resizeObserver?.observe(badgeEl);
+        }
+      });
+    }
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener("resize", queueConnectorUpdate);
+      resizeObserver?.disconnect();
+    };
+  }, [activeStep, steps.length]);
+
   return (
-    <ol className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0">
+    <ol
+      ref={timelineRef}
+      className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0"
+    >
       {steps.length > 1 ? (
         <span
-          className="pointer-events-none absolute bottom-12 left-10 top-12 z-0 hidden w-px rounded-full bg-gradient-to-b from-gp-evergreen/25 via-gp-evergreen/15 to-gp-evergreen/25 lg:block"
+          ref={connectorRef}
+          className="pointer-events-none absolute left-10 z-0 hidden w-px rounded-full bg-gradient-to-b from-gp-evergreen/25 via-gp-evergreen/15 to-gp-evergreen/25 lg:block"
+          style={{ top: "2.5rem", height: "calc(100% - 5rem)" }}
           aria-hidden="true"
         />
       ) : null}
@@ -447,11 +511,14 @@ function ProductTourTimeline({
               aria-current={isActive ? "step" : undefined}
               className={`group relative flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
                 isActive
-                  ? "border-gp-gold/50 bg-white/80 shadow-sm"
-                  : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
+                  ? "border-gp-gold/50 bg-white/95 shadow-sm"
+                  : "border-gp-evergreen/15 bg-white/90 hover:border-gp-gold/35 hover:bg-white/95"
               }`}
             >
               <span
+                ref={(element) => {
+                  stepBadgeRefs.current[index] = element;
+                }}
                 className={`relative z-10 inline-flex rounded-full transition-all duration-200 ${
                   isActive ? "ring-2 ring-gp-gold/30 shadow-sm" : ""
                 }`}
