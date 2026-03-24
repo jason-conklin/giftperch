@@ -158,33 +158,44 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card grid gap-5 md:grid-cols-[minmax(20rem,22rem)_minmax(0,1fr)] md:items-start md:gap-6">
-        <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-4 shadow-sm">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/jasonconklin.png"
-              alt="Jason Conklin"
-              width={256}
-              height={256}
-              quality={100}
-              unoptimized
-              className="h-20 w-20 shrink-0 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-24 sm:w-24"
-            />
-            <div className="min-w-0 space-y-1 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
-                Built by
-              </p>
-              <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
-                Jason Conklin
-              </h2>
-              <p className="whitespace-nowrap text-sm font-medium text-gp-evergreen/80">
-                Creator of GiftPerch
-              </p>
-              <span className="mt-2 inline-flex whitespace-nowrap rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
-                B.S. Computer Science, NJIT
-              </span>
+      <section className="gp-card grid gap-5 md:grid-cols-[minmax(21rem,23rem)_minmax(0,1fr)] md:items-start md:gap-6">
+        <div className="space-y-3 md:self-center">
+          <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-5 shadow-sm">
+            <div className="flex items-center gap-4">
+              <Image
+                src="/jasonconklin.png"
+                alt="Jason Conklin"
+                width={256}
+                height={256}
+                quality={100}
+                unoptimized
+                className="h-24 w-24 shrink-0 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-28 sm:w-28"
+              />
+              <div className="min-w-0 space-y-1 text-left">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
+                  Built by
+                </p>
+                <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
+                  Jason Conklin
+                </h2>
+                <p className="whitespace-nowrap text-sm font-medium text-gp-evergreen/80">
+                  Creator of GiftPerch
+                </p>
+                <span className="mt-2 inline-flex whitespace-nowrap rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
+                  B.S. Computer Science, NJIT
+                </span>
+              </div>
             </div>
           </div>
+
+          <Link
+            href="https://jasonconklin.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+          >
+            Learn more about Jason
+          </Link>
         </div>
 
         <div className="gp-founder-note-glow rounded-2xl border border-gp-gold/20 bg-white/65 px-5 py-5 sm:px-6">
@@ -216,14 +227,6 @@ export default function AboutPage() {
               last-minute stress and keep traditions special.
             </p>
 
-            <Link
-              href="https://jasonconklin.dev"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-            >
-              Learn more about Jason
-            </Link>
           </div>
         </div>
       </section>
