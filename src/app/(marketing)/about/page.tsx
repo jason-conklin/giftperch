@@ -160,6 +160,10 @@ export default function AboutPage() {
 
       <section className="gp-card grid gap-5 md:grid-cols-[minmax(21rem,23rem)_minmax(0,1fr)] md:items-start md:gap-6">
         <div className="space-y-3 md:self-center">
+          <p className="pl-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
+            Built by
+          </p>
+
           <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-5 shadow-sm">
             <div className="flex items-center gap-4">
               <Image
@@ -172,9 +176,6 @@ export default function AboutPage() {
                 className="h-24 w-24 shrink-0 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-28 sm:w-28"
               />
               <div className="min-w-0 space-y-1 text-left">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
-                  Built by
-                </p>
                 <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
                   Jason Conklin
                 </h2>
