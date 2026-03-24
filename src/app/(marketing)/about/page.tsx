@@ -158,8 +158,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card grid gap-6 md:grid-cols-[16rem_minmax(0,1fr)] md:items-start">
-        <div className="space-y-3">
+      <section className="gp-card grid gap-6 md:grid-cols-[16rem_minmax(0,1fr)] md:items-start md:gap-7">
+        <div className="space-y-4">
           <Image
             src="/jasonconklin.png"
             alt="Jason Conklin"
@@ -167,21 +167,21 @@ export default function AboutPage() {
             height={256}
             quality={100}
             unoptimized
-            className="h-20 w-20 rounded-full border border-gp-evergreen/15 object-cover sm:h-28 sm:w-28"
+            className="h-24 w-24 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-28 sm:w-28"
           />
-          <div className="space-y-1 text-left">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
+          <div className="rounded-2xl border border-gp-evergreen/12 bg-white/65 p-4 text-left shadow-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
               Built by
             </p>
-            <h2 className="text-lg font-semibold text-gp-evergreen sm:text-xl">
+            <h2 className="mt-1 text-xl font-semibold leading-tight text-gp-evergreen">
               Jason Conklin
             </h2>
-            <p className="text-sm text-gp-evergreen/70">
+            <p className="mt-2 text-sm font-medium text-gp-evergreen/80">
               Creator of GiftPerch
             </p>
-            <p className="text-sm text-gp-evergreen/70">
+            <span className="mt-3 inline-flex rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
               B.S. Computer Science, NJIT
-            </p>
+            </span>
           </div>
         </div>
 
