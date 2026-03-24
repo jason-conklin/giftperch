@@ -192,9 +192,9 @@ function ComparisonXIcon() {
 
 const faqs = [
   {
-    question: "How is GiftPerch different from typical gift idea tools?",
+    question: "How do I actually use GiftPerch to get gift ideas?",
     answer:
-      "Most tools generate ideas from scratch every time. GiftPerch gives you a reusable gifting workspace — with recipient profiles, past gifts, and preferences — so suggestions become more relevant and personal over time.",
+      "Simply choose a recipient, set an occasion or budget if you want, and click “Generate Gift Ideas.” GiftPerch uses the profile and past context you’ve saved to suggest ideas that actually fit the person.",
   },
   {
     question: "Will I keep seeing the same gift ideas?",
