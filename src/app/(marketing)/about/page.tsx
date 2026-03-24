@@ -158,76 +158,82 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card grid gap-5 md:grid-cols-[minmax(21rem,23rem)_minmax(0,1fr)] md:items-start md:gap-6">
-        <div className="space-y-3 md:self-center">
-          <p className="pl-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
-            Built by
+      <section className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+            CREATOR
           </p>
-
-          <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              <Image
-                src="/jasonconklin.png"
-                alt="Jason Conklin"
-                width={256}
-                height={256}
-                quality={100}
-                unoptimized
-                className="h-24 w-24 shrink-0 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-28 sm:w-28"
-              />
-              <div className="min-w-0 space-y-1 text-left">
-                <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
-                  Jason Conklin
-                </h2>
-                <p className="whitespace-nowrap text-sm font-medium text-gp-evergreen/80">
-                  Creator of GiftPerch
-                </p>
-                <span className="mt-2 inline-flex whitespace-nowrap rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
-                  B.S. Computer Science, NJIT
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <Link
-            href="https://jasonconklin.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-          >
-            Learn more about Jason
-          </Link>
+          <h2 className="text-2xl font-semibold text-gp-evergreen">
+            About the creator
+          </h2>
         </div>
 
-        <div className="gp-founder-note-glow rounded-2xl border border-gp-gold/20 bg-white/65 px-5 py-5 sm:px-6">
-          <div className="space-y-3">
-            <span
-              className="inline-flex h-6 w-6 items-center justify-center text-gp-gold/90"
-              aria-hidden="true"
-            >
-              <svg viewBox="0 0 24 24" className="h-5 w-5 opacity-90">
-                <path
-                  d="M10 6.5c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2H9.8c.1-1.6.9-2.9 2.2-4l-2-2.8Zm8 0c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2h-3c.1-1.6.9-2.9 2.2-4l-2-2.8Z"
-                  fill="currentColor"
+        <div className="gp-card grid gap-5 md:grid-cols-[minmax(21rem,23rem)_minmax(0,1fr)] md:items-start md:gap-6">
+          <div className="space-y-3 md:self-center">
+            <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <Image
+                  src="/jasonconklin.png"
+                  alt="Jason Conklin"
+                  width={256}
+                  height={256}
+                  quality={100}
+                  unoptimized
+                  className="h-24 w-24 shrink-0 rounded-full border border-gp-evergreen/15 object-cover shadow-sm sm:h-28 sm:w-28"
                 />
-              </svg>
-            </span>
+                <div className="min-w-0 space-y-1 text-left">
+                  <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
+                    Jason Conklin
+                  </h2>
+                  <p className="whitespace-nowrap text-sm font-medium text-gp-evergreen/80">
+                    Creator of GiftPerch
+                  </p>
+                  <span className="mt-2 inline-flex whitespace-nowrap rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
+                    B.S. Computer Science, NJIT
+                  </span>
+                </div>
+              </div>
+            </div>
 
-            <h3 className="text-2xl font-semibold text-gp-evergreen">
-              Why I built GiftPerch
-            </h3>
+            <Link
+              href="https://jasonconklin.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+            >
+              Learn more about Jason
+            </Link>
+          </div>
 
-            <p className="text-lg leading-relaxed text-gp-evergreen/90">
-              &ldquo;Thoughtful gifting should feel personal, not chaotic.&rdquo;
-            </p>
+          <div className="gp-founder-note-glow rounded-2xl border border-gp-gold/20 bg-white/65 px-5 py-5 sm:px-6">
+            <div className="space-y-3">
+              <span
+                className="inline-flex h-6 w-6 items-center justify-center text-gp-gold/90"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5 opacity-90">
+                  <path
+                    d="M10 6.5c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2H9.8c.1-1.6.9-2.9 2.2-4l-2-2.8Zm8 0c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2h-3c.1-1.6.9-2.9 2.2-4l-2-2.8Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>
 
-            <p className="text-sm leading-relaxed text-gp-evergreen/80">
-              Capturing interests, budgets, past wins, and subtle hints in one
-              place and pairing it with AI makes gifting easier and more
-              meaningful. My goal is to help families, couples, and teams avoid
-              last-minute stress and keep traditions special.
-            </p>
+              <h3 className="text-2xl font-semibold text-gp-evergreen">
+                Why I built GiftPerch
+              </h3>
 
+              <p className="text-lg leading-relaxed text-gp-evergreen/90">
+                &ldquo;Thoughtful gifting should feel personal, not chaotic.&rdquo;
+              </p>
+
+              <p className="text-sm leading-relaxed text-gp-evergreen/80">
+                Capturing interests, budgets, past wins, and subtle hints in one
+                place and pairing it with AI makes gifting easier and more
+                meaningful. My goal is to help families, couples, and teams avoid
+                last-minute stress and keep traditions special.
+              </p>
+            </div>
           </div>
         </div>
       </section>
