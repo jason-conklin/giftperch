@@ -660,7 +660,7 @@ export default function MarketingHome() {
                   href="/auth/signup"
                   className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
                 >
-                  Login/Get started
+                  Start your gifting workspace
                 </Link>
                 <a
                   href="#product-tour"
@@ -793,7 +793,7 @@ export default function MarketingHome() {
             href="/auth/signup"
             className="gp-btn gp-btn--primary gp-btn--lg px-7"
           >
-            Login/Get started
+            Start your gifting workspace
           </Link>
           <a
             href="#product-tour"
