@@ -647,6 +647,35 @@ export default function MarketingHome() {
       giftperch: "Plan ahead with a calendar view",
     },
   ];
+  const handleProductTourLinkClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const productTourSection = document.getElementById("product-tour");
+      if (!productTourSection) return;
+
+      event.preventDefault();
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      productTourSection.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start",
+      });
+      window.history.replaceState(null, "", "#product-tour");
+    },
+    [],
+  );
 
   return (
     <div className="space-y-12">
@@ -664,6 +693,7 @@ export default function MarketingHome() {
                 </Link>
                 <a
                   href="#product-tour"
+                  onClick={handleProductTourLinkClick}
                   className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
                 >
                   See how it works
@@ -797,6 +827,7 @@ export default function MarketingHome() {
           </Link>
           <a
             href="#product-tour"
+            onClick={handleProductTourLinkClick}
             className="gp-btn gp-btn--secondary gp-btn--lg px-7"
           >
             See how it works
