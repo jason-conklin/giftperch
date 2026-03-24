@@ -212,9 +212,9 @@ const faqs = [
       "Yes. GiftPerch helps you stay ahead of key occasions with saved context and budget-aware suggestions, so you’re not scrambling at the last minute.",
   },
   {
-    question: "Is it free to get started?",
+    question: "Is it free to use?",
     answer:
-      "Yes. You can create an account and start building recipient profiles and generating ideas right away.",
+      "Yes, completely free. You can create an account and start building recipient profiles and generating ideas right away.",
   },
 ] as const;
 
