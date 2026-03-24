@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BadgeCheck, ChevronRight, RefreshCcw, Sparkles, ShieldCheck } from "lucide-react";
+import { BadgeCheck, ChevronRight, Minus, Plus, RefreshCcw, Sparkles, ShieldCheck } from "lucide-react";
 import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { HeroBrandMark } from "@/components/marketing/HeroBrandMark";
@@ -192,28 +192,29 @@ function ComparisonXIcon() {
 
 const faqs = [
   {
-    question: "What is GiftPerch?",
+    question: "How is GiftPerch different from typical gift idea tools?",
     answer:
-      "GiftPerch is a gifting workspace that combines recipient profiles, gift history, occasions, and PerchPal AI suggestions.",
+      "Most tools generate ideas from scratch every time. GiftPerch gives you a reusable gifting workspace — with recipient profiles, past gifts, and preferences — so suggestions become more relevant and personal over time.",
   },
   {
-    question: "Who is GiftPerch for?",
+    question: "Will I keep seeing the same gift ideas?",
     answer:
-      "Anyone who shops for family, friends, partners, or teams and wants gifting to feel thoughtful without last-minute stress.",
+      "No. GiftPerch uses your saved gift history and feedback to help reduce repeats. As you like or dislike suggestions, future ideas adapt to better match each person.",
   },
   {
-    question: "How does PerchPal make suggestions better?",
+    question: "What does a recipient profile actually include?",
     answer:
-      "PerchPal uses the context you save, like budgets, preferences, occasions, and prior gifts, to generate more relevant ideas.",
+      "Profiles can include interests, notes, past gifts, budgets, and important occasions. It’s a single place to store everything you know about someone so you don’t have to rethink it every time you shop.",
   },
   {
-    question: "Can I track spending ranges?",
+    question: "Can I plan ahead for birthdays and holidays?",
     answer:
-      "Yes. Recipient profiles support budget context so your suggestions stay practical for each person and occasion.",
+      "Yes. GiftPerch helps you stay ahead of key occasions with saved context and budget-aware suggestions, so you’re not scrambling at the last minute.",
   },
   {
-    question: "Do I need a credit card to start?",
-    answer: "No. You can create an account and start organizing gifts right away.",
+    question: "Is it free to get started?",
+    answer:
+      "Yes. You can create an account and start building recipient profiles and generating ideas right away.",
   },
 ] as const;
 
@@ -832,17 +833,27 @@ export default function MarketingHome() {
             FAQ
           </p>
           <h2 id="homepage-faq-title" className="text-2xl font-semibold text-gp-evergreen">
-            Common questions
+            Questions, answered clearly
           </h2>
+          <p className="mt-1 text-sm text-gp-evergreen/75">
+            Everything you need to know before you start organizing smarter, more personal gifts.
+          </p>
         </div>
-        <div className="gp-card divide-y divide-gp-evergreen/10">
+        <div className="gp-card space-y-2 p-2">
           {faqs.map((faq, index) => {
             const isOpen = openFaqIndex === index;
             return (
-              <div key={faq.question} className="py-4 first:pt-0 last:pb-0">
+              <div
+                key={faq.question}
+                className={`rounded-2xl border px-4 py-5 transition-colors duration-200 ${
+                  isOpen
+                    ? "border-gp-gold/35 bg-gp-cream/55"
+                    : "border-transparent bg-transparent hover:bg-white/55"
+                }`}
+              >
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
+                  className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${index}`}
                   onClick={() => setOpenFaqIndex(isOpen ? null : index)}
@@ -851,17 +862,34 @@ export default function MarketingHome() {
                     {faq.question}
                   </span>
                   <span
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-gp-evergreen/20 bg-gp-cream/70 text-lg leading-none text-gp-evergreen"
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-gp-evergreen transition-colors duration-200 ${
+                      isOpen
+                        ? "border-gp-gold/35 bg-gp-gold/20"
+                        : "border-gp-evergreen/20 bg-white/70"
+                    }`}
                     aria-hidden="true"
                   >
-                    {isOpen ? "-" : "+"}
+                    {isOpen ? (
+                      <Minus className="h-4 w-4" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
                   </span>
                 </button>
-                {isOpen ? (
-                  <p id={`faq-answer-${index}`} className="mt-3 pr-9 text-sm text-gp-evergreen/80">
+                <div
+                  className={`grid overflow-hidden transition-all duration-250 ease-out ${
+                    isOpen
+                      ? "mt-4 grid-rows-[1fr] opacity-100"
+                      : "mt-0 grid-rows-[0fr] opacity-0"
+                  }`}
+                >
+                  <p
+                    id={`faq-answer-${index}`}
+                    className="min-h-0 overflow-hidden pr-9 text-sm leading-relaxed text-gp-evergreen/80"
+                  >
                     {faq.answer}
                   </p>
-                ) : null}
+                </div>
               </div>
             );
           })}
