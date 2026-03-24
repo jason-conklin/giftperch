@@ -424,11 +424,23 @@ function ProductTourTimeline({
   onSelectStep: (stepIndex: number) => void;
 }) {
   return (
-    <ol className="space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0">
-      {steps.flatMap((step, index) => {
+    <ol className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0">
+      {steps.length > 1 ? (
+        <span
+          className="pointer-events-none absolute bottom-12 left-10 top-12 z-0 hidden w-px rounded-full bg-gradient-to-b from-gp-evergreen/25 via-gp-evergreen/15 to-gp-evergreen/25 lg:block"
+          aria-hidden="true"
+        />
+      ) : null}
+      {steps.map((step, index) => {
         const isActive = index === activeStep;
+        const rowClass =
+          index === 0
+            ? "lg:row-start-1"
+            : index === 1
+              ? "lg:row-start-3"
+              : "lg:row-start-5";
         const stepItem = (
-          <li key={`${step.id}-timeline`} className="relative">
+          <li key={`${step.id}-timeline`} className={`relative z-10 ${rowClass}`}>
             <button
               type="button"
               onClick={() => onSelectStep(index)}
@@ -439,12 +451,6 @@ function ProductTourTimeline({
                   : "border-gp-evergreen/15 bg-white/45 hover:border-gp-gold/35 hover:bg-white/60"
               }`}
             >
-              {index < steps.length - 1 ? (
-                <span
-                  className="pointer-events-none absolute bottom-0 left-10 top-10 hidden w-px rounded-full bg-gp-evergreen/15 lg:block"
-                  aria-hidden="true"
-                />
-              ) : null}
               <span
                 className={`relative z-10 inline-flex rounded-full transition-all duration-200 ${
                   isActive ? "ring-2 ring-gp-gold/30 shadow-sm" : ""
@@ -477,22 +483,7 @@ function ProductTourTimeline({
             </button>
           </li>
         );
-
-        if (index === steps.length - 1) {
-          return [stepItem];
-        }
-
-        const connectorItem = (
-          <li
-            key={`${step.id}-connector`}
-            className="relative hidden lg:flex"
-            aria-hidden="true"
-          >
-            <span className="ml-10 block h-full w-px rounded-full bg-gp-evergreen/15" />
-          </li>
-        );
-
-        return [stepItem, connectorItem];
+        return stepItem;
       })}
     </ol>
   );
