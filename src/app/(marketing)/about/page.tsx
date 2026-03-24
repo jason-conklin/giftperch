@@ -158,7 +158,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card grid gap-5 md:grid-cols-[minmax(14.5rem,15.75rem)_minmax(0,1fr)] md:items-start md:gap-6">
+      <section className="gp-card grid gap-5 md:grid-cols-[minmax(20rem,22rem)_minmax(0,1fr)] md:items-start md:gap-6">
         <div className="rounded-2xl border border-gp-evergreen/12 bg-white/70 p-4 shadow-sm">
           <div className="flex items-center gap-4">
             <Image
@@ -174,13 +174,13 @@ export default function AboutPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-gp-evergreen/55">
                 Built by
               </p>
-              <h2 className="text-2xl font-semibold leading-tight text-gp-evergreen">
+              <h2 className="whitespace-nowrap text-2xl font-semibold leading-tight text-gp-evergreen">
                 Jason Conklin
               </h2>
-              <p className="text-sm font-medium text-gp-evergreen/80">
+              <p className="whitespace-nowrap text-sm font-medium text-gp-evergreen/80">
                 Creator of GiftPerch
               </p>
-              <span className="mt-2 inline-flex rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
+              <span className="mt-2 inline-flex whitespace-nowrap rounded-full border border-gp-gold/35 bg-gp-cream/60 px-3 py-1 text-xs font-medium text-gp-evergreen/75">
                 B.S. Computer Science, NJIT
               </span>
             </div>
