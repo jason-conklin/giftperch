@@ -158,8 +158,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="gp-card space-y-4 transition hover:-translate-y-0.5 hover:shadow-lg">
-        <div className="flex items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
+      <section className="gp-card grid gap-6 md:grid-cols-[16rem_minmax(0,1fr)] md:items-start">
+        <div className="space-y-3">
           <Image
             src="/jasonconklin.png"
             alt="Jason Conklin"
@@ -184,26 +184,46 @@ export default function AboutPage() {
             </p>
           </div>
         </div>
-        <div className="space-y-2 text-sm text-gp-evergreen/80">
-          <p>
-            I created GiftPerch because thoughtful gifting should feel personal,
-            not chaotic. Capturing interests, budgets, past wins, and subtle hints
-            in one place—and pairing it with AI—makes gifting easier and more
-            meaningful.
-          </p>
-          <p>
-            My goal is to help families, couples, and teams avoid last-minute
-            stress and keep traditions special.
-          </p>
+
+        <div className="gp-founder-note-glow rounded-2xl border border-gp-gold/20 bg-white/65 px-5 py-5 sm:px-6">
+          <div className="space-y-3">
+            <span
+              className="inline-flex h-6 w-6 items-center justify-center text-gp-gold/90"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 opacity-90">
+                <path
+                  d="M10 6.5c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2H9.8c.1-1.6.9-2.9 2.2-4l-2-2.8Zm8 0c-2.1 1.4-3.4 3.7-3.4 6.4v4.6h6.2v-4.2h-3c.1-1.6.9-2.9 2.2-4l-2-2.8Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+
+            <h3 className="text-2xl font-semibold text-gp-evergreen">
+              Why I built GiftPerch
+            </h3>
+
+            <p className="text-lg leading-relaxed text-gp-evergreen/90">
+              &ldquo;Thoughtful gifting should feel personal, not chaotic.&rdquo;
+            </p>
+
+            <p className="text-sm leading-relaxed text-gp-evergreen/80">
+              Capturing interests, budgets, past wins, and subtle hints in one
+              place and pairing it with AI makes gifting easier and more
+              meaningful. My goal is to help families, couples, and teams avoid
+              last-minute stress and keep traditions special.
+            </p>
+
+            <Link
+              href="https://jasonconklin.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
+            >
+              Learn more about Jason
+            </Link>
+          </div>
         </div>
-        <Link
-          href="https://jasonconklin.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-        >
-          Learn more about Jason
-        </Link>
       </section>
 
       <section className="gp-card border border-white bg-gp-gold text-center text-base text-black">
