@@ -201,7 +201,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="inline-flex text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
             >
-              Learn more about Jason
+              Learn more about Jason →
             </Link>
           </div>
 
