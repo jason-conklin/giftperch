@@ -192,14 +192,9 @@ function ComparisonXIcon() {
 
 const faqs = [
   {
-    question: "How do I actually use GiftPerch to get gift ideas?",
+    question: "How do I use GiftPerch to get gift ideas?",
     answer:
       "Simply choose a recipient, set an occasion or budget if you want, and click “Generate Gift Ideas.” GiftPerch uses the profile and past context you’ve saved to suggest ideas that actually fit the person.",
-  },
-  {
-    question: "Will I keep seeing the same gift ideas?",
-    answer:
-      "No. GiftPerch uses your saved gift history and feedback to help reduce repeats. As you like or dislike suggestions, future ideas adapt to better match each person.",
   },
   {
     question: "What does a recipient profile actually include?",
@@ -207,9 +202,14 @@ const faqs = [
       "Profiles can include interests, notes, past gifts, budgets, and important occasions. It’s a single place to store everything you know about someone so you don’t have to rethink it every time you shop.",
   },
   {
-    question: "Can I plan ahead for birthdays and holidays?",
+    question: "Will I keep seeing the same gift ideas?",
     answer:
-      "Yes. GiftPerch helps you stay ahead of key occasions with saved context and budget-aware suggestions, so you’re not scrambling at the last minute.",
+      "No. GiftPerch uses your saved gift history and feedback to help reduce repeats. As you like or dislike suggestions, future ideas adapt to better match each person.",
+  },
+  {
+    question: "How does GiftPerch help me plan ahead for special occasions?",
+    answer:
+      "GiftPerch helps you stay ahead of birthdays, holidays, and special moments by keeping everything organized in one place. With saved recipient profiles, past gifts, and occasion context, you can plan earlier and generate ideas that are ready when you need them.",
   },
   {
     question: "Is it free to use?",
