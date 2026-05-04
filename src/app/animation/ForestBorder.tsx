@@ -12,7 +12,7 @@ export default function ForestBorder() {
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         preserveAspectRatio="xMidYMax meet"
-        className="w-full h-auto"
+        className="h-full w-full"
         aria-hidden="true"
       >
         <g>
