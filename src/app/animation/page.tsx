@@ -199,14 +199,16 @@ export default function AnimationPage() {
       aria-labelledby="giftperch-animation-title"
     >
       <style>{`
-      .gp-animation-forest {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        z-index: 1; /* BELOW animation, ABOVE background */
-        pointer-events: none;
-      }
+        .gp-animation-forest {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          height: 180px;
+          overflow: hidden;
+          z-index: 1;
+          pointer-events: none;
+        }
         .gp-animation-shell + .gp-global-footer {
           display: none;
         }

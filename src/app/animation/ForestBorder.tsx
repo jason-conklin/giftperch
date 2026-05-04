@@ -11,8 +11,8 @@ export default function ForestBorder() {
     <div className="w-full pointer-events-none select-none">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-        preserveAspectRatio="none"
-        className="h-[190px] w-full"
+        preserveAspectRatio="xMidYMax meet"
+        className="w-full h-auto"
         aria-hidden="true"
       >
         <g>
