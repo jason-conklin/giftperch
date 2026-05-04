@@ -5,48 +5,58 @@ export default function ForestBorder() {
   return (
     <div className="w-full pointer-events-none select-none">
       <svg
-        viewBox="0 0 1200 140"
+        viewBox="0 0 1200 145"
         preserveAspectRatio="none"
-        className="w-full h-[110px]"
+        className="h-[115px] w-full"
+        aria-hidden="true"
       >
         <g>
           {Array.from({ length: TREE_COUNT }).map((_, i) => {
             const x = i * TREE_WIDTH;
             const isAlt = i % 2 === 0;
-
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
-            // Slight variation per tree for natural feel
-            const heightOffset = isAlt ? 0 : 6;
+            // Small height variation so it feels natural, not stamped.
+            const lift = isAlt ? 0 : 7;
+            const cx = x + TREE_WIDTH / 2;
 
             return (
               <g key={i}>
-                {/* Bottom triangle (largest) */}
+                {/* Top tier: narrow but with a visible overhang */}
                 <polygon
                   points={`
-                    ${x + 25},${40 - heightOffset}
-                    ${x},110
-                    ${x + 50},110
+                    ${cx},${6 - lift}
+                    ${cx - 16},${54 - lift}
+                    ${cx - 7},${50 - lift}
+                    ${cx},${66 - lift}
+                    ${cx + 7},${50 - lift}
+                    ${cx + 16},${54 - lift}
                   `}
                   fill={color}
                 />
 
-                {/* Middle triangle */}
+                {/* Middle tier: wider, pointy side overhangs */}
                 <polygon
                   points={`
-                    ${x + 25},${20 - heightOffset}
-                    ${x + 8},85
-                    ${x + 42},85
+                    ${cx},${28 - lift}
+                    ${cx - 24},${84 - lift}
+                    ${cx - 11},${78 - lift}
+                    ${cx},${96 - lift}
+                    ${cx + 11},${78 - lift}
+                    ${cx + 24},${84 - lift}
                   `}
                   fill={color}
                 />
 
-                {/* Top triangle */}
+                {/* Bottom tier: widest tier, strongest tree silhouette */}
                 <polygon
                   points={`
-                    ${x + 25},${5 - heightOffset}
-                    ${x + 14},60
-                    ${x + 36},60
+                    ${cx},${52 - lift}
+                    ${cx - 32},110
+                    ${cx - 14},102
+                    ${cx},122
+                    ${cx + 14},102
+                    ${cx + 32},110
                   `}
                   fill={color}
                 />
@@ -55,8 +65,7 @@ export default function ForestBorder() {
           })}
         </g>
 
-        {/* Ground line (keep — this anchors the forest visually) */}
-        <rect x="0" y="110" width="1200" height="20" fill="#0F3D3E" />
+        <rect x="0" y="110" width="1200" height="35" fill="#0F3D3E" />
       </svg>
     </div>
   );
