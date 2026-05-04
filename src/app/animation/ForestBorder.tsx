@@ -2,16 +2,16 @@ export default function ForestBorder() {
   const TREE_COUNT = 25;
   const TREE_WIDTH = 48;
   const VIEWBOX_WIDTH = 1200;
-  const VIEWBOX_HEIGHT = 170;
+  const VIEWBOX_HEIGHT = 210;
   const CENTER_INDEX = (TREE_COUNT - 1) / 2;
-  const GROUND_Y = 132;
+  const GROUND_Y = 170;
 
   return (
     <div className="w-full pointer-events-none select-none">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         preserveAspectRatio="none"
-        className="h-[125px] w-full"
+        className="h-[145px] w-full"
         aria-hidden="true"
       >
         <g>
@@ -21,19 +21,19 @@ export default function ForestBorder() {
             const isAlt = i % 2 === 0;
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
-            // 0 at center, 1 at far edges
+            // 0 at center, 1 at edges
             const distanceFromCenter =
               Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
 
-            // Controlled height difference: noticeable, not chaotic
-            const heightBoost = Math.pow(distanceFromCenter, 1.35) * 34;
+            // Much stronger height difference, but safe because GROUND_Y is lower.
+            const heightBoost = Math.pow(distanceFromCenter, 1.45) * 72;
 
-            // Tiny deterministic variation
-            const variation = i % 4 === 0 ? 3 : i % 4 === 1 ? -2 : i % 4 === 2 ? 1 : -1;
+            const variation =
+              i % 4 === 0 ? 4 : i % 4 === 1 ? -2 : i % 4 === 2 ? 2 : -1;
 
-            const topY = 34 - heightBoost + variation;
-            const middleY = 58 - heightBoost * 0.65 + variation;
-            const bottomY = 82 - heightBoost * 0.35 + variation;
+            const topY = 58 - heightBoost + variation;
+            const middleY = 88 - heightBoost * 0.66 + variation;
+            const bottomY = 116 - heightBoost * 0.36 + variation;
 
             return (
               <g key={i}>
@@ -84,7 +84,7 @@ export default function ForestBorder() {
           x="0"
           y={GROUND_Y}
           width={VIEWBOX_WIDTH}
-          height="38"
+          height="40"
           fill="#0F3D3E"
         />
       </svg>
