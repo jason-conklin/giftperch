@@ -201,19 +201,16 @@ export default function AnimationPage() {
       <style>{`
         .gp-animation-forest {
           position: absolute;
-          left: 0;
           bottom: 0;
+          left: 0;
           width: 100%;
-          height: clamp(150px, 18vh, 220px);
+          height: clamp(160px, 20vh, 230px);
           overflow: hidden;
           z-index: 1;
           pointer-events: none;
         }
 
         .gp-animation-forest svg {
-          position: absolute;
-          left: 0;
-          bottom: 0;
           display: block;
           width: 100%;
           height: 100%;

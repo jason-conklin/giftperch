@@ -1,32 +1,30 @@
 export default function ForestBorder() {
-  const TREE_COUNT = 17;
-  const TREE_WIDTH = 70;
-  const VIEWBOX_WIDTH = TREE_COUNT * TREE_WIDTH;
+  const TREE_COUNT = 32;
+  const VIEWBOX_WIDTH = 1200;
   const VIEWBOX_HEIGHT = 390;
-
-  const CENTER_INDEX = (TREE_COUNT - 1) / 2;
   const GROUND_Y = 320;
+  const CENTER_INDEX = (TREE_COUNT - 1) / 2;
 
   return (
-    <div className="w-full pointer-events-none select-none">
+    <div className="pointer-events-none w-full select-none">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-        preserveAspectRatio="xMidYMax meet"
+        preserveAspectRatio="none"
         className="h-full w-full"
         aria-hidden="true"
       >
         <g>
           {Array.from({ length: TREE_COUNT }).map((_, i) => {
-            const x = i * TREE_WIDTH;
-            const cx = x + TREE_WIDTH / 2;
+            const spacing = VIEWBOX_WIDTH / (TREE_COUNT - 1);
+            const cx = i * spacing;
 
             const isAlt = i % 2 === 0;
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
             const distance = Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
 
-            // Shorter center, much taller sides.
-            const scale = 0.62 + Math.pow(distance, 1.55) * 1.28;
+            // Short center trees, noticeably taller edge trees.
+            const scale = 0.58 + Math.pow(distance, 1.65) * 1.32;
 
             const variation =
               i % 4 === 0 ? 0.06 : i % 4 === 1 ? -0.03 : i % 4 === 2 ? 0.03 : 0;
