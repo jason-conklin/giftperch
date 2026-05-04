@@ -140,44 +140,103 @@ export default function ForestBorder() {
         {/* ===== ROCKS (GEOMETRIC, NOT OVALS) ===== */}
 
         {/* Left rocks */}
-        <polygon
-          points={`
-            ${riverCenterX - 70},${GROUND_Y + 8}
-            ${riverCenterX - 58},${GROUND_Y + 14}
-            ${riverCenterX - 66},${GROUND_Y + 20}
-          `}
-          fill="#E8C978"
-        />
+        {/* Left bank boulders */}
+        <g opacity="0.95">
+          <polygon
+            points={`
+              ${riverCenterX - 74},${GROUND_Y + 6}
+              ${riverCenterX - 58},${GROUND_Y + 2}
+              ${riverCenterX - 46},${GROUND_Y + 10}
+              ${riverCenterX - 50},${GROUND_Y + 20}
+              ${riverCenterX - 68},${GROUND_Y + 22}
+              ${riverCenterX - 80},${GROUND_Y + 15}
+            `}
+            fill="#D7B65F"
+          />
+          <polygon
+            points={`
+              ${riverCenterX - 69},${GROUND_Y + 8}
+              ${riverCenterX - 58},${GROUND_Y + 5}
+              ${riverCenterX - 51},${GROUND_Y + 10}
+              ${riverCenterX - 57},${GROUND_Y + 14}
+              ${riverCenterX - 68},${GROUND_Y + 15}
+            `}
+            fill="#E8C978"
+            opacity="0.75"
+          />
 
-        <polygon
-          points={`
-            ${riverCenterX - 88},${GROUND_Y + 20}
-            ${riverCenterX - 74},${GROUND_Y + 26}
-            ${riverCenterX - 84},${GROUND_Y + 34}
-          `}
-          fill="#F8F5E7"
-          opacity="0.85"
-        />
+          <polygon
+            points={`
+              ${riverCenterX - 98},${GROUND_Y + 26}
+              ${riverCenterX - 84},${GROUND_Y + 20}
+              ${riverCenterX - 70},${GROUND_Y + 27}
+              ${riverCenterX - 74},${GROUND_Y + 39}
+              ${riverCenterX - 92},${GROUND_Y + 42}
+              ${riverCenterX - 104},${GROUND_Y + 34}
+            `}
+            fill="#F0DFAC"
+          />
+          <polygon
+            points={`
+              ${riverCenterX - 94},${GROUND_Y + 28}
+              ${riverCenterX - 84},${GROUND_Y + 24}
+              ${riverCenterX - 76},${GROUND_Y + 28}
+              ${riverCenterX - 84},${GROUND_Y + 33}
+              ${riverCenterX - 94},${GROUND_Y + 34}
+            `}
+            fill="#F8F5E7"
+            opacity="0.7"
+          />
+        </g>
 
-        {/* Right rocks */}
-        <polygon
-          points={`
-            ${riverCenterX + 70},${GROUND_Y + 10}
-            ${riverCenterX + 82},${GROUND_Y + 16}
-            ${riverCenterX + 74},${GROUND_Y + 22}
-          `}
-          fill="#E8C978"
-        />
+        {/* Right bank boulders */}
+        <g opacity="0.95">
+          <polygon
+            points={`
+              ${riverCenterX + 54},${GROUND_Y + 8}
+              ${riverCenterX + 70},${GROUND_Y + 3}
+              ${riverCenterX + 84},${GROUND_Y + 10}
+              ${riverCenterX + 80},${GROUND_Y + 22}
+              ${riverCenterX + 62},${GROUND_Y + 24}
+              ${riverCenterX + 50},${GROUND_Y + 16}
+            `}
+            fill="#D7B65F"
+          />
+          <polygon
+            points={`
+              ${riverCenterX + 60},${GROUND_Y + 10}
+              ${riverCenterX + 70},${GROUND_Y + 6}
+              ${riverCenterX + 78},${GROUND_Y + 10}
+              ${riverCenterX + 70},${GROUND_Y + 15}
+              ${riverCenterX + 60},${GROUND_Y + 16}
+            `}
+            fill="#E8C978"
+            opacity="0.75"
+          />
 
-        <polygon
-          points={`
-            ${riverCenterX + 92},${GROUND_Y + 22}
-            ${riverCenterX + 106},${GROUND_Y + 30}
-            ${riverCenterX + 96},${GROUND_Y + 36}
-          `}
-          fill="#F8F5E7"
-          opacity="0.85"
-        />
+          <polygon
+            points={`
+              ${riverCenterX + 84},${GROUND_Y + 31}
+              ${riverCenterX + 98},${GROUND_Y + 25}
+              ${riverCenterX + 112},${GROUND_Y + 32}
+              ${riverCenterX + 108},${GROUND_Y + 44}
+              ${riverCenterX + 90},${GROUND_Y + 46}
+              ${riverCenterX + 78},${GROUND_Y + 38}
+            `}
+            fill="#F0DFAC"
+          />
+          <polygon
+            points={`
+              ${riverCenterX + 88},${GROUND_Y + 33}
+              ${riverCenterX + 98},${GROUND_Y + 29}
+              ${riverCenterX + 106},${GROUND_Y + 33}
+              ${riverCenterX + 98},${GROUND_Y + 38}
+              ${riverCenterX + 88},${GROUND_Y + 39}
+            `}
+            fill="#F8F5E7"
+            opacity="0.7"
+          />
+        </g>
       </svg>
     </div>
   );
