@@ -1,8 +1,8 @@
 export default function ForestBorder() {
   const TREE_COUNT = 32;
   const VIEWBOX_WIDTH = 1200;
-  const VIEWBOX_HEIGHT = 390;
-  const GROUND_Y = 320;
+  const VIEWBOX_HEIGHT = 240;
+  const GROUND_Y = 190;
   const CENTER_INDEX = (TREE_COUNT - 1) / 2;
 
   return (
@@ -22,12 +22,10 @@ export default function ForestBorder() {
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
             const distance = Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
-
-            // Short center trees, noticeably taller edge trees.
-            const scale = 0.58 + Math.pow(distance, 1.65) * 1.32;
+            const scale = 0.58 + Math.pow(distance, 1.65) * 1.12;
 
             const variation =
-              i % 4 === 0 ? 0.06 : i % 4 === 1 ? -0.03 : i % 4 === 2 ? 0.03 : 0;
+              i % 4 === 0 ? 0.05 : i % 4 === 1 ? -0.03 : i % 4 === 2 ? 0.03 : 0;
 
             const finalScale = scale + variation;
 
@@ -40,41 +38,38 @@ export default function ForestBorder() {
                   translate(${-cx}, ${-GROUND_Y})
                 `}
               >
-                {/* Top tier */}
                 <polygon
                   points={`
-                    ${cx},${GROUND_Y - 125}
-                    ${cx - 17},${GROUND_Y - 78}
-                    ${cx - 7},${GROUND_Y - 82}
-                    ${cx},${GROUND_Y - 64}
-                    ${cx + 7},${GROUND_Y - 82}
-                    ${cx + 17},${GROUND_Y - 78}
+                    ${cx},${GROUND_Y - 105}
+                    ${cx - 16},${GROUND_Y - 66}
+                    ${cx - 7},${GROUND_Y - 70}
+                    ${cx},${GROUND_Y - 55}
+                    ${cx + 7},${GROUND_Y - 70}
+                    ${cx + 16},${GROUND_Y - 66}
                   `}
                   fill={color}
                 />
 
-                {/* Middle tier */}
                 <polygon
                   points={`
-                    ${cx},${GROUND_Y - 94}
-                    ${cx - 28},${GROUND_Y - 39}
-                    ${cx - 12},${GROUND_Y - 46}
-                    ${cx},${GROUND_Y - 25}
-                    ${cx + 12},${GROUND_Y - 46}
-                    ${cx + 28},${GROUND_Y - 39}
+                    ${cx},${GROUND_Y - 78}
+                    ${cx - 26},${GROUND_Y - 32}
+                    ${cx - 11},${GROUND_Y - 39}
+                    ${cx},${GROUND_Y - 21}
+                    ${cx + 11},${GROUND_Y - 39}
+                    ${cx + 26},${GROUND_Y - 32}
                   `}
                   fill={color}
                 />
 
-                {/* Bottom tier */}
                 <polygon
                   points={`
-                    ${cx},${GROUND_Y - 62}
-                    ${cx - 39},${GROUND_Y}
-                    ${cx - 16},${GROUND_Y - 10}
-                    ${cx},${GROUND_Y + 12}
-                    ${cx + 16},${GROUND_Y - 10}
-                    ${cx + 39},${GROUND_Y}
+                    ${cx},${GROUND_Y - 50}
+                    ${cx - 36},${GROUND_Y}
+                    ${cx - 15},${GROUND_Y - 9}
+                    ${cx},${GROUND_Y + 10}
+                    ${cx + 15},${GROUND_Y - 9}
+                    ${cx + 36},${GROUND_Y}
                   `}
                   fill={color}
                 />
@@ -87,7 +82,7 @@ export default function ForestBorder() {
           x="0"
           y={GROUND_Y}
           width={VIEWBOX_WIDTH}
-          height="70"
+          height="50"
           fill="#0F3D3E"
         />
       </svg>
