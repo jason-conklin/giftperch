@@ -200,11 +200,11 @@ export default function AnimationPage() {
     >
       <style>{`
         .gp-animation-forest {
-          position: fixed;   /* 🔥 THIS is the key fix */
+          position: fixed;
           bottom: 0;
           left: 0;
           width: 100%;
-          height: 220px;     /* stable visual height */
+          height: 250px;     /* stable visual height */
           overflow: hidden;
           z-index: 1;
           pointer-events: none;
