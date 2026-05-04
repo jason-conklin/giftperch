@@ -2,10 +2,10 @@ export default function ForestBorder() {
   const TREE_COUNT = 25;
   const TREE_WIDTH = 48;
   const VIEWBOX_WIDTH = 1200;
-  const VIEWBOX_HEIGHT = 220; // ↑ more headroom
-  const CENTER_INDEX = (TREE_COUNT - 1) / 2;
+  const VIEWBOX_HEIGHT = 220;
 
-  const GROUND_Y = 170; // ↓ push everything down
+  const CENTER_INDEX = (TREE_COUNT - 1) / 2;
+  const GROUND_Y = 170;
 
   return (
     <div className="w-full pointer-events-none select-none">
@@ -26,28 +26,32 @@ export default function ForestBorder() {
             const distanceFromCenter =
               Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
 
-            // 🔥 Stronger curve (this is what you want visually)
-            const curved = Math.pow(distanceFromCenter, 1.6);
+            // 🔥 Strong curve for visible difference
+            const scale = 0.75 + Math.pow(distanceFromCenter, 1.8) * 0.9;
 
-            const heightBoost = curved * 90; // ↑ MUCH stronger
+            // Slight controlled variation
+            const variation =
+              i % 3 === 0 ? 0.04 : i % 3 === 1 ? -0.02 : 0.02;
 
-            const variation = i % 3 === 0 ? 6 : i % 3 === 1 ? -4 : 2;
-
-            const topY = 60 - heightBoost + variation;
-            const middleY = 95 - heightBoost * 0.7 + variation;
-            const bottomY = 120 - heightBoost * 0.4 + variation;
+            const finalScale = scale + variation;
 
             return (
-              <g key={i}>
+              <g
+                key={i}
+                transform={`
+                  translate(${cx} ${GROUND_Y})
+                  scale(${finalScale})
+                  translate(${-cx} ${-GROUND_Y})
+                `}
+              >
+                {/* CLEAN, CONSISTENT TREE SHAPE */}
+
                 {/* Top */}
                 <polygon
                   points={`
-                    ${cx},${topY}
-                    ${cx - 16},${topY + 50}
-                    ${cx - 6},${topY + 46}
-                    ${cx},${topY + 64}
-                    ${cx + 6},${topY + 46}
-                    ${cx + 16},${topY + 50}
+                    ${cx},40
+                    ${cx - 14},80
+                    ${cx + 14},80
                   `}
                   fill={color}
                 />
@@ -55,12 +59,9 @@ export default function ForestBorder() {
                 {/* Middle */}
                 <polygon
                   points={`
-                    ${cx},${middleY}
-                    ${cx - 24},${middleY + 60}
-                    ${cx - 10},${middleY + 52}
-                    ${cx},${middleY + 72}
-                    ${cx + 10},${middleY + 52}
-                    ${cx + 24},${middleY + 60}
+                    ${cx},70
+                    ${cx - 22},115
+                    ${cx + 22},115
                   `}
                   fill={color}
                 />
@@ -68,12 +69,9 @@ export default function ForestBorder() {
                 {/* Bottom */}
                 <polygon
                   points={`
-                    ${cx},${bottomY}
-                    ${cx - 32},${GROUND_Y}
-                    ${cx - 14},${GROUND_Y - 10}
-                    ${cx},${GROUND_Y + 14}
-                    ${cx + 14},${GROUND_Y - 10}
-                    ${cx + 32},${GROUND_Y}
+                    ${cx},100
+                    ${cx - 30},150
+                    ${cx + 30},150
                   `}
                   fill={color}
                 />
