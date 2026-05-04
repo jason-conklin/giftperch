@@ -151,7 +151,7 @@ export default function ForestBorder() {
               ${riverCenterX - 68},${GROUND_Y + 22}
               ${riverCenterX - 80},${GROUND_Y + 15}
             `}
-            fill="#D7B65F"
+            fill="#929292"
           />
           <polygon
             points={`
@@ -174,7 +174,7 @@ export default function ForestBorder() {
               ${riverCenterX - 92},${GROUND_Y + 42}
               ${riverCenterX - 104},${GROUND_Y + 34}
             `}
-            fill="#F0DFAC"
+            fill="#929292"
           />
           <polygon
             points={`
@@ -200,7 +200,7 @@ export default function ForestBorder() {
               ${riverCenterX + 62},${GROUND_Y + 24}
               ${riverCenterX + 50},${GROUND_Y + 16}
             `}
-            fill="#D7B65F"
+            fill="#929292"
           />
           <polygon
             points={`
@@ -223,7 +223,7 @@ export default function ForestBorder() {
               ${riverCenterX + 90},${GROUND_Y + 46}
               ${riverCenterX + 78},${GROUND_Y + 38}
             `}
-            fill="#F0DFAC"
+            fill="#929292"
           />
           <polygon
             points={`
