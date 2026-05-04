@@ -2,17 +2,17 @@ export default function ForestBorder() {
   const TREE_COUNT = 25;
   const TREE_WIDTH = 48;
   const VIEWBOX_WIDTH = 1200;
-  const VIEWBOX_HEIGHT = 240;
+  const VIEWBOX_HEIGHT = 390;
 
   const CENTER_INDEX = (TREE_COUNT - 1) / 2;
-  const GROUND_Y = 190;
+  const GROUND_Y = 320;
 
   return (
     <div className="w-full pointer-events-none select-none">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         preserveAspectRatio="none"
-        className="h-[150px] w-full"
+        className="h-[170px] w-full"
         aria-hidden="true"
       >
         <g>
@@ -23,11 +23,8 @@ export default function ForestBorder() {
             const isAlt = i % 2 === 0;
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
-            // 0 center → 1 edges
-            const distance =
-              Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
+            const distance = Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
 
-            // MUCH stronger growth (your request)
             const scale = 0.65 + Math.pow(distance, 1.8) * 1.35;
 
             const variation =
@@ -44,7 +41,7 @@ export default function ForestBorder() {
                   translate(${-cx}, ${-GROUND_Y})
                 `}
               >
-                {/* Top */}
+                {/* Top tier */}
                 <polygon
                   points={`
                     ${cx},${GROUND_Y - 120}
@@ -57,7 +54,7 @@ export default function ForestBorder() {
                   fill={color}
                 />
 
-                {/* Middle */}
+                {/* Middle tier */}
                 <polygon
                   points={`
                     ${cx},${GROUND_Y - 90}
@@ -70,7 +67,7 @@ export default function ForestBorder() {
                   fill={color}
                 />
 
-                {/* Bottom */}
+                {/* Bottom tier */}
                 <polygon
                   points={`
                     ${cx},${GROUND_Y - 60}
@@ -87,12 +84,11 @@ export default function ForestBorder() {
           })}
         </g>
 
-        {/* Ground */}
         <rect
           x="0"
           y={GROUND_Y}
           width={VIEWBOX_WIDTH}
-          height="50"
+          height="70"
           fill="#0F3D3E"
         />
       </svg>
