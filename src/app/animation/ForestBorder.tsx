@@ -5,6 +5,10 @@ export default function ForestBorder() {
   const GROUND_Y = 190;
   const CENTER_INDEX = (TREE_COUNT - 1) / 2;
 
+  const riverCenterX = VIEWBOX_WIDTH / 2;
+  const riverTopWidth = 74;
+  const riverBottomWidth = 122;
+
   return (
     <div className="pointer-events-none w-full select-none">
       <svg
@@ -13,10 +17,14 @@ export default function ForestBorder() {
         className="h-full w-full"
         aria-hidden="true"
       >
+        {/* Trees */}
         <g>
           {Array.from({ length: TREE_COUNT }).map((_, i) => {
             const spacing = VIEWBOX_WIDTH / (TREE_COUNT - 1);
             const cx = i * spacing;
+
+            // Leave a subtle opening around the river so it feels intentional.
+            if (Math.abs(cx - riverCenterX) < 54) return null;
 
             const isAlt = i % 2 === 0;
             const color = isAlt ? "#0F3D3E" : "#145C54";
@@ -78,6 +86,7 @@ export default function ForestBorder() {
           })}
         </g>
 
+        {/* Ground */}
         <rect
           x="0"
           y={GROUND_Y}
@@ -85,6 +94,58 @@ export default function ForestBorder() {
           height="50"
           fill="#0F3D3E"
         />
+
+        {/* River cut through center */}
+        <polygon
+          points={`
+            ${riverCenterX - riverTopWidth / 2},${GROUND_Y - 4}
+            ${riverCenterX + riverTopWidth / 2},${GROUND_Y - 4}
+            ${riverCenterX + riverBottomWidth / 2},${VIEWBOX_HEIGHT}
+            ${riverCenterX - riverBottomWidth / 2},${VIEWBOX_HEIGHT}
+          `}
+          fill="#3BA7D8"
+        />
+
+        {/* River highlight */}
+        <polygon
+          points={`
+            ${riverCenterX - 8},${GROUND_Y + 2}
+            ${riverCenterX + 12},${GROUND_Y + 2}
+            ${riverCenterX + 26},${VIEWBOX_HEIGHT}
+            ${riverCenterX - 22},${VIEWBOX_HEIGHT}
+          `}
+          fill="#5FC3EA"
+          opacity="0.85"
+        />
+
+        {/* River banks */}
+        <polygon
+          points={`
+            ${riverCenterX - riverTopWidth / 2 - 18},${GROUND_Y}
+            ${riverCenterX - riverTopWidth / 2},${GROUND_Y}
+            ${riverCenterX - riverBottomWidth / 2},${VIEWBOX_HEIGHT}
+            ${riverCenterX - riverBottomWidth / 2 - 22},${VIEWBOX_HEIGHT}
+          `}
+          fill="#0B2F30"
+          opacity="0.92"
+        />
+
+        <polygon
+          points={`
+            ${riverCenterX + riverTopWidth / 2},${GROUND_Y}
+            ${riverCenterX + riverTopWidth / 2 + 18},${GROUND_Y}
+            ${riverCenterX + riverBottomWidth / 2 + 22},${VIEWBOX_HEIGHT}
+            ${riverCenterX + riverBottomWidth / 2},${VIEWBOX_HEIGHT}
+          `}
+          fill="#0B2F30"
+          opacity="0.92"
+        />
+
+        {/* Simple rocks */}
+        <ellipse cx={riverCenterX - 62} cy={GROUND_Y + 18} rx="10" ry="5" fill="#E8C978" opacity="0.65" />
+        <ellipse cx={riverCenterX + 58} cy={GROUND_Y + 22} rx="12" ry="6" fill="#E8C978" opacity="0.55" />
+        <ellipse cx={riverCenterX - 42} cy={GROUND_Y + 42} rx="8" ry="4" fill="#F8F5E7" opacity="0.55" />
+        <ellipse cx={riverCenterX + 44} cy={GROUND_Y + 54} rx="9" ry="4" fill="#F8F5E7" opacity="0.45" />
       </svg>
     </div>
   );
