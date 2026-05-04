@@ -1,5 +1,5 @@
 "use client";
-
+import ForestBorder from "./ForestBorder";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -199,6 +199,14 @@ export default function AnimationPage() {
       aria-labelledby="giftperch-animation-title"
     >
       <style>{`
+      .gp-animation-forest {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1; /* BELOW animation, ABOVE background */
+        pointer-events: none;
+      }
         .gp-animation-shell + .gp-global-footer {
           display: none;
         }
@@ -646,6 +654,9 @@ export default function AnimationPage() {
           </div>
         ) : null}
       </section>
+      <div className="gp-animation-forest">
+        <ForestBorder />
+      </div>
     </main>
   );
 }
