@@ -161,7 +161,7 @@ export default function ForestBorder() {
               ${riverCenterX - 57},${GROUND_Y + 14}
               ${riverCenterX - 68},${GROUND_Y + 15}
             `}
-            fill="#E8C978"
+            fill="#757575"
             opacity="0.75"
           />
 
@@ -184,7 +184,7 @@ export default function ForestBorder() {
               ${riverCenterX - 84},${GROUND_Y + 33}
               ${riverCenterX - 94},${GROUND_Y + 34}
             `}
-            fill="#F8F5E7"
+            fill="#757575"
             opacity="0.7"
           />
         </g>
@@ -210,7 +210,7 @@ export default function ForestBorder() {
               ${riverCenterX + 70},${GROUND_Y + 15}
               ${riverCenterX + 60},${GROUND_Y + 16}
             `}
-            fill="#E8C978"
+            fill="#757575"
             opacity="0.75"
           />
 
@@ -233,7 +233,7 @@ export default function ForestBorder() {
               ${riverCenterX + 98},${GROUND_Y + 38}
               ${riverCenterX + 88},${GROUND_Y + 39}
             `}
-            fill="#F8F5E7"
+            fill="#757575"
             opacity="0.7"
           />
         </g>
