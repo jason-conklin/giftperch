@@ -1,5 +1,4 @@
 "use client";
-import ForestBorder from "./ForestBorder";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
@@ -43,18 +42,6 @@ const LANDING_FRAMES: AnimationFrame[] = [
 const LANDING_FRAME_DURATIONS = [
   120, 120, 120, 120, 165, 175, 180, 240, 255,
 ];
-const LANDING_TOTAL_MS = LANDING_FRAME_DURATIONS.reduce(
-  (total, duration) => total + duration,
-  0,
-);
-const TEXT_REVEAL_FINISH_MS = 840;
-const INTRO_TOTAL_MS =
-  FLY_OUT_MS +
-  OFFSCREEN_PAUSE_MS +
-  RETURN_MS +
-  LANDING_TOTAL_MS +
-  LOGO_HOLD_MS +
-  TEXT_REVEAL_FINISH_MS;
 
 const FINAL_LOGO_SRC = "/giftperch-home-page-no-bg.png";
 
@@ -180,10 +167,15 @@ export default function AnimationPage() {
       );
     });
 
+    const totalLandingDuration = LANDING_FRAME_DURATIONS.reduce(
+      (total, duration) => total + duration,
+      0,
+    );
+
     timers.push(
       window.setTimeout(
         () => setPhase("final"),
-        LANDING_TOTAL_MS + LOGO_HOLD_MS,
+        totalLandingDuration + LOGO_HOLD_MS,
       ),
     );
 
@@ -202,29 +194,10 @@ export default function AnimationPage() {
   return (
     <main
       className="gp-animation-shell"
-      data-phase={phase}
       data-reduced-motion={prefersReducedMotion ? "true" : "false"}
       aria-labelledby="giftperch-animation-title"
     >
       <style>{`
-        .gp-animation-forest {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 300px;     /* stable visual height */
-          overflow: hidden;
-          z-index: 1;
-          pointer-events: none;
-        }
-        .gp-animation-forest svg {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: block;
-        }
         .gp-animation-shell + .gp-global-footer {
           display: none;
         }
@@ -264,65 +237,8 @@ export default function AnimationPage() {
             linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 32%, rgba(15, 61, 62, 0.05));
         }
 
-        .gp-animation-sky {
-          position: fixed;
-          inset: 0;
-          z-index: 0;
-          overflow: hidden;
-          pointer-events: none;
-          isolation: isolate;
-          background:
-            radial-gradient(circle at 78% 78%, rgba(232, 201, 120, 0.09), transparent 28%),
-            linear-gradient(180deg, #ffffff 0%, #fffaf0 46%, var(--gp-animation-cream) 100%);
-        }
-
-        .gp-animation-sky::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: 0;
-          pointer-events: none;
-          opacity: 0.08;
-          background:
-            radial-gradient(circle at 77% 28%, rgba(232, 201, 120, 0.26), transparent 31%),
-            radial-gradient(circle at 82% 58%, rgba(217, 193, 137, 0.16), transparent 38%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(232, 201, 120, 0.13));
-          animation: gpSkyWarm ${INTRO_TOTAL_MS}ms cubic-bezier(0.18, 0.72, 0.2, 1) both;
-        }
-
-        .gp-animation-sky::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          pointer-events: none;
-          background:
-            linear-gradient(90deg, rgba(15, 61, 62, 0.07), transparent 28%, transparent 72%, rgba(15, 61, 62, 0.08)),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 32%, rgba(15, 61, 62, 0.05));
-        }
-
-        .gp-animation-sun {
-          position: absolute;
-          right: clamp(12%, 18vw, 24%);
-          bottom: -46px;
-          z-index: 1;
-          width: clamp(80px, 10vw, 150px);
-          aspect-ratio: 1;
-          border-radius: 999px;
-          opacity: 0.35;
-          background:
-            radial-gradient(circle at 34% 28%, #f4dc95 0%, #e8c978 44%, #d5aa49 100%);
-          box-shadow:
-            0 0 28px rgba(232, 201, 120, 0.28),
-            0 0 88px rgba(232, 201, 120, 0.18);
-          transform: translate3d(0, 0, 0) scale(0.92);
-          animation: gpSunRise ${INTRO_TOTAL_MS}ms cubic-bezier(0.18, 0.72, 0.2, 1) both;
-          will-change: transform, opacity;
-        }
-
         .gp-animation-stage {
           position: relative;
-          z-index: 2;
           width: min(94vw, 1120px);
           height: clamp(320px, 68svh, 620px);
           flex: none;
@@ -553,40 +469,6 @@ export default function AnimationPage() {
           }
         }
 
-        @keyframes gpSunRise {
-          0% {
-            opacity: 0.35;
-            transform: translate3d(0, 0, 0) scale(0.92);
-          }
-          46% {
-            opacity: 0.52;
-            transform: translate3d(0, -27svh, 0) scale(0.96);
-          }
-          82% {
-            opacity: 0.78;
-            transform: translate3d(0, -60svh, 0) scale(0.99);
-          }
-          100% {
-            opacity: 0.88;
-            transform: translate3d(0, -66svh, 0) scale(1);
-          }
-        }
-
-        @keyframes gpSkyWarm {
-          0% {
-            opacity: 0.08;
-          }
-          48% {
-            opacity: 0.18;
-          }
-          82% {
-            opacity: 0.34;
-          }
-          100% {
-            opacity: 0.42;
-          }
-        }
-
         @media (max-width: 980px) {
           .gp-animation-shell {
             --gp-animation-mark-size: clamp(124px, 31vw, 260px);
@@ -606,10 +488,6 @@ export default function AnimationPage() {
 
           .gp-animation-wordmark-subtitle {
             font-size: 1.05rem;
-          }
-
-          .gp-animation-sun {
-            right: clamp(6%, 12vw, 18%);
           }
         }
 
@@ -647,12 +525,6 @@ export default function AnimationPage() {
             font-size: 0.66rem;
             font-weight: 800;
           }
-
-          .gp-animation-sun {
-            right: 6%;
-            bottom: -34px;
-            width: clamp(72px, 19vw, 108px);
-          }
         }
 
         @media (max-width: 380px) {
@@ -686,17 +558,6 @@ export default function AnimationPage() {
           transform: none;
         }
 
-        .gp-animation-shell[data-reduced-motion="true"] .gp-animation-sky::before {
-          animation: none;
-          opacity: 0.42;
-        }
-
-        .gp-animation-shell[data-reduced-motion="true"] .gp-animation-sun {
-          animation: none;
-          opacity: 0.88;
-          transform: translate3d(0, -66svh, 0) scale(1);
-        }
-
         @media (prefers-reduced-motion: reduce) {
           .gp-animation-shell *,
           .gp-animation-shell *::before,
@@ -708,10 +569,6 @@ export default function AnimationPage() {
           }
         }
       `}</style>
-
-      <div className="gp-animation-sky" aria-hidden="true">
-        <div className="gp-animation-sun" />
-      </div>
 
       <div className="gp-animation-preload" aria-hidden="true">
         <Image
@@ -788,9 +645,6 @@ export default function AnimationPage() {
           </div>
         ) : null}
       </section>
-      <div className="gp-animation-forest">
-        <ForestBorder />
-      </div>
     </main>
   );
 }
