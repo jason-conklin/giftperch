@@ -204,7 +204,7 @@ export default function AnimationPage() {
           bottom: 0;
           left: 0;
           width: 100%;
-          height: 180px;     /* stable visual height */
+          height: 220px;     /* stable visual height */
           overflow: hidden;
           z-index: 1;
           pointer-events: none;
