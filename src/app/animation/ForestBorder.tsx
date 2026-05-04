@@ -2,83 +2,76 @@ export default function ForestBorder() {
   const TREE_COUNT = 25;
   const TREE_WIDTH = 48;
   const VIEWBOX_WIDTH = 1200;
-  const VIEWBOX_HEIGHT = 240;
-
+  const VIEWBOX_HEIGHT = 210;
   const CENTER_INDEX = (TREE_COUNT - 1) / 2;
-
-  const GROUND_Y = 190;
-  const BASE_OFFSET = 40; // pushes everything down safely
+  const GROUND_Y = 170;
 
   return (
     <div className="w-full pointer-events-none select-none">
       <svg
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         preserveAspectRatio="none"
-        className="h-[150px] w-full"
+        className="h-[145px] w-full"
         aria-hidden="true"
       >
         <g>
           {Array.from({ length: TREE_COUNT }).map((_, i) => {
             const x = i * TREE_WIDTH;
             const cx = x + TREE_WIDTH / 2;
-
             const isAlt = i % 2 === 0;
             const color = isAlt ? "#0F3D3E" : "#145C54";
 
-            // 0 center → 1 edges
-            const distance =
+            // 0 at center, 1 at edges
+            const distanceFromCenter =
               Math.abs(i - CENTER_INDEX) / CENTER_INDEX;
 
-            // Strong edge growth (this is what you want visually)
-            const heightBoost = Math.pow(distance, 1.6) * 85;
+            // Much stronger height difference, but safe because GROUND_Y is lower.
+            const heightBoost = Math.pow(distanceFromCenter, 1.45) * 72;
 
             const variation =
               i % 4 === 0 ? 4 : i % 4 === 1 ? -2 : i % 4 === 2 ? 2 : -1;
 
-            let topY = 60 - heightBoost + variation + BASE_OFFSET;
-            const midY = 95 - heightBoost * 0.65 + variation + BASE_OFFSET;
-            const botY = 125 - heightBoost * 0.35 + variation + BASE_OFFSET;
-
-            // clamp ONLY the one that needs it
-            topY = Math.max(8, topY);
+            const topY = 58 - heightBoost + variation;
+            const middleY = 88 - heightBoost * 0.66 + variation;
+            const bottomY = 116 - heightBoost * 0.36 + variation;
 
             return (
               <g key={i}>
-                {/* Top */}
+                {/* Top tier */}
                 <polygon
                   points={`
                     ${cx},${topY}
-                    ${cx - 14},${topY + 44}
-                    ${cx - 6},${topY + 40}
-                    ${cx},${topY + 54}
-                    ${cx + 6},${topY + 40}
-                    ${cx + 14},${topY + 44}
+                    ${cx - 15},${topY + 46}
+                    ${cx - 6},${topY + 42}
+                    ${cx},${topY + 56}
+                    ${cx + 6},${topY + 42}
+                    ${cx + 15},${topY + 46}
                   `}
                   fill={color}
                 />
 
-                {/* Middle */}
+                {/* Middle tier */}
                 <polygon
                   points={`
-                    ${cx},${midY}
-                    ${cx - 22},${midY + 52}
-                    ${cx - 10},${midY + 46}
-                    ${cx},${midY + 62}
-                    ${cx + 10},${midY + 46}
-                    ${cx + 22},${midY + 52}
+                    ${cx},${middleY}
+                    ${cx - 23},${middleY + 52}
+                    ${cx - 10},${middleY + 46}
+                    ${cx},${middleY + 62}
+                    ${cx + 10},${middleY + 46}
+                    ${cx + 23},${middleY + 52}
                   `}
                   fill={color}
                 />
 
-                {/* Bottom */}
+                {/* Bottom tier */}
                 <polygon
                   points={`
-                    ${cx},${botY}
-                    ${cx - 30},${GROUND_Y}
-                    ${cx - 12},${GROUND_Y - 8}
+                    ${cx},${bottomY}
+                    ${cx - 31},${GROUND_Y}
+                    ${cx - 13},${GROUND_Y - 8}
                     ${cx},${GROUND_Y + 10}
-                    ${cx + 12},${GROUND_Y - 8}
-                    ${cx + 30},${GROUND_Y}
+                    ${cx + 13},${GROUND_Y - 8}
+                    ${cx + 31},${GROUND_Y}
                   `}
                   fill={color}
                 />
@@ -87,7 +80,6 @@ export default function ForestBorder() {
           })}
         </g>
 
-        {/* Ground */}
         <rect
           x="0"
           y={GROUND_Y}
