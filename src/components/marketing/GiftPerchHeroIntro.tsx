@@ -235,19 +235,6 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           isolation: isolate;
         }
 
-        .gp-home-intro-stage::after {
-          content: "";
-          position: absolute;
-          left: 50%;
-          right: auto;
-          bottom: 5%;
-          width: 92%;
-          height: 1px;
-          transform: translateX(-50%);
-          background: linear-gradient(90deg, transparent, rgba(15, 61, 62, 0.12), transparent);
-          opacity: 0.7;
-        }
-
         .gp-home-intro-bird,
         .gp-home-intro-landing-stack {
           position: absolute;
