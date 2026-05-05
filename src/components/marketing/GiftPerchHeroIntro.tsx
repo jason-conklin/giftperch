@@ -15,7 +15,7 @@ type GiftPerchHeroIntroProps = {
   onComplete?: () => void;
 };
 
-const FLY_OUT_MS = 1450;
+const FLY_OUT_MS = 1220;
 const OFFSCREEN_PAUSE_MS = 260;
 const RETURN_MS = 1380;
 const LOGO_HOLD_MS = 420;
@@ -46,7 +46,7 @@ const LANDING_FRAMES: AnimationFrame[] = [
 ];
 
 const LANDING_FRAME_DURATIONS = [
-  120, 120, 120, 120, 165, 175, 180, 240, 255,
+  90, 90, 95, 95, 125, 135, 140, 190, 210,
 ];
 const LANDING_TOTAL_MS = LANDING_FRAME_DURATIONS.reduce(
   (total, duration) => total + duration,
