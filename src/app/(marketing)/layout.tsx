@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { label: "About", href: "/about" },
@@ -29,7 +29,44 @@ export default function MarketingLayout({
   const year = new Date().getFullYear();
   const pathname = usePathname();
   const isLandingPage = pathname === "/";
+  const [landingIntroComplete, setLandingIntroComplete] = useState(
+    !isLandingPage,
+  );
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    const timers: number[] = [];
+    const queueStateUpdate = (callback: () => void) => {
+      timers.push(window.setTimeout(callback, 0));
+    };
+
+    if (!isLandingPage) {
+      queueStateUpdate(() => setLandingIntroComplete(true));
+      return () => timers.forEach((timerId) => window.clearTimeout(timerId));
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleIntroComplete = () => setLandingIntroComplete(true);
+
+    if (reducedMotion.matches) {
+      queueStateUpdate(() => setLandingIntroComplete(true));
+      return () => timers.forEach((timerId) => window.clearTimeout(timerId));
+    }
+
+    queueStateUpdate(() => setLandingIntroComplete(false));
+    window.addEventListener(
+      "giftperch:landing-intro-complete",
+      handleIntroComplete,
+    );
+
+    return () => {
+      timers.forEach((timerId) => window.clearTimeout(timerId));
+      window.removeEventListener(
+        "giftperch:landing-intro-complete",
+        handleIntroComplete,
+      );
+    };
+  }, [isLandingPage, pathname]);
 
   const renderNavLink = (
     item: (typeof navItems)[number],
@@ -69,11 +106,58 @@ export default function MarketingLayout({
   };
 
   return (
-    <div className="gp-marketing-shell gp-marketing-bg-premium relative flex min-h-screen w-full flex-col text-gp-evergreen">
+    <div
+      className="gp-marketing-shell gp-marketing-bg-premium relative flex min-h-screen w-full flex-col text-gp-evergreen"
+      data-landing-intro={
+        isLandingPage
+          ? landingIntroComplete
+            ? "complete"
+            : "running"
+          : "none"
+      }
+    >
+      {isLandingPage ? (
+        <style>{`
+          .gp-marketing-shell[data-landing-intro="running"] .gp-landing-header {
+            opacity: 0;
+            transform: translateY(-110%);
+          }
+
+          .gp-marketing-shell[data-landing-intro="complete"] .gp-landing-header {
+            opacity: 1;
+            transform: translateY(0);
+            transition:
+              transform 700ms cubic-bezier(0.18, 0.72, 0.22, 1),
+              opacity 450ms ease;
+          }
+
+          .gp-marketing-shell[data-landing-intro="running"] .gp-marketing-landing-arc::before {
+            opacity: 0;
+            transform: translateY(-110%);
+          }
+
+          .gp-marketing-shell[data-landing-intro="complete"] .gp-marketing-landing-arc::before {
+            opacity: 1;
+            transform: translateY(0);
+            transition:
+              transform 760ms cubic-bezier(0.18, 0.72, 0.22, 1),
+              opacity 500ms ease;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .gp-marketing-shell[data-landing-intro] .gp-landing-header,
+            .gp-marketing-shell[data-landing-intro] .gp-marketing-landing-arc::before {
+              opacity: 1;
+              transform: none;
+              transition: none;
+            }
+          }
+        `}</style>
+      ) : null}
       <header
         className={`sticky top-0 z-40 ${
           isLandingPage
-            ? "pt-3"
+            ? "gp-landing-header pt-3"
             : "border-b border-gp-evergreen/30 bg-gp-evergreen pt-2"
         }`}
       >
