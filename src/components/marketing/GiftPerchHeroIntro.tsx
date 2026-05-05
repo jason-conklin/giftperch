@@ -18,8 +18,8 @@ type GiftPerchHeroIntroProps = {
 const FLY_OUT_MS = 1220;
 const OFFSCREEN_PAUSE_MS = 260;
 const RETURN_MS = 1380;
-const LOGO_HOLD_MS = 420;
-const FINAL_REVEAL_MS = 920;
+const LOGO_HOLD_MS = 240;
+const FINAL_REVEAL_MS = 760;
 
 const FLYING_FRAMES: AnimationFrame[] = [
   { src: "/giftperch_flying_animation1.PNG", width: 814, height: 814 },
@@ -356,7 +356,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
             -1px 1px 0 rgba(248, 245, 224, 0.95),
             1px 1px 0 rgba(248, 245, 224, 0.95),
             0 10px 20px rgba(15, 61, 62, 0.14);
-          animation-delay: 160ms;
+          animation-delay: 80ms;
         }
 
         .gp-home-intro-wordmark-rule {
@@ -365,7 +365,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           margin: clamp(0.46rem, 1.3vw, 1rem) 0;
           border-radius: 999px;
           background: linear-gradient(90deg, #d9c189, #e8c978);
-          animation-delay: 230ms;
+          animation-delay: 150ms;
         }
 
         .gp-home-intro-wordmark-subtitle {
@@ -380,7 +380,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           text-shadow:
             0 1px 0 rgba(255, 255, 255, 0.58),
             0 8px 16px rgba(114, 83, 18, 0.13);
-          animation-delay: 340ms;
+          animation-delay: 220ms;
         }
 
         .gp-home-intro-preload {

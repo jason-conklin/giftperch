@@ -766,23 +766,23 @@ export default function MarketingHome() {
         }
 
         .gp-landing-page[data-intro-complete="true"] [data-hero-reveal="cta"] {
-          transition-delay: 120ms;
+          transition-delay: 80ms;
         }
 
         .gp-landing-page[data-intro-complete="true"] [data-hero-reveal="divider"] {
-          transition-delay: 260ms;
+          transition-delay: 190ms;
         }
 
         .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(1) {
-          transition-delay: 380ms;
+          transition-delay: 280ms;
         }
 
         .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(2) {
-          transition-delay: 460ms;
+          transition-delay: 340ms;
         }
 
         .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(3) {
-          transition-delay: 540ms;
+          transition-delay: 400ms;
         }
 
         @media (prefers-reduced-motion: reduce) {
