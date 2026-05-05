@@ -680,7 +680,6 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 
 export default function MarketingHome() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [introComplete, setIntroComplete] = useState(false);
   const comparisonRows: ReadonlyArray<{
     icon: ComparisonIconKey;
     typical: string;
@@ -736,73 +735,13 @@ export default function MarketingHome() {
     },
     [],
   );
-  const handleHeroIntroComplete = useCallback(() => {
-    setIntroComplete(true);
-    window.dispatchEvent(new Event("giftperch:landing-intro-complete"));
-  }, []);
-
   return (
-    <div
-      className="gp-landing-page space-y-12"
-      data-intro-complete={introComplete ? "true" : "false"}
-    >
-      <style>{`
-        .gp-landing-page [data-hero-reveal],
-        .gp-landing-page [data-trust-item] {
-          opacity: 0;
-          transform: translateY(14px);
-          pointer-events: none;
-          transition:
-            opacity 520ms ease,
-            transform 560ms cubic-bezier(0.18, 0.72, 0.22, 1);
-          will-change: opacity, transform;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-hero-reveal],
-        .gp-landing-page[data-intro-complete="true"] [data-trust-item] {
-          opacity: 1;
-          transform: translateY(0);
-          pointer-events: auto;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-hero-reveal="cta"] {
-          transition-delay: 80ms;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-hero-reveal="divider"] {
-          transition-delay: 190ms;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(1) {
-          transition-delay: 280ms;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(2) {
-          transition-delay: 340ms;
-        }
-
-        .gp-landing-page[data-intro-complete="true"] [data-trust-item]:nth-child(3) {
-          transition-delay: 400ms;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .gp-landing-page [data-hero-reveal],
-          .gp-landing-page [data-trust-item] {
-            opacity: 1;
-            transform: none;
-            pointer-events: auto;
-            transition: none;
-          }
-        }
-      `}</style>
+    <div className="gp-landing-page space-y-12">
       <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
         <div className="mx-auto w-full">
           <div className="flex w-full flex-col items-center text-center">
-            <GiftPerchHeroIntro onComplete={handleHeroIntroComplete} />
-            <div
-              className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10"
-              data-hero-reveal="cta"
-            >
+            <GiftPerchHeroIntro />
+            <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
               <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link
                   href="/auth/signup"
@@ -818,29 +757,17 @@ export default function MarketingHome() {
                   See how it works
                 </a>
               </div>
-              <div
-                className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10"
-                data-hero-reveal="divider"
-              />
+              <div className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10" />
               <div className="gp-landing-hero-trust mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
-                <span
-                  className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm"
-                  data-trust-item
-                >
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
                   One-time setup
                 </span>
-                <span
-                  className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm"
-                  data-trust-item
-                >
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <BadgeCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
                   Completely free to use
                 </span>
-                <span
-                  className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm"
-                  data-trust-item
-                >
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
                   <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
                   Secure data storage
                 </span>
