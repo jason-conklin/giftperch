@@ -105,7 +105,10 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
   useEffect(() => {
     allImageSources.forEach((src) => {
       const image = new window.Image();
+      image.decoding = "sync";
+      image.loading = "eager";
       image.src = src;
+      void image.decode?.().catch(() => undefined);
     });
   }, [allImageSources]);
 
@@ -207,7 +210,6 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
     phase === "return" ? RETRIEVE_FRAMES : FLYING_FRAMES;
   const currentFlightFrame =
     flightFrames[flightFrameIndex % flightFrames.length];
-  const currentLandingFrame = LANDING_FRAMES[landingFrameIndex];
   const showFlyingBird = phase === "fly-out" || phase === "return";
   const showLanding = phase === "landing";
   const showFinal = phase === "final";
@@ -247,7 +249,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         }
 
         .gp-home-intro-bird,
-        .gp-home-intro-landing {
+        .gp-home-intro-landing-stack {
           position: absolute;
           left: 50%;
           top: 50%;
@@ -278,9 +280,27 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           animation-duration: 430ms;
         }
 
-        .gp-home-intro-landing {
+        .gp-home-intro-landing-stack {
           z-index: 3;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        .gp-home-intro-landing-stack--active {
+          opacity: 1;
           animation: gpHeroLandingWeight 1.55s cubic-bezier(0.2, 0.72, 0.2, 1) both;
+        }
+
+        .gp-home-intro-landing-frame {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+
+        .gp-home-intro-landing-frame--active {
+          opacity: 1;
         }
 
         .gp-home-intro-final-composition {
@@ -477,7 +497,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           }
 
           .gp-home-intro-bird,
-          .gp-home-intro-landing,
+          .gp-home-intro-landing-stack,
           .gp-home-intro-final-mark {
             height: 120%;
           }
@@ -531,21 +551,34 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           </div>
         ) : null}
 
-        {showLanding ? (
-          <div className="gp-home-intro-landing" aria-hidden="true">
-            <Image
-              key={currentLandingFrame.src}
-              src={currentLandingFrame.src}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 44vw, 22rem"
-              className="object-contain"
-              priority
-              unoptimized
-              draggable={false}
-            />
-          </div>
-        ) : null}
+        <div
+          className={`gp-home-intro-landing-stack ${
+            showLanding ? "gp-home-intro-landing-stack--active" : ""
+          }`}
+          aria-hidden="true"
+        >
+          {LANDING_FRAMES.map((frame, index) => (
+            <div
+              key={frame.src}
+              className={`gp-home-intro-landing-frame ${
+                showLanding && landingFrameIndex === index
+                  ? "gp-home-intro-landing-frame--active"
+                  : ""
+              }`}
+            >
+              <Image
+                src={frame.src}
+                alt=""
+                fill
+                sizes="(max-width: 640px) 44vw, 22rem"
+                className="object-contain"
+                priority
+                unoptimized
+                draggable={false}
+              />
+            </div>
+          ))}
+        </div>
 
         {showFinal ? (
           <div className="gp-home-intro-final-composition">
