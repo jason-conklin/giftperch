@@ -19,7 +19,7 @@ const FLY_OUT_MS = 1450;
 const OFFSCREEN_PAUSE_MS = 260;
 const RETURN_MS = 1380;
 const LOGO_HOLD_MS = 420;
-const FINAL_SETTLE_MS = 360;
+const FINAL_REVEAL_MS = 920;
 
 const FLYING_FRAMES: AnimationFrame[] = [
   { src: "/giftperch_flying_animation1.PNG", width: 814, height: 814 },
@@ -121,7 +121,6 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
       queueStateUpdate(() => {
         setPhase("final");
         setLandingFrameIndex(LANDING_FRAMES.length - 1);
-        notifyComplete();
       });
       return () => timers.forEach((timerId) => window.clearTimeout(timerId));
     }
@@ -189,11 +188,19 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
 
     const finalStartMs = LANDING_TOTAL_MS + LOGO_HOLD_MS;
     timers.push(window.setTimeout(() => setPhase("final"), finalStartMs));
-    timers.push(
-      window.setTimeout(() => notifyComplete(), finalStartMs + FINAL_SETTLE_MS),
-    );
 
     return () => timers.forEach((timerId) => window.clearTimeout(timerId));
+  }, [phase, prefersReducedMotion]);
+
+  useEffect(() => {
+    if (phase !== "final") return;
+
+    const timerId = window.setTimeout(
+      () => notifyComplete(),
+      prefersReducedMotion ? 0 : FINAL_REVEAL_MS,
+    );
+
+    return () => window.clearTimeout(timerId);
   }, [notifyComplete, phase, prefersReducedMotion]);
 
   const flightFrames =
@@ -207,19 +214,18 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
 
   return (
     <div
-      className="gp-hero-intro"
+      className="gp-home-intro"
       data-phase={phase}
       data-reduced-motion={prefersReducedMotion ? "true" : "false"}
     >
       <style>{`
-        .gp-hero-intro {
-          --gp-hero-mark-center-x: 18.5%;
+        .gp-home-intro {
           width: 100%;
           display: flex;
           justify-content: center;
         }
 
-        .gp-hero-intro-stage {
+        .gp-home-intro-stage {
           position: relative;
           width: min(88vw, 62rem);
           aspect-ratio: 1375 / 389;
@@ -227,7 +233,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           isolation: isolate;
         }
 
-        .gp-hero-intro-stage::after {
+        .gp-home-intro-stage::after {
           content: "";
           position: absolute;
           left: 50%;
@@ -240,10 +246,10 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           opacity: 0.7;
         }
 
-        .gp-hero-intro-bird,
-        .gp-hero-intro-landing {
+        .gp-home-intro-bird,
+        .gp-home-intro-landing {
           position: absolute;
-          left: var(--gp-hero-mark-center-x);
+          left: 50%;
           top: 50%;
           z-index: 2;
           height: 108%;
@@ -252,15 +258,15 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           will-change: transform;
         }
 
-        .gp-hero-intro-bird--fly-out {
+        .gp-home-intro-bird--fly-out {
           animation: gpHeroFlyOut ${FLY_OUT_MS}ms linear both;
         }
 
-        .gp-hero-intro-bird--return {
+        .gp-home-intro-bird--return {
           animation: gpHeroReturn ${RETURN_MS}ms cubic-bezier(0.14, 0.72, 0.18, 1) both;
         }
 
-        .gp-hero-intro-bird-frame {
+        .gp-home-intro-bird-frame {
           position: absolute;
           inset: 0;
           animation: gpHeroWingBob 360ms ease-in-out infinite;
@@ -268,26 +274,96 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
           will-change: transform;
         }
 
-        .gp-hero-intro-bird--return .gp-hero-intro-bird-frame {
+        .gp-home-intro-bird--return .gp-home-intro-bird-frame {
           animation-duration: 430ms;
         }
 
-        .gp-hero-intro-landing {
+        .gp-home-intro-landing {
           z-index: 3;
           animation: gpHeroLandingWeight 1.55s cubic-bezier(0.2, 0.72, 0.2, 1) both;
         }
 
-        .gp-hero-intro-final {
+        .gp-home-intro-final-composition {
           position: absolute;
           inset: 0;
           z-index: 4;
-          opacity: 0;
-          transform: scale(0.985);
-          filter: drop-shadow(0 18px 28px rgba(15, 61, 62, 0.14));
-          animation: gpHeroFinalLock 560ms cubic-bezier(0.18, 0.78, 0.22, 1) both;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: clamp(0.55rem, 2.4vw, 1.8rem);
+          width: 100%;
+          margin: 0 auto;
         }
 
-        .gp-hero-intro-preload {
+        .gp-home-intro-final-mark {
+          position: relative;
+          height: 108%;
+          aspect-ratio: 1;
+          flex: 0 0 auto;
+          opacity: 0;
+          filter: drop-shadow(0 18px 28px rgba(15, 61, 62, 0.14));
+          animation: gpHeroFinalLock 560ms cubic-bezier(0.18, 0.78, 0.22, 1) both;
+          will-change: transform, opacity;
+        }
+
+        .gp-home-intro-wordmark {
+          min-width: 0;
+          max-width: min(62%, 620px);
+          flex: 0 1 auto;
+          text-align: left;
+        }
+
+        .gp-home-intro-wordmark-title,
+        .gp-home-intro-wordmark-rule,
+        .gp-home-intro-wordmark-subtitle {
+          opacity: 0;
+          transform: translateX(20px);
+          animation: gpHeroTextReveal 500ms cubic-bezier(0.18, 0.72, 0.22, 1) forwards;
+        }
+
+        .gp-home-intro-wordmark-title {
+          margin: 0;
+          color: #0f3d3e;
+          font-family: Georgia, Cambria, "Times New Roman", serif;
+          font-size: clamp(2.55rem, 8.5vw, 6.15rem);
+          font-weight: 700;
+          letter-spacing: 0;
+          line-height: 0.86;
+          white-space: nowrap;
+          text-shadow:
+            -1px -1px 0 rgba(248, 245, 224, 0.95),
+            1px -1px 0 rgba(248, 245, 224, 0.95),
+            -1px 1px 0 rgba(248, 245, 224, 0.95),
+            1px 1px 0 rgba(248, 245, 224, 0.95),
+            0 10px 20px rgba(15, 61, 62, 0.14);
+          animation-delay: 160ms;
+        }
+
+        .gp-home-intro-wordmark-rule {
+          width: 100%;
+          height: clamp(2px, 0.35vw, 4px);
+          margin: clamp(0.46rem, 1.3vw, 1rem) 0;
+          border-radius: 999px;
+          background: linear-gradient(90deg, #d9c189, #e8c978);
+          animation-delay: 230ms;
+        }
+
+        .gp-home-intro-wordmark-subtitle {
+          margin: 0;
+          color: #caa546;
+          font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+          font-size: clamp(0.66rem, 1.9vw, 1.38rem);
+          font-weight: 800;
+          letter-spacing: 0;
+          line-height: 1.1;
+          white-space: nowrap;
+          text-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.58),
+            0 8px 16px rgba(114, 83, 18, 0.13);
+          animation-delay: 340ms;
+        }
+
+        .gp-home-intro-preload {
           position: absolute;
           width: 1px;
           height: 1px;
@@ -297,29 +373,29 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
 
         @keyframes gpHeroFlyOut {
           0% {
-            transform: translate(-50%, -50%) translate3d(240%, -3%, 0) rotate(-1deg) scale(0.9);
+            transform: translate(-50%, -50%) translate3d(122%, -3%, 0) rotate(-1deg) scale(0.9);
           }
           28% {
-            transform: translate(-50%, -50%) translate3d(118%, -15%, 0) rotate(-3deg) scale(0.9);
+            transform: translate(-50%, -50%) translate3d(0, -15%, 0) rotate(-3deg) scale(0.9);
           }
           58% {
-            transform: translate(-50%, -50%) translate3d(-38%, -4%, 0) rotate(-4deg) scale(0.86);
+            transform: translate(-50%, -50%) translate3d(-138%, -4%, 0) rotate(-4deg) scale(0.86);
           }
           100% {
-            transform: translate(-50%, -50%) translate3d(-185%, -9%, 0) rotate(-6deg) scale(0.82);
+            transform: translate(-50%, -50%) translate3d(-270%, -9%, 0) rotate(-6deg) scale(0.82);
           }
         }
 
         @keyframes gpHeroReturn {
           0% {
             opacity: 1;
-            transform: translate(-50%, -50%) translate3d(-185%, -22%, 0) rotate(5deg) scale(0.86);
+            transform: translate(-50%, -50%) translate3d(-270%, -22%, 0) rotate(5deg) scale(0.86);
           }
           42% {
-            transform: translate(-50%, -50%) translate3d(-92%, -15%, 0) rotate(2deg) scale(0.9);
+            transform: translate(-50%, -50%) translate3d(-150%, -15%, 0) rotate(2deg) scale(0.9);
           }
           76% {
-            transform: translate(-50%, -50%) translate3d(-18%, -5%, 0) rotate(0.6deg) scale(0.93);
+            transform: translate(-50%, -50%) translate3d(-40%, -5%, 0) rotate(0.6deg) scale(0.93);
           }
           100% {
             opacity: 1;
@@ -358,41 +434,60 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         @keyframes gpHeroFinalLock {
           0% {
             opacity: 0.95;
-            transform: scale(0.985);
+            transform: translateX(clamp(7rem, 20vw, 17rem)) scale(0.98);
           }
           100% {
             opacity: 1;
-            transform: scale(1);
+            transform: translateX(0) scale(1);
           }
         }
 
-        .gp-hero-intro[data-reduced-motion="true"] .gp-hero-intro-final {
+        @keyframes gpHeroTextReveal {
+          0% {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .gp-home-intro[data-reduced-motion="true"] .gp-home-intro-final-mark,
+        .gp-home-intro[data-reduced-motion="true"] .gp-home-intro-wordmark-title,
+        .gp-home-intro[data-reduced-motion="true"] .gp-home-intro-wordmark-rule,
+        .gp-home-intro[data-reduced-motion="true"] .gp-home-intro-wordmark-subtitle {
           animation: none;
           opacity: 1;
           transform: none;
         }
 
         @media (max-width: 980px) {
-          .gp-hero-intro-stage {
+          .gp-home-intro-stage {
             width: min(84vw, 56rem);
           }
         }
 
         @media (max-width: 640px) {
-          .gp-hero-intro-stage {
+          .gp-home-intro-stage {
             width: min(92vw, 36rem);
           }
 
-          .gp-hero-intro-bird,
-          .gp-hero-intro-landing {
+          .gp-home-intro-bird,
+          .gp-home-intro-landing,
+          .gp-home-intro-final-mark {
             height: 120%;
+          }
+
+          .gp-home-intro-wordmark {
+            max-width: 62vw;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .gp-hero-intro *,
-          .gp-hero-intro *::before,
-          .gp-hero-intro *::after {
+          .gp-home-intro *,
+          .gp-home-intro *::before,
+          .gp-home-intro *::after {
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
@@ -400,7 +495,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         }
       `}</style>
 
-      <div className="gp-hero-intro-preload" aria-hidden="true">
+      <div className="gp-home-intro-preload" aria-hidden="true">
         <Image
           src={FINAL_LOGO_SRC}
           alt=""
@@ -411,14 +506,14 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         />
       </div>
 
-      <div className="gp-hero-intro-stage" aria-label="GiftPerch brand intro">
+      <div className="gp-home-intro-stage" aria-label="GiftPerch brand intro">
         {showFlyingBird ? (
           <div
             key={phase}
-            className={`gp-hero-intro-bird gp-hero-intro-bird--${phase}`}
+            className={`gp-home-intro-bird gp-home-intro-bird--${phase}`}
             aria-hidden="true"
           >
-            <div className="gp-hero-intro-bird-frame">
+            <div className="gp-home-intro-bird-frame">
               <Image
                 src={currentFlightFrame.src}
                 alt=""
@@ -434,7 +529,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         ) : null}
 
         {showLanding ? (
-          <div className="gp-hero-intro-landing" aria-hidden="true">
+          <div className="gp-home-intro-landing" aria-hidden="true">
             <Image
               key={currentLandingFrame.src}
               src={currentLandingFrame.src}
@@ -450,17 +545,26 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
         ) : null}
 
         {showFinal ? (
-          <div className="gp-hero-intro-final">
-            <Image
-              src={FINAL_LOGO_SRC}
-              alt="GiftPerch AI-Powered Gifting Workspace"
-              fill
-              sizes="(max-width: 640px) 92vw, (max-width: 980px) 84vw, 62rem"
-              className="object-contain"
-              priority
-              unoptimized
-              draggable={false}
-            />
+          <div className="gp-home-intro-final-composition">
+            <div className="gp-home-intro-final-mark" aria-hidden="true">
+              <Image
+                src="/intro-frame9.png"
+                alt=""
+                fill
+                sizes="(max-width: 640px) 44vw, 22rem"
+                className="object-contain"
+                priority
+                unoptimized
+                draggable={false}
+              />
+            </div>
+            <div className="gp-home-intro-wordmark">
+              <h1 className="gp-home-intro-wordmark-title">GiftPerch</h1>
+              <div className="gp-home-intro-wordmark-rule" aria-hidden="true" />
+              <p className="gp-home-intro-wordmark-subtitle">
+                AI-Powered Gifting Workspace
+              </p>
+            </div>
           </div>
         ) : null}
       </div>
