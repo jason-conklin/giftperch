@@ -373,16 +373,19 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
 
         @keyframes gpHeroFlyOut {
           0% {
-            transform: translate(-50%, -50%) translate3d(122%, -3%, 0) rotate(-1deg) scale(0.9);
+            transform: translate(-50%, -50%) translate3d(22vw, -3%, 0) rotate(-1deg) scale(0.9);
           }
-          28% {
-            transform: translate(-50%, -50%) translate3d(0, -15%, 0) rotate(-3deg) scale(0.9);
+          30% {
+            transform: translate(-50%, -50%) translate3d(3vw, -15%, 0) rotate(-3deg) scale(0.9);
           }
-          58% {
-            transform: translate(-50%, -50%) translate3d(-138%, -4%, 0) rotate(-4deg) scale(0.86);
+          64% {
+            transform: translate(-50%, -50%) translate3d(-27vw, -4%, 0) rotate(-4deg) scale(0.86);
+          }
+          86% {
+            transform: translate(-50%, -50%) translate3d(calc(-50vw + 55%), -7%, 0) rotate(-5deg) scale(0.84);
           }
           100% {
-            transform: translate(-50%, -50%) translate3d(-270%, -9%, 0) rotate(-6deg) scale(0.82);
+            transform: translate(-50%, -50%) translate3d(calc(-50vw - 85%), -9%, 0) rotate(-6deg) scale(0.82);
           }
         }
 
