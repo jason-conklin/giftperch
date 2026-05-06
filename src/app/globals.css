@@ -284,10 +284,10 @@ body {
 
 @media (max-width: 640px) {
   .gp-home-landing-arc.gp-marketing-landing-arc::before {
-    top: -225px;
-    height: 335px;
-    border-bottom-left-radius: 96% 56%;
-    border-bottom-right-radius: 96% 56%;
+    top: -205px;
+    height: 245px;
+    border-bottom-left-radius: 70% 24%;
+    border-bottom-right-radius: 70% 24%;
   }
 }
 
