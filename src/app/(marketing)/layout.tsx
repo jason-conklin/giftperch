@@ -174,7 +174,9 @@ export default function MarketingLayout({
       </header>
       <div
         className={`gp-marketing-bottom-fade flex flex-1 flex-col ${
-          isLandingPage ? "gp-marketing-landing-arc gp-hero-arc" : ""
+          isLandingPage
+            ? "gp-marketing-landing-arc gp-home-landing-arc gp-hero-arc"
+            : ""
         }`}
       >
         <main
