@@ -16,68 +16,59 @@ async function countTable(
   return count ?? 0;
 }
 
-async function countUsersAdmin(
+async function listUsersAdmin(
   supabase: ReturnType<typeof getSupabaseServerClient>,
 ) {
-  // Try direct auth.users count first
-  try {
-    const { count, error } = await supabase
-      .schema("auth")
-      .from("users")
-      .select("*", { count: "exact", head: true });
-    if (!error && typeof count === "number") {
-      return count;
-    }
-  } catch {
-    // fall back
-  }
-
-  // Fallback: paginate GoTrue admin users
   let page = 1;
   const perPage = 1000;
-  let total = 0;
+  const users: { email?: string; created_at?: string }[] = [];
   let hasMore = true;
+
   while (hasMore) {
     const { data, error } = await supabase.auth.admin.listUsers({
       page,
       perPage,
     });
     if (error) throw error;
-    const count = data?.users?.length ?? 0;
-    total += count;
-    hasMore = count >= perPage;
+    const pageUsers = data?.users ?? [];
+    users.push(...pageUsers);
+    hasMore = pageUsers.length >= perPage;
     if (hasMore) {
       page += 1;
     }
   }
-  return total;
+
+  const registeredUserEmails = users
+    .filter((user) => user.email)
+    .sort((a, b) => {
+      const aTime = a.created_at ? Date.parse(a.created_at) : 0;
+      const bTime = b.created_at ? Date.parse(b.created_at) : 0;
+      return bTime - aTime;
+    })
+    .map((user) => user.email as string);
+
+  return {
+    users: users.length,
+    registeredUserEmails,
+  };
 }
 
 export async function GET(request: Request) {
   const supabase = getSupabaseServerClient();
   const authHeader = request.headers.get("authorization") || "";
   const token = authHeader.replace(/Bearer\s+/i, "").trim();
-  const headerEmail = request.headers.get("x-user-email")?.trim().toLowerCase();
 
-  let resolvedEmail: string | null = null;
-
-  // Prefer explicit header for the two known admins
-  if (headerEmail && ADMIN_EMAILS.has(headerEmail)) {
-    resolvedEmail = headerEmail;
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Otherwise try bearer token
-  if (!resolvedEmail && token) {
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-    if (!userError && user?.email) {
-      resolvedEmail = user.email.toLowerCase();
-    }
-  }
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser(token);
+  const resolvedEmail = user?.email?.toLowerCase() ?? null;
 
-  if (!resolvedEmail) {
+  if (userError || !resolvedEmail) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -86,7 +77,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const users = await countUsersAdmin(supabase);
+    const { users, registeredUserEmails } = await listUsersAdmin(supabase);
     const recipientProfiles = await countTable(supabase, "recipient_profiles");
     const wishlistItems = await countTable(supabase, "wishlist_items");
 
@@ -103,6 +94,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       users,
+      registeredUserEmails,
       recipientProfiles,
       giftSuggestions: giftSuggestions ?? 0,
       wishlistItems,

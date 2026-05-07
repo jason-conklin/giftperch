@@ -7,6 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type Metrics = {
   users: number;
+  registeredUserEmails: string[];
   recipientProfiles: number;
   giftSuggestions: number;
   wishlistItems: number;
@@ -37,7 +38,6 @@ export function AdminMetrics() {
           credentials: "include",
           headers: {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            "x-user-email": user.email.toLowerCase(),
           },
         });
 
@@ -85,14 +85,54 @@ export function AdminMetrics() {
       ) : error ? (
         <p className="text-sm text-red-700">{error}</p>
       ) : metrics ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Stat label="Registered users" value={metrics.users} />
-          <Stat label="Recipient profiles" value={metrics.recipientProfiles} />
-          <Stat label="Gift suggestions Runs" value={metrics.giftSuggestions} />
-          <Stat label="Wishlist items" value={metrics.wishlistItems} />
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Stat label="Registered users" value={metrics.users} />
+            <Stat label="Recipient profiles" value={metrics.recipientProfiles} />
+            <Stat label="Gift suggestions Runs" value={metrics.giftSuggestions} />
+            <Stat label="Wishlist items" value={metrics.wishlistItems} />
+          </div>
+          <RegisteredUserEmails emails={metrics.registeredUserEmails} />
         </div>
       ) : null}
     </section>
+  );
+}
+
+function RegisteredUserEmails({ emails }: { emails: string[] }) {
+  return (
+    <div className="rounded-2xl border border-gp-evergreen/10 bg-white/80 p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
+            Registered user emails
+          </p>
+          <p className="text-[11px] text-gp-evergreen/60">
+            Newest signups appear first.
+          </p>
+        </div>
+        <span className="rounded-full bg-gp-cream px-3 py-1 text-xs font-semibold text-gp-evergreen">
+          {emails.length}
+        </span>
+      </div>
+
+      {emails.length ? (
+        <ul className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1">
+          {emails.map((email, index) => (
+            <li
+              key={`${email}-${index}`}
+              className="break-all rounded-xl border border-gp-evergreen/10 bg-gp-cream/70 px-3 py-2 text-sm text-gp-evergreen"
+            >
+              {email}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-gp-evergreen/70">
+          No registered user emails found.
+        </p>
+      )}
+    </div>
   );
 }
 
