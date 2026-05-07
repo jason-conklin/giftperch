@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 
 type RecipientSummary = {
@@ -50,7 +51,8 @@ type OccasionType =
   | "mothersday"
   | "fathersday"
   | "newyears"
-  | "thanksgiving";
+  | "thanksgiving"
+  | "halloween";
 
 const parseDateOnly = (value: string | null | undefined): Date | null => {
   if (!value) return null;
@@ -73,11 +75,6 @@ const parseDateOnly = (value: string | null | undefined): Date | null => {
   }
   return new Date(year, month, day);
 };
-
-const seasonalEvents = [
-  { id: "valentines", month: 1, day: 14, label: "Valentine's Day" },
-  { id: "christmas", month: 11, day: 25, label: "Christmas Day" },
-] as const;
 
 const formatFullDate = (date: Date) =>
   date.toLocaleDateString(undefined, {
@@ -112,6 +109,7 @@ const getOccasionType = (name: string): OccasionType => {
   if (normalized.includes("father")) return "fathersday";
   if (normalized.includes("new year")) return "newyears";
   if (normalized.includes("thanksgiving")) return "thanksgiving";
+  if (normalized.includes("halloween")) return "halloween";
   return "gift";
 };
 
@@ -127,6 +125,7 @@ const getOccasionIcon = (type: OccasionType) => {
     fathersday: { src: "/icons/occasions/icon-occasion-fathersday.png", alt: "Father's Day" },
     newyears: { src: "/icons/occasions/icon-occasion-newyears.png", alt: "New Year's" },
     thanksgiving: { src: "/icons/occasions/icon-occasion-thanksgiving.png", alt: "Thanksgiving" },
+    halloween: { src: "/icons/occasions/icon-occasion-halloween.png", alt: "Halloween" },
   };
   return map[type] ?? map.gift;
 };
@@ -151,6 +150,8 @@ const getOccasionMoodText = (type: OccasionType): string => {
       return "New year, new gifts to share!";
     case "thanksgiving":
       return "Gathering soon – thoughtful thanks go a long way.";
+    case "halloween":
+      return "A playful seasonal moment is coming up.";
     default:
       return "A special occasion is coming up – plan something thoughtful.";
   }
@@ -251,7 +252,6 @@ export function DashboardHighlights() {
   }, [recipients.length, recipientsHover]);
 
   const nextOccasion = useMemo(() => {
-    if (!recipients.length) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const upcoming: UpcomingEvent[] = [];
@@ -291,17 +291,19 @@ export function DashboardHighlights() {
       });
     });
 
-    const year = today.getFullYear();
-    seasonalEvents.forEach((season) => {
-      const eventDate = new Date(year, season.month, season.day);
-      if (eventDate < today) {
-        eventDate.setFullYear(year + 1);
-      }
-      upcoming.push({
-        id: `seasonal-${season.id}-${eventDate.getFullYear()}`,
-        date: eventDate,
-        label: season.label,
-        type: "seasonal",
+    const years = [today.getFullYear(), today.getFullYear() + 1];
+    years.forEach((year) => {
+      getDefaultUsHolidaysForYear(year).forEach((holiday) => {
+        const eventDate = new Date(holiday.date);
+        eventDate.setHours(0, 0, 0, 0);
+        if (eventDate < today) return;
+
+        upcoming.push({
+          id: holiday.id,
+          date: eventDate,
+          label: holiday.title,
+          type: "seasonal",
+        });
       });
     });
 
