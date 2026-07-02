@@ -265,7 +265,7 @@ const SAMPLE_PROFILES = [
 
 function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
   return (
-    <div className="h-full rounded-2xl border border-gp-evergreen/20 bg-gp-cream/60 p-4">
+    <div className="h-full rounded-[16px] border border-gp-evergreen/20 bg-gp-cream/60 p-4">
       <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
         Sample profile
       </p>
@@ -326,7 +326,7 @@ function ProductTourLoaderSlice() {
   }, []);
 
   return (
-    <div className="flex h-full min-h-[170px] items-center rounded-2xl border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
+    <div className="flex h-full min-h-[170px] items-center rounded-[16px] border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
       <div className="w-full">
         <PerchPalLoader
           variant="inline"
@@ -348,7 +348,7 @@ function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
   const remaining = Math.max(0, DEMO_TOTAL_IDEAS - DEMO_VISIBLE_IDEAS);
 
   return (
-    <div className="h-full rounded-2xl border border-gp-evergreen/15 bg-white p-4">
+    <div className="h-full rounded-[16px] border border-gp-evergreen/15 bg-white p-4">
       <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
         {SAMPLE_PROFILES[activeIndex].ideasLabel}
       </p>
@@ -510,7 +510,7 @@ function ProductTourTimeline({
               type="button"
               onClick={() => onSelectStep(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`group relative flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
+              className={`group relative flex w-full items-start gap-3 rounded-[16px] border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
                 isActive
                   ? "border-gp-gold/50 bg-white/95 shadow-sm"
                   : "border-gp-evergreen/15 bg-white/90 hover:border-gp-gold/35 hover:bg-white/95"
@@ -612,7 +612,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   }, []);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] lg:items-stretch lg:gap-8">
+    <div className="grid gap-8 lg:grid-cols-[minmax(340px,0.42fr)_minmax(0,0.58fr)] lg:items-stretch lg:gap-12 xl:grid-cols-[minmax(390px,0.45fr)_minmax(0,0.55fr)] xl:gap-16">
       <div className="space-y-3 lg:flex lg:h-full lg:flex-col">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gp-evergreen/55">
           Step-by-step timeline
@@ -628,7 +628,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div
-          className="gp-card p-5 sm:p-6"
+          className="rounded-[18px] border border-gp-evergreen/15 bg-white/95 p-5 shadow-sm sm:p-6 xl:p-7"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -645,7 +645,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 
           <div className="mt-4 space-y-3">
             <div
-              className={`rounded-2xl transition-all duration-300 ${
+              className={`rounded-[16px] transition-all duration-300 ${
                 activeStep === 0
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
                   : ""
@@ -654,7 +654,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               <ProductTourProfileSlice activeIndex={activeIndex} />
             </div>
             <div
-              className={`rounded-2xl transition-all duration-300 ${
+              className={`rounded-[16px] transition-all duration-300 ${
                 activeStep === 1
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
                   : ""
@@ -663,7 +663,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               <ProductTourLoaderSlice />
             </div>
             <div
-              className={`rounded-2xl transition-all duration-300 ${
+              className={`rounded-[16px] transition-all duration-300 ${
                 activeStep === 2
                   ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
                   : ""
@@ -736,187 +736,205 @@ export default function MarketingHome() {
     [],
   );
   return (
-    <div className="gp-landing-page space-y-12">
-      <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
-        <div className="mx-auto w-full">
-          <div className="flex w-full flex-col items-center text-center">
-            <GiftPerchHeroIntro />
-            <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
-              <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                <Link
-                  href="/auth/signup"
-                  className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
-                >
-                  Start your gifting workspace
-                </Link>
-                <a
-                  href="#product-tour"
-                  onClick={handleProductTourLinkClick}
-                  className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
-                >
-                  See how it works
-                </a>
+    <div className="gp-landing-page">
+      <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-6">
+        <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
+          <div className="mx-auto w-full">
+            <div className="flex w-full flex-col items-center text-center">
+              <GiftPerchHeroIntro />
+              <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
+                <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                  <Link
+                    href="/auth/signup"
+                    className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
+                  >
+                    Start your gifting workspace
+                  </Link>
+                  <a
+                    href="#product-tour"
+                    onClick={handleProductTourLinkClick}
+                    className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
+                  >
+                    See how it works
+                  </a>
+                </div>
+                <div className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10" />
+                <div className="gp-landing-hero-trust mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                    <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                    One-time setup
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                    Completely free to use
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
+                    <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
+                    Secure data storage
+                  </span>
+                </div>
               </div>
-              <div className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10" />
-              <div className="gp-landing-hero-trust mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                  <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                  One-time setup
-                </span>
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                  <BadgeCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                  Completely free to use
-                </span>
-                <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                  <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                  Secure data storage
-                </span>
-              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section
+        id="product-tour"
+        className="gp-landing-section gp-landing-section--product scroll-mt-28"
+      >
+        <div className="gp-landing-section-inner gp-landing-section-inner--wide">
+          <div className="mb-8 sm:mb-10">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+              Product tour
+            </p>
+            <h2 className="text-2xl font-semibold text-gp-evergreen">
+              How GiftPerch works
+            </h2>
+          </div>
+          <LandingSampleProfiles steps={workflowSteps} />
+        </div>
+      </section>
+
+      <section className="gp-landing-section gp-landing-section--comparison">
+        <div className="gp-landing-section-inner">
+          <div className="mb-8 max-w-3xl sm:mb-10">
+            <h2 className="text-2xl font-semibold text-gp-evergreen">Why GiftPerch is different</h2>
+            <p className="mt-1 text-sm text-gp-evergreen/75">
+              Powered by memory and context — not guesswork.
+            </p>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2 lg:gap-8">
+            <article className="rounded-[18px] border border-gp-evergreen/15 bg-gp-cream/55 p-6 shadow-sm sm:p-7">
+              <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators:</h3>
+              <ul className="mt-5 space-y-4">
+                {comparisonRows.map((row) => (
+                  <li key={`typical-${row.typical}`} className="flex items-start gap-3 text-sm text-gp-evergreen/70">
+                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 text-red-600">
+                      <ComparisonXIcon />
+                    </span>
+                    <span>{row.typical}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+            <article className="rounded-[18px] border border-gp-gold/40 bg-white p-6 shadow-sm sm:p-7">
+              <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch offers:</h3>
+              <ul className="mt-5 space-y-4">
+                {comparisonRows.map((row) => (
+                  <li key={`giftperch-${row.giftperch}`} className="flex items-start gap-3 text-sm text-gp-evergreen/85">
+                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
+                      <ComparisonBulletIcon icon={row.icon} />
+                    </span>
+                    <span>{row.giftperch}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="homepage-faq-title"
+        className="gp-landing-section gp-landing-section--faq"
+      >
+        <div className="gp-landing-section-inner">
+          <div className="grid gap-10 lg:grid-cols-[minmax(17rem,0.34fr)_minmax(0,0.66fr)] lg:items-start lg:gap-14">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
+                FAQ
+              </p>
+              <h2 id="homepage-faq-title" className="mt-2 text-2xl font-semibold text-gp-evergreen">
+                Questions, answered clearly
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-gp-evergreen/75">
+                Everything you need to know before you start organizing smarter, more personal gifts.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {faqs.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={faq.question}
+                    className={`rounded-[16px] border px-4 py-5 shadow-sm transition-colors duration-200 sm:px-5 ${
+                      isOpen
+                        ? "border-gp-gold/35 bg-white"
+                        : "border-gp-evergreen/10 bg-white/60 hover:bg-white/85"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${index}`}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                    >
+                      <span className="text-base font-semibold text-gp-evergreen">
+                        {faq.question}
+                      </span>
+                      <span
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-gp-evergreen transition-colors duration-200 ${
+                          isOpen
+                            ? "border-gp-gold/35 bg-gp-gold/20"
+                            : "border-gp-evergreen/20 bg-white/70"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {isOpen ? (
+                          <Minus className="h-4 w-4" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </span>
+                    </button>
+                    <div
+                      className={`grid overflow-hidden transition-all duration-250 ease-out ${
+                        isOpen
+                          ? "mt-4 grid-rows-[1fr] opacity-100"
+                          : "mt-0 grid-rows-[0fr] opacity-0"
+                      }`}
+                    >
+                      <p
+                        id={`faq-answer-${index}`}
+                        className="min-h-0 overflow-hidden pr-9 text-sm leading-relaxed text-gp-evergreen/80"
+                      >
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      <section id="product-tour" className="space-y-5 scroll-mt-28">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-            Product tour
-          </p>
-          <h2 className="text-2xl font-semibold text-gp-evergreen">
-            How GiftPerch works
+      <section className="gp-landing-section gp-landing-section--final-cta">
+        <div className="gp-landing-section-inner gp-landing-section-inner--cta text-center">
+          <h2 className="text-2xl font-semibold text-gp-cream">
+            Start your gifting workspace today
           </h2>
-        </div>
-        <LandingSampleProfiles steps={workflowSteps} />
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-semibold text-gp-evergreen">Why GiftPerch is different</h2>
-          <p className="mt-1 text-sm text-gp-evergreen/75">
-            Powered by memory and context — not guesswork.
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gp-cream/80">
+            Organize every recipient once, then let PerchPal help with better ideas
+            all year.
           </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <article className="gp-card-soft border-gp-evergreen/15 p-5">
-            <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators:</h3>
-            <ul className="mt-4 space-y-3">
-              {comparisonRows.map((row) => (
-                <li key={`typical-${row.typical}`} className="flex items-start gap-3 text-sm text-gp-evergreen/70">
-                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 text-red-600">
-                    <ComparisonXIcon />
-                  </span>
-                  <span>{row.typical}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-          <article className="gp-card-soft border-gp-gold/40 bg-white/70 p-5">
-            <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch offers:</h3>
-            <ul className="mt-4 space-y-3">
-              {comparisonRows.map((row) => (
-                <li key={`giftperch-${row.giftperch}`} className="flex items-start gap-3 text-sm text-gp-evergreen/85">
-                  <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
-                    <ComparisonBulletIcon icon={row.icon} />
-                  </span>
-                  <span>{row.giftperch}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section aria-labelledby="homepage-faq-title" className="space-y-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-            FAQ
-          </p>
-          <h2 id="homepage-faq-title" className="text-2xl font-semibold text-gp-evergreen">
-            Questions, answered clearly
-          </h2>
-          <p className="mt-1 text-sm text-gp-evergreen/75">
-            Everything you need to know before you start organizing smarter, more personal gifts.
-          </p>
-        </div>
-        <div className="gp-card space-y-2 p-2">
-          {faqs.map((faq, index) => {
-            const isOpen = openFaqIndex === index;
-            return (
-              <div
-                key={faq.question}
-                className={`rounded-2xl border px-4 py-5 transition-colors duration-200 ${
-                  isOpen
-                    ? "border-gp-gold/35 bg-gp-cream/55"
-                    : "border-transparent bg-transparent hover:bg-white/55"
-                }`}
-              >
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
-                  aria-expanded={isOpen}
-                  aria-controls={`faq-answer-${index}`}
-                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                >
-                  <span className="text-base font-semibold text-gp-evergreen">
-                    {faq.question}
-                  </span>
-                  <span
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-full border text-gp-evergreen transition-colors duration-200 ${
-                      isOpen
-                        ? "border-gp-gold/35 bg-gp-gold/20"
-                        : "border-gp-evergreen/20 bg-white/70"
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {isOpen ? (
-                      <Minus className="h-4 w-4" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                  </span>
-                </button>
-                <div
-                  className={`grid overflow-hidden transition-all duration-250 ease-out ${
-                    isOpen
-                      ? "mt-4 grid-rows-[1fr] opacity-100"
-                      : "mt-0 grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <p
-                    id={`faq-answer-${index}`}
-                    className="min-h-0 overflow-hidden pr-9 text-sm leading-relaxed text-gp-evergreen/80"
-                  >
-                    {faq.answer}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-gp-gold/50 bg-gp-gold/20 p-6 text-center sm:p-8">
-        <h2 className="text-2xl font-semibold text-gp-evergreen">
-          Start your gifting workspace today
-        </h2>
-        <p className="mt-2 text-sm text-gp-evergreen/80">
-          Organize every recipient once, then let PerchPal help with better ideas
-          all year.
-        </p>
-        <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link
-            href="/auth/signup"
-            className="gp-btn gp-btn--primary gp-btn--lg px-7"
-          >
-            Start your gifting workspace
-          </Link>
-          <a
-            href="#product-tour"
-            onClick={handleProductTourLinkClick}
-            className="gp-btn gp-btn--secondary gp-btn--lg px-7"
-          >
-            See how it works
-          </a>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/auth/signup"
+              className="gp-btn gp-btn--gold gp-btn--lg px-7"
+            >
+              Start your gifting workspace
+            </Link>
+            <a
+              href="#product-tour"
+              onClick={handleProductTourLinkClick}
+              className="gp-btn gp-btn--secondary gp-btn--lg px-7"
+            >
+              See how it works
+            </a>
+          </div>
         </div>
       </section>
     </div>

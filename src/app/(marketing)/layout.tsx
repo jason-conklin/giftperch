@@ -181,12 +181,28 @@ export default function MarketingLayout({
       >
         <main
           id="gp-main-content"
-          className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"
+          className={
+            isLandingPage
+              ? "w-full flex-1"
+              : "mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 lg:px-6"
+          }
         >
           {children}
         </main>
-        <footer className="bg-transparent px-4 pb-8 sm:px-6 lg:px-6">
-          <div className="mx-auto w-full max-w-4xl space-y-2 rounded-3xl border border-gp-evergreen/12 bg-white/42 px-5 py-5 text-center text-sm text-gp-evergreen/70 backdrop-blur-sm">
+        <footer
+          className={
+            isLandingPage
+              ? "bg-[#fbf8ef] px-4 py-12 sm:px-6 lg:px-8"
+              : "bg-transparent px-4 pb-8 sm:px-6 lg:px-6"
+          }
+        >
+          <div
+            className={
+              isLandingPage
+                ? "mx-auto flex w-full max-w-6xl flex-col items-center gap-3 text-center text-sm text-gp-evergreen/70"
+                : "mx-auto w-full max-w-4xl space-y-2 rounded-3xl border border-gp-evergreen/12 bg-white/42 px-5 py-5 text-center text-sm text-gp-evergreen/70 backdrop-blur-sm"
+            }
+          >
             <p>
               © {year} GiftPerch. Built by{" "}
               <Link
