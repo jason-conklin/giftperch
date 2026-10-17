@@ -419,7 +419,7 @@ function SavedIdeaItem({
               PRESET_AVATAR_OPTIONS.find(
                 (opt) =>
                   opt.key === recipientMap[idea.recipient_id]?.avatar_icon,
-              )?.image || "/gift_placeholder_img.png"
+              )?.image || "/giftperch_logo_only.png"
             }
             alt={idea.recipient_name}
             width={40}

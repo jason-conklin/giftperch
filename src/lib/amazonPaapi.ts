@@ -94,7 +94,7 @@ const MOCK_PRODUCTS: AmazonProduct[] = [
   {
     asin: "MOCK-COFFEE-BOX",
     title: "",
-    imageUrl: "/gift_placeholder_img.png",
+    imageUrl: "/icons/previews/preview-gift-box.png",
     detailPageUrl: null,
     priceDisplay: "Amazon.com",
     currency: "USD",
