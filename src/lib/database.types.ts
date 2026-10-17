@@ -63,6 +63,7 @@ export interface Database {
           estimated_price_min: number | null;
           id: string;
           image_url: string | null;
+          product_match: Json | null;
           product_url: string | null;
           rationale: string | null;
           recipient_id: string;
@@ -77,6 +78,7 @@ export interface Database {
           estimated_price_min?: number | null;
           id?: string;
           image_url?: string | null;
+          product_match?: Json | null;
           product_url?: string | null;
           rationale?: string | null;
           recipient_id: string;
@@ -91,6 +93,7 @@ export interface Database {
           estimated_price_min?: number | null;
           id?: string;
           image_url?: string | null;
+          product_match?: Json | null;
           product_url?: string | null;
           rationale?: string | null;
           recipient_id?: string;

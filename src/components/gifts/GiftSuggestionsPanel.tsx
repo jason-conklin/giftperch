@@ -11,6 +11,13 @@ import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
 import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
+import {
+  AFFILIATE_DISCLOSURE,
+  AFFILIATE_LINK_REL,
+  AFFILIATE_SHOPPING_BUTTON_CLASS,
+  getMatchedProductPresentation,
+  type ProductMatch,
+} from "@/lib/affiliateProduct";
 
 type AvatarIconKey =
   | "babyboy"
@@ -108,6 +115,7 @@ export type GiftSuggestion = {
   why_it_fits: string;
   suggested_url?: string | null;
   image_url?: string | null;
+  productMatch?: ProductMatch | null;
   amazonProduct?: {
     asin: string;
     title: string;
@@ -224,8 +232,11 @@ function GiftSuggestionCard({
   const isDisliked = isDislikedProp ?? feedback === "disliked";
   const previewIcon = getGiftPreviewIcon(suggestion);
   const amazon = suggestion.amazonProduct;
-
-  const headerHasAmazonImage = !!amazon?.imageUrl;
+  const matchedProduct = getMatchedProductPresentation(
+    suggestion.productMatch,
+    amazon,
+  );
+  const matchedImage = matchedProduct?.match.imageUrl ?? null;
 
   const basePriceDisplay = buildPriceDisplay(
     suggestion.price_min,
@@ -234,21 +245,23 @@ function GiftSuggestionCard({
     suggestion.price_guidance,
   );
   const priceDisplay =
-    amazon?.priceDisplay || basePriceDisplay || "Not specified";
+    matchedProduct?.priceDisplay || basePriceDisplay || "Not specified";
 
   const amazonHref = buildAmazonAffiliateUrl({
     productUrl: amazon?.detailPageUrl ?? undefined,
     title: suggestion.title,
   });
+  const shoppingHref = matchedProduct?.match.affiliateUrl ?? amazonHref;
+  const shoppingLabel = matchedProduct?.shoppingLabel ?? "View on Amazon";
 
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
       <div className="relative h-40 w-full overflow-hidden bg-gp-evergreen/5">
         <Image
-          src={headerHasAmazonImage ? (amazon?.imageUrl as string) : previewIcon}
+          src={matchedImage ?? previewIcon}
           alt={
-            headerHasAmazonImage
-              ? amazon?.title || suggestion.title || "Amazon product image"
+            matchedImage
+              ? matchedProduct?.match.productTitle || suggestion.title
               : suggestion.title
               ? `${suggestion.title} preview icon`
               : "Gift preview icon"
@@ -336,15 +349,27 @@ function GiftSuggestionCard({
           <p>{suggestion.why_it_fits}</p>
         </div>
 
-        <div className="flex justify-center">
+        {matchedProduct ? (
+          <div className="border-t border-gp-evergreen/10 pt-3 text-sm text-gp-evergreen/80">
+            <p className="font-semibold text-gp-evergreen">
+              {matchedProduct.match.productTitle}
+            </p>
+            <p className="mt-1 text-xs">{matchedProduct.merchantLabel}</p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col items-center gap-2">
           <a
-            href={amazonHref}
+            href={shoppingHref}
             target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="gp-btn gp-btn--gold gp-btn--md w-full max-w-xs text-sm"
+            rel={AFFILIATE_LINK_REL}
+            className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} w-full max-w-xs`}
           >
-            View on Amazon
+            {shoppingLabel}
           </a>
+          <p className="text-center text-[11px] text-gp-evergreen/60">
+            {AFFILIATE_DISCLOSURE}
+          </p>
         </div>
 
         {(() => {
@@ -613,6 +638,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           },
           body: JSON.stringify({
             suggestionId: suggestion.id,
+            suggestionRunId: activeRunId,
             title: suggestion.title,
             tier: suggestion.tier,
             rationale: suggestion.why_it_fits,
@@ -785,7 +811,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         setActiveRunId(next ? next.id : null);
         return remaining;
       });
-
       setShowDeleteConfirm(false);
     } catch (err) {
       console.error("Failed to delete run", err);
@@ -1598,7 +1623,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         <a
           href="https://www.amazon.com/?tag=giftperch-20"
           target="_blank"
-          rel="noopener noreferrer"
+          rel="sponsored noopener noreferrer"
           className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
         >
           Shop Amazon’s full catalog »

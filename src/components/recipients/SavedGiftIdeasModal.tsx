@@ -5,6 +5,16 @@ import type { GiftSuggestion } from "@/components/gifts/GiftSuggestionsPanel";
 import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import {
+  AFFILIATE_DISCLOSURE,
+  AFFILIATE_LINK_REL,
+  AFFILIATE_SHOPPING_BUTTON_CLASS,
+  getMatchedProductPresentation,
+  getSafeExternalUrl,
+  getSafeImageUrl,
+  isExpectedAmazonAffiliateUrl,
+  normalizeProductMatch,
+} from "@/lib/affiliateProduct";
 
 type SavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -18,6 +28,7 @@ type FeedbackIdea = {
   estimated_price_max: number | null;
   product_url: string | null;
   image_url: string | null;
+  product_match: unknown;
   preference: "liked" | "disliked";
 };
 type CombinedGift = SavedGiftIdea | FeedbackIdea;
@@ -128,6 +139,10 @@ export function SavedGiftIdeasModal({
       "product_url" in gift ? gift.product_url ?? null : null,
     image_url:
       "image_url" in gift ? gift.image_url ?? null : null,
+    productMatch:
+      "product_match" in gift
+        ? normalizeProductMatch(gift.product_match)
+        : null,
     initialSaved: true,
     initialPreference:
       "preference" in gift ? (gift.preference as "liked" | "disliked") : null,
@@ -634,7 +649,39 @@ export function SavedGiftIdeasModal({
                     "estimated_price_min" in gift ? gift.estimated_price_min : null;
                   const priceMax =
                     "estimated_price_max" in gift ? gift.estimated_price_max : null;
-                  const previewIcon = getGiftPreviewIcon(mapToSuggestionShape(gift));
+                  const suggestionShape = mapToSuggestionShape(gift);
+                  const previewIcon = getGiftPreviewIcon(suggestionShape);
+                  const matchedProduct = getMatchedProductPresentation(
+                    "product_match" in gift ? gift.product_match : null,
+                  );
+                  const savedImage =
+                    matchedProduct?.match.imageUrl ??
+                    ("image_url" in gift
+                      ? getSafeImageUrl(gift.image_url)
+                      : null);
+                  const legacyProductUrl =
+                    "product_url" in gift
+                      ? getSafeExternalUrl(gift.product_url)
+                      : null;
+                  const shoppingHref =
+                    matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
+                  const shoppingLabel = matchedProduct
+                    ? matchedProduct.shoppingLabel
+                    : legacyProductUrl &&
+                      isExpectedAmazonAffiliateUrl(legacyProductUrl)
+                    ? "View on Amazon"
+                    : "View product";
+                  const isAffiliateShoppingLink =
+                    Boolean(matchedProduct) ||
+                    Boolean(
+                      legacyProductUrl &&
+                        isExpectedAmazonAffiliateUrl(legacyProductUrl),
+                    );
+                  const displayedPrice =
+                    matchedProduct?.priceDisplay ??
+                    (priceMin !== null || priceMax !== null
+                      ? formatPriceRange(priceMin, priceMax)
+                      : null);
                   return (
                     <div
                       key={gift.id}
@@ -642,11 +689,15 @@ export function SavedGiftIdeasModal({
                     >
                       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
                         <Image
-                          src={previewIcon}
-                          alt={gift.title}
+                          src={savedImage ?? previewIcon}
+                          alt={
+                            savedImage
+                              ? matchedProduct?.match.productTitle ?? gift.title
+                              : gift.title
+                          }
                           fill
                           sizes="80px"
-                          className="object-cover"
+                          className={savedImage ? "object-contain" : "object-cover"}
                           unoptimized
                         />
                       </div>
@@ -678,21 +729,36 @@ export function SavedGiftIdeasModal({
                             {gift.rationale}
                           </p>
                         ) : null}
+                        {matchedProduct ? (
+                          <div className="pt-1 text-xs text-gp-evergreen/75">
+                            <p className="font-semibold text-gp-evergreen">
+                              {matchedProduct.match.productTitle}
+                            </p>
+                            <p>{matchedProduct.merchantLabel}</p>
+                          </div>
+                        ) : null}
                         <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
-                          {priceMin !== null || priceMax !== null ? (
-                            <span>{formatPriceRange(priceMin, priceMax)}</span>
-                          ) : null}
-                          {gift.product_url ? (
+                          {displayedPrice ? <span>{displayedPrice}</span> : null}
+                          {shoppingHref ? (
                             <a
-                              href={gift.product_url}
+                              href={shoppingHref}
                               target="_blank"
-                              rel="noreferrer"
-                              className="underline underline-offset-4 hover:text-gp-evergreen"
+                              rel={
+                                isAffiliateShoppingLink
+                                  ? AFFILIATE_LINK_REL
+                                  : "noopener noreferrer"
+                              }
+                              className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} mt-1`}
                             >
-                              Open on Amazon
+                              {shoppingLabel}
                             </a>
                           ) : null}
                         </div>
+                        {isAffiliateShoppingLink ? (
+                          <p className="pt-1 text-[11px] text-gp-evergreen/60">
+                            {AFFILIATE_DISCLOSURE}
+                          </p>
+                        ) : null}
                       </div>
 
                       <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">

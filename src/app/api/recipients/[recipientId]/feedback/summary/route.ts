@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import type { Database } from "@/lib/database.types";
+import { resolveProductMatch } from "@/lib/affiliateProduct";
 
 type SupabaseTypedClient = SupabaseClient<Database>;
 
@@ -96,6 +97,7 @@ export async function GET(
     estimated_price_max: number | null;
     product_url: string | null;
     image_url: string | null;
+    product_match: unknown;
     preference: "liked" | "disliked";
     created_at: string;
   };
@@ -107,6 +109,8 @@ export async function GET(
     price_max?: number | null;
     suggested_url?: string | null;
     image_url?: string | null;
+    productMatch?: unknown;
+    amazonProduct?: unknown;
   };
   type SuggestionRow = { id: string; suggestions: unknown };
   let suggestionMap: Record<string, SuggestionPayload[] | null> = {};
@@ -144,6 +148,10 @@ export async function GET(
       ] ??
       suggestionsArr?.[0] ??
       {};
+    const productMatch = resolveProductMatch(
+      suggestion.productMatch,
+      suggestion.amazonProduct,
+    );
     const idea = {
       id: row.id,
       suggestion_id: row.suggestion_id ?? "",
@@ -155,8 +163,9 @@ export async function GET(
         typeof suggestion.price_min === "number" ? suggestion.price_min : null,
       estimated_price_max:
         typeof suggestion.price_max === "number" ? suggestion.price_max : null,
-      product_url: suggestion.suggested_url ?? null,
-      image_url: suggestion.image_url ?? null,
+      product_url: productMatch?.affiliateUrl ?? suggestion.suggested_url ?? null,
+      image_url: productMatch?.imageUrl ?? suggestion.image_url ?? null,
+      product_match: productMatch,
       preference: row.preference,
       created_at: row.created_at,
     };

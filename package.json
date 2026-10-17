@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:awin": "tsx --test src/server/awin/*.test.ts",
+    "awin:import": "tsx scripts/import-awin-products.ts",
+    "awin:snapshot": "tsx scripts/download-awin-snapshot.ts",
+    "awin:import-snapshot": "tsx scripts/import-awin-products.ts --write",
+    "awin:verify": "tsx scripts/verify-awin-products.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.81.1",
@@ -26,6 +31,7 @@
     "eslint-config-next": "16.0.3",
     "supabase": "^2.58.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

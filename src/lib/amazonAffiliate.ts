@@ -1,3 +1,5 @@
+import { isExpectedAmazonAffiliateUrl } from "@/lib/affiliateProduct";
+
 const AFFILIATE_FALLBACK_TAG = "giftperch-20";
 let warnedMissingTag = false;
 
@@ -34,12 +36,9 @@ export function buildAmazonAffiliateUrl({
   const partnerTag = getAffiliateTag();
   const safeTitle = title?.trim() || "gift ideas";
 
-  const looksLikeAmazon =
-    typeof productUrl === "string" && productUrl.includes("amazon.");
-
-  if (looksLikeAmazon) {
+  if (isExpectedAmazonAffiliateUrl(productUrl)) {
     try {
-      const url = new URL(productUrl as string);
+      const url = new URL(productUrl);
       url.searchParams.set("tag", partnerTag);
       return url.toString();
     } catch {
