@@ -15,12 +15,14 @@ import {
   RECENT_GIFT_IMAGE_FALLBACK,
   type RecentGiftCardModel,
 } from "@/lib/dashboardRecentGifts";
+import {
+  getContinuousScrollDelta,
+  wrapContinuousScrollPosition,
+} from "@/lib/recentGiftCarouselMotion";
 import styles from "./RecentGiftIdeasCarousel.module.css";
 
-const AUTOPLAY_INTERVAL_MS = 5000;
-const MANUAL_IDLE_MS = 7000;
+const MANUAL_IDLE_MS = 1200;
 const DRAG_THRESHOLD_PX = 7;
-const MAX_DOTS = 5;
 
 type DragState = {
   pointerId: number;
@@ -118,16 +120,19 @@ export function RecentGiftIdeasCarousel({
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
   const draggedRef = useRef(false);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const normalizationTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const previousFrameTimeRef = useRef<number | null>(null);
   const [canScroll, setCanScroll] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [hasFocus, setHasFocus] = useState(false);
   const [manualPause, setManualPause] = useState(false);
   const [isDocumentHidden, setIsDocumentHidden] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const giftKey = gifts.map((gift) => gift.id).join("|");
 
   const repeatedGifts = canScroll ? [...gifts, ...gifts, ...gifts] : gifts;
 
@@ -140,48 +145,41 @@ export function RecentGiftIdeasCarousel({
       : [];
   }, []);
 
-  const nearestPhysicalIndex = useCallback(() => {
+  const loopMetrics = useCallback(() => {
     const viewport = viewportRef.current;
     const elements = cards();
-    if (!viewport || !elements.length) return 0;
-    return elements.reduce((nearest, element, index) => {
-      const nearestDistance = Math.abs(
-        elements[nearest].offsetLeft - viewport.scrollLeft,
-      );
-      const distance = Math.abs(element.offsetLeft - viewport.scrollLeft);
-      return distance < nearestDistance ? index : nearest;
-    }, 0);
-  }, [cards]);
-
-  const scrollToPhysical = useCallback(
-    (physicalIndex: number, behavior: ScrollBehavior = "smooth") => {
-      const viewport = viewportRef.current;
-      const elements = cards();
-      const target = elements[physicalIndex];
-      if (!viewport || !target) return;
-      viewport.scrollTo({ left: target.offsetLeft, behavior });
-    },
-    [cards],
-  );
-
-  const settle = useCallback(() => {
-    if (!gifts.length) return;
-    let physicalIndex = nearestPhysicalIndex();
-    const logicalIndex = physicalIndex % gifts.length;
-    setActiveIndex(logicalIndex);
-
-    if (canScroll && (physicalIndex < gifts.length || physicalIndex >= gifts.length * 2)) {
-      physicalIndex = gifts.length + logicalIndex;
-      scrollToPhysical(physicalIndex, "auto");
-    } else {
-      scrollToPhysical(physicalIndex, reducedMotion ? "auto" : "smooth");
+    const middleStart = elements[gifts.length]?.offsetLeft;
+    const nextStart = elements[gifts.length * 2]?.offsetLeft;
+    if (
+      !viewport ||
+      middleStart === undefined ||
+      nextStart === undefined ||
+      nextStart <= middleStart
+    ) {
+      return null;
     }
-  }, [canScroll, gifts.length, nearestPhysicalIndex, reducedMotion, scrollToPhysical]);
+    return { viewport, middleStart, setWidth: nextStart - middleStart };
+  }, [cards, gifts.length]);
+
+  const normalizeLoopPosition = useCallback(() => {
+    if (!canScroll || dragRef.current) return;
+    const metrics = loopMetrics();
+    if (!metrics) return;
+    const { viewport, middleStart, setWidth } = metrics;
+    viewport.scrollLeft = wrapContinuousScrollPosition(
+      viewport.scrollLeft,
+      middleStart,
+      setWidth,
+    );
+  }, [canScroll, loopMetrics]);
 
   const pauseTemporarily = useCallback(() => {
     setManualPause(true);
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = setTimeout(() => setManualPause(false), MANUAL_IDLE_MS);
+    idleTimerRef.current = setTimeout(
+      () => setManualPause(false),
+      MANUAL_IDLE_MS,
+    );
   }, []);
 
   useEffect(() => {
@@ -196,7 +194,8 @@ export function RecentGiftIdeasCarousel({
       }
       const track = firstCard.parentElement;
       const gap = track ? Number.parseFloat(getComputedStyle(track).gap) || 0 : 0;
-      const uniqueWidth = firstCard.offsetWidth * gifts.length + gap * (gifts.length - 1);
+      const uniqueWidth =
+        firstCard.offsetWidth * gifts.length + gap * (gifts.length - 1);
       setCanScroll(uniqueWidth > viewport.clientWidth + 1);
     };
 
@@ -208,9 +207,13 @@ export function RecentGiftIdeasCarousel({
 
   useLayoutEffect(() => {
     if (!canScroll || !gifts.length) return;
-    const frame = requestAnimationFrame(() => scrollToPhysical(gifts.length, "auto"));
+    const frame = requestAnimationFrame(() => {
+      const target = cards()[gifts.length];
+      const viewport = viewportRef.current;
+      if (target && viewport) viewport.scrollLeft = target.offsetLeft;
+    });
     return () => cancelAnimationFrame(frame);
-  }, [canScroll, gifts.length, scrollToPhysical]);
+  }, [canScroll, cards, giftKey, gifts.length]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -238,10 +241,26 @@ export function RecentGiftIdeasCarousel({
     ) {
       return;
     }
-    const timer = setInterval(() => {
-      scrollToPhysical(nearestPhysicalIndex() + 1);
-    }, AUTOPLAY_INTERVAL_MS);
-    return () => clearInterval(timer);
+    const animate = (timestamp: number) => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      const previous = previousFrameTimeRef.current;
+      previousFrameTimeRef.current = timestamp;
+      if (previous !== null) {
+        viewport.scrollLeft += getContinuousScrollDelta(timestamp - previous);
+        normalizeLoopPosition();
+      }
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+    previousFrameTimeRef.current = null;
+    animationFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      previousFrameTimeRef.current = null;
+    };
   }, [
     canScroll,
     hasFocus,
@@ -249,31 +268,46 @@ export function RecentGiftIdeasCarousel({
     isDragging,
     isHovered,
     manualPause,
-    nearestPhysicalIndex,
+    normalizeLoopPosition,
     reducedMotion,
-    scrollToPhysical,
   ]);
 
   useEffect(
     () => () => {
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (normalizationTimerRef.current) {
+        clearTimeout(normalizationTimerRef.current);
+      }
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     },
     [],
   );
 
-  const scheduleSettle = () => {
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = setTimeout(settle, 140);
-  };
-
   const move = (direction: -1 | 1) => {
+    const viewport = viewportRef.current;
+    const elements = cards();
+    if (!viewport || elements.length < 2) return;
+    const distance = elements[1].offsetLeft - elements[0].offsetLeft;
     pauseTemporarily();
-    scrollToPhysical(nearestPhysicalIndex() + direction);
+    viewport.scrollBy({
+      left: distance * direction,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+    if (normalizationTimerRef.current) {
+      clearTimeout(normalizationTimerRef.current);
+    }
+    normalizationTimerRef.current = setTimeout(normalizeLoopPosition, 500);
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if ((event.pointerType === "mouse" && event.button !== 0) || !canScroll) return;
+    if (
+      (event.pointerType === "mouse" && event.button !== 0) ||
+      !canScroll
+    ) {
+      return;
+    }
     dragRef.current = {
       pointerId: event.pointerId,
       pointerType: event.pointerType,
@@ -306,20 +340,8 @@ export function RecentGiftIdeasCarousel({
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    settle();
+    normalizeLoopPosition();
   };
-
-  const dotIndexes = Array.from(
-    { length: Math.min(gifts.length, MAX_DOTS) },
-    (_, offset) => {
-      if (gifts.length <= MAX_DOTS) return offset;
-      const start = Math.min(
-        Math.max(activeIndex - Math.floor(MAX_DOTS / 2), 0),
-        gifts.length - MAX_DOTS,
-      );
-      return start + offset;
-    },
-  );
 
   return (
     <div
@@ -336,7 +358,6 @@ export function RecentGiftIdeasCarousel({
       <div
         ref={viewportRef}
         className={`${styles.viewport} ${isDragging ? styles.viewportDragging : ""}`}
-        onScroll={scheduleSettle}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishPointerDrag}
@@ -350,7 +371,10 @@ export function RecentGiftIdeasCarousel({
       >
         <div className={styles.track}>
           {repeatedGifts.map((gift, physicalIndex) => {
-            const isClone = canScroll && (physicalIndex < gifts.length || physicalIndex >= gifts.length * 2);
+            const isClone =
+              canScroll &&
+              (physicalIndex < gifts.length ||
+                physicalIndex >= gifts.length * 2);
             return (
               <div
                 key={`${gift.id}-${physicalIndex}`}
@@ -384,25 +408,6 @@ export function RecentGiftIdeasCarousel({
           >
             <ChevronRight aria-hidden="true" className="h-5 w-5" />
           </button>
-          <div className="mt-4 flex justify-center gap-2" aria-label="Carousel position">
-            {dotIndexes.map((index) => (
-              <button
-                key={index}
-                type="button"
-                aria-label={`Show gift idea ${index + 1}`}
-                aria-current={index === activeIndex ? "true" : undefined}
-                onClick={() => {
-                  pauseTemporarily();
-                  scrollToPhysical(gifts.length + index);
-                }}
-                className={`h-2 rounded-full transition-[width,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold ${
-                  index === activeIndex
-                    ? "w-5 bg-gp-app-evergreen"
-                    : "w-2 bg-gp-app-evergreen/20 hover:bg-gp-app-evergreen/35"
-                }`}
-              />
-            ))}
-          </div>
         </>
       ) : null}
     </div>

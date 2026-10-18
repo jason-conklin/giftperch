@@ -8,10 +8,9 @@
   cursor: grab;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
+  scroll-behavior: auto;
   scrollbar-width: none;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
   user-select: none;
 }
 
@@ -21,8 +20,6 @@
 
 .viewportDragging {
   cursor: grabbing;
-  scroll-behavior: auto;
-  scroll-snap-type: none;
 }
 
 .track {
@@ -32,8 +29,6 @@
 
 .card {
   flex: 0 0 88%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 @container (min-width: 32rem) {
