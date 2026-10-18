@@ -436,6 +436,7 @@ export function DashboardHighlights() {
           label="Recipients"
           value={dashboardStats.recipientCount.toLocaleString()}
           detail="People in your gift list"
+          emphasizeDetail
           href="/recipients"
           action="Manage recipients"
         />
@@ -476,6 +477,7 @@ export function DashboardHighlights() {
           label="Saved gifts"
           value={dashboardStats.savedGiftCount.toLocaleString()}
           detail="Ideas you have saved"
+          emphasizeDetail
           href="/history"
           action="View saved gifts"
         />
@@ -493,6 +495,7 @@ export function DashboardHighlights() {
           label="Gift idea runs"
           value={dashboardStats.suggestionRunCount.toLocaleString()}
           detail="Personalized recommendation runs"
+          emphasizeDetail
           href="/history"
           action="View history"
         />
@@ -653,6 +656,7 @@ function SummaryCard({
   label,
   value,
   detail,
+  emphasizeDetail = false,
   badge,
   href,
   action,
@@ -661,6 +665,7 @@ function SummaryCard({
   label: string;
   value: string;
   detail: string;
+  emphasizeDetail?: boolean;
   badge?: string | null;
   href: string;
   action: string;
@@ -680,7 +685,11 @@ function SummaryCard({
           {value}
         </p>
         <div className="flex min-w-fit max-w-full flex-wrap items-center gap-2">
-          <p className="break-words text-xs leading-4 text-gp-app-muted">
+          <p
+            className={`break-words leading-4 text-gp-app-muted ${
+              emphasizeDetail ? "text-[13px]" : "text-xs"
+            }`}
+          >
             {detail}
           </p>
           {badge ? (
