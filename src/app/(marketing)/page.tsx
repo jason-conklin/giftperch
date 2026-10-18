@@ -239,7 +239,7 @@ const SAMPLE_PROFILES = [
     id: "maya",
     name: "Maya",
     relationship: "Sister",
-    avatarSrc: "/woman_icon.png",
+    avatarSrc: "/icons/avatars/maya.png",
     description:
       "Loves scented candles, nature hikes, and makeup. Appreciates small, meaningful things.",
     interests: ["Candles", "Hiking", "Beauty", "Outdoors"],
@@ -269,7 +269,7 @@ const SAMPLE_PROFILES = [
     id: "mocha",
     name: "Mocha",
     relationship: "Pet (Dog)",
-    avatarSrc: "/dog_icon.png",
+    avatarSrc: "/icons/avatars/mocha.png",
     description:
       "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
     interests: ["Puzzle toys", "Blankets", "Fetch", "Treats"],
@@ -299,7 +299,7 @@ const SAMPLE_PROFILES = [
     id: "dad",
     name: "Dad",
     relationship: "Father",
-    avatarSrc: "/man_icon.png",
+    avatarSrc: "/icons/avatars/dad.png",
     description:
       "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
     interests: ["Grilling", "Football", "Gadgets", "Game day"],
