@@ -1,4 +1,7 @@
-import { getSafeImageUrl } from "@/lib/affiliateProduct";
+import {
+  getMatchedProductPresentation,
+  getSafeImageUrl,
+} from "@/lib/affiliateProduct";
 
 export const GIFT_HISTORY_IMAGE_FALLBACK = "/gift-thumbnails/default-gift.svg";
 
@@ -24,6 +27,15 @@ export type GiftHistorySort =
   | "oldest"
   | "price-high"
   | "price-low";
+
+export type SavedIdeaSort = "recent" | "oldest" | "price-high" | "price-low";
+
+export type SavedIdeaPresentationInput = {
+  created_at: string;
+  estimated_price_min: number | null;
+  estimated_price_max: number | null;
+  product_match: unknown;
+};
 
 export type SortableGiftHistoryEntry = {
   purchased_at: string | null;
@@ -72,6 +84,47 @@ export function formatGiftHistoryPrice(price: number | null) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(price);
+}
+
+export function formatSavedIdeaPrice(idea: SavedIdeaPresentationInput) {
+  const matched = getMatchedProductPresentation(idea.product_match);
+  if (matched?.priceDisplay) return matched.priceDisplay;
+  const min = idea.estimated_price_min;
+  const max = idea.estimated_price_max;
+  if (min === null && max === null) return "Price not available";
+  if (min !== null && max !== null) {
+    return min === max
+      ? `$${min.toFixed(2)}`
+      : `$${min.toFixed(2)}–$${max.toFixed(2)}`;
+  }
+  return min !== null ? `From $${min.toFixed(2)}` : `Up to $${max?.toFixed(2)}`;
+}
+
+function savedIdeaSortPrice(idea: SavedIdeaPresentationInput) {
+  return (
+    getMatchedProductPresentation(idea.product_match)?.match.price ??
+    idea.estimated_price_min ??
+    idea.estimated_price_max
+  );
+}
+
+export function sortSavedIdeas<T extends SavedIdeaPresentationInput>(
+  ideas: T[],
+  sort: SavedIdeaSort,
+) {
+  return [...ideas].sort((a, b) => {
+    if (sort === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+    if (sort === "price-high" || sort === "price-low") {
+      const aPrice = savedIdeaSortPrice(a);
+      const bPrice = savedIdeaSortPrice(b);
+      if (aPrice === null) return 1;
+      if (bPrice === null) return -1;
+      return sort === "price-high" ? bPrice - aPrice : aPrice - bPrice;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 }
 
 function giftTimestamp(gift: SortableGiftHistoryEntry) {

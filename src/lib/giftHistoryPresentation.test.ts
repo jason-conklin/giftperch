@@ -3,9 +3,11 @@ import test from "node:test";
 import {
   GIFT_HISTORY_IMAGE_FALLBACK,
   formatGiftHistoryPrice,
+  formatSavedIdeaPrice,
   resolveGiftHistoryImage,
   resolveHistoryRecipientAvatar,
   sortGiftHistoryEntries,
+  sortSavedIdeas,
 } from "./giftHistoryPresentation";
 
 test("formats recorded and missing gift prices without inventing values", () => {
@@ -86,5 +88,80 @@ test("sorts gift history while keeping missing prices last", () => {
   assert.deepEqual(
     sortGiftHistoryEntries(gifts, "price-low").map((gift) => gift.id),
     ["old", "new", "missing"],
+  );
+});
+
+test("formats saved idea product prices, ranges, and missing values", () => {
+  const base = { created_at: "2026-10-18T12:00:00Z" };
+  assert.equal(
+    formatSavedIdeaPrice({
+      ...base,
+      estimated_price_min: null,
+      estimated_price_max: null,
+      product_match: {
+        provider: "amazon",
+        productId: "B000TEST",
+        merchant: "Amazon",
+        productTitle: "Test gift",
+        imageUrl: null,
+        price: 42,
+        currency: "USD",
+        affiliateUrl: "https://www.amazon.com/dp/B000TEST?tag=giftperch-20",
+      },
+    }),
+    "$42.00 USD",
+  );
+  assert.equal(
+    formatSavedIdeaPrice({
+      ...base,
+      estimated_price_min: 25,
+      estimated_price_max: 75,
+      product_match: null,
+    }),
+    "$25.00–$75.00",
+  );
+  assert.equal(
+    formatSavedIdeaPrice({
+      ...base,
+      estimated_price_min: null,
+      estimated_price_max: null,
+      product_match: null,
+    }),
+    "Price not available",
+  );
+});
+
+test("sorts saved ideas and keeps missing prices last", () => {
+  const ideas = [
+    {
+      id: "older",
+      created_at: "2026-01-01T12:00:00Z",
+      estimated_price_min: 20,
+      estimated_price_max: 30,
+      product_match: null,
+    },
+    {
+      id: "newer",
+      created_at: "2026-10-01T12:00:00Z",
+      estimated_price_min: 50,
+      estimated_price_max: 60,
+      product_match: null,
+    },
+    {
+      id: "missing",
+      created_at: "2026-05-01T12:00:00Z",
+      estimated_price_min: null,
+      estimated_price_max: null,
+      product_match: null,
+    },
+  ];
+
+  assert.deepEqual(
+    sortSavedIdeas(ideas, "recent").map((idea) => idea.id),
+    ["newer", "missing", "older"],
+  );
+  assert.deepEqual(
+    sortSavedIdeas(ideas, "price-low").map((idea) => idea.id),
+    ["older", "newer", "missing"],
   );
 });

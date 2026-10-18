@@ -16,32 +16,28 @@ import {
   Pencil,
   Plus,
   Search,
+  ShoppingBag,
   Trash2,
   Users,
 } from "lucide-react";
 import {
+  AFFILIATE_LINK_REL,
+  getMatchedProductPresentation,
+  getSafeExternalUrl,
+  getSafeImageUrl,
+  isExpectedAmazonAffiliateUrl,
+} from "@/lib/affiliateProduct";
+import {
   GIFT_HISTORY_IMAGE_FALLBACK,
   formatGiftHistoryPrice,
+  formatSavedIdeaPrice,
   resolveGiftHistoryImage,
   resolveHistoryRecipientAvatar,
   sortGiftHistoryEntries,
+  sortSavedIdeas,
   type GiftHistorySort,
+  type SavedIdeaSort,
 } from "@/lib/giftHistoryPresentation";
-
-const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
-  key: string;
-  label: string;
-  image: string;
-}> = [
-  { key: "babyboy", label: "Baby boy", image: "/babyboy_icon.png" },
-  { key: "babygirl", label: "Baby girl", image: "/babygirl_icon.png" },
-  { key: "boy", label: "Boy", image: "/boy_icon.png" },
-  { key: "girl", label: "Girl", image: "/girl_icon.png" },
-  { key: "man", label: "Man", image: "/man_icon.png" },
-  { key: "woman", label: "Woman", image: "/woman_icon.png" },
-  { key: "dog", label: "Dog", image: "/dog_icon.png" },
-  { key: "cat", label: "Cat", image: "/cat_icon.png" },
-];
 
 export type GiftHistoryEntry = {
   id: string;
@@ -81,25 +77,13 @@ type SavedIdeaAggregated = {
   recipient_relationship: string | null;
   title: string;
   url: string | null;
+  image_url: string | null;
+  estimated_price_min: number | null;
+  estimated_price_max: number | null;
+  product_match: unknown;
+  tier: string | null;
   created_at: string;
   suggestion_id?: string | null;
-};
-
-const getInitials = (value: string) => {
-  if (!value) return "GP";
-  const parts = value.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
-  const initials = `${first}${last}`.toUpperCase();
-  return initials || "GP";
-};
-
-const buildAmazonSearchUrl = (query: string) => {
-  const partner =
-    process.env.NEXT_PUBLIC_AMAZON_PA_PARTNER_TAG || "giftperch-20";
-  return `https://www.amazon.com/s?k=${encodeURIComponent(
-    query || "",
-  )}&tag=${encodeURIComponent(partner)}`;
 };
 
 const toNoonIso = (dateStr: string | null | undefined) => {
@@ -483,94 +467,203 @@ function SavedIdeaItem({
   isRemoving: boolean;
   recipientMap: Record<string, RecipientSummary>;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAbove, setMenuAbove] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const firstMenuItemRef = useRef<HTMLButtonElement | null>(null);
   const dateLabel = idea.created_at
     ? new Date(idea.created_at).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       })
-    : null;
+    : "Date unavailable";
+  const recipient = recipientMap[idea.recipient_id];
+  const recipientAvatar = resolveHistoryRecipientAvatar(recipient);
+  const matchedProduct = getMatchedProductPresentation(idea.product_match);
+  const legacyProductUrl = getSafeExternalUrl(idea.url);
+  const shoppingHref = matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
+  const isAffiliateLink =
+    Boolean(matchedProduct) ||
+    Boolean(legacyProductUrl && isExpectedAmazonAffiliateUrl(legacyProductUrl));
+  const savedImage =
+    matchedProduct?.match.imageUrl ?? getSafeImageUrl(idea.image_url);
+  const imageSrc =
+    imageFailed || !savedImage ? GIFT_HISTORY_IMAGE_FALLBACK : savedImage;
+  const displayedPrice = formatSavedIdeaPrice(idea);
 
-  const amazonUrl = buildAmazonSearchUrl(idea.title);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    requestAnimationFrame(() => firstMenuItemRef.current?.focus());
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  const toggleMenu = () => {
+    if (!menuOpen && triggerRef.current) {
+      const bounds = triggerRef.current.getBoundingClientRect();
+      setMenuAbove(window.innerHeight - bounds.bottom < 150);
+    }
+    setMenuOpen((open) => !open);
+  };
 
   return (
-    <div className="gp-card flex items-start gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold text-gp-evergreen">
-        {idea.recipient_id &&
-        recipientMap[idea.recipient_id]?.avatar_url ? (
-          <Image
-            src={recipientMap[idea.recipient_id]?.avatar_url || ""}
-            alt={idea.recipient_name}
-            width={48}
-            height={48}
-            className="h-full w-full object-cover"
-            unoptimized
-          />
-        ) : idea.recipient_id &&
-          recipientMap[idea.recipient_id]?.avatar_icon ? (
-          <Image
-            src={
-              PRESET_AVATAR_OPTIONS.find(
-                (opt) =>
-                  opt.key === recipientMap[idea.recipient_id]?.avatar_icon,
-              )?.image || "/giftperch_logo_only.png"
-            }
-            alt={idea.recipient_name}
-            width={40}
-            height={40}
-            className="h-10 w-10 object-contain"
-            unoptimized
-          />
+    <article className="relative grid min-w-0 gap-3 rounded-2xl border border-gp-app-evergreen/10 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.045)] transition hover:border-gp-app-evergreen/16 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-center xl:grid-cols-[8.75rem_minmax(12rem,1.25fr)_minmax(7.5rem,0.45fr)_minmax(8rem,0.45fr)_minmax(7rem,auto)_minmax(8rem,auto)_auto] xl:gap-0 xl:px-4 xl:py-2.5">
+      <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-gp-app-surface-warm sm:aspect-[7/5] xl:h-[5.25rem] xl:w-[8.75rem]">
+        <Image
+          src={imageSrc}
+          alt={
+            imageSrc === GIFT_HISTORY_IMAGE_FALLBACK
+              ? "Gift placeholder"
+              : idea.title
+          }
+          fill
+          sizes="(min-width: 1024px) 140px, (min-width: 640px) 120px, 90vw"
+          className="object-contain p-1"
+          unoptimized={imageSrc.startsWith("https://")}
+          onError={() => setImageFailed(true)}
+        />
+      </div>
+
+      <div className="min-w-0 sm:pr-2 xl:px-5">
+        <h2 className="line-clamp-2 font-display text-lg font-semibold leading-6 text-gp-app-evergreen">
+          {idea.title}
+        </h2>
+        <div className="mt-2 flex min-w-0 items-center gap-2">
+          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-app-gold/45 bg-[#eef4e9] text-[11px] font-bold text-gp-app-evergreen">
+            {recipientAvatar.kind === "image" && !avatarFailed ? (
+              <Image
+                src={recipientAvatar.src}
+                alt=""
+                fill
+                sizes="32px"
+                className="object-cover"
+                unoptimized={recipientAvatar.src.startsWith("https://")}
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : recipientAvatar.kind === "image" ? (
+              recipientAvatar.fallbackInitials
+            ) : (
+              recipientAvatar.initials
+            )}
+          </span>
+          <p className="min-w-0 truncate text-sm text-gp-app-muted">
+            For {idea.recipient_name}
+            {idea.recipient_relationship
+              ? ` (${idea.recipient_relationship})`
+              : ""}
+          </p>
+        </div>
+      </div>
+
+      <div className="border-gp-app-evergreen/8 sm:col-start-2 xl:col-auto xl:border-x xl:px-5">
+        <p
+          className={`font-bold text-gp-app-evergreen ${displayedPrice === "Price not available" ? "text-xs" : "text-base"}`}
+        >
+          {displayedPrice}
+        </p>
+      </div>
+
+      <div className="flex min-w-0 items-center gap-2 text-xs text-gp-app-muted sm:col-start-2 xl:col-auto xl:border-r xl:border-gp-app-evergreen/8 xl:px-5">
+        <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0 text-gp-app-evergreen/60" />
+        <span>
+          <span className="block text-[10px] uppercase tracking-[0.08em] text-gp-app-muted/75">
+            Saved
+          </span>
+          <span className="block">{dateLabel}</span>
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 sm:col-start-2 xl:col-auto xl:px-4">
+        {idea.tier ? (
+          <span className="rounded-full bg-[#eef6ec] px-3 py-1 text-[11px] font-medium capitalize text-gp-app-evergreen">
+            {idea.tier}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex items-center gap-2 sm:col-start-2 xl:col-auto xl:px-3">
+        {shoppingHref ? (
+          <a
+            href={shoppingHref}
+            target="_blank"
+            rel={isAffiliateLink ? AFFILIATE_LINK_REL : "noopener noreferrer"}
+            className="gp-btn gp-btn--primary gp-btn--sm whitespace-nowrap"
+          >
+            View product
+            <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
+          </a>
         ) : (
-          getInitials(idea.recipient_name)
+          <span className="text-xs text-gp-app-muted">No product link</span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-gp-evergreen">{idea.title}</p>
-          <span
-            className="rounded-full bg-gp-gold/25 px-2 py-0.5 text-[11px] font-semibold text-gp-evergreen"
+      <div ref={menuRef} className="absolute right-3 top-3 sm:relative sm:right-auto sm:top-auto sm:col-start-3 sm:row-span-3 sm:row-start-1 sm:self-center xl:col-auto xl:row-auto xl:row-span-1 xl:px-1">
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-label={`Actions for ${idea.title}`}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={toggleMenu}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff8e6] text-gp-app-evergreen transition hover:bg-[#fff1c8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+        >
+          <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
+        </button>
+        {menuOpen ? (
+          <div
+            role="menu"
+            aria-label={`Actions for ${idea.title}`}
+            className={`absolute right-0 z-30 min-w-48 overflow-hidden rounded-xl border border-gp-app-evergreen/10 bg-white p-1.5 shadow-[0_14px_35px_rgba(15,61,62,0.16)] ${
+              menuAbove ? "bottom-12" : "top-12"
+            }`}
           >
-            Saved
-          </span>
-        </div>
-        <p className="text-xs text-gp-evergreen/70">
-          For: {idea.recipient_name}
-          {idea.recipient_relationship
-            ? ` (${idea.recipient_relationship})`
-            : ""}{" "}
-          {dateLabel ? `· ${dateLabel}` : ""}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window === "undefined") return;
-              window.open(amazonUrl, "_blank", "noopener,noreferrer");
-            }}
-            className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
-          >
-            Find on Amazon
-          </button>
-          <button
-            type="button"
-            onClick={onLog}
-            className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
-          >
-            Log this gift
-          </button>
-          <button
-            type="button"
-            onClick={onRemove}
-            disabled={isRemoving}
-            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:text-red-700 hover:underline cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isRemoving ? "Removing..." : "Remove"}
-          </button>
-        </div>
+            <button
+              ref={firstMenuItemRef}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onLog();
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-gp-app-evergreen transition hover:bg-gp-app-surface-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+            >
+              <ShoppingBag aria-hidden="true" className="h-4 w-4" />
+              Log this gift
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onRemove();
+              }}
+              disabled={isRemoving}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              {isRemoving ? "Removing..." : "Remove"}
+            </button>
+          </div>
+        ) : null}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -601,6 +694,8 @@ export function GiftHistoryTable() {
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState("");
   const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
+  const [savedSearch, setSavedSearch] = useState("");
+  const [savedSort, setSavedSort] = useState<SavedIdeaSort>("recent");
   const [giftToDelete, setGiftToDelete] = useState<GiftHistoryEntry | null>(null);
   const [isDeletingGift, setIsDeletingGift] = useState(false);
   const [loggedFromSaved, setLoggedFromSaved] = useState(false);
@@ -676,13 +771,15 @@ export function GiftHistoryTable() {
   );
 
   const filteredSavedIdeas = useMemo(() => {
-    return savedIdeas.filter((idea) => {
+    const matches = savedIdeas.filter((idea) => {
       if (savedRecipientFilter !== "all" && idea.recipient_id !== savedRecipientFilter) {
         return false;
       }
-      return true;
+      const term = savedSearch.trim().toLowerCase();
+      return !term || idea.title.toLowerCase().includes(term);
     });
-  }, [savedIdeas, savedRecipientFilter]);
+    return sortSavedIdeas(matches, savedSort);
+  }, [savedIdeas, savedRecipientFilter, savedSearch, savedSort]);
 
   const filteredGifts = useMemo(() => {
     const matches = gifts.filter((gift) => {
@@ -873,11 +970,17 @@ export function GiftHistoryTable() {
               id: string;
               title: string;
               product_url: string | null;
+              image_url: string | null;
+              estimated_price_min: number | null;
+              estimated_price_max: number | null;
+              product_match: unknown;
+              tier: string | null;
               created_at: string;
+              suggestion_id?: string | null;
             }[];
           };
           const mapItem = (
-            item: { id: string; title: string; product_url: string | null; created_at: string; suggestion_id?: string | null },
+            item: (typeof saved.savedGifts)[number],
           ): SavedIdeaAggregated => ({
             id: item.id,
             recipient_id: recipient.id,
@@ -885,6 +988,11 @@ export function GiftHistoryTable() {
             recipient_relationship: recipient.relationship ?? null,
             title: item.title,
             url: item.product_url,
+            image_url: item.image_url,
+            estimated_price_min: item.estimated_price_min,
+            estimated_price_max: item.estimated_price_max,
+            product_match: item.product_match,
+            tier: item.tier,
             created_at: item.created_at,
             suggestion_id: item.suggestion_id ?? null,
           });
@@ -1154,23 +1262,68 @@ export function GiftHistoryTable() {
               </button>
             </div>
           ) : null}
-          <div className="rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm">
-            <label className="flex max-w-xl flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-              Recipient
-              <select
-                value={savedRecipientFilter}
-                onChange={(event) => setSavedRecipientFilter(event.target.value)}
-                className="gp-input cursor-pointer"
-              >
-                <option value="all">All recipients</option>
-                {recipients.map((recipient) => (
-                  <option key={recipient.id} value={recipient.id}>
-                    {recipient.name}
-                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="rounded-2xl border border-gp-app-evergreen/8 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.04)]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(14rem,0.85fr)_minmax(18rem,1.5fr)_minmax(13rem,0.65fr)]">
+              <label className="relative block min-w-0">
+                <span className="sr-only">Recipient</span>
+                <Users
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+                />
+                <select
+                  value={savedRecipientFilter}
+                  onChange={(event) =>
+                    setSavedRecipientFilter(event.target.value)
+                  }
+                  className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
+                >
+                  <option value="all">All recipients</option>
+                  {recipients.map((recipient) => (
+                    <option key={recipient.id} value={recipient.id}>
+                      {recipient.name}
+                      {recipient.relationship
+                        ? ` (${recipient.relationship})`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="relative block min-w-0">
+                <span className="sr-only">Search saved ideas</span>
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+                />
+                <input
+                  type="search"
+                  placeholder="Search by gift title..."
+                  value={savedSearch}
+                  onChange={(event) => setSavedSearch(event.target.value)}
+                  className="gp-input h-12 w-full bg-white pl-10"
+                />
+              </label>
+
+              <label className="relative block min-w-0">
+                <span className="sr-only">Sort saved ideas</span>
+                <ListFilter
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+                />
+                <select
+                  value={savedSort}
+                  onChange={(event) =>
+                    setSavedSort(event.target.value as SavedIdeaSort)
+                  }
+                  className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
+                >
+                  <option value="recent">Recently saved</option>
+                  <option value="oldest">Oldest saved</option>
+                  <option value="price-high">Price: high to low</option>
+                  <option value="price-low">Price: low to high</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           {filteredSavedIdeas.length === 0 ? (
