@@ -3,8 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BadgeCheck, ChevronRight, Minus, Plus, RefreshCcw, Sparkles, ShieldCheck } from "lucide-react";
-import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
+import {
+  BadgeCheck,
+  BookOpen,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Gift,
+  Heart,
+  MessageCircleQuestion,
+  Minus,
+  NotebookText,
+  Plus,
+  RefreshCcw,
+  Sparkles,
+  ShieldCheck,
+  UsersRound,
+  X,
+} from "lucide-react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GiftPerchHeroIntro } from "@/components/marketing/GiftPerchHeroIntro";
 
@@ -25,7 +41,7 @@ const workflowSteps = [
     id: "history",
     title: "Smarter Ideas with Every Click",
     description:
-      "Like or dislike suggestions so future gift ideas get better and more personalized.",
+      "Save the ideas you love and keep track of past gifts to make future suggestions more thoughtful.",
   },
 ] as const;
 
@@ -204,7 +220,7 @@ const faqs = [
   {
     question: "Will I keep seeing the same gift ideas?",
     answer:
-      "No. GiftPerch uses your saved gift history and feedback to help reduce repeats. As you like or dislike suggestions, future ideas adapt to better match each person.",
+      "No. GiftPerch uses your saved ideas and gift history to help reduce repeats. As you save suggestions, future ideas stay fresh and better matched to each person.",
   },
   {
     question: "How does GiftPerch help me plan ahead for special occasions?",
@@ -226,11 +242,27 @@ const SAMPLE_PROFILES = [
     avatarSrc: "/woman_icon.png",
     description:
       "Loves scented candles, nature hikes, and makeup. Appreciates small, meaningful things.",
+    interests: ["Candles", "Hiking", "Beauty", "Outdoors"],
+    occasion: "Birthday",
+    occasionDate: "May 18",
+    notes: "Meaningful and practical gifts",
     ideasLabel: "Gift ideas for Maya",
     ideas: [
-      { text: "Essential oils candle set", icon: "/icons/previews/preview-candle.png" },
-      { text: "Lightweight Hiking Backpack", icon: "/icons/previews/preview-backpack.png" },
-      { text: "Clean Beauty Essentials Kit", icon: "/icons/previews/preview-makeup.png" },
+      {
+        text: "Essential oils candle set",
+        description: "A calming pick for cozy evenings at home.",
+        icon: "/icons/previews/preview-candle.png",
+      },
+      {
+        text: "Lightweight Hiking Backpack",
+        description: "Practical storage for her next trail day.",
+        icon: "/icons/previews/preview-backpack.png",
+      },
+      {
+        text: "Clean Beauty Essentials Kit",
+        description: "A thoughtful set for her everyday routine.",
+        icon: "/icons/previews/preview-makeup.png",
+      },
     ],
   },
   {
@@ -240,11 +272,27 @@ const SAMPLE_PROFILES = [
     avatarSrc: "/dog_icon.png",
     description:
       "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
+    interests: ["Puzzle toys", "Blankets", "Fetch", "Treats"],
+    occasion: "Gotcha day",
+    occasionDate: "June 12",
+    notes: "Small-dog friendly picks",
     ideasLabel: "Gift ideas for Mocha",
     ideas: [
-      { text: "Small interactive puzzle dog toy", icon: "/icons/previews/preview-dog-toy.png" },
-      { text: "Plush Rabbit Animatronic Dog Toy", icon: "/icons/previews/preview-paw.png" },
-      { text: "Automatic ball launcher for indoor fetch", icon: "/icons/previews/preview-sports.png" },
+      {
+        text: "Small interactive puzzle dog toy",
+        description: "A playful challenge sized for curious paws.",
+        icon: "/icons/previews/preview-dog-toy.png",
+      },
+      {
+        text: "Plush Rabbit Animatronic Dog Toy",
+        description: "A soft, squeaky companion for indoor play.",
+        icon: "/icons/previews/preview-paw.png",
+      },
+      {
+        text: "Automatic ball launcher for indoor fetch",
+        description: "Keeps fetch going when space is limited.",
+        icon: "/icons/previews/preview-sports.png",
+      },
     ],
   },
   {
@@ -254,45 +302,77 @@ const SAMPLE_PROFILES = [
     avatarSrc: "/man_icon.png",
     description:
       "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
+    interests: ["Grilling", "Football", "Gadgets", "Game day"],
+    occasion: "Birthday",
+    occasionDate: "November 4",
+    notes: "Useful gifts with a personal touch",
     ideasLabel: "Gift ideas for Dad",
     ideas: [
-      { text: "Personalized grill tool set", icon: "/icons/previews/preview-diy.png" },
-      { text: "Cozy game-day throw blanket", icon: "/icons/previews/preview-blanket.png" },
-      { text: "Father/Son Game day tickets", icon: "/icons/previews/preview-ticket.png" },
+      {
+        text: "Personalized grill tool set",
+        description: "A practical upgrade for weekend cookouts.",
+        icon: "/icons/previews/preview-diy.png",
+      },
+      {
+        text: "Cozy game-day throw blanket",
+        description: "Warm comfort for football afternoons.",
+        icon: "/icons/previews/preview-blanket.png",
+      },
+      {
+        text: "Father/Son Game day tickets",
+        description: "A memorable experience to enjoy together.",
+        icon: "/icons/previews/preview-ticket.png",
+      },
     ],
   },
 ] as const;
 
 function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
   return (
-    <div className="h-full rounded-[16px] border border-gp-evergreen/20 bg-gp-cream/60 p-4">
-      <p className="text-xs uppercase tracking-wide text-gp-evergreen/70">
+    <div className="gp-tour-profile">
+      <p className="gp-tour-panel-label">
         Sample profile
       </p>
-      <div className="relative mt-3 min-h-[110px]">
+      <div className="gp-tour-profile-stage">
         {SAMPLE_PROFILES.map((profile, index) => (
           <div
             key={profile.id}
-            className={`absolute inset-0 flex items-start gap-3 transition-opacity duration-500 ${
+            aria-hidden={activeIndex === index ? undefined : true}
+            className={`gp-tour-profile-slide ${
               activeIndex === index
-                ? "opacity-100"
-                : "pointer-events-none opacity-0"
+                ? "gp-tour-profile-slide--active"
+                : "gp-tour-profile-slide--hidden"
             }`}
           >
-            <Image
-              src={profile.avatarSrc}
-              alt={`${profile.name} avatar`}
-              width={48}
-              height={48}
-              className="h-12 w-12 rounded-full border border-gp-evergreen/20 bg-white object-cover"
-            />
-            <div className="space-y-1">
-              <p className="text-lg font-semibold text-gp-evergreen">{profile.name}</p>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                {profile.relationship}
-              </p>
-              <p className="text-sm text-gp-evergreen/80">{profile.description}</p>
+            <div className="gp-tour-profile-main">
+              <Image
+                src={profile.avatarSrc}
+                alt={`${profile.name} avatar`}
+                width={88}
+                height={88}
+                className="gp-tour-profile-avatar"
+              />
+              <div className="gp-tour-profile-copy">
+                <h4>{profile.name}</h4>
+                <p className="gp-tour-relationship">{profile.relationship}</p>
+                <p className="gp-tour-description">{profile.description}</p>
+                <div className="gp-tour-interest-list" aria-label={`${profile.name}'s interests`}>
+                  {profile.interests.map((interest) => (
+                    <span key={interest}>{interest}</span>
+                  ))}
+                </div>
+              </div>
             </div>
+            <dl className="gp-tour-profile-details">
+              <div>
+                <dt><CalendarDays aria-hidden="true" /> Occasion</dt>
+                <dd>{profile.occasion} · {profile.occasionDate}</dd>
+              </div>
+              <div>
+                <dt><NotebookText aria-hidden="true" /> Notes</dt>
+                <dd>{profile.notes}</dd>
+              </div>
+            </dl>
           </div>
         ))}
       </div>
@@ -304,6 +384,11 @@ function ProductTourLoaderSlice() {
   const [demoProgress, setDemoProgress] = useState(0);
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const frameId = window.requestAnimationFrame(() => setDemoProgress(72));
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
     const intervalId = window.setInterval(() => {
       setDemoProgress((prev) => {
         if (prev >= 94) {
@@ -326,86 +411,102 @@ function ProductTourLoaderSlice() {
   }, []);
 
   return (
-    <div className="flex h-full min-h-[170px] items-center rounded-[16px] border border-dashed border-gp-gold/50 bg-gp-cream/40 p-5">
-      <div className="w-full">
-        <PerchPalLoader
-          variant="inline"
-          size="lg"
-          message="PerchPal is fetching gift ideas..."
+    <div className="gp-tour-loader">
+      <PerchPalLoader
+        variant="inline"
+        size="lg"
+        message="PerchPal is fetching personalized gift ideas..."
+      />
+      <div
+        className="gp-tour-progress-track"
+        role="progressbar"
+        aria-label="PerchPal gift idea progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(demoProgress)}
+      >
+        <div
+          className="gp-tour-progress-value"
+          style={{ width: `${Math.min(100, demoProgress)}%` }}
         />
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full border border-black/40 bg-white shadow-inner">
-          <div
-            className="h-full rounded-full bg-gp-gold transition-[width] duration-300 ease-out"
-            style={{ width: `${Math.min(100, demoProgress)}%` }}
-          />
-        </div>
       </div>
     </div>
   );
 }
 
-function ProductTourIdeasSlice({ activeIndex }: { activeIndex: number }) {
+function ProductTourIdeasSlice({
+  activeIndex,
+  savedIdeas,
+  onToggleSaved,
+}: {
+  activeIndex: number;
+  savedIdeas: ReadonlySet<string>;
+  onToggleSaved: (ideaKey: string) => void;
+}) {
   const remaining = Math.max(0, DEMO_TOTAL_IDEAS - DEMO_VISIBLE_IDEAS);
 
   return (
-    <div className="h-full rounded-[16px] border border-gp-evergreen/15 bg-white p-4">
-      <p className="text-sm uppercase tracking-wide text-gp-evergreen/70">
+    <div className="gp-tour-ideas">
+      <p className="gp-tour-panel-label">
         {SAMPLE_PROFILES[activeIndex].ideasLabel}
       </p>
-      <div className="relative mt-3 min-h-[196px]">
+      <div className="gp-tour-ideas-stage">
         {SAMPLE_PROFILES.map((profile, index) => (
           <div
             key={`${profile.id}-ideas`}
-            className={`absolute inset-0 space-y-2 transition-opacity duration-500 ${
+            aria-hidden={activeIndex === index ? undefined : true}
+            className={`gp-tour-ideas-slide ${
               activeIndex === index
-                ? "opacity-100"
-                : "pointer-events-none opacity-0"
+                ? "gp-tour-ideas-slide--active"
+                : "gp-tour-ideas-slide--hidden"
             }`}
           >
-            {profile.ideas.slice(0, DEMO_VISIBLE_IDEAS).map((idea) => (
-              <div key={idea.text} className="flex items-center gap-3">
-                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream/80 shadow-sm">
-                  <Image
-                    src={idea.icon}
-                    alt="Gift idea preview"
-                    width={96}
-                    height={96}
-                    className="h-9 w-9 object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                  <p className="min-w-0 truncate text-sm font-medium text-gp-evergreen/90">
-                    {idea.text}
-                  </p>
-                  <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
-                    <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-blue-300/80 bg-blue-50 text-blue-600 transition-all duration-150 hover:-translate-y-px hover:border-blue-400/90 hover:bg-blue-100 hover:shadow-[0_2px_6px_rgba(37,99,235,0.2)]">
-                      <ThumbUpIcon className="h-4 w-4 fill-none stroke-current" />
-                    </span>
-                    <span className="inline-flex h-8 w-8 cursor-default items-center justify-center rounded-full border border-red-300/80 bg-red-50 text-red-600 transition-all duration-150 hover:-translate-y-px hover:border-red-400/90 hover:bg-red-100 hover:shadow-[0_2px_6px_rgba(220,38,38,0.2)]">
-                      <ThumbDownIcon className="h-4 w-4 fill-none stroke-current" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="gp-tour-idea-grid">
+              {profile.ideas.slice(0, DEMO_VISIBLE_IDEAS).map((idea) => {
+                const ideaKey = `${profile.id}:${idea.text}`;
+                const isSaved = savedIdeas.has(ideaKey);
+
+                return (
+                  <article key={idea.text} className="gp-tour-idea-card">
+                    <div className="gp-tour-idea-image">
+                      <Image
+                        src={idea.icon}
+                        alt=""
+                        width={144}
+                        height={144}
+                        className="h-full w-full object-contain"
+                        unoptimized
+                      />
+                      <button
+                        type="button"
+                        className="gp-tour-save-button"
+                        aria-label={`${isSaved ? "Remove" : "Save"} ${idea.text} in this demonstration`}
+                        aria-pressed={isSaved}
+                        tabIndex={activeIndex === index ? 0 : -1}
+                        onClick={() => onToggleSaved(ideaKey)}
+                      >
+                        <Heart aria-hidden="true" className={isSaved ? "fill-current" : ""} />
+                      </button>
+                    </div>
+                    <div className="gp-tour-idea-copy">
+                      <h5>{idea.text}</h5>
+                      <p>{idea.description}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
             {remaining > 0 ? (
-              <div className="mt-1 flex items-center justify-between rounded-lg border border-gp-evergreen/10 bg-white/60 px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/60 text-gp-evergreen/75"
-                    aria-hidden="true"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                  </span>
-                  <span className="text-sm font-medium text-gp-evergreen/80">
-                    +{remaining} more ideas
-                  </span>
-                </div>
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-gp-evergreen/70">
-                  View more
-                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
+              <div className="gp-tour-more-row">
+                <span><Sparkles aria-hidden="true" /> +{remaining} more sample ideas</span>
+                <Link
+                  href="/auth/signup"
+                  className="gp-tour-more-link"
+                  tabIndex={activeIndex === index ? 0 : -1}
+                >
+                  View more ideas
+                  <ChevronRight aria-hidden="true" />
+                </Link>
               </div>
             ) : null}
           </div>
@@ -486,72 +587,48 @@ function ProductTourTimeline({
   return (
     <ol
       ref={timelineRef}
-      className="relative space-y-3 lg:grid lg:h-full lg:grid-rows-[auto_minmax(0,0.2fr)_auto_minmax(0,0.16fr)_auto] lg:gap-0 lg:space-y-0"
+      className="gp-tour-timeline"
     >
       {steps.length > 1 ? (
         <span
           ref={connectorRef}
-          className="pointer-events-none absolute left-10 z-0 hidden w-px rounded-full bg-gradient-to-b from-gp-evergreen/25 via-gp-evergreen/15 to-gp-evergreen/25 lg:block"
-          style={{ top: "2.5rem", height: "calc(100% - 5rem)" }}
+          className="gp-tour-timeline-line"
+          style={{ top: "1.25rem", height: "calc(100% - 2.5rem)" }}
           aria-hidden="true"
         />
       ) : null}
       {steps.map((step, index) => {
         const isActive = index === activeStep;
-        const rowClass =
-          index === 0
-            ? "lg:row-start-1"
-            : index === 1
-              ? "lg:row-start-3"
-              : "lg:row-start-5";
-        const stepItem = (
-          <li key={`${step.id}-timeline`} className={`relative z-10 ${rowClass}`}>
+        return (
+          <li key={`${step.id}-timeline`} className="gp-tour-step-item">
             <button
               type="button"
               onClick={() => onSelectStep(index)}
               aria-current={isActive ? "step" : undefined}
-              className={`group relative flex w-full items-start gap-3 rounded-[16px] border px-4 py-4 text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/45 ${
-                isActive
-                  ? "border-gp-gold/50 bg-white/95 shadow-sm"
-                  : "border-gp-evergreen/15 bg-white/90 hover:border-gp-gold/35 hover:bg-white/95"
-              }`}
+              className={`gp-tour-step ${isActive ? "gp-tour-step--active" : ""}`}
             >
               <span
                 ref={(element) => {
                   stepBadgeRefs.current[index] = element;
                 }}
-                className={`relative z-10 inline-flex rounded-full transition-all duration-200 ${
-                  isActive ? "ring-2 ring-gp-gold/30 shadow-sm" : ""
-                }`}
+                className="gp-tour-step-number"
                 aria-hidden="true"
               >
-                <WorkflowStepBadge stepId={step.id} />
+                {index + 1}
               </span>
-              <span className="min-w-0 space-y-1.5">
-                <span
-                  className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                    isActive
-                      ? "border-gp-gold/40 bg-gp-gold/20 text-gp-evergreen"
-                      : "border-gp-evergreen/20 bg-gp-cream/45 text-gp-evergreen/65"
-                  }`}
-                >
-                  Step {index + 1}
+              <span className="gp-tour-step-card">
+                <span className="gp-tour-step-icon" aria-hidden="true">
+                  <WorkflowStepBadge stepId={step.id} />
                 </span>
-                <span
-                  className={`block text-base font-semibold ${
-                    isActive ? "text-gp-evergreen" : "text-gp-evergreen/85"
-                  }`}
-                >
-                  {step.title}
-                </span>
-                <span className="block text-sm text-gp-evergreen/75">
-                  {step.description}
+                <span className="gp-tour-step-copy">
+                  <span className="gp-tour-step-label">Step {index + 1}</span>
+                  <span className="gp-tour-step-title">{step.title}</span>
+                  <span className="gp-tour-step-description">{step.description}</span>
                 </span>
               </span>
             </button>
           </li>
         );
-        return stepItem;
       })}
     </ol>
   );
@@ -561,6 +638,12 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [manualPauseUntil, setManualPauseUntil] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const [savedIdeas, setSavedIdeas] = useState<Set<string>>(() => new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const firstCycleRef = useRef(true);
   const stepCount = steps.length > 0 ? steps.length : 1;
@@ -573,7 +656,15 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   }, []);
 
   useEffect(() => {
-    if (isHovered) {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    mediaQuery.addEventListener("change", updatePreference);
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (isHovered || prefersReducedMotion) {
       clearTimer();
       return;
     }
@@ -598,7 +689,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       });
     }, delay);
     return () => clearTimer();
-  }, [activeIndex, clearTimer, isHovered, manualPauseUntil]);
+  }, [activeIndex, clearTimer, isHovered, manualPauseUntil, prefersReducedMotion]);
 
   const activeStep = activeIndex % stepCount;
 
@@ -611,65 +702,80 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
     setManualPauseUntil(Date.now() + 8000);
   }, []);
 
+  const handleToggleSaved = useCallback((ideaKey: string) => {
+    setSavedIdeas((current) => {
+      const next = new Set(current);
+      if (next.has(ideaKey)) {
+        next.delete(ideaKey);
+      } else {
+        next.add(ideaKey);
+      }
+      return next;
+    });
+  }, []);
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(340px,0.42fr)_minmax(0,0.58fr)] lg:items-stretch lg:gap-12 xl:grid-cols-[minmax(390px,0.45fr)_minmax(0,0.55fr)] xl:gap-16">
-      <div className="space-y-3 lg:flex lg:h-full lg:flex-col">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-gp-evergreen/55">
-          Step-by-step timeline
-        </p>
-        <div className="lg:flex-1">
-          <ProductTourTimeline
-            steps={steps}
-            activeStep={activeStep}
-            onSelectStep={handleStepSelect}
-          />
-        </div>
+    <div className="gp-tour-layout">
+      <div className="gp-tour-timeline-column">
+        <ProductTourTimeline
+          steps={steps}
+          activeStep={activeStep}
+          onSelectStep={handleStepSelect}
+        />
       </div>
 
-      <div className="lg:sticky lg:top-24 lg:self-start">
+      <div className="gp-tour-demo-column">
         <div
-          className="rounded-[18px] border border-gp-evergreen/15 bg-white/95 p-5 shadow-sm sm:p-6 xl:p-7"
+          className="gp-tour-demo"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="border-b border-gp-evergreen/10 pb-3">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="text-lg font-semibold text-gp-evergreen">
-                From Profile to Perfect Gift
-              </p>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-evergreen/55">
-                A quick walkthrough
-              </p>
+          <header className="gp-tour-demo-header">
+            <div>
+              <p className="gp-tour-demo-title">From Profile to Perfect Gift</p>
+              <p className="gp-tour-demo-eyebrow">A quick walkthrough</p>
             </div>
-          </div>
+            <div className="gp-tour-recipient-tabs" aria-label="Choose a sample recipient">
+              {SAMPLE_PROFILES.map((profile, index) => (
+                <button
+                  key={`${profile.id}-tab`}
+                  type="button"
+                  className={activeIndex === index ? "gp-tour-recipient-tab gp-tour-recipient-tab--active" : "gp-tour-recipient-tab"}
+                  aria-pressed={activeIndex === index}
+                  onClick={() => handleStepSelect(index)}
+                >
+                  <Image
+                    src={profile.avatarSrc}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="gp-tour-recipient-tab-avatar"
+                  />
+                  <span>{profile.name}</span>
+                </button>
+              ))}
+            </div>
+          </header>
 
-          <div className="mt-4 space-y-3">
+          <div className="gp-tour-demo-content">
             <div
-              className={`rounded-[16px] transition-all duration-300 ${
-                activeStep === 0
-                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : ""
-              }`}
+              className={`gp-tour-demo-section ${activeStep === 0 ? "gp-tour-demo-section--active" : ""}`}
             >
               <ProductTourProfileSlice activeIndex={activeIndex} />
             </div>
             <div
-              className={`rounded-[16px] transition-all duration-300 ${
-                activeStep === 1
-                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : ""
-              }`}
+              className={`gp-tour-demo-section ${activeStep === 1 ? "gp-tour-demo-section--active" : ""}`}
             >
               <ProductTourLoaderSlice />
             </div>
             <div
-              className={`rounded-[16px] transition-all duration-300 ${
-                activeStep === 2
-                  ? "scale-[1.01] ring-2 ring-gp-gold/30 shadow-[0_12px_24px_rgba(15,61,62,0.14)]"
-                  : ""
-              }`}
+              className={`gp-tour-demo-section ${activeStep === 2 ? "gp-tour-demo-section--active" : ""}`}
             >
-              <ProductTourIdeasSlice activeIndex={activeIndex} />
+              <ProductTourIdeasSlice
+                activeIndex={activeIndex}
+                savedIdeas={savedIdeas}
+                onToggleSaved={handleToggleSaved}
+              />
             </div>
           </div>
         </div>
@@ -693,7 +799,7 @@ export default function MarketingHome() {
     {
       icon: "repeat",
       typical: "Repeats gift suggestions with no feedback loop",
-      giftperch: "Gift history + feedback to avoid repeats",
+      giftperch: "Saved gifts + gift history to avoid repeats",
     },
     {
       icon: "history",
@@ -737,80 +843,138 @@ export default function MarketingHome() {
   );
   return (
     <div className="gp-landing-page">
-      <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-6">
-        <section className="gp-landing-hero-stage flex min-h-[85vh] items-center justify-center">
-          <div className="mx-auto w-full">
-            <div className="flex w-full flex-col items-center text-center">
-              <GiftPerchHeroIntro />
-              <div className="gp-landing-hero-cta mt-8 w-full max-w-[44rem] sm:mt-10">
-                <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                  <Link
-                    href="/auth/signup"
-                    className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
-                  >
-                    Start your gifting workspace
-                  </Link>
-                  <a
-                    href="#product-tour"
-                    onClick={handleProductTourLinkClick}
-                    className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
-                  >
-                    See how it works
-                  </a>
-                </div>
-                <div className="gp-landing-hero-divider mt-12 h-px w-full bg-gp-evergreen/10" />
-                <div className="gp-landing-hero-trust mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:flex-nowrap md:gap-x-10">
-                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                    <RefreshCcw className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                    One-time setup
-                  </span>
-                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                    <BadgeCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                    Completely free to use
-                  </span>
-                  <span className="inline-flex items-center gap-2 text-xs font-medium text-gp-evergreen/70 transition-colors hover:text-gp-evergreen/80 sm:text-sm">
-                    <ShieldCheck className="h-4 w-4 shrink-0 text-gp-gold/90" aria-hidden="true" />
-                    Secure data storage
-                  </span>
-                </div>
+      <section className="gp-landing-hero-stage gp-landing-scenic-hero">
+        <div className="gp-landing-scenic-hero-inner">
+          <div className="flex w-full flex-col items-center text-center">
+            <GiftPerchHeroIntro />
+            <div className="gp-landing-hero-cta w-full max-w-[44rem]">
+              <div className="flex w-full flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+                <Link
+                  href="/auth/signup"
+                  className="gp-btn gp-btn--primary gp-btn--lg w-full sm:w-[clamp(15.5rem,32vw,20rem)]"
+                >
+                  Start your gifting workspace
+                </Link>
+                <a
+                  href="#product-tour"
+                  onClick={handleProductTourLinkClick}
+                  className="gp-btn gp-btn--secondary gp-btn--lg w-full sm:w-[clamp(13.25rem,27vw,16.5rem)]"
+                >
+                  See how it works
+                </a>
+              </div>
+              <div className="gp-landing-hero-trust gp-landing-hero-benefits">
+                <span className="gp-landing-hero-benefit">
+                  <RefreshCcw className="gp-landing-hero-benefit-icon" aria-hidden="true" />
+                  One-time setup
+                </span>
+                <span className="gp-landing-hero-benefit">
+                  <BadgeCheck className="gp-landing-hero-benefit-icon" aria-hidden="true" />
+                  Completely free to use
+                </span>
+                <span className="gp-landing-hero-benefit">
+                  <ShieldCheck className="gp-landing-hero-benefit-icon" aria-hidden="true" />
+                  Secure data storage
+                </span>
               </div>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <section
         id="product-tour"
-        className="gp-landing-section gp-landing-section--product scroll-mt-28"
+        aria-labelledby="product-tour-title"
+        className="gp-landing-section gp-landing-section--product gp-tour-section scroll-mt-28"
       >
-        <div className="gp-landing-section-inner gp-landing-section-inner--wide">
-          <div className="mb-8 sm:mb-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-              Product tour
+        <Image
+          src="/tour-left-side.png"
+          alt=""
+          width={887}
+          height={1774}
+          sizes="(min-width: 1440px) 26vw, (min-width: 1180px) 24vw, 0px"
+          className="gp-tour-decoration gp-tour-decoration--left"
+          aria-hidden="true"
+        />
+        <Image
+          src="/tour-right-side.png"
+          alt=""
+          width={820}
+          height={1918}
+          sizes="(min-width: 1440px) 21vw, (min-width: 1180px) 19vw, 0px"
+          className="gp-tour-decoration gp-tour-decoration--right"
+          aria-hidden="true"
+        />
+
+        <div className="gp-landing-section-inner gp-landing-section-inner--wide gp-tour-inner">
+          <header className="gp-tour-heading">
+            <div className="gp-tour-heading-ornament" aria-hidden="true">
+              <span />
+              <BookOpen />
+              <span />
+            </div>
+            <p className="gp-tour-heading-eyebrow">Product tour</p>
+            <h2 id="product-tour-title">How GiftPerch works</h2>
+            <p className="gp-tour-heading-subtitle">
+              From people you care about to thoughtful gift ideas — in just a few clicks.
             </p>
-            <h2 className="text-2xl font-semibold text-gp-evergreen">
-              How GiftPerch works
-            </h2>
-          </div>
+          </header>
           <LandingSampleProfiles steps={workflowSteps} />
         </div>
       </section>
 
-      <section className="gp-landing-section gp-landing-section--comparison">
-        <div className="gp-landing-section-inner">
-          <div className="mb-8 max-w-3xl sm:mb-10">
-            <h2 className="text-2xl font-semibold text-gp-evergreen">Why GiftPerch is different</h2>
-            <p className="mt-1 text-sm text-gp-evergreen/75">
+      <section
+        aria-labelledby="giftperch-difference-title"
+        className="gp-landing-section gp-landing-section--comparison"
+      >
+        <Image
+          src="/left-presents.png"
+          alt=""
+          width={1402}
+          height={1122}
+          sizes="(min-width: 1440px) 28vw, (min-width: 1100px) 24vw, 0px"
+          className="gp-comparison-presents gp-comparison-presents--left"
+          aria-hidden="true"
+        />
+        <Image
+          src="/right-presents.png"
+          alt=""
+          width={1402}
+          height={1122}
+          sizes="(min-width: 1440px) 28vw, (min-width: 1100px) 24vw, 0px"
+          className="gp-comparison-presents gp-comparison-presents--right"
+          aria-hidden="true"
+        />
+
+        <div className="gp-landing-section-inner gp-comparison-inner">
+          <header className="gp-comparison-heading">
+            <div className="gp-comparison-ornament" aria-hidden="true">
+              <span />
+              <Gift />
+              <span />
+            </div>
+            <h2 id="giftperch-difference-title">Why GiftPerch is different</h2>
+            <p>
               Powered by memory and context — not guesswork.
             </p>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2 lg:gap-8">
-            <article className="rounded-[18px] border border-gp-evergreen/15 bg-gp-cream/55 p-6 shadow-sm sm:p-7">
-              <h3 className="text-lg font-semibold text-gp-evergreen">Typical gift generators:</h3>
-              <ul className="mt-5 space-y-4">
+          </header>
+
+          <div className="gp-comparison-grid">
+            <article className="gp-comparison-card gp-comparison-card--typical">
+              <header className="gp-comparison-card-header">
+                <span className="gp-comparison-card-mark gp-comparison-card-mark--typical" aria-hidden="true">
+                  <X />
+                </span>
+                <div>
+                  <h3>Typical gift generators</h3>
+                  <p>Generic suggestions. No memory. No context.</p>
+                </div>
+              </header>
+              <div className="gp-comparison-card-divider" />
+              <ul className="gp-comparison-list">
                 {comparisonRows.map((row) => (
-                  <li key={`typical-${row.typical}`} className="flex items-start gap-3 text-sm text-gp-evergreen/70">
-                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 text-red-600">
+                  <li key={`typical-${row.typical}`}>
+                    <span className="gp-comparison-list-icon gp-comparison-list-icon--typical">
                       <ComparisonXIcon />
                     </span>
                     <span>{row.typical}</span>
@@ -818,12 +982,21 @@ export default function MarketingHome() {
                 ))}
               </ul>
             </article>
-            <article className="rounded-[18px] border border-gp-gold/40 bg-white p-6 shadow-sm sm:p-7">
-              <h3 className="text-lg font-semibold text-gp-evergreen">GiftPerch offers:</h3>
-              <ul className="mt-5 space-y-4">
+            <article className="gp-comparison-card gp-comparison-card--giftperch">
+              <header className="gp-comparison-card-header">
+                <span className="gp-comparison-card-mark gp-comparison-card-mark--giftperch" aria-hidden="true">
+                  <Check />
+                </span>
+                <div>
+                  <h3>GiftPerch offers</h3>
+                  <p>Thoughtful, personalized gifting — all in one place.</p>
+                </div>
+              </header>
+              <div className="gp-comparison-card-divider" />
+              <ul className="gp-comparison-list">
                 {comparisonRows.map((row) => (
-                  <li key={`giftperch-${row.giftperch}`} className="flex items-start gap-3 text-sm text-gp-evergreen/85">
-                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gp-gold/25 bg-gp-cream/60 text-gp-evergreen">
+                  <li key={`giftperch-${row.giftperch}`}>
+                    <span className="gp-comparison-list-icon gp-comparison-list-icon--giftperch">
                       <ComparisonBulletIcon icon={row.icon} />
                     </span>
                     <span>{row.giftperch}</span>
@@ -837,73 +1010,101 @@ export default function MarketingHome() {
 
       <section
         aria-labelledby="homepage-faq-title"
-        className="gp-landing-section gp-landing-section--faq"
+        className="gp-landing-section gp-landing-section--faq gp-faq-section"
       >
-        <div className="gp-landing-section-inner">
-          <div className="grid gap-10 lg:grid-cols-[minmax(17rem,0.34fr)_minmax(0,0.66fr)] lg:items-start lg:gap-14">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gp-evergreen/50">
-                FAQ
-              </p>
-              <h2 id="homepage-faq-title" className="mt-2 text-2xl font-semibold text-gp-evergreen">
-                Questions, answered clearly
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-gp-evergreen/75">
-                Everything you need to know before you start organizing smarter, more personal gifts.
-              </p>
+        <div className="gp-landing-section-inner gp-faq-inner">
+          <header className="gp-faq-heading">
+            <div className="gp-faq-ornament" aria-hidden="true">
+              <span />
+              <MessageCircleQuestion />
+              <span />
             </div>
-            <div className="space-y-3">
+            <p className="gp-faq-eyebrow">FAQ</p>
+            <h2 id="homepage-faq-title">Questions, answered clearly</h2>
+            <p className="gp-faq-subtitle">
+              Everything you need to know before you start organizing smarter,
+              more personal gifts.
+            </p>
+          </header>
+
+          <div className="gp-faq-layout">
+            <aside className="gp-faq-help" aria-label="GiftPerch benefits">
+              <p className="gp-faq-help-eyebrow">Still have questions?</p>
+              <h3>We&apos;re here to help.</h3>
+              <span className="gp-faq-help-divider" aria-hidden="true" />
+              <ul className="gp-faq-help-list">
+                <li>
+                  <span className="gp-faq-help-icon" aria-hidden="true">
+                    <Gift />
+                  </span>
+                  <span>
+                    <strong>Simple to use</strong>
+                    <small>Get started in minutes.</small>
+                  </span>
+                </li>
+                <li>
+                  <span className="gp-faq-help-icon" aria-hidden="true">
+                    <Heart />
+                  </span>
+                  <span>
+                    <strong>Built for real life</strong>
+                    <small>Birthdays, holidays, and everything in between.</small>
+                  </span>
+                </li>
+                <li>
+                  <span className="gp-faq-help-icon" aria-hidden="true">
+                    <UsersRound />
+                  </span>
+                  <span>
+                    <strong>A more thoughtful you</strong>
+                    <small>Keep track and give gifts that truly fit.</small>
+                  </span>
+                </li>
+              </ul>
+            </aside>
+
+            <div className="gp-faq-list">
               {faqs.map((faq, index) => {
                 const isOpen = openFaqIndex === index;
                 return (
-                  <div
+                  <article
                     key={faq.question}
-                    className={`rounded-[16px] border px-4 py-5 shadow-sm transition-colors duration-200 sm:px-5 ${
-                      isOpen
-                        ? "border-gp-gold/35 bg-white"
-                        : "border-gp-evergreen/10 bg-white/60 hover:bg-white/85"
-                    }`}
+                    className={`gp-faq-card ${isOpen ? "gp-faq-card--open" : ""}`}
                   >
                     <button
                       type="button"
-                      className="flex w-full cursor-pointer items-center justify-between gap-4 text-left"
+                      id={`faq-question-${index}`}
+                      className="gp-faq-trigger"
                       aria-expanded={isOpen}
                       aria-controls={`faq-answer-${index}`}
                       onClick={() => setOpenFaqIndex(isOpen ? null : index)}
                     >
-                      <span className="text-base font-semibold text-gp-evergreen">
+                      <span className="gp-faq-number" aria-hidden="true">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="gp-faq-question">
                         {faq.question}
                       </span>
-                      <span
-                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-gp-evergreen transition-colors duration-200 ${
-                          isOpen
-                            ? "border-gp-gold/35 bg-gp-gold/20"
-                            : "border-gp-evergreen/20 bg-white/70"
-                        }`}
-                        aria-hidden="true"
-                      >
+                      <span className="gp-faq-toggle" aria-hidden="true">
                         {isOpen ? (
-                          <Minus className="h-4 w-4" />
+                          <Minus />
                         ) : (
-                          <Plus className="h-4 w-4" />
+                          <Plus />
                         )}
                       </span>
                     </button>
                     <div
-                      className={`grid overflow-hidden transition-all duration-250 ease-out ${
-                        isOpen
-                          ? "mt-4 grid-rows-[1fr] opacity-100"
-                          : "mt-0 grid-rows-[0fr] opacity-0"
-                      }`}
+                      id={`faq-answer-${index}`}
+                      role="region"
+                      aria-labelledby={`faq-question-${index}`}
+                      aria-hidden={!isOpen}
+                      className={`gp-faq-answer ${isOpen ? "gp-faq-answer--open" : ""}`}
                     >
-                      <p
-                        id={`faq-answer-${index}`}
-                        className="min-h-0 overflow-hidden pr-9 text-sm leading-relaxed text-gp-evergreen/80"
-                      >
-                        {faq.answer}
-                      </p>
+                      <div>
+                        <p>{faq.answer}</p>
+                      </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>

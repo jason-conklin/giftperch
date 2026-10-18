@@ -24,7 +24,7 @@ export default function OccasionsPage() {
             title="Occasions"
             subtitle="Track birthdays, anniversaries, and seasonal moments so PerchPal can send timely nudges."
           >
-            <div className="mx-auto w-full max-w-6xl space-y-6">
+            <div className="w-full space-y-6">
               <OccasionsManager />
             </div>
           </PageShell>

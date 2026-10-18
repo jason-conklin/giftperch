@@ -14,19 +14,17 @@ export function FirstSuggestionsTipBanner({
   if (!visible) return null;
 
   return (
-    <div className="rounded-2xl border border-gp-gold/20 bg-gp-cream/90 px-4 py-3 text-sm text-gp-evergreen/80 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-gp-evergreen">
-          Tip: Use Like, Dislike, and Save so PerchPal can learn your preferences.
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gp-gold/20 bg-[#fffaf0] px-3 py-2 text-gp-evergreen/75">
+        <p className="text-xs font-medium">
+          Tip: Use the heart to keep promising ideas in your saved collection.
         </p>
         <button
           type="button"
           onClick={() => setDismissed(true)}
-          className="rounded-full border border-gp-evergreen/20 bg-white px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream cursor-pointer"
+          className="rounded-full px-2 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60"
         >
           Got it
         </button>
-      </div>
     </div>
   );
 }

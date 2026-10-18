@@ -21,30 +21,32 @@ export function PageShell({
     <main
       id="gp-main-content"
       role="main"
-      className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8 text-gp-evergreen sm:px-6 lg:px-8"
+      className="gp-app-page-shell"
     >
       {hero}
       {(title || subtitle || actions) && (
-        <section className="flex flex-col gap-3 rounded-2xl border border-white/70 bg-gp-gold px-5 py-4 text-black shadow-sm md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
+        <header className="gp-app-page-header">
+          <div className="min-w-0 space-y-2">
             {eyebrow ? (
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-app-gold-strong">
                 {eyebrow}
               </p>
             ) : null}
-            <h1 className="text-2xl font-semibold text-black">
+            <h1 className="font-display text-3xl font-semibold leading-tight text-gp-app-evergreen sm:text-4xl lg:text-[2.75rem]">
               {title ?? "GiftPerch"}
             </h1>
             {subtitle ? (
-              <p className="mt-1 text-sm text-black/70">{subtitle}</p>
+              <p className="max-w-3xl text-sm leading-6 text-gp-app-muted sm:text-base">
+                {subtitle}
+              </p>
             ) : null}
           </div>
           {actions ? (
-            <div className="grid gap-2 sm:flex sm:items-center sm:gap-3">
+            <div className="grid shrink-0 gap-2 sm:flex sm:items-center sm:gap-3">
               {actions}
             </div>
           ) : null}
-        </section>
+        </header>
       )}
       {children}
     </main>

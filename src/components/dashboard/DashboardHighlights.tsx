@@ -1,29 +1,42 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CalendarDays,
+  Clock3,
+  Gift,
+  MessageCircle,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
+import {
+  getMatchedProductPresentation,
+  getSafeImageUrl,
+} from "@/lib/affiliateProduct";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+
+type DashboardHighlightsProps = {
+  recipientCount: number;
+  suggestionCount: number;
+  savedGiftCount: number;
+};
 
 type RecipientSummary = {
   id: string;
   name: string;
-  relationship: string | null;
-  pet_type?: string | null;
-  avatar_url: string | null;
   birthday: string | null;
 };
 
 type RecipientEventRow = {
   id: string;
   label: string | null;
-  event_type: string | null;
   event_date: string | null;
-  notes: string | null;
   recipient_id: string | null;
 };
 
@@ -32,13 +45,20 @@ type AiInteraction = {
   created_at: string;
 };
 
+type SavedGiftSummary = {
+  id: string;
+  title: string;
+  estimated_price_min: number | null;
+  estimated_price_max: number | null;
+  image_url: string | null;
+  product_match: unknown;
+  created_at: string;
+};
+
 type UpcomingEvent = {
   id: string;
   date: Date;
   label: string;
-  type: "birthday" | "event" | "seasonal";
-  recipientId?: string | null;
-  recipientName?: string | null;
 };
 
 type OccasionType =
@@ -56,16 +76,14 @@ type OccasionType =
 
 const parseDateOnly = (value: string | null | undefined): Date | null => {
   if (!value) return null;
-  const parts = value.split("-");
-  if (parts.length !== 3) return null;
-  const [yearStr, monthStr, dayStr] = parts;
-  const year = Number(yearStr);
-  const month = Number(monthStr) - 1;
-  const day = Number(dayStr);
+  const [yearText, monthText, dayText] = value.split("-");
+  const year = Number(yearText);
+  const month = Number(monthText) - 1;
+  const day = Number(dayText);
   if (
-    Number.isNaN(year) ||
-    Number.isNaN(month) ||
-    Number.isNaN(day) ||
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
     month < 0 ||
     month > 11 ||
     day < 1 ||
@@ -84,15 +102,15 @@ const formatFullDate = (date: Date) =>
     year: "numeric",
   });
 
-const buildCountdownLabel = (target: Date | null): string | null => {
-  if (!target) return null;
+const buildCountdownLabel = (target: Date): string => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const targetClean = new Date(target);
-  targetClean.setHours(0, 0, 0, 0);
-  const diffMs = targetClean.getTime() - today.getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (days < 0) return null;
+  const targetDay = new Date(target);
+  targetDay.setHours(0, 0, 0, 0);
+  const days = Math.max(
+    0,
+    Math.round((targetDay.getTime() - today.getTime()) / 86_400_000),
+  );
   if (days === 0) return "Today";
   if (days === 1) return "1 day away";
   return `${days} days away`;
@@ -102,7 +120,9 @@ const getOccasionType = (name: string): OccasionType => {
   const normalized = name.toLowerCase();
   if (normalized.includes("birthday")) return "birthday";
   if (normalized.includes("christmas")) return "christmas";
-  if (normalized.includes("anniversary") || normalized.includes("wedding")) return "anniversary";
+  if (normalized.includes("anniversary") || normalized.includes("wedding")) {
+    return "anniversary";
+  }
   if (normalized.includes("graduation")) return "graduation";
   if (normalized.includes("valentine")) return "valentines";
   if (normalized.includes("mother")) return "mothersday";
@@ -114,383 +134,580 @@ const getOccasionType = (name: string): OccasionType => {
 };
 
 const getOccasionIcon = (type: OccasionType) => {
-  const map: Record<OccasionType, { src: string; alt: string }> = {
-    birthday: { src: "/icons/occasions/icon-occasion-birthday.png", alt: "Birthday" },
-    christmas: { src: "/icons/occasions/icon-occasion-christmas.png", alt: "Christmas" },
-    anniversary: { src: "/icons/occasions/icon-occasion-anniversary.png", alt: "Anniversary" },
-    graduation: { src: "/icons/occasions/icon-occasion-graduation.png", alt: "Graduation" },
-    gift: { src: "/icons/occasions/icon-occasion-gift.png", alt: "Occasion" },
-    valentines: { src: "/icons/occasions/icon-occasion-valentines.png", alt: "Valentine's Day" },
-    mothersday: { src: "/icons/occasions/icon-occasion-mothersday.png", alt: "Mother's Day" },
-    fathersday: { src: "/icons/occasions/icon-occasion-fathersday.png", alt: "Father's Day" },
-    newyears: { src: "/icons/occasions/icon-occasion-newyears.png", alt: "New Year's" },
-    thanksgiving: { src: "/icons/occasions/icon-occasion-thanksgiving.png", alt: "Thanksgiving" },
-    halloween: { src: "/icons/occasions/icon-occasion-halloween.png", alt: "Halloween" },
+  const icons: Record<OccasionType, { src: string; alt: string }> = {
+    birthday: {
+      src: "/icons/occasions/icon-occasion-birthday.png",
+      alt: "Birthday",
+    },
+    christmas: {
+      src: "/icons/occasions/icon-occasion-christmas.png",
+      alt: "Christmas",
+    },
+    anniversary: {
+      src: "/icons/occasions/icon-occasion-anniversary.png",
+      alt: "Anniversary",
+    },
+    graduation: {
+      src: "/icons/occasions/icon-occasion-graduation.png",
+      alt: "Graduation",
+    },
+    gift: {
+      src: "/icons/occasions/icon-occasion-gift.png",
+      alt: "Occasion",
+    },
+    valentines: {
+      src: "/icons/occasions/icon-occasion-valentines.png",
+      alt: "Valentine's Day",
+    },
+    mothersday: {
+      src: "/icons/occasions/icon-occasion-mothersday.png",
+      alt: "Mother's Day",
+    },
+    fathersday: {
+      src: "/icons/occasions/icon-occasion-fathersday.png",
+      alt: "Father's Day",
+    },
+    newyears: {
+      src: "/icons/occasions/icon-occasion-newyears.png",
+      alt: "New Year's Day",
+    },
+    thanksgiving: {
+      src: "/icons/occasions/icon-occasion-thanksgiving.png",
+      alt: "Thanksgiving",
+    },
+    halloween: {
+      src: "/icons/occasions/icon-occasion-halloween.png",
+      alt: "Halloween",
+    },
   };
-  return map[type] ?? map.gift;
+  return icons[type];
 };
 
-const getOccasionMoodText = (type: OccasionType): string => {
-  switch (type) {
-    case "birthday":
-      return "Birthday coming up – start planning gift ideas?";
-    case "christmas":
-      return "Holiday gifting season is around the corner.";
-    case "anniversary":
-      return "Anniversary on the horizon – don’t leave it last-minute.";
-    case "graduation":
-      return "Big milestone ahead – celebrate their hard work.";
-    case "valentines":
-      return "Romantic moment ahead – make it feel special.";
-    case "mothersday":
-      return "A chance to show extra appreciation.";
-    case "fathersday":
-      return "Time to thank them for all they do.";
-    case "newyears":
-      return "New year, new gifts to share!";
-    case "thanksgiving":
-      return "Gathering soon – thoughtful thanks go a long way.";
-    case "halloween":
-      return "A playful seasonal moment is coming up.";
-    default:
-      return "A special occasion is coming up – plan something thoughtful.";
+const formatEstimatedPrice = (gift: SavedGiftSummary) => {
+  const min = gift.estimated_price_min;
+  const max = gift.estimated_price_max;
+  if (min === null && max === null) return null;
+  if (min !== null && max !== null && min !== max) {
+    return `$${min.toFixed(0)}–$${max.toFixed(0)}`;
   }
+  return `$${(min ?? max ?? 0).toFixed(2)}`;
 };
 
-const getInitials = (name: string | null | undefined) => {
-  if (!name) return "GP";
-  const parts = name.trim().split(/\s+/);
-  if (!parts.length) return "GP";
-  const first = parts[0]?.[0] ?? "";
-  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
-  return `${first}${last}`.toUpperCase() || "GP";
-};
+function DashboardPanel({ children }: { children: ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-gp-app-evergreen/10 bg-white/94 p-4 shadow-[0_10px_30px_rgba(15,61,62,0.055)] sm:p-5">
+      {children}
+    </section>
+  );
+}
 
-export function DashboardHighlights() {
+export function DashboardHighlights({
+  recipientCount,
+  suggestionCount,
+  savedGiftCount,
+}: DashboardHighlightsProps) {
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
-  const router = useRouter();
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
   const [events, setEvents] = useState<RecipientEventRow[]>([]);
-  const [latestInteraction, setLatestInteraction] = useState<AiInteraction | null>(null);
+  const [recentGifts, setRecentGifts] = useState<SavedGiftSummary[]>([]);
+  const [latestInteraction, setLatestInteraction] =
+    useState<AiInteraction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeRecipientIndex, setActiveRecipientIndex] = useState(0);
-  const [recipientsHover, setRecipientsHover] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
     let active = true;
+
     const loadData = async () => {
       setLoading(true);
       setError("");
       try {
-        const { data: recipientData, error: recipientError } = await supabase
-          .from("recipient_profiles")
-          .select("id, name, relationship, pet_type, avatar_url, birthday")
-          .eq("user_id", user.id)
-          .eq("is_self", false)
-          .order("created_at", { ascending: true });
-        if (recipientError) throw recipientError;
-        const recipientList = (recipientData ?? []) as RecipientSummary[];
+        const [recipientResult, interactionResult, savedGiftResult] =
+          await Promise.all([
+            supabase
+              .from("recipient_profiles")
+              .select("id, name, birthday")
+              .eq("user_id", user.id)
+              .eq("is_self", false)
+              .order("created_at", { ascending: true }),
+            supabase
+              .from("ai_interactions")
+              .select("message, created_at")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            supabase
+              .from("recipient_saved_gift_ideas")
+              .select(
+                "id, title, estimated_price_min, estimated_price_max, image_url, product_match, created_at",
+              )
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(3),
+          ]);
+
+        if (recipientResult.error) throw recipientResult.error;
+        if (savedGiftResult.error) throw savedGiftResult.error;
         if (!active) return;
+
+        const recipientList =
+          (recipientResult.data ?? []) as RecipientSummary[];
         setRecipients(recipientList);
+        setLatestInteraction(interactionResult.data ?? null);
+        setRecentGifts((savedGiftResult.data ?? []) as SavedGiftSummary[]);
 
         if (recipientList.length) {
-          const ids = recipientList.map((recipient) => recipient.id);
           const { data: eventRows, error: eventError } = await supabase
             .from("recipient_events")
-            .select("id, label, event_type, event_date, notes, recipient_id")
-            .in("recipient_id", ids);
+            .select("id, label, event_date, recipient_id")
+            .in(
+              "recipient_id",
+              recipientList.map((recipient) => recipient.id),
+            );
           if (eventError) throw eventError;
-          if (active) {
-            setEvents((eventRows ?? []) as RecipientEventRow[]);
-          }
+          if (active) setEvents((eventRows ?? []) as RecipientEventRow[]);
         } else {
           setEvents([]);
         }
-
-        const { data: aiData } = await supabase
-          .from("ai_interactions")
-          .select("message, created_at")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (active) {
-          setLatestInteraction(aiData ?? null);
-        }
-      } catch (err) {
+      } catch (caught) {
         if (!active) return;
-        const message =
-          err instanceof Error ? err.message : "Unable to load dashboard data.";
-        setError(message);
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Unable to load dashboard data.",
+        );
       } finally {
         if (active) setLoading(false);
       }
     };
 
-    loadData();
+    void loadData();
     return () => {
       active = false;
     };
   }, [supabase, user?.id]);
 
-  useEffect(() => {
-    if (!recipients.length) return;
-    setActiveRecipientIndex((prev) => prev % recipients.length);
-  }, [recipients.length]);
-
-  useEffect(() => {
-    if (!recipients.length || recipientsHover) return;
-    const id = window.setInterval(() => {
-      setActiveRecipientIndex((prev) =>
-        recipients.length ? (prev + 1) % recipients.length : 0
-      );
-    }, 2500);
-    return () => window.clearInterval(id);
-  }, [recipients.length, recipientsHover]);
-
-  const nextOccasion = useMemo(() => {
+  const upcomingOccasions = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const upcoming: UpcomingEvent[] = [];
 
     recipients.forEach((recipient) => {
-      if (!recipient.birthday) return;
-      const original = parseDateOnly(recipient.birthday);
-      if (!original) return;
-      const next = new Date(
+      const birthday = parseDateOnly(recipient.birthday);
+      if (!birthday) return;
+      const nextBirthday = new Date(
         today.getFullYear(),
-        original.getMonth(),
-        original.getDate()
+        birthday.getMonth(),
+        birthday.getDate(),
       );
-      if (next < today) next.setFullYear(next.getFullYear() + 1);
+      if (nextBirthday < today) {
+        nextBirthday.setFullYear(nextBirthday.getFullYear() + 1);
+      }
       upcoming.push({
         id: `birthday-${recipient.id}`,
-        date: next,
+        date: nextBirthday,
         label: `${recipient.name}'s birthday`,
-        type: "birthday",
-        recipientId: recipient.id,
-        recipientName: recipient.name,
       });
     });
 
     events.forEach((event) => {
-      if (!event.event_date) return;
       const eventDate = parseDateOnly(event.event_date);
       if (!eventDate || eventDate < today) return;
       upcoming.push({
         id: event.id,
         date: eventDate,
         label: event.label ?? "Upcoming occasion",
-        type: "event",
-        recipientId: event.recipient_id ?? undefined,
-        recipientName:
-          recipients.find((r) => r.id === event.recipient_id)?.name ?? undefined,
       });
     });
 
-    const years = [today.getFullYear(), today.getFullYear() + 1];
-    years.forEach((year) => {
+    [today.getFullYear(), today.getFullYear() + 1].forEach((year) => {
       getDefaultUsHolidaysForYear(year).forEach((holiday) => {
-        const eventDate = new Date(holiday.date);
-        eventDate.setHours(0, 0, 0, 0);
-        if (eventDate < today) return;
-
+        const holidayDate = new Date(holiday.date);
+        if (Number.isNaN(holidayDate.getTime())) return;
+        holidayDate.setHours(0, 0, 0, 0);
+        if (holidayDate < today) return;
         upcoming.push({
           id: holiday.id,
-          date: eventDate,
+          date: holidayDate,
           label: holiday.title,
-          type: "seasonal",
         });
       });
     });
 
-    upcoming.sort((a, b) => a.date.getTime() - b.date.getTime());
-    return upcoming[0] ?? null;
+    return upcoming
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+      .slice(0, 4);
   }, [events, recipients]);
-
-  const recipientsHighlight =
-    recipients.length && activeRecipientIndex < recipients.length
-      ? recipients[activeRecipientIndex]
-      : null;
-  const lastRunLabel = useMemo(() => {
-    if (!latestInteraction?.message) return null;
-    return latestInteraction.message;
-  }, [latestInteraction]);
 
   if (loading) {
     return (
-      <div className="gp-card-soft">
-        <PerchPalLoader variant="inline" size="sm" message="Loading dashboard insights..." />
+      <div className="rounded-2xl border border-gp-app-evergreen/10 bg-white/80 p-6">
+        <PerchPalLoader
+          variant="inline"
+          size="sm"
+          message="Loading dashboard insights..."
+        />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="gp-card-soft text-sm text-red-700">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
         {error}
       </div>
     );
   }
 
+  const nextOccasion = upcomingOccasions[0] ?? null;
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <article className="gp-card flex flex-col gap-3">
-        <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-          Next big occasion
-        </p>
-        {nextOccasion ? (
-          (() => {
-            const occasionType = getOccasionType(nextOccasion.label);
-            const { src, alt } = getOccasionIcon(occasionType);
-            const mood = getOccasionMoodText(occasionType);
-
-            return (
-              <>
-                <div className="mt-0 flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-gp-cream/80 flex items-center justify-center shadow-sm">
-                    <Image
-                      src={src}
-                      alt={alt}
-                      width={48}
-                      height={48}
-                      className="h-10 w-10 object-contain"
-                    />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gp-evergreen">
-                    {nextOccasion.label}
-                  </h3>
-                </div>
-
-                <p className="text-sm text-gp-evergreen/70">
-                  {formatFullDate(nextOccasion.date)}
-                </p>
-
-                {buildCountdownLabel(nextOccasion.date) ? (
-                  <span className="inline-flex w-fit rounded-full border border-3 border-gp-gold/40 bg-white px-3 py-1 text-xs font-medium text-gp-evergreen">
-                    {buildCountdownLabel(nextOccasion.date)}
-                  </span>
-                ) : null}
-
-                <div className="mt-1 mb-1 inline-flex rounded-full bg-gp-cream/80 px-3 py-1">
-                  <p className="text-[11px] text-gp-evergreen/70 sm:text-xs">
-                    {mood}
-                  </p>
-                </div>
-
-                {nextOccasion.recipientId ? (
-                  <Link
-                    href={`/recipients`}
-                    className="text-sm font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                  >
-                    Prepare for {nextOccasion.recipientName}
-                  </Link>
-                ) : null}
-
-                <Link
-                  href="/occasions"
-                  className="gp-primary-button w-fit"
-                >
-                  View occasions →
-                </Link>
-              </>
-            );
-          })()
-        ) : (
-          <p className="text-sm text-gp-evergreen/70">
-            Add birthdays or occasions to see what&apos;s coming up next.
-          </p>
-        )}
-      </article>
-
-      <article className="gp-card flex flex-col gap-3">
-        <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-          Your recipient profiles
-        </p>
-        <h3 className="text-3xl font-semibold text-gp-evergreen">
-          {recipients.length}
-        </h3>
-        <p className="text-sm text-gp-evergreen/70">
-          {recipients.length
-            ? "Profiles ready for their next surprise."
-            : "Start by adding the people you shop for most often."}
-        </p>
-        {recipientsHighlight ? (
-          <button
-            type="button"
-            onClick={() => router.push("/recipients")}
-            className="rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-3 py-2 text-left shadow-sm transition hover:border-gp-evergreen/25 cursor-pointer"
-            onMouseEnter={() => setRecipientsHover(true)}
-            onMouseLeave={() => setRecipientsHover(false)}
-          >
-            <div className="flex items-center gap-3">
-              {recipientsHighlight.avatar_url ? (
-                <Image
-                  src={recipientsHighlight.avatar_url}
-                  alt={recipientsHighlight.name}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full border border-gp-evergreen/15 bg-white object-cover"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gp-evergreen/10 text-base font-semibold text-gp-evergreen">
-                  {getInitials(recipientsHighlight.name)}
-                </div>
-              )}
-              <div>
-                <p className="text-base font-semibold text-gp-evergreen">
-                  {recipientsHighlight.name}
-                </p>
-                <p className="text-[12px] uppercase tracking-wide text-gp-evergreen/60">
-                  {recipientsHighlight.relationship === "Pet" && recipientsHighlight.pet_type
-                    ? `Pet (${recipientsHighlight.pet_type})`
-                    : recipientsHighlight.relationship ?? "Relationship TBD"}
-                </p>
-              </div>
-            </div>
-          </button>
-        ) : null}
-        <Link
+    <div className="space-y-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          icon={<Users aria-hidden="true" className="h-5 w-5" />}
+          label="Recipients"
+          value={recipientCount.toLocaleString()}
+          detail="People in your gift list"
           href="/recipients"
-          className="gp-primary-button w-fit mt-1"
-        >
-          Manage recipients →
-        </Link>
-      </article>
+          action="Manage recipients"
+        />
+        <SummaryCard
+          icon={<CalendarDays aria-hidden="true" className="h-5 w-5" />}
+          label="Next occasion"
+          value={nextOccasion?.label ?? "Nothing scheduled"}
+          detail={
+            nextOccasion
+              ? formatFullDate(nextOccasion.date)
+              : "Add an occasion to get reminders"
+          }
+          badge={nextOccasion ? buildCountdownLabel(nextOccasion.date) : null}
+          href="/occasions"
+          action="View occasions"
+        />
+        <SummaryCard
+          icon={<Gift aria-hidden="true" className="h-5 w-5" />}
+          label="Saved gifts"
+          value={savedGiftCount.toLocaleString()}
+          detail="Ideas you have saved"
+          href="/history"
+          action="View saved gifts"
+        />
+        <SummaryCard
+          icon={<Sparkles aria-hidden="true" className="h-5 w-5" />}
+          label="Gift idea runs"
+          value={suggestionCount.toLocaleString()}
+          detail="Personalized recommendation runs"
+          href="/history"
+          action="View history"
+        />
+      </div>
 
-      <article className="gp-card flex flex-col gap-3">
-        <p className="text-xs uppercase tracking-wide text-gp-evergreen/60">
-          PerchPal
-        </p>
-        <div className="flex items-center gap-3">
-          <Link href="/gifts" className="rounded-full transition hover:scale-105">
+      <section className="flex flex-col gap-4 rounded-2xl border border-gp-app-evergreen/10 bg-[linear-gradient(100deg,rgba(226,236,222,0.82),rgba(255,252,245,0.92))] px-5 py-4 shadow-[0_10px_28px_rgba(15,61,62,0.045)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex min-w-0 items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#fff4cf]">
             <Image
               src="/giftperch_perchpal_front.png"
               alt="PerchPal"
-              width={56}
-              height={56}
-              className="h-12 w-12 rounded-full border border-gp-evergreen/10 bg-gp-cream/80 object-contain shadow-sm"
+              width={52}
+              height={52}
+              className="h-12 w-12 object-contain"
             />
-          </Link>
-          <div>
-            <h3 className="text-lg font-semibold text-gp-evergreen">Chat with PerchPal</h3>
-            <p className="text-sm text-gp-evergreen/70">Your AI gifting assistant</p>
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-display text-xl font-semibold text-gp-app-evergreen sm:text-2xl">
+              Ask PerchPal for a gift idea
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-5 text-gp-app-muted">
+              Not sure what to buy next? Get thoughtful recommendations based
+              on your recipients, interests, and upcoming occasions.
+            </p>
+            {latestInteraction?.message ? (
+              <p className="mt-1 truncate text-xs text-gp-app-evergreen/55">
+                Recent activity: {latestInteraction.message}
+              </p>
+            ) : null}
           </div>
         </div>
-        <p className="text-sm text-gp-evergreen/80">
-          Not sure what to buy next? Ask PerchPal for fresh, personalized gift ideas for each of your recipient profiles.
-        </p>
-        <Link href="/gifts" className="gp-primary-button mt-2 w-fit">
-          Open Gift Ideas →
+        <Link
+          href="/gifts"
+          className="gp-btn gp-btn--primary gp-btn--md shrink-0 justify-center"
+        >
+          <MessageCircle aria-hidden="true" className="h-4 w-4" />
+          Chat with PerchPal
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </Link>
-        {lastRunLabel ? (
-          <p className="text-xs text-gp-evergreen/60">Last run: {lastRunLabel}</p>
-        ) : null}
-      </article>
+      </section>
+
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(20rem,0.8fr)_minmax(0,1.2fr)]">
+        <DashboardPanel>
+          <PanelHeading
+            icon={<CalendarDays aria-hidden="true" className="h-5 w-5" />}
+            title="Upcoming occasions"
+            href="/occasions"
+          />
+          {upcomingOccasions.length ? (
+            <ul className="mt-4 space-y-2">
+              {upcomingOccasions.map((occasion) => {
+                const occasionIcon = getOccasionIcon(
+                  getOccasionType(occasion.label),
+                );
+                return (
+                  <li key={occasion.id}>
+                    <Link
+                      href="/occasions"
+                      className="group flex items-center gap-3 rounded-xl border border-gp-app-evergreen/8 bg-gp-app-surface-warm px-3 py-2.5 transition hover:border-gp-app-evergreen/18 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef4e9]">
+                        <Image
+                          src={occasionIcon.src}
+                          alt={occasionIcon.alt}
+                          width={36}
+                          height={36}
+                          className="h-8 w-8 object-contain"
+                        />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-gp-app-evergreen">
+                          {occasion.label}
+                        </span>
+                        <span className="block truncate text-xs text-gp-app-muted">
+                          {formatFullDate(occasion.date)}
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-[#fff4cf] px-2.5 py-1 text-[11px] font-semibold text-[#805a16]">
+                        {buildCountdownLabel(occasion.date)}
+                      </span>
+                      <ArrowRight
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-gp-app-muted transition group-hover:translate-x-0.5"
+                      />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="mt-4 rounded-xl bg-gp-app-surface-warm p-5 text-sm text-gp-app-muted">
+              Add birthdays or occasions to see what is coming up next.
+            </div>
+          )}
+        </DashboardPanel>
+
+        <DashboardPanel>
+          <PanelHeading
+            icon={<Sparkles aria-hidden="true" className="h-5 w-5" />}
+            title="Recent gift ideas"
+            href="/history"
+          />
+          {recentGifts.length ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {recentGifts.map((gift) => (
+                <RecentGiftCard key={gift.id} gift={gift} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-gp-app-evergreen/15 bg-gp-app-surface-warm p-6 text-center">
+              <Gift
+                aria-hidden="true"
+                className="h-7 w-7 text-gp-app-gold-strong"
+              />
+              <p className="mt-3 text-sm font-semibold text-gp-app-evergreen">
+                No saved gift ideas yet
+              </p>
+              <p className="mt-1 text-xs text-gp-app-muted">
+                Save a recommendation and it will appear here.
+              </p>
+              <Link
+                href="/gifts"
+                className="gp-btn gp-btn--secondary gp-btn--sm mt-4"
+              >
+                Find gift ideas
+              </Link>
+            </div>
+          )}
+        </DashboardPanel>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <QuickAction
+          icon={<Gift aria-hidden="true" className="h-6 w-6" />}
+          href="/recipients"
+          title="Create a new recipient profile"
+          description="Capture their interests, budgets, key dates, and gift history in one place."
+        />
+        <QuickAction
+          icon={<Sparkles aria-hidden="true" className="h-6 w-6" />}
+          href="/gifts"
+          title="Generate fresh gift ideas"
+          description="Get personalized recommendations from PerchPal in seconds."
+        />
+        <QuickAction
+          icon={<Clock3 aria-hidden="true" className="h-6 w-6" />}
+          href="/history"
+          title="Explore your gift history"
+          description="Review past ideas so you do not repeat yourself next time."
+        />
+      </div>
     </div>
+  );
+}
+
+function SummaryCard({
+  icon,
+  label,
+  value,
+  detail,
+  badge,
+  href,
+  action,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  detail: string;
+  badge?: string | null;
+  href: string;
+  action: string;
+}) {
+  return (
+    <article className="flex min-h-44 flex-col rounded-2xl border border-gp-app-evergreen/10 bg-white/94 p-4 shadow-[0_10px_30px_rgba(15,61,62,0.05)]">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff3c8] text-gp-app-evergreen">
+          {icon}
+        </span>
+        <p className="text-sm font-medium text-gp-app-evergreen/80">{label}</p>
+      </div>
+      <p className="mt-2 line-clamp-2 font-display text-[1.65rem] font-semibold leading-8 text-gp-app-evergreen">
+        {value}
+      </p>
+      <div className="mt-1 flex min-h-8 flex-wrap items-center gap-2">
+        <p className="text-xs leading-4 text-gp-app-muted">{detail}</p>
+        {badge ? (
+          <span className="rounded-full bg-[#fff3c8] px-2 py-1 text-[10px] font-semibold text-[#805a16]">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      <Link
+        href={href}
+        className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-[#faf5e7] px-3 py-2 text-xs font-semibold text-gp-app-evergreen transition hover:bg-[#f5ecd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+      >
+        {action}
+        <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+      </Link>
+    </article>
+  );
+}
+
+function PanelHeading({
+  icon,
+  title,
+  href,
+}: {
+  icon: ReactNode;
+  title: string;
+  href: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4e9] text-gp-app-evergreen">
+          {icon}
+        </span>
+        <h2 className="font-display text-xl font-semibold text-gp-app-evergreen">
+          {title}
+        </h2>
+      </div>
+      <Link
+        href={href}
+        className="flex shrink-0 items-center gap-1 text-xs font-semibold text-gp-app-evergreen hover:underline hover:underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+      >
+        View all
+        <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+function RecentGiftCard({ gift }: { gift: SavedGiftSummary }) {
+  const product = getMatchedProductPresentation(gift.product_match);
+  const imageUrl =
+    product?.match.imageUrl ?? getSafeImageUrl(gift.image_url) ?? null;
+  const price = product?.priceDisplay ?? formatEstimatedPrice(gift);
+
+  return (
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gp-app-evergreen/10 bg-white">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#f4f0e5]">
+        <Image
+          src={imageUrl ?? "/gift-thumbnails/default-gift.svg"}
+          alt={imageUrl ? gift.title : "Gift idea placeholder"}
+          fill
+          sizes="(min-width: 1280px) 15vw, (min-width: 640px) 28vw, 90vw"
+          className="object-cover"
+          unoptimized={Boolean(imageUrl)}
+        />
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gp-app-evergreen">
+          {gift.title}
+        </h3>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5">
+          <span className="text-sm font-bold text-gp-app-evergreen">
+            {price ?? "Saved idea"}
+          </span>
+          {product ? (
+            <span className="truncate text-[11px] text-gp-app-muted">
+              {product.match.merchant}
+            </span>
+          ) : null}
+        </div>
+        <Link
+          href="/history"
+          className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-gp-app-evergreen px-3 py-2 text-xs font-semibold text-white transition hover:bg-gp-app-evergreen-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+        >
+          View saved idea
+          <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+function QuickAction({
+  icon,
+  href,
+  title,
+  description,
+}: {
+  icon: ReactNode;
+  href: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex min-w-0 items-center gap-4 rounded-2xl border border-gp-app-evergreen/10 bg-white/92 p-4 shadow-[0_8px_24px_rgba(15,61,62,0.045)] transition hover:-translate-y-0.5 hover:border-gp-app-evergreen/18 hover:shadow-[0_12px_30px_rgba(15,61,62,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+    >
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eef4e9] text-gp-app-evergreen">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-gp-app-evergreen">
+          {title}
+        </span>
+        <span className="mt-1 block text-xs leading-4 text-gp-app-muted">
+          {description}
+        </span>
+      </span>
+      <ArrowRight
+        aria-hidden="true"
+        className="h-4 w-4 shrink-0 text-gp-app-evergreen transition group-hover:translate-x-0.5"
+      />
+    </Link>
   );
 }

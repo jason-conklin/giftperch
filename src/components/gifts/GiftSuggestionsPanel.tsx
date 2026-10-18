@@ -7,17 +7,28 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
-import { ThumbDownIcon, ThumbUpIcon } from "@/components/icons/ThumbIcons";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
 import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
+import {
+  getSavedGiftProductKey,
+  normalizeSavedGiftTitle,
+} from "@/lib/savedGiftIdentity";
 import {
   AFFILIATE_DISCLOSURE,
   AFFILIATE_LINK_REL,
   AFFILIATE_SHOPPING_BUTTON_CLASS,
   getMatchedProductPresentation,
+  resolveProductMatch,
   type ProductMatch,
 } from "@/lib/affiliateProduct";
+import {
+  Check,
+  ChevronDown,
+  ExternalLink,
+  Heart,
+  Trash2,
+} from "lucide-react";
 
 type AvatarIconKey =
   | "babyboy"
@@ -126,7 +137,6 @@ export type GiftSuggestion = {
     primeEligible?: boolean | null;
   } | null;
   initialSaved?: boolean;
-  initialPreference?: "liked" | "disliked" | null;
 };
 
 type GiftPromptContext = {
@@ -149,6 +159,18 @@ type SuggestionRun = {
 };
 
 type SortOption = "relevance" | "price-asc" | "price-desc" | "tier";
+type GiftCategoryFilter = "all" | GiftSuggestion["tier"];
+
+const giftCategoryFilters: ReadonlyArray<{
+  value: GiftCategoryFilter;
+  label: string;
+}> = [
+  { value: "all", label: "All ideas" },
+  { value: "thoughtful", label: "Thoughtful" },
+  { value: "safe", label: "Safe favorites" },
+  { value: "experience", label: "Experiences" },
+  { value: "splurge", label: "Splurge" },
+];
 
 type GiftSuggestionsPanelProps = {
   onFirstRunComplete?: () => void;
@@ -176,14 +198,183 @@ const formatRunLabel = (run: SuggestionRun) => {
   const ideaLabel = ideaCount === 1 ? "idea" : "ideas";
   return `${dateStr} • ${timeStr} • ${occasion} • ${ideaCount} ${ideaLabel}`;
 };
+
+type RunHistoryMenuProps = {
+  runs: SuggestionRun[];
+  activeRunId: string | null;
+  onSelect: (runId: string) => void;
+  onRequestDelete: (runId: string) => void;
+};
+
+function RunHistoryMenu({
+  runs,
+  activeRunId,
+  onSelect,
+  onRequestDelete,
+}: RunHistoryMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const activeRun = runs.find((run) => run.id === activeRunId) ?? runs[0];
+
+  const closeMenu = (returnFocus = false) => {
+    setIsOpen(false);
+    if (returnFocus) {
+      requestAnimationFrame(() => triggerRef.current?.focus());
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    requestAnimationFrame(() => {
+      const actions = Array.from(
+        menuRef.current?.querySelectorAll<HTMLButtonElement>(
+          "[data-run-menu-action]",
+        ) ?? [],
+      );
+      const selectedAction = actions.find(
+        (action) => action.dataset.runId === activeRunId,
+      );
+      (selectedAction ?? actions[0])?.focus();
+    });
+
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [activeRunId, isOpen]);
+
+  const handleMenuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu(true);
+      return;
+    }
+
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+      return;
+    }
+
+    const actions = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>(
+        "[data-run-menu-action]",
+      ) ?? [],
+    );
+    if (!actions.length) return;
+
+    event.preventDefault();
+    const currentIndex = actions.indexOf(document.activeElement as HTMLButtonElement);
+    let nextIndex = currentIndex;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = actions.length - 1;
+    if (event.key === "ArrowDown") {
+      nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % actions.length;
+    }
+    if (event.key === "ArrowUp") {
+      nextIndex =
+        currentIndex < 0
+          ? actions.length - 1
+          : (currentIndex - 1 + actions.length) % actions.length;
+    }
+    actions[nextIndex]?.focus();
+  };
+
+  return (
+    <div ref={rootRef} className="relative w-full min-w-0 sm:w-[21rem]">
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((previous) => !previous)}
+        onKeyDown={(event) => {
+          if (!isOpen && ["ArrowDown", "ArrowUp"].includes(event.key)) {
+            event.preventDefault();
+            setIsOpen(true);
+          }
+        }}
+        className="flex min-h-10 w-full items-center justify-between gap-2 rounded-full border border-gp-evergreen/15 bg-white px-3.5 py-1.5 text-left text-xs font-semibold text-gp-evergreen transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70"
+      >
+        <span className="min-w-0 truncate">
+          {activeRun ? formatRunLabel(activeRun) : "Previous runs"}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 transition ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {isOpen ? (
+        <div
+          ref={menuRef}
+          role="menu"
+          aria-label="Previous recommendation runs"
+          onKeyDown={handleMenuKeyDown}
+          className="absolute right-0 z-40 mt-2 max-h-80 w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-gp-evergreen/15 bg-white p-1.5 shadow-[0_18px_44px_rgba(8,47,48,0.18)]"
+        >
+          {runs.map((run) => {
+            const isSelected = run.id === activeRunId;
+            return (
+              <div
+                key={run.id}
+                className={`flex items-center gap-1 rounded-lg ${
+                  isSelected ? "bg-gp-cream" : "hover:bg-[#fffdf7]"
+                }`}
+              >
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={isSelected}
+                  data-run-menu-action
+                  data-run-id={run.id}
+                  onClick={() => {
+                    onSelect(run.id);
+                    closeMenu(true);
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium text-gp-evergreen focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gp-gold/70"
+                >
+                  <span className="min-w-0 flex-1 truncate">
+                    {formatRunLabel(run)}
+                  </span>
+                  {isSelected ? (
+                    <Check
+                      className="h-4 w-4 shrink-0 text-gp-evergreen"
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  data-run-menu-action
+                  aria-label={`Delete run ${formatRunLabel(run)}`}
+                  onClick={() => {
+                    onRequestDelete(run.id);
+                    closeMenu();
+                  }}
+                  className="mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gp-evergreen/40 transition hover:bg-red-50 hover:text-red-700 focus-visible:bg-red-50 focus-visible:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                >
+                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 const PERCHPAL_ERROR_MESSAGE =
   "PerchPal is temporarily unavailable. Please try again in a few minutes.";
 
 const getSuggestionIdentity = (suggestion: GiftSuggestion) =>
   suggestion.id?.trim() || "";
-
-const isUuid = (value: string | null | undefined) =>
-  typeof value === "string" && /^[0-9a-fA-F-]{32,36}$/.test(value);
 
 type SuggestionCardProps = {
   suggestionKey: string;
@@ -191,8 +382,6 @@ type SuggestionCardProps = {
   onSaveGift: (suggestion: GiftSuggestion) => void;
   onUnsaveGift: (suggestion: GiftSuggestion) => void;
   isSaved: boolean;
-  isLiked: boolean;
-  isDisliked: boolean;
   lastSavedId: string | null;
   lastUnsavedId: string | null;
   saveState?: {
@@ -202,11 +391,6 @@ type SuggestionCardProps = {
   };
   onOpenSaved?: () => void;
   onDismissSave?: () => void;
-  onDismissFeedback?: () => void;
-  feedback?: "liked" | "disliked" | null;
-  feedbackError?: string | null;
-  onToggleFeedback: (next: "liked" | "disliked") => void;
-  dismissedFeedback?: boolean;
 };
 
 function GiftSuggestionCard({
@@ -215,21 +399,12 @@ function GiftSuggestionCard({
   onSaveGift,
   onUnsaveGift,
   isSaved,
-  isLiked: isLikedProp,
-  isDisliked: isDislikedProp,
   lastSavedId,
   lastUnsavedId,
   saveState,
   onOpenSaved,
   onDismissSave,
-  onDismissFeedback,
-  feedback,
-  onToggleFeedback,
-  feedbackError,
-  dismissedFeedback,
 }: SuggestionCardProps) {
-  const isLiked = isLikedProp ?? feedback === "liked";
-  const isDisliked = isDislikedProp ?? feedback === "disliked";
   const previewIcon = getGiftPreviewIcon(suggestion);
   const amazon = suggestion.amazonProduct;
   const matchedProduct = getMatchedProductPresentation(
@@ -255,141 +430,105 @@ function GiftSuggestionCard({
   const shoppingLabel = matchedProduct?.shoppingLabel ?? "View on Amazon";
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-gp-evergreen/15 bg-white/90 shadow-sm">
-      <div className="relative h-40 w-full overflow-hidden bg-gp-evergreen/5">
-        <Image
-          src={matchedImage ?? previewIcon}
-          alt={
-            matchedImage
-              ? matchedProduct?.match.productTitle || suggestion.title
-              : suggestion.title
-              ? `${suggestion.title} preview icon`
-              : "Gift preview icon"
+    <article className="group flex min-w-0 self-start flex-col overflow-hidden rounded-2xl border border-gp-evergreen/10 bg-white shadow-[0_12px_32px_rgba(15,61,62,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-gp-gold/45 hover:shadow-[0_18px_38px_rgba(15,61,62,0.11)]">
+      <div className="relative aspect-[16/10] min-h-48 w-full overflow-hidden border-b border-gp-evergreen/8 bg-[#f8f6ef]">
+        <a
+          href={shoppingHref}
+          target="_blank"
+          rel={AFFILIATE_LINK_REL}
+          aria-label={`${shoppingLabel}: ${matchedProduct?.match.productTitle || suggestion.title} (opens in a new tab)`}
+          className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-gp-gold/80"
+        >
+          <Image
+            src={matchedImage ?? previewIcon}
+            alt={
+              matchedImage
+                ? matchedProduct?.match.productTitle || suggestion.title
+                : suggestion.title
+                ? `${suggestion.title} preview icon`
+                : "Gift preview icon"
+            }
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 25vw"
+            className="object-contain p-3 transition duration-300 group-hover:scale-[1.025]"
+          />
+        </a>
+        <span
+          className={`pointer-events-none absolute left-3 top-3 z-10 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-sm ${
+            tierBadgeClasses[suggestion.tier]
+          }`}
+        >
+          {tierLabels[suggestion.tier]}
+        </span>
+        <button
+          type="button"
+          onClick={() =>
+            isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
           }
-          fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-contain"
-        />
+          disabled={saveState?.saving}
+          className="absolute right-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/10 bg-white/95 text-gp-evergreen shadow-sm transition hover:bg-gp-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-label={
+            saveState?.saving
+              ? "Saving gift idea"
+              : isSaved
+                ? "Remove from saved ideas"
+                : "Save gift idea"
+          }
+          aria-pressed={isSaved}
+        >
+          <Heart
+            className={`h-4.5 w-4.5 ${isSaved ? "fill-current" : ""}`}
+            aria-hidden="true"
+          />
+        </button>
       </div>
 
-      <div className="flex h-full flex-col gap-3 px-4 pb-4 pt-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-gp-evergreen">
-              {suggestion.title}
-            </h3>
-            <p className="text-sm text-gp-evergreen/80">
-              {suggestion.short_description}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <span
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                tierBadgeClasses[suggestion.tier]
-              }`}
-            >
-              {tierLabels[suggestion.tier]}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-            onClick={() => onToggleFeedback("liked")}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-              isLiked ? "bg-blue-50" : ""
-            }`}
-            aria-label="Like this idea"
-            aria-pressed={isLiked}
-              >
-                <ThumbUpIcon
-                  className={`h-4 w-4 stroke-current ${
-                    isLiked ? "fill-current" : "fill-none"
-                  }`}
-                />
-              </button>
-              <button
-                type="button"
-            onClick={() => onToggleFeedback("disliked")}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-red-500 transition hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer ${
-              isDisliked ? "bg-red-50" : ""
-            }`}
-            aria-label="Dislike this idea"
-            aria-pressed={isDisliked}
-              >
-                <ThumbDownIcon
-                  className={`h-4 w-4 stroke-current ${
-                    isDisliked ? "fill-current" : "fill-none"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-start justify-between gap-3 text-sm text-gp-evergreen/80">
-          <div className="min-w-[180px]">
-            <p className="font-semibold text-gp-evergreen">Price</p>
-            <p className="text-sm">{priceDisplay}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              isSaved ? onUnsaveGift(suggestion) : onSaveGift(suggestion)
-            }
-            disabled={saveState?.saving}
-            className="rounded-full border border-gp-evergreen/30 px-4 py-2 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-          >
-            {saveState?.saving ? "Saving..." : isSaved ? "Unsave" : "Save"}
-          </button>
-        </div>
-
-        <div className="rounded-2xl border border-gp-evergreen/15 bg-gp-cream/60 px-4 py-3 text-sm text-gp-evergreen/90">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-            Why this fits
+      <div className="flex flex-col gap-3 p-4">
+        <div className="space-y-1.5">
+          <h3 className="line-clamp-2 text-base font-bold leading-5 text-gp-evergreen">
+            {suggestion.title}
+          </h3>
+          <p className="line-clamp-2 text-sm leading-5 text-gp-evergreen/65">
+            {suggestion.short_description}
           </p>
-          <p>{suggestion.why_it_fits}</p>
         </div>
 
-        {matchedProduct ? (
-          <div className="border-t border-gp-evergreen/10 pt-3 text-sm text-gp-evergreen/80">
-            <p className="font-semibold text-gp-evergreen">
-              {matchedProduct.match.productTitle}
+        <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xl font-bold tracking-tight text-gp-evergreen">
+              {priceDisplay}
             </p>
-            <p className="mt-1 text-xs">{matchedProduct.merchantLabel}</p>
           </div>
-        ) : null}
+          {matchedProduct ? (
+            <div className="max-w-[55%] text-right">
+              <p className="truncate text-sm font-semibold text-gp-evergreen/80">
+                {matchedProduct.merchantLabel}
+              </p>
+            </div>
+          ) : null}
+        </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col gap-1.5">
           <a
             href={shoppingHref}
             target="_blank"
             rel={AFFILIATE_LINK_REL}
-            className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} w-full max-w-xs`}
+            className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} gp-affiliate-shopping-button w-full justify-center`}
           >
             {shoppingLabel}
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
-          <p className="text-center text-[11px] text-gp-evergreen/60">
+          <p className="text-center text-[10px] leading-4 text-gp-evergreen/50">
             {AFFILIATE_DISCLOSURE}
           </p>
         </div>
 
         {(() => {
-        const recentlySaved =
-          isSaved && lastSavedId === suggestionKey && saveState?.success;
-        const recentlyUnsaved =
-          !isSaved && lastUnsavedId === suggestionKey && !saveState?.success;
-          const banner = isLiked && !dismissedFeedback
-            ? {
-              className: "border border-emerald-200 bg-emerald-50 text-emerald-900",
-              message: "Gift idea liked. ",
-              onDismiss: onDismissFeedback,
-              }
-            : isDisliked && !dismissedFeedback
-            ? {
-              className: "border border-red-200 bg-red-50 text-red-900",
-              message: "Gift idea disliked. ",
-              onDismiss: onDismissFeedback,
-              }
-            : recentlySaved
+          const recentlySaved =
+            isSaved && lastSavedId === suggestionKey && saveState?.success;
+          const recentlyUnsaved =
+            !isSaved && lastUnsavedId === suggestionKey && !saveState?.success;
+          const banner = recentlySaved
             ? {
                 className:
                   "border border-gp-evergreen/15 bg-green-50 text-gp-evergreen",
@@ -429,9 +568,6 @@ function GiftSuggestionCard({
             </div>
           );
         })()}
-        {feedbackError ? (
-          <p className="text-xs text-red-600">{feedbackError}</p>
-        ) : null}
         {saveState?.error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
             {saveState.error}
@@ -456,6 +592,8 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   const [sortOption, setSortOption] = useState<SortOption>("relevance");
+  const [categoryFilter, setCategoryFilter] =
+    useState<GiftCategoryFilter>("all");
 
   const [isLoadingRecipients, setIsLoadingRecipients] = useState(true);
   const [isLoadingRuns, setIsLoadingRuns] = useState(false);
@@ -480,8 +618,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [savedMap, setSavedMap] = useState<Record<string, boolean>>({});
   const [savedIdMap, setSavedIdMap] = useState<Record<string, string>>({});
-  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
-  const [dislikedMap, setDislikedMap] = useState<Record<string, boolean>>({});
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [lastUnsavedId, setLastUnsavedId] = useState<string | null>(null);
   const [saveStates, setSaveStates] = useState<
@@ -490,21 +626,24 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       { saving: boolean; success: boolean; error: string | null; ts: number }
     >
   >({});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeleteRunId, setPendingDeleteRunId] = useState<string | null>(
+    null,
+  );
   const [isDeletingRun, setIsDeletingRun] = useState(false);
-  const [feedbackById, setFeedbackById] = useState<
-    Record<string, "liked" | "disliked" | null>
-  >({});
-  const [feedbackErrorById, setFeedbackErrorById] = useState<
-    Record<string, string | null>
-  >({});
-  const [dismissedFeedbackByKey, setDismissedFeedbackByKey] = useState<
-    Record<string, boolean>
-  >({});
   const resultsSectionRef = useRef<HTMLDivElement | null>(null);
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
+  );
+  const selectedBudgetDisplay = selectedRecipient
+    ? formatBudgetRange(
+        selectedRecipient.budget_per_gift,
+        selectedRecipient.budget_annual,
+      )
+    : "Select a recipient";
+  const pendingDeleteRun = useMemo(
+    () => runs.find((run) => run.id === pendingDeleteRunId) ?? null,
+    [pendingDeleteRunId, runs],
   );
   const [showTipBanner, setShowTipBanner] = useState(false);
 
@@ -704,8 +843,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     const params = new URLSearchParams();
     if (savedId) {
       params.set("id", savedId);
-    } else if (isUuid(suggestion.id)) {
-      params.set("suggestionId", suggestion.id);
     } else if (suggestion.title) {
       params.set("title", suggestion.title);
     }
@@ -794,107 +931,32 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   };
 
   const handleDeleteRun = async () => {
-    if (!activeRunId || !user?.id) return;
+    if (!pendingDeleteRunId || !user?.id) return;
+    const runIdToDelete = pendingDeleteRunId;
     try {
       setIsDeletingRun(true);
       const { error } = await supabase
         .from("gift_suggestions")
         .delete()
-        .eq("id", activeRunId)
+        .eq("id", runIdToDelete)
         .eq("recipient_id", selectedRecipientId || "")
         .eq("user_id", user.id);
       if (error) throw error;
 
       setRuns((prev) => {
-        const remaining = prev.filter((run) => run.id !== activeRunId);
-        const next = remaining[0];
-        setActiveRunId(next ? next.id : null);
+        const remaining = prev.filter((run) => run.id !== runIdToDelete);
+        setActiveRunId((currentRunId) =>
+          currentRunId === runIdToDelete
+            ? (remaining[0]?.id ?? null)
+            : currentRunId,
+        );
         return remaining;
       });
-      setShowDeleteConfirm(false);
+      setPendingDeleteRunId(null);
     } catch (err) {
       console.error("Failed to delete run", err);
     } finally {
       setIsDeletingRun(false);
-    }
-  };
-
-  const toggleFeedback = async (
-    suggestionKey: string,
-    suggestion: GiftSuggestion,
-    suggestionIndex: number,
-    next: "liked" | "disliked",
-  ) => {
-    if (!selectedRecipientId || !selectedRecipient) {
-      return;
-    }
-    const current = feedbackById[suggestionKey] ?? null;
-    const preference = current === next ? "clear" : next;
-
-    try {
-      setFeedbackErrorById((prev) => ({ ...prev, [suggestionKey]: null }));
-      setDismissedFeedbackByKey((prev) => {
-        const nextMap = { ...prev };
-        delete nextMap[suggestionKey];
-        return nextMap;
-      });
-      const res = await fetch(
-        `/api/recipients/${selectedRecipient.id}/suggestions/${activeRunId}/feedback`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
-          body: JSON.stringify({
-            preference,
-            suggestionIndex,
-            suggestionId: suggestion.id,
-            title: suggestion.title,
-          }),
-        },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to save feedback");
-      }
-      setFeedbackById((prev) => ({
-        ...prev,
-        [suggestionKey]:
-          preference === "clear" ? null : (preference as "liked" | "disliked"),
-      }));
-      if (preference === "clear") {
-        setLikedMap((prev) => {
-          const next = { ...prev };
-          delete next[suggestionKey];
-          return next;
-        });
-        setDislikedMap((prev) => {
-          const next = { ...prev };
-          delete next[suggestionKey];
-          return next;
-        });
-      } else if (preference === "liked") {
-        setLikedMap((prev) => ({ ...prev, [suggestionKey]: true }));
-        setDislikedMap((prev) => {
-          const next = { ...prev };
-          delete next[suggestionKey];
-          return next;
-        });
-      } else if (preference === "disliked") {
-        setDislikedMap((prev) => ({ ...prev, [suggestionKey]: true }));
-        setLikedMap((prev) => {
-          const next = { ...prev };
-          delete next[suggestionKey];
-          return next;
-        });
-      }
-    } catch (err) {
-      setFeedbackErrorById((prev) => ({
-        ...prev,
-        [suggestionKey]:
-          err instanceof Error ? err.message : "Failed to save feedback",
-      }));
     }
   };
 
@@ -946,8 +1008,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   );
 
   useEffect(() => {
-    setFeedbackById({});
-    setFeedbackErrorById({});
+    setCategoryFilter("all");
   }, [activeRunId]);
 
   const visibleSuggestions = useMemo(() => {
@@ -979,6 +1040,28 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
     return suggestions;
   }, [activeRun, sortOption]);
+  const filteredSuggestions = useMemo(
+    () =>
+      categoryFilter === "all"
+        ? visibleSuggestions
+        : visibleSuggestions.filter(
+            (suggestion) => suggestion.tier === categoryFilter,
+          ),
+    [categoryFilter, visibleSuggestions],
+  );
+  const categoryCounts = useMemo(() => {
+    const counts: Record<GiftCategoryFilter, number> = {
+      all: visibleSuggestions.length,
+      safe: 0,
+      thoughtful: 0,
+      experience: 0,
+      splurge: 0,
+    };
+    visibleSuggestions.forEach((suggestion) => {
+      counts[suggestion.tier] += 1;
+    });
+    return counts;
+  }, [visibleSuggestions]);
   const visibleSuggestionsKey = visibleSuggestions
     .map((s) => getSuggestionIdentity(s))
     .join("|");
@@ -986,17 +1069,12 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   useEffect(() => {
     if (!selectedRecipientId || visibleSuggestions.length === 0) {
       setSavedMap({});
-      setLikedMap({});
-      setDislikedMap({});
-      setFeedbackById({});
+      setSavedIdMap({});
       setShowTipBanner(false);
       return;
     }
 
     const nextSaved: Record<string, boolean> = {};
-    const nextLiked: Record<string, boolean> = {};
-    const nextDisliked: Record<string, boolean> = {};
-    const nextFeedback: Record<string, "liked" | "disliked" | null> = {};
 
     visibleSuggestions.forEach((sugg) => {
       const key = getSuggestionIdentity(sugg);
@@ -1004,20 +1082,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       if (sugg.initialSaved) {
         nextSaved[key] = true;
       }
-      if (sugg.initialPreference === "liked") {
-        nextLiked[key] = true;
-        nextFeedback[key] = "liked";
-      } else if (sugg.initialPreference === "disliked") {
-        nextDisliked[key] = true;
-        nextFeedback[key] = "disliked";
-      }
     });
 
     setSavedMap(nextSaved);
-    setLikedMap(nextLiked);
-    setDislikedMap(nextDisliked);
-    setFeedbackById(nextFeedback);
-    setDismissedFeedbackByKey({});
     setShowTipBanner(true);
   }, [
     selectedRecipientId,
@@ -1025,6 +1092,98 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     visibleSuggestions.length,
     visibleSuggestions,
   ]);
+
+  useEffect(() => {
+    if (!selectedRecipientId || !authToken || visibleSuggestions.length === 0) {
+      return;
+    }
+
+    let active = true;
+    const reconcileSavedIdeas = async () => {
+      try {
+        const response = await fetch(
+          `/api/recipients/${selectedRecipientId}/saved-gifts`,
+          { headers: { Authorization: `Bearer ${authToken}` } },
+        );
+        if (!response.ok) return;
+
+        const body = (await response.json()) as {
+          savedGifts?: Array<{
+            id: string;
+            title: string;
+            product_match: unknown;
+          }>;
+        };
+        if (!active) return;
+
+        const nextSaved: Record<string, boolean> = {};
+        const nextSavedIds: Record<string, string> = {};
+        visibleSuggestions.forEach((suggestion) => {
+          const suggestionKey = getSuggestionIdentity(suggestion);
+          const suggestionProductKey = getSavedGiftProductKey(
+            resolveProductMatch(
+              suggestion.productMatch,
+              suggestion.amazonProduct,
+            ),
+          );
+          const suggestionTitleKey = normalizeSavedGiftTitle(suggestion.title);
+          const savedGift = (body.savedGifts ?? []).find((gift) => {
+            const savedProductKey = getSavedGiftProductKey(gift.product_match);
+            if (suggestionProductKey && savedProductKey) {
+              return suggestionProductKey === savedProductKey;
+            }
+            return normalizeSavedGiftTitle(gift.title) === suggestionTitleKey;
+          });
+          if (!suggestionKey || !savedGift) return;
+          nextSaved[suggestionKey] = true;
+          nextSavedIds[suggestionKey] = savedGift.id;
+        });
+        setSavedMap(nextSaved);
+        setSavedIdMap(nextSavedIds);
+      } catch {
+        // The run's persisted flags remain a safe fallback when reconciliation fails.
+      }
+    };
+
+    void reconcileSavedIdeas();
+    return () => {
+      active = false;
+    };
+  }, [authToken, selectedRecipientId, visibleSuggestions, visibleSuggestionsKey]);
+
+  const handleSavedGiftRemoved = (
+    recipientId: string,
+    removedGift: { id: string; title: string; product_match: unknown },
+  ) => {
+    if (recipientId !== selectedRecipientId) return;
+    const removedProductKey = getSavedGiftProductKey(removedGift.product_match);
+    const removedTitleKey = normalizeSavedGiftTitle(removedGift.title);
+
+    visibleSuggestions.forEach((suggestion) => {
+      const suggestionKey = getSuggestionIdentity(suggestion);
+      const suggestionProductKey = getSavedGiftProductKey(
+        resolveProductMatch(suggestion.productMatch, suggestion.amazonProduct),
+      );
+      const matches =
+        removedProductKey && suggestionProductKey
+          ? removedProductKey === suggestionProductKey
+          : normalizeSavedGiftTitle(suggestion.title) === removedTitleKey;
+      if (!suggestionKey || !matches) return;
+
+      setSavedMap((previous) => {
+        const next = { ...previous };
+        delete next[suggestionKey];
+        return next;
+      });
+      setSavedIdMap((previous) => {
+        const next = { ...previous };
+        delete next[suggestionKey];
+        return next;
+      });
+      setLastUnsavedId(suggestionKey);
+      setLastSavedId(null);
+    });
+  };
 
   const isInitialLoading =
     status === "loading" ||
@@ -1200,18 +1359,8 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   return (
     <section
       ref={suggestionsCardRef}
-      className="space-y-4 rounded-3xl border border-gp-evergreen/15 bg-white/95 p-4 sm:p-6 shadow-sm"
+      className="space-y-4"
     >
-      <header className="space-y-1">
-        <p className="text-lg uppercase font-semibold tracking-[0.2em] text-gp-evergreen">
-          Smart Gift Suggestions
-        </p>
-        <p className="text-sm text-gp-evergreen/70">
-          Choose a recipient, set a budget or occasion, and PerchPal will craft
-          tailored gift ideas with clear reasoning.
-        </p>
-      </header>
-
       {error && (
         <p className="rounded-2xl bg-red-50 px-4 py-2 text-sm text-red-700">
           {error}
@@ -1225,12 +1374,20 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         </div>
       ) : (
         <>
-          <form className="mt-2 space-y-4" onSubmit={handleRequestSuggestions}>
+          <form
+            className="gp-gift-generator-grid rounded-2xl border border-[#e8dfca] bg-[#fffdf7] p-4 shadow-[0_10px_28px_rgba(15,61,62,0.045)]"
+            onSubmit={handleRequestSuggestions}
+          >
+            <div className="gp-gift-generator-heading">
+              <h2 className="font-display text-xl font-semibold text-gp-evergreen sm:text-2xl">
+                Tell us who and what you&apos;re shopping for
+              </h2>
+            </div>
             {selectedRecipient ? (
-              <>
+              <div className="gp-gift-generator-recipient min-w-0">
                 <label
                   htmlFor="recipient-summary"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                  className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-gp-evergreen/60"
                 >
                   Recipient
                 </label>
@@ -1241,9 +1398,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     onClick={() =>
                       setRecipientMenuOpen((previous) => !previous)
                     }
-                    className="flex w-full items-center gap-3 rounded-2xl border border-gp-evergreen/10 bg-gp-cream/80 px-4 py-3 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
+                    className="flex min-h-13 w-full items-center gap-3 rounded-xl border border-gp-evergreen/15 bg-white px-3 py-1.5 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-white text-sm font-semibold text-gp-evergreen">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-white text-sm font-semibold text-gp-evergreen">
                       {(() => {
                         const avatar = getRecipientAvatarVisual(selectedRecipient);
                         if (avatar.kind === "image") {
@@ -1251,8 +1408,8 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                             <Image
                               src={avatar.src}
                               alt={avatar.alt}
-                              width={48}
-                              height={48}
+                              width={40}
+                              height={40}
                               className="h-full w-full object-cover"
                               unoptimized
                             />
@@ -1263,9 +1420,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                             <Image
                               src={avatar.src}
                               alt={avatar.alt}
-                              width={40}
-                              height={40}
-                              className="h-10 w-10 object-contain"
+                              width={34}
+                              height={34}
+                              className="h-8.5 w-8.5 object-contain"
                               unoptimized
                             />
                           );
@@ -1360,20 +1517,19 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   ) : null}
                 </div>
                 {showPrefilledHint ? (
-                  <p className="text-xs text-gp-evergreen/70">
+                  <p className="gp-gift-generator-note mt-1.5 text-xs leading-4 text-gp-evergreen/55">
                     Ready to generate ideas for {selectedRecipient.name}. Adjust
                     the occasion if you like, then click &quot;Ask PerchPal for
                     suggestions&quot;.
                   </p>
                 ) : null}
-              </>
+              </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
+              <div className="gp-gift-generator-occasion min-w-0">
                 <label
                   htmlFor="occasion-select"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                  className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-gp-evergreen/60"
                 >
                   Occasion (optional)
                 </label>
@@ -1381,7 +1537,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   id="occasion-select"
                   value={occasion}
                   onChange={(event) => setOccasion(event.target.value)}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
+                  className="gp-input min-h-13 rounded-xl bg-white"
                 >
                   <option value="">Choose an occasion</option>
                   <option value="birthday">Birthday</option>
@@ -1403,36 +1559,44 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 </select>
               </div>
 
-              <div>
+              <div className="gp-gift-generator-budget min-w-0">
+                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-gp-evergreen/60">
+                  Recipient profile budget
+                </span>
+                <div className="flex min-h-13 items-center rounded-xl border border-gp-evergreen/15 bg-white px-3.5 text-sm font-semibold text-gp-evergreen">
+                  {selectedBudgetDisplay}
+                </div>
+              </div>
+
+              <div className="gp-gift-generator-count min-w-0">
                 <label
                   htmlFor="num-suggestions-input"
-                  className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
+                  className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-gp-evergreen/60"
                 >
-                  Number of ideas (3-12)
+                  Number of ideas
                 </label>
-                <input
+                <select
                   id="num-suggestions-input"
-                  type="number"
-                  min={3}
-                  max={12}
                   value={numSuggestions}
                   onChange={(event) => setNumSuggestions(event.target.value)}
-                  className="w-full rounded-2xl border border-gp-evergreen/30 bg-white px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-                />
+                  className="gp-input min-h-13 rounded-xl bg-white"
+                >
+                  {Array.from({ length: 10 }, (_, index) => index + 3).map(
+                    (count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
+                    ),
+                  )}
+                </select>
               </div>
-            </div>
 
-            <div className="mt-4 rounded-xl border border-gp-gold/20 bg-gp-cream/40 px-4 py-4">
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-center text-sm text-gp-evergreen/70">
-                  Ready to generate tailored ideas for{" "}
-                  {selectedRecipient?.name ?? "your recipient"}?
-                </p>
+              <div className="gp-gift-generator-action flex flex-col justify-end gap-2">
                 <button
                   type="submit"
                   disabled={!selectedRecipientId || isGenerating || requestProgress > 0}
                   aria-disabled={isGenerating || requestProgress > 0}
-                  className="gp-btn gp-btn--primary gp-btn--lg h-14 w-full max-w-xl px-10 text-lg disabled:cursor-not-allowed"
+                  className="gp-btn gp-btn--primary min-h-13 w-full justify-center rounded-xl px-5 text-sm disabled:cursor-not-allowed"
                 >
                   <svg
                     viewBox="0 0 20 20"
@@ -1448,76 +1612,70 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                   </svg>
                   {isGenerating ? "Generating…" : "Generate Gift Ideas"}
                 </button>
+                <p className="text-center text-[11px] leading-4 text-gp-evergreen/55">
+                  Personalized using {selectedRecipient?.name ?? "this recipient"}&apos;s profile
+                </p>
               </div>
-            </div>
           </form>
 
           <div ref={resultsSectionRef}>
-            {selectedRecipient?.name ? (
-              <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
-                <p className="text-base font-semibold text-gp-evergreen sm:text-lg">
-                  Gift ideas for {selectedRecipient.name}
-                </p>
-                <button
-                  type="button"
-                  onClick={openSavedIdeasModal}
-                  className="inline-flex items-center rounded-full border border-gp-evergreen/20 bg-white/80 px-3 py-1 text-xs font-semibold text-gp-evergreen/80 transition hover:border-gp-gold/70 hover:bg-gp-cream hover:text-gp-evergreen focus:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/60 cursor-pointer"
-                >
-                  View saved ideas
-                </button>
-              </div>
-            ) : null}
-
             {runs.length > 0 && (
-              <div className="mt-4 flex flex-col gap-3 text-gp-evergreen sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-                <div className="flex items-end gap-2 sm:gap-3">
-                  <div className="min-w-0 flex-1 sm:min-w-[20rem]">
-                    <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                      Previous runs
-                    </label>
-                    <select
-                      value={activeRunId ?? ""}
-                      onChange={(e) =>
-                        setActiveRunId(e.target.value || null)
-                      }
-                      className="w-full rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer"
-                    >
-                      {runs.map((run) => (
-                        <option key={run.id} value={run.id}>
-                          {formatRunLabel(run)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!activeRunId}
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="gp-btn gp-btn--danger gp-btn--sm disabled:cursor-not-allowed"
-                  >
-                    Delete run
-                  </button>
+              <div className="mt-4 flex flex-col gap-3 border-b border-gp-evergreen/10 pb-3 text-gp-evergreen lg:flex-row lg:items-center">
+                <div
+                  className="flex flex-1 flex-wrap items-center gap-2"
+                  role="group"
+                  aria-label="Filter gift ideas"
+                >
+                  {giftCategoryFilters.map((filter) => {
+                    const count = categoryCounts[filter.value];
+                    if (filter.value !== "all" && count === 0) return null;
+                    const active = categoryFilter === filter.value;
+                    return (
+                      <button
+                        key={filter.value}
+                        type="button"
+                        onClick={() => setCategoryFilter(filter.value)}
+                        aria-pressed={active}
+                        className={`min-h-9 rounded-full border px-4 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 ${
+                          active
+                            ? "border-gp-evergreen bg-gp-evergreen text-white shadow-sm"
+                            : "border-gp-evergreen/12 bg-white text-gp-evergreen/75 hover:border-gp-evergreen/25 hover:bg-[#fffdf7]"
+                        }`}
+                      >
+                        {filter.label} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="flex items-end gap-2 sm:ml-auto">
-                  <label
-                    htmlFor="sort-option"
-                    className="mb-1 text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70"
-                  >
-                    Sort by
-                  </label>
+
+                <div className="flex w-full flex-wrap items-center gap-2 lg:ml-auto lg:w-auto lg:justify-end">
+                  <RunHistoryMenu
+                    runs={runs}
+                    activeRunId={activeRunId}
+                    onSelect={setActiveRunId}
+                    onRequestDelete={setPendingDeleteRunId}
+                  />
                   <select
                     id="sort-option"
                     value={sortOption}
                     onChange={(event) =>
                       setSortOption(event.target.value as SortOption)
                     }
-                    className="w-full min-w-[11rem] rounded-full border border-gp-evergreen/20 bg-white px-4 py-2.5 text-sm text-gp-evergreen shadow-sm focus:outline-none focus:ring-2 focus:ring-gp-gold/60 cursor-pointer sm:w-auto"
+                    className="gp-input min-h-10 w-auto min-w-[9rem] rounded-full bg-white py-1.5 text-xs"
+                    aria-label="Sort gift ideas"
                   >
-                    <option value="relevance">Model order</option>
+                    <option value="relevance">Relevance</option>
                     <option value="price-asc">Price: Low to high</option>
                     <option value="price-desc">Price: High to low</option>
                     <option value="tier">Tier</option>
                   </select>
+                  <button
+                    type="button"
+                    onClick={openSavedIdeasModal}
+                    className="gp-btn gp-btn--secondary gp-btn--sm min-h-10 rounded-full"
+                  >
+                    Saved ideas
+                  </button>
                 </div>
               </div>
             )}
@@ -1556,7 +1714,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 </div>
               ) : (
                 <>
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gp-evergreen/70">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gp-evergreen/60">
                     <span>
                       Generated {new Date(activeRun.created_at).toLocaleString()}{" "}
                       for {activeRun.prompt_context.recipient_name}
@@ -1564,20 +1722,28 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                         ? ` - ${activeRun.prompt_context.occasion}`
                         : ""}
                     </span>
-                    <FirstSuggestionsTipBanner hasSuggestionsThisSession={showTipBanner} />
                     {activeRun.prompt_context.budget_min ||
                     activeRun.prompt_context.budget_max ? (
                       <span>
-                        Budget:{" "}
+                        Run budget:{" "}
                         {formatBudgetRange(
                           activeRun.prompt_context.budget_min,
                           activeRun.prompt_context.budget_max,
                         )}
                       </span>
                     ) : null}
-                </div>
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {visibleSuggestions.map((suggestion, idx) => {
+                  </div>
+                  <FirstSuggestionsTipBanner hasSuggestionsThisSession={showTipBanner} />
+                  {filteredSuggestions.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-gp-evergreen/20 bg-white/70 p-5 text-center text-sm text-gp-evergreen/70">
+                      No ideas in this run match the selected category.
+                    </div>
+                  ) : (
+                    <div
+                      className="gp-gift-suggestions-grid grid gap-4"
+                      data-result-count={Math.min(filteredSuggestions.length, 4)}
+                    >
+                    {filteredSuggestions.map((suggestion) => {
                       const suggestionKey = getSuggestionIdentity(suggestion);
                       return (
                         <GiftSuggestionCard
@@ -1587,31 +1753,16 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                           onSaveGift={handleSaveGift}
                           onUnsaveGift={handleUnsaveGift}
                           isSaved={!!savedMap[suggestionKey]}
-                          isLiked={!!likedMap[suggestionKey]}
-                          isDisliked={!!dislikedMap[suggestionKey]}
                           lastSavedId={lastSavedId}
                           lastUnsavedId={lastUnsavedId}
                           saveState={saveStates[suggestionKey]}
                           onOpenSaved={openSavedIdeasModal}
                           onDismissSave={() => handleDismissSave(suggestionKey)}
-                          feedback={feedbackById[suggestionKey] ?? null}
-                          feedbackError={feedbackErrorById[suggestionKey] ?? null}
-                          dismissedFeedback={
-                            !!dismissedFeedbackByKey[suggestionKey]
-                          }
-                          onDismissFeedback={() =>
-                            setDismissedFeedbackByKey((prev) => ({
-                              ...prev,
-                              [suggestionKey]: true,
-                            }))
-                          }
-                          onToggleFeedback={(next) =>
-                            toggleFeedback(suggestionKey, suggestion, idx, next)
-                          }
                         />
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1642,23 +1793,24 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           isOpen={savedGiftsOpen}
           onClose={() => setSavedGiftsOpen(false)}
           authToken={authToken}
+          onSavedGiftRemoved={handleSavedGiftRemoved}
         />
       ) : null}
 
-      {showDeleteConfirm && activeRunId ? (
+      {pendingDeleteRunId && pendingDeleteRun ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-sm rounded-2xl bg-gp-cream p-5 shadow-xl">
             <p className="text-sm font-semibold text-gp-evergreen">
               Delete this run?
             </p>
             <p className="mt-2 text-sm text-gp-evergreen/80">
-              This will remove the saved suggestions for this run from your
-              history. This action can’t be undone.
+              This will remove {formatRunLabel(pendingDeleteRun)} from your
+              recommendation history. This action can’t be undone.
             </p>
             <div className="mt-4 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={() => setPendingDeleteRunId(null)}
                   className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-gp-evergreen border border-gp-evergreen/20 hover:bg-gp-cream/80 cursor-pointer"
                 >
                   Cancel

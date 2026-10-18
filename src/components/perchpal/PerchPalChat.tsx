@@ -212,12 +212,12 @@ export function PerchPalChat({
   const renderMessageBubble = (message: ChatMessage) => {
     if (message.role === "assistant") {
       return (
-        <div key={message.id} className="flex items-start gap-3">
+        <div key={message.id} className="flex min-w-0 items-start gap-3">
           <PerchPalFlyingAvatar size="sm" className="mt-1 shrink-0" />
-          <div>
-            <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-gp-evergreen shadow-sm">
+          <div className="min-w-0 flex-1">
+            <div className="rounded-2xl rounded-bl-sm border border-gp-evergreen/8 bg-white px-4 py-3 text-[13px] text-gp-evergreen shadow-sm">
               {message.content.split("\n").map((line, idx) => (
-                <p key={idx} className="leading-relaxed">
+                <p key={idx} className="break-words leading-6">
                   {line}
                 </p>
               ))}
@@ -236,8 +236,8 @@ export function PerchPalChat({
 
     return (
       <div key={message.id} className="flex justify-end">
-        <div>
-          <div className="rounded-2xl rounded-br-sm bg-gp-evergreen px-4 py-3 text-sm text-gp-cream shadow-sm">
+        <div className="max-w-[88%]">
+          <div className="break-words rounded-2xl rounded-br-sm bg-gp-evergreen px-4 py-3 text-[13px] leading-6 text-gp-cream shadow-sm">
             {message.content}
           </div>
           <p className="mt-1 text-right text-[10px] uppercase tracking-wide text-gp-evergreen/50">
@@ -258,14 +258,14 @@ export function PerchPalChat({
   ) => (
     <div
       ref={ref}
-      className={`gp-card-soft space-y-4 overflow-y-auto p-4 sm:p-5 ${wrapperClass}`}
+      className={`gp-card-soft space-y-5 overflow-y-auto p-4 ${wrapperClass}`}
     >
       {isLoadingHistory ? (
         <div className="flex justify-center">
           <PerchPalLoader variant="inline" size="sm" message="PerchPal is warming up..." />
         </div>
       ) : messages.length === 0 ? (
-        <div className="rounded-2xl border border-gp-evergreen/10 bg-white/95 p-5 text-center text-sm text-gp-evergreen/70">
+        <div className="rounded-2xl border border-gp-evergreen/10 bg-white/95 p-5 text-center text-sm leading-6 text-gp-evergreen/70">
           Start by telling PerchPal about a person you are shopping for, the
           occasion, and your budget.
         </div>
@@ -290,7 +290,7 @@ export function PerchPalChat({
 
   const renderInputArea = (id: string, extraClasses = "", minRows = 1) => (
     <form
-      className={`mt-2 flex flex-col gap-3 sm:flex-row sm:items-center ${extraClasses}`}
+      className={`mt-2 flex flex-col gap-2 ${extraClasses}`}
       onSubmit={handleSubmit}
     >
       <div className="flex-1">
@@ -303,13 +303,13 @@ export function PerchPalChat({
           value={input}
           onChange={(event) => setInput(event.target.value)}
           placeholder='Ask PerchPal for gift ideas (e.g. "Birthday gift for my mom who loves gardening, budget $100")'
-          className="gp-input min-h-[52px] resize-none"
+          className="gp-input min-h-[64px] resize-none rounded-xl bg-white py-3 text-sm leading-5"
         />
       </div>
       <button
         type="submit"
         disabled={isSending || !input.trim()}
-        className="gp-primary-button w-full sm:w-auto cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+        className="gp-primary-button min-h-11 w-full cursor-pointer justify-center rounded-xl transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
       >
         Send
       </button>

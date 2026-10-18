@@ -40,7 +40,6 @@ type GiftSuggestion = {
   productMatch?: ProductMatch | null;
   amazonProduct?: AmazonProduct | null;
   initialSaved?: boolean;
-  initialPreference?: "liked" | "disliked" | null;
 };
 
 type GiftPromptContext = {
@@ -82,14 +81,6 @@ type GiftHistoryItem = {
   notes: string | null;
 };
 
-type FeedbackRow = {
-  preference: "liked" | "disliked";
-  suggestion_id: string | null;
-  suggestion_index: number | null;
-  title?: string | null;
-  tier?: string | null;
-};
-
 type GiftSuggestionRunRow = {
   id: string;
   created_at: string;
@@ -119,7 +110,6 @@ const TOP_UP_BUFFER = 2;
 const RECENT_RUN_LOOKBACK_DAYS = 90;
 const RECENT_RUN_LIMIT = 24;
 const SAVED_IDEA_LIMIT = 200;
-const FEEDBACK_LIMIT = 250;
 const SUGGESTIONS_PER_RUN_CAP = 20;
 const PROMPT_EXCLUSION_LIMIT = 30;
 
@@ -259,7 +249,6 @@ export async function POST(request: NextRequest) {
       { data: interestsData },
       { data: giftsData },
       { data: savedData },
-      { data: feedbackData },
       { data: recentRunsData },
     ] = await Promise.all([
       supabase
@@ -281,13 +270,6 @@ export async function POST(request: NextRequest) {
         .order("created_at", { ascending: false })
         .limit(SAVED_IDEA_LIMIT),
       supabase
-        .from("recipient_gift_feedback")
-        .select("preference, suggestion_id, suggestion_index, title, tier")
-        .eq("recipient_id", recipientId)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(FEEDBACK_LIMIT),
-      supabase
         .from("gift_suggestions")
         .select("id, created_at, suggestions")
         .eq("recipient_id", recipientId)
@@ -300,63 +282,24 @@ export async function POST(request: NextRequest) {
     const interests = (interestsData ?? []) as RecipientInterest[];
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
     const recentRuns = (recentRunsData ?? []) as GiftSuggestionRunRow[];
-    const feedbackRows = ((feedbackData ?? []) as FeedbackRow[]).filter(
-      (row) => row.preference === "liked" || row.preference === "disliked",
-    );
 
     const savedByIdentity: Record<string, boolean> = {};
     const savedByCanonical: Record<string, boolean> = {};
-    const preferenceByIdentity: Record<string, "liked" | "disliked"> = {};
-    const preferenceByCanonical: Record<string, "liked" | "disliked"> = {};
 
     const previouslySavedTitles: string[] = [];
-    const likedTitles: string[] = [];
-    const dislikedTitles: string[] = [];
     const recentSuggestionTitles: string[] = [];
 
-    const suggestionsByRunId = new Map<string, GiftSuggestionFromRun[]>();
     recentRuns.forEach((run) => {
       const runSuggestions = extractSuggestionPayloads(
         run.suggestions,
         SUGGESTIONS_PER_RUN_CAP,
       );
-      suggestionsByRunId.set(run.id, runSuggestions);
       runSuggestions.forEach((item) => {
         if (typeof item.title === "string" && item.title.trim().length > 0) {
           recentSuggestionTitles.push(item.title.trim());
         }
       });
     });
-
-    const feedbackSuggestionIds = Array.from(
-      new Set(
-        feedbackRows
-          .map((row) =>
-            typeof row.suggestion_id === "string" ? row.suggestion_id.trim() : "",
-          )
-          .filter(Boolean),
-      ),
-    );
-    const missingFeedbackSuggestionIds = feedbackSuggestionIds.filter(
-      (id) => !suggestionsByRunId.has(id),
-    );
-
-    if (missingFeedbackSuggestionIds.length > 0) {
-      const { data: feedbackRunsData } = await supabase
-        .from("gift_suggestions")
-        .select("id, suggestions")
-        .eq("recipient_id", recipientId)
-        .eq("user_id", user.id)
-        .in("id", missingFeedbackSuggestionIds);
-
-      (feedbackRunsData ?? []).forEach((run) => {
-        if (typeof run.id !== "string") return;
-        suggestionsByRunId.set(
-          run.id,
-          extractSuggestionPayloads(run.suggestions, SUGGESTIONS_PER_RUN_CAP),
-        );
-      });
-    }
 
     (savedData ?? []).forEach((row) => {
       const title = typeof row.title === "string" ? row.title.trim() : "";
@@ -377,65 +320,13 @@ export async function POST(request: NextRequest) {
       previouslySavedTitles.push(title);
     });
 
-    feedbackRows.forEach((row) => {
-      const suggestionId =
-        typeof row.suggestion_id === "string" ? row.suggestion_id.trim() : "";
-      const hasExplicitSuggestionIndex =
-        typeof row.suggestion_index === "number" &&
-        Number.isInteger(row.suggestion_index) &&
-        row.suggestion_index >= 0;
-      const suggestionIndex =
-        hasExplicitSuggestionIndex
-          ? (row.suggestion_index as number)
-          : 0;
-
-      const runSuggestions = suggestionId ? suggestionsByRunId.get(suggestionId) : null;
-      const fromRun =
-        runSuggestions?.[suggestionIndex] ??
-        (!hasExplicitSuggestionIndex ? runSuggestions?.[0] ?? null : null);
-      const resolvedTitle =
-        typeof fromRun?.title === "string" && fromRun.title.trim().length > 0
-          ? fromRun.title.trim()
-          : typeof row.title === "string" && row.title.trim().length > 0
-            ? row.title.trim()
-            : "";
-      const resolvedTier =
-        typeof fromRun?.tier === "string" && fromRun.tier.trim().length > 0
-          ? fromRun.tier.trim()
-          : typeof row.tier === "string" && row.tier.trim().length > 0
-            ? row.tier.trim()
-            : null;
-
-      if (!resolvedTitle) return;
-
-      const identity = makeIdentity(resolvedTitle, resolvedTier);
-      if (!preferenceByIdentity[identity]) {
-        preferenceByIdentity[identity] = row.preference;
-      }
-
-      const canonicalKey = getGiftSuggestionCanonicalKey(resolvedTitle);
-      if (canonicalKey && !preferenceByCanonical[canonicalKey]) {
-        preferenceByCanonical[canonicalKey] = row.preference;
-      }
-
-      if (row.preference === "liked") {
-        likedTitles.push(resolvedTitle);
-      } else if (row.preference === "disliked") {
-        dislikedTitles.push(resolvedTitle);
-      }
-    });
-
     const uniqueSavedTitles = uniqueTrimmedValues(previouslySavedTitles);
-    const uniqueLikedTitles = uniqueTrimmedValues(likedTitles);
-    const uniqueDislikedTitles = uniqueTrimmedValues(dislikedTitles);
     const uniqueRecentSuggestionTitles = uniqueTrimmedValues(recentSuggestionTitles);
 
     const historicalExclusionKeys = new Set<string>();
     [
       ...cappedPreviousSuggestions,
       ...uniqueSavedTitles,
-      ...uniqueLikedTitles,
-      ...uniqueDislikedTitles,
       ...uniqueRecentSuggestionTitles,
     ].forEach((title) => {
       const key = canonicalizeGiftSuggestionText(title);
@@ -447,8 +338,6 @@ export async function POST(request: NextRequest) {
     logSuggestionDedupeDebug("loaded recipient exclusions", {
       recipientId,
       savedIdeaCount: uniqueSavedTitles.length,
-      likedIdeaCount: uniqueLikedTitles.length,
-      dislikedIdeaCount: uniqueDislikedTitles.length,
       recentSuggestionCount: uniqueRecentSuggestionTitles.length,
       canonicalExclusionCount: historicalExclusionKeys.size,
     });
@@ -554,16 +443,6 @@ export async function POST(request: NextRequest) {
                       "DO NOT SUGGEST (canonical ideas):",
                       ...doNotSuggestCanonical.map((idea) => `- ${idea}`),
                     ].join("\n")
-                  : "",
-                uniqueLikedTitles.length
-                  ? `The user has previously liked these gift ideas for this recipient: ${uniqueLikedTitles
-                      .slice(0, 20)
-                      .join("; ")}. Favor ideas with similar qualities or vibe.`
-                  : "",
-                uniqueDislikedTitles.length
-                  ? `The user has previously disliked these gift ideas: ${uniqueDislikedTitles
-                      .slice(0, 20)
-                      .join("; ")}. Avoid repeating or closely matching these items.`
                   : "",
                 uniqueSavedTitles.length
                   ? `The user has already saved these gift ideas for this recipient: ${uniqueSavedTitles
@@ -741,16 +620,11 @@ export async function POST(request: NextRequest) {
     const suggestionsWithFlags = enrichedSuggestions.map((s) => {
       const identity = makeIdentity(s.title, s.tier);
       const canonicalKey = getGiftSuggestionCanonicalKey(s.title);
-      const canonicalPreference = canonicalKey
-        ? preferenceByCanonical[canonicalKey]
-        : null;
       return {
         ...s,
         initialSaved:
           !!savedByIdentity[identity] ||
           (!!canonicalKey && !!savedByCanonical[canonicalKey]),
-        initialPreference:
-          preferenceByIdentity[identity] ?? canonicalPreference ?? null,
       };
     });
 

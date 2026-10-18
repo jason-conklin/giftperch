@@ -26,8 +26,8 @@ const steps = [
   },
   {
     number: "3",
-    title: "Save or like a gift idea",
-    description: "Use Like, Dislike, or Save so PerchPal learns your preferences.",
+    title: "Save a gift idea",
+    description: "Use the heart to keep promising ideas in your saved collection.",
     href: "/gifts",
     cta: "Browse suggestions →",
   },

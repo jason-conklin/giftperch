@@ -1,14 +1,32 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { PerchPalChat } from "@/components/perchpal/PerchPalChat";
 
 type PerchPalChatPanelProps = {
   userId?: string | null;
+  onDesktopCollapsedChange?: (collapsed: boolean) => void;
 };
 
-export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
+export type PerchPalChatPanelHandle = {
+  openDesktop: () => void;
+};
+
+export const PerchPalChatPanel = forwardRef<
+  PerchPalChatPanelHandle,
+  PerchPalChatPanelProps
+>(function PerchPalChatPanel(
+  { userId, onDesktopCollapsedChange },
+  ref,
+) {
   const storageKey = useMemo(
     () => `gp_gifts_chat_collapsed_${userId || "anon"}`,
     [userId],
@@ -18,6 +36,14 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const mobileOpenButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileWasOpenRef = useRef(false);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      openDesktop: () => setDesktopCollapsed(false),
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -46,6 +72,10 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
       // ignore storage failures
     }
   }, [desktopCollapsed, hydrated, storageKey]);
+
+  useEffect(() => {
+    onDesktopCollapsedChange?.(desktopCollapsed);
+  }, [desktopCollapsed, onDesktopCollapsedChange]);
 
   useEffect(() => {
     if (!mobileOpen || typeof document === "undefined") return;
@@ -89,36 +119,13 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
 
   return (
     <>
-      <aside className="hidden lg:block">
+      <aside className="hidden xl:block">
         {desktopCollapsed ? (
-          <div className="gp-card fixed right-4 top-8 z-40 flex w-20 flex-col items-center justify-start gap-3 px-2 py-3">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70 shadow-sm">
-                <Image
-                  src="/giftperch_perchpal_front.png"
-                  alt="PerchPal"
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 object-contain"
-                />
-              </div>
-              <span className="text-xs font-semibold tracking-wide text-gp-evergreen/75">
-                Chat
-              </span>
-            </div>
-            <button
-              type="button"
-              aria-label="Expand PerchPal chat panel"
-              onClick={() => setDesktopCollapsed(false)}
-              className="gp-secondary-button h-9 w-9 p-0 text-base cursor-pointer"
-            >
-              →
-            </button>
-          </div>
+          null
         ) : (
-          <div className="fixed right-4 top-8 z-40 w-[24rem]">
-            <div className="gp-card flex h-[calc(100vh-4rem)] min-h-[560px] max-h-[calc(100vh-4rem)] flex-col gap-3 p-4">
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/80 px-3 py-2">
+          <div className="fixed right-4 top-6 z-40 w-[26rem]">
+            <div className="gp-card flex h-[calc(100vh-3rem)] min-h-[560px] max-h-[calc(100vh-3rem)] flex-col gap-3 overflow-hidden border-gp-evergreen/10 bg-[#f8f5eb] p-3 shadow-[0_20px_50px_rgba(8,47,48,0.14)]">
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-gp-evergreen/10 bg-white px-3.5 py-3">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full border border-gp-evergreen/15 bg-gp-cream/70">
                     <Image
@@ -130,18 +137,18 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
                     />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gp-evergreen">
+                    <p className="font-display text-base font-semibold text-gp-evergreen">
                       PerchPal Chat
                     </p>
-                    <p className="text-xs text-gp-evergreen/70">
-                      Quick assistant
+                    <p className="text-xs text-gp-evergreen/60">
+                      Your personal gifting assistant
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDesktopCollapsed(true)}
-                  className="gp-secondary-button px-3 py-1.5 text-xs cursor-pointer"
+                  className="gp-secondary-button min-h-9 rounded-lg px-3 py-1.5 text-xs cursor-pointer"
                 >
                   Collapse
                 </button>
@@ -161,7 +168,7 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
         )}
       </aside>
 
-      <div className="lg:hidden">
+      <div className="xl:hidden">
         <button
           ref={mobileOpenButtonRef}
           type="button"
@@ -234,4 +241,4 @@ export function PerchPalChatPanel({ userId }: PerchPalChatPanelProps) {
       </div>
     </>
   );
-}
+});

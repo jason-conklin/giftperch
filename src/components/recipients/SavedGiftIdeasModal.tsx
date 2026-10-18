@@ -18,20 +18,6 @@ import {
 
 type SavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
-type FeedbackIdea = {
-  id: string;
-  suggestion_id: string;
-  title: string;
-  tier: string | null;
-  rationale: string | null;
-  estimated_price_min: number | null;
-  estimated_price_max: number | null;
-  product_url: string | null;
-  image_url: string | null;
-  product_match: unknown;
-  preference: "liked" | "disliked";
-};
-type CombinedGift = SavedGiftIdea | FeedbackIdea;
 type RecipientSwitchOption = {
   id: string;
   name: string;
@@ -48,18 +34,17 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   authToken?: string | null;
+  onSavedGiftRemoved?: (
+    recipientId: string,
+    gift: Pick<SavedGiftIdea, "id" | "title" | "product_match">,
+  ) => void;
 };
 
 type FetchState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | {
-      status: "success";
-      saved: SavedGiftIdea[];
-      liked: FeedbackIdea[];
-      disliked: FeedbackIdea[];
-    };
+  | { status: "success"; gifts: SavedGiftIdea[] };
 
 export function SavedGiftIdeasModal({
   recipientId,
@@ -69,17 +54,12 @@ export function SavedGiftIdeasModal({
   isOpen,
   onClose,
   authToken,
+  onSavedGiftRemoved,
 }: Props) {
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [state, setState] = useState<FetchState>({ status: "idle" });
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [removingFeedbackId, setRemovingFeedbackId] = useState<string | null>(
-    null,
-  );
-  const [activeTab, setActiveTab] = useState<"saved" | "liked" | "disliked">(
-    "saved",
-  );
   const [selectedRecipientId, setSelectedRecipientId] = useState(recipientId);
   const [recipientOptions, setRecipientOptions] = useState<RecipientSwitchOption[]>([]);
   const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
@@ -113,7 +93,7 @@ export function SavedGiftIdeasModal({
     );
   }, [fallbackRecipientOption, recipientOptions, selectedRecipientId]);
 
-  const mapToSuggestionShape = (gift: CombinedGift): GiftSuggestion => ({
+  const mapToSuggestionShape = (gift: SavedGiftIdea): GiftSuggestion => ({
     id: gift.id,
     title: gift.title,
     short_description: "",
@@ -125,27 +105,15 @@ export function SavedGiftIdeasModal({
         : (gift as { tier?: string | null }).tier === "safe"
         ? "safe"
         : "thoughtful",
-    price_min:
-      "estimated_price_min" in gift ? gift.estimated_price_min : null,
-    price_max:
-      "estimated_price_max" in gift ? gift.estimated_price_max : null,
+    price_min: gift.estimated_price_min,
+    price_max: gift.estimated_price_max,
     price_hint: null,
     price_guidance: null,
-    why_it_fits:
-      "rationale" in gift && gift.rationale
-        ? gift.rationale
-        : "",
-    suggested_url:
-      "product_url" in gift ? gift.product_url ?? null : null,
-    image_url:
-      "image_url" in gift ? gift.image_url ?? null : null,
-    productMatch:
-      "product_match" in gift
-        ? normalizeProductMatch(gift.product_match)
-        : null,
+    why_it_fits: gift.rationale ?? "",
+    suggested_url: gift.product_url,
+    image_url: gift.image_url,
+    productMatch: normalizeProductMatch(gift.product_match),
     initialSaved: true,
-    initialPreference:
-      "preference" in gift ? (gift.preference as "liked" | "disliked") : null,
   });
 
   const headers = useMemo(() => {
@@ -157,28 +125,18 @@ export function SavedGiftIdeasModal({
   const fetchGifts = async (targetRecipientId: string) => {
     setState({ status: "loading" });
     try {
-      const [savedRes, feedbackRes] = await Promise.all([
-        fetch(`/api/recipients/${targetRecipientId}/saved-gifts`, { headers }),
-        fetch(`/api/recipients/${targetRecipientId}/feedback/summary`, { headers }),
-      ]);
+      const savedRes = await fetch(
+        `/api/recipients/${targetRecipientId}/saved-gifts`,
+        { headers },
+      );
       if (!savedRes.ok) {
         const body = await savedRes.json().catch(() => ({}));
         throw new Error(body.error || "Failed to load saved gifts");
       }
-      if (!feedbackRes.ok) {
-        const body = await feedbackRes.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to load feedback");
-      }
       const saved = (await savedRes.json()) as { savedGifts: SavedGiftIdea[] };
-      const feedback = (await feedbackRes.json()) as {
-        liked: FeedbackIdea[];
-        disliked: FeedbackIdea[];
-      };
       setState({
         status: "success",
-        saved: saved.savedGifts || [],
-        liked: feedback.liked || [],
-        disliked: feedback.disliked || [],
+        gifts: saved.savedGifts || [],
       });
     } catch (err) {
       const message =
@@ -252,7 +210,6 @@ export function SavedGiftIdeasModal({
       }
     } else {
       setState({ status: "idle" });
-      setActiveTab("saved");
       setIsRecipientMenuOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -309,13 +266,13 @@ export function SavedGiftIdeasModal({
     }
   }, [isRecipientMenuOpen]);
 
-  const handleRemove = async (id: string) => {
+  const handleRemove = async (gift: SavedGiftIdea) => {
     if (!selectedRecipientId) return;
-    setRemovingId(id);
+    setRemovingId(gift.id);
     try {
       const res = await fetch(
         `/api/recipients/${selectedRecipientId}/saved-gifts?id=${encodeURIComponent(
-          id,
+          gift.id,
         )}`,
         { method: "DELETE", headers },
       );
@@ -327,9 +284,10 @@ export function SavedGiftIdeasModal({
         if (prev.status !== "success") return prev;
         return {
           ...prev,
-          saved: prev.saved.filter((gift) => gift.id !== id),
+          gifts: prev.gifts.filter((item) => item.id !== gift.id),
         };
       });
+      onSavedGiftRemoved?.(selectedRecipientId, gift);
     } catch (err) {
       console.error(err);
       alert(
@@ -342,72 +300,7 @@ export function SavedGiftIdeasModal({
     }
   };
 
-  const handleRemoveFeedback = async (
-    id: string,
-    kind: "liked" | "disliked",
-  ) => {
-    if (!selectedRecipientId) return;
-    setRemovingFeedbackId(id);
-    try {
-      const res = await fetch(
-        `/api/recipients/${selectedRecipientId}/feedback?id=${encodeURIComponent(
-          id,
-        )}`,
-        { method: "DELETE", headers },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to remove feedback");
-      }
-      setState((prev) => {
-        if (prev.status !== "success") return prev;
-        return {
-          ...prev,
-          liked:
-            kind === "liked"
-              ? prev.liked.filter((gift) => gift.id !== id)
-              : prev.liked,
-          disliked:
-            kind === "disliked"
-              ? prev.disliked.filter((gift) => gift.id !== id)
-              : prev.disliked,
-        };
-      });
-    } catch (err) {
-      console.error(err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Unable to remove feedback. Please try again.",
-      );
-    } finally {
-      setRemovingFeedbackId(null);
-    }
-  };
-
-  const { savedTab, liked, disliked } = useMemo(() => {
-    if (state.status !== "success") {
-      return {
-        savedTab: [] as CombinedGift[],
-        liked: [] as FeedbackIdea[],
-        disliked: [] as FeedbackIdea[],
-      };
-    }
-
-    // Saved tab should only contain explicitly saved ideas (do not merge liked here).
-    return {
-      savedTab: state.saved,
-      liked: state.liked,
-      disliked: state.disliked,
-    };
-  }, [state]);
-
-  const activeList =
-    activeTab === "saved" ? savedTab : activeTab === "liked" ? liked : disliked;
-
-  const savedCount = savedTab.length;
-  const likedCount = liked.length;
-  const dislikedCount = disliked.length;
+  const gifts = state.status === "success" ? state.gifts : [];
 
   if (!isOpen) return null;
 
@@ -598,30 +491,20 @@ export function SavedGiftIdeasModal({
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 border-b border-gp-evergreen/10 px-5 py-4 sm:px-6">
-            <div className="inline-flex w-full rounded-full border border-gp-evergreen/15 bg-white p-1 text-sm font-semibold text-gp-evergreen shadow-sm">
-              {(["saved", "liked", "disliked"] as const).map((tab) => {
-                const isActive = activeTab === tab;
-                const label =
-                  tab === "saved"
-                    ? `Saved (${savedCount})`
-                    : tab === "liked"
-                    ? `Liked (${likedCount})`
-                    : `Disliked (${dislikedCount})`;
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 rounded-full px-3 py-2 transition ${
-                      isActive
-                        ? "bg-gp-gold text-gp-evergreen shadow-sm"
-                        : "bg-white text-gp-evergreen/80 hover:bg-gp-cream/70"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-display text-lg font-semibold text-gp-evergreen">
+                  Your saved collection
+                </p>
+                <p className="mt-0.5 text-sm text-gp-evergreen/65">
+                  Keep promising ideas together until you are ready to gift.
+                </p>
+              </div>
+              {state.status === "success" ? (
+                <span className="shrink-0 rounded-full bg-gp-gold/25 px-3 py-1 text-xs font-semibold text-gp-evergreen">
+                  {gifts.length} saved
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -635,34 +518,26 @@ export function SavedGiftIdeasModal({
             {state.status === "error" && (
               <p className="text-sm text-red-700">{state.message}</p>
             )}
-            {state.status === "success" && activeList.length === 0 && (
+            {state.status === "success" && gifts.length === 0 && (
               <p className="text-sm text-gp-evergreen/70">
                 No saved gift ideas yet. Save ideas from AI suggestions to see them
                 here.
               </p>
             )}
-            {state.status === "success" && activeList.length > 0 && (
+            {state.status === "success" && gifts.length > 0 && (
               <div className="space-y-3">
-                {activeList.map((gift) => {
-                  const isFeedback = "preference" in gift;
-                  const priceMin =
-                    "estimated_price_min" in gift ? gift.estimated_price_min : null;
-                  const priceMax =
-                    "estimated_price_max" in gift ? gift.estimated_price_max : null;
+                {gifts.map((gift) => {
+                  const priceMin = gift.estimated_price_min;
+                  const priceMax = gift.estimated_price_max;
                   const suggestionShape = mapToSuggestionShape(gift);
                   const previewIcon = getGiftPreviewIcon(suggestionShape);
                   const matchedProduct = getMatchedProductPresentation(
-                    "product_match" in gift ? gift.product_match : null,
+                    gift.product_match,
                   );
                   const savedImage =
                     matchedProduct?.match.imageUrl ??
-                    ("image_url" in gift
-                      ? getSafeImageUrl(gift.image_url)
-                      : null);
-                  const legacyProductUrl =
-                    "product_url" in gift
-                      ? getSafeExternalUrl(gift.product_url)
-                      : null;
+                    getSafeImageUrl(gift.image_url);
+                  const legacyProductUrl = getSafeExternalUrl(gift.product_url);
                   const shoppingHref =
                     matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
                   const shoppingLabel = matchedProduct
@@ -712,17 +587,6 @@ export function SavedGiftIdeasModal({
                               {gift.tier}
                             </span>
                           ) : null}
-                          {isFeedback ? (
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                                gift.preference === "liked"
-                                  ? "bg-blue-50 text-blue-700"
-                                  : "bg-red-50 text-red-700"
-                              }`}
-                            >
-                              {gift.preference === "liked" ? "Liked" : "Disliked"}
-                            </span>
-                          ) : null}
                         </div>
                         {gift.rationale ? (
                           <p className="text-sm text-gp-evergreen/80 line-clamp-2">
@@ -762,34 +626,14 @@ export function SavedGiftIdeasModal({
                       </div>
 
                       <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:justify-between">
-                        {isFeedback ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleRemoveFeedback(
-                                gift.id,
-                                gift.preference === "liked"
-                                  ? "liked"
-                                  : "disliked",
-                              )
-                            }
-                            disabled={removingFeedbackId === gift.id}
-                            className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-                          >
-                            {removingFeedbackId === gift.id
-                              ? "Removing…"
-                              : "Remove"}
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleRemove(gift.id)}
-                            disabled={removingId === gift.id}
-                            className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-                          >
-                            {removingId === gift.id ? "Removing…" : "Remove"}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(gift)}
+                          disabled={removingId === gift.id}
+                          className="text-xs font-semibold text-red-600 underline-offset-4 hover:underline disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          {removingId === gift.id ? "Removing…" : "Remove"}
+                        </button>
                       </div>
                     </div>
                   );

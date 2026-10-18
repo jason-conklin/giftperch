@@ -5,7 +5,7 @@ import Link from "next/link";
 type GettingStartedChecklistCardProps = {
   hasRecipient: boolean;
   hasGenerated: boolean;
-  hasSavedOrLiked: boolean;
+  hasSavedGift: boolean;
 };
 
 const steps = [
@@ -24,9 +24,9 @@ const steps = [
     actionLabel: "Open Gift Ideas →",
   },
   {
-    key: "save-like",
-    title: "Save or like a gift idea",
-    description: "Use Like, Dislike, or Save so PerchPal learns your preferences.",
+    key: "save",
+    title: "Save a gift idea",
+    description: "Use the heart to keep promising ideas in your saved collection.",
     actionHref: "/gifts",
     actionLabel: "Browse suggestions →",
   },
@@ -35,15 +35,15 @@ const steps = [
 export function GettingStartedChecklistCard({
   hasRecipient,
   hasGenerated,
-  hasSavedOrLiked,
+  hasSavedGift,
 }: GettingStartedChecklistCardProps) {
   const completionMap: Record<string, boolean> = {
     recipient: hasRecipient,
     generate: hasGenerated,
-    "save-like": hasSavedOrLiked,
+    save: hasSavedGift,
   };
 
-  const allDone = hasRecipient && hasGenerated && hasSavedOrLiked;
+  const allDone = hasRecipient && hasGenerated && hasSavedGift;
   if (allDone) return null;
 
   return (

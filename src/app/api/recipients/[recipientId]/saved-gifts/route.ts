@@ -10,6 +10,7 @@ import {
   productMatchFromCatalogRow,
   type AuthoritativeGiftSuggestion,
 } from "@/server/savedGifts/productSnapshot";
+import { findMatchingSavedGift } from "@/server/savedGifts/deduplication";
 
 type RecipientSavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -222,6 +223,33 @@ export async function POST(
   );
   if (!snapshot) return badRequest("title is required");
 
+  const { data: existingSavedGifts, error: existingSavedGiftsError } =
+    await supabase
+      .from("recipient_saved_gift_ideas")
+      .select("id, title, suggestion_id, product_match, created_at")
+      .eq("user_id", user.id)
+      .eq("recipient_id", trimmedRecipientId)
+      .limit(500);
+
+  if (existingSavedGiftsError) {
+    return NextResponse.json(
+      { error: "Unable to verify whether this gift is already saved" },
+      { status: 500 },
+    );
+  }
+
+  const existingSavedGift = findMatchingSavedGift(
+    existingSavedGifts ?? [],
+    snapshot.title,
+    snapshot.productMatch,
+  );
+  if (existingSavedGift) {
+    return NextResponse.json({
+      savedGift: existingSavedGift,
+      alreadySaved: true,
+    });
+  }
+
   const { data, error } = await supabase
     .from("recipient_saved_gift_ideas")
     .insert({
@@ -239,6 +267,26 @@ export async function POST(
     })
     .select("*")
     .single();
+
+  if (error?.code === "23505") {
+    const { data: concurrentSavedGifts } = await supabase
+      .from("recipient_saved_gift_ideas")
+      .select("id, title, suggestion_id, product_match, created_at")
+      .eq("user_id", user.id)
+      .eq("recipient_id", trimmedRecipientId)
+      .limit(500);
+    const concurrentSavedGift = findMatchingSavedGift(
+      concurrentSavedGifts ?? [],
+      snapshot.title,
+      snapshot.productMatch,
+    );
+    if (concurrentSavedGift) {
+      return NextResponse.json({
+        savedGift: concurrentSavedGift,
+        alreadySaved: true,
+      });
+    }
+  }
 
   if (error || !data) {
     return NextResponse.json(

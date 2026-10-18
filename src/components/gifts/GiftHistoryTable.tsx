@@ -61,7 +61,6 @@ type SavedIdeaAggregated = {
   recipient_relationship: string | null;
   title: string;
   url: string | null;
-  status: "saved" | "liked" | "disliked";
   created_at: string;
   suggestion_id?: string | null;
 };
@@ -375,20 +374,6 @@ function SavedIdeaItem({
   isRemoving: boolean;
   recipientMap: Record<string, RecipientSummary>;
 }) {
-  const badgeStyles =
-    idea.status === "saved"
-      ? "bg-gp-gold/25 text-gp-evergreen"
-      : idea.status === "liked"
-      ? "bg-emerald-100 text-emerald-800"
-      : "bg-red-100 text-red-700";
-
-  const savedLabel =
-    idea.status === "saved"
-      ? "Saved"
-      : idea.status === "liked"
-      ? "Liked"
-      : "Disliked";
-
   const dateLabel = idea.created_at
     ? new Date(idea.created_at).toLocaleDateString(undefined, {
         month: "short",
@@ -436,9 +421,9 @@ function SavedIdeaItem({
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold text-gp-evergreen">{idea.title}</p>
           <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeStyles}`}
+            className="rounded-full bg-gp-gold/25 px-2 py-0.5 text-[11px] font-semibold text-gp-evergreen"
           >
-            {savedLabel}
+            Saved
           </span>
         </div>
         <p className="text-xs text-gp-evergreen/70">
@@ -449,27 +434,23 @@ function SavedIdeaItem({
           {dateLabel ? `· ${dateLabel}` : ""}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          {idea.status !== "disliked" ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window === "undefined") return;
-                window.open(amazonUrl, "_blank", "noopener,noreferrer");
-              }}
-              className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
-            >
-              Find on Amazon
-            </button>
-          ) : null}
-          {idea.status !== "disliked" ? (
-            <button
-              type="button"
-              onClick={onLog}
-              className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
-            >
-              Log this gift
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window === "undefined") return;
+              window.open(amazonUrl, "_blank", "noopener,noreferrer");
+            }}
+            className="rounded-full border border-gp-gold/60 bg-gp-gold px-3 py-1 text-[11px] font-semibold text-black transition hover:bg-[#e0bd6f] cursor-pointer"
+          >
+            Find on Amazon
+          </button>
+          <button
+            type="button"
+            onClick={onLog}
+            className="rounded-full bg-gp-evergreen px-3 py-1 text-[11px] font-semibold text-gp-cream transition hover:bg-[#0c3132] cursor-pointer"
+          >
+            Log this gift
+          </button>
           <button
             type="button"
             onClick={onRemove}
@@ -510,7 +491,6 @@ export function GiftHistoryTable() {
   const [savedLoading, setSavedLoading] = useState(false);
   const [savedError, setSavedError] = useState("");
   const [savedRecipientFilter, setSavedRecipientFilter] = useState("all");
-  const [savedTypeFilter, setSavedTypeFilter] = useState<"all" | "saved" | "liked" | "disliked">("all");
   const [giftToDelete, setGiftToDelete] = useState<GiftHistoryEntry | null>(null);
   const [isDeletingGift, setIsDeletingGift] = useState(false);
   const [loggedFromSaved, setLoggedFromSaved] = useState(false);
@@ -590,12 +570,9 @@ export function GiftHistoryTable() {
       if (savedRecipientFilter !== "all" && idea.recipient_id !== savedRecipientFilter) {
         return false;
       }
-      if (savedTypeFilter !== "all" && idea.status !== savedTypeFilter) {
-        return false;
-      }
       return true;
     });
-  }, [savedIdeas, savedRecipientFilter, savedTypeFilter]);
+  }, [savedIdeas, savedRecipientFilter]);
 
   const filteredGifts = useMemo(() => {
     return gifts.filter((gift) => {
@@ -771,18 +748,14 @@ export function GiftHistoryTable() {
         if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
         const fetches = recipients.map(async (recipient) => {
-          const [savedRes, feedbackRes] = await Promise.all([
-            fetch(`/api/recipients/${recipient.id}/saved-gifts`, { headers }),
-            fetch(`/api/recipients/${recipient.id}/feedback/summary`, { headers }),
-          ]);
+          const savedRes = await fetch(
+            `/api/recipients/${recipient.id}/saved-gifts`,
+            { headers },
+          );
 
           if (!savedRes.ok) {
             const body = await savedRes.json().catch(() => ({}));
             throw new Error(body.error || "Failed to load saved gifts");
-          }
-          if (!feedbackRes.ok) {
-            const body = await feedbackRes.json().catch(() => ({}));
-            throw new Error(body.error || "Failed to load feedback");
           }
 
           const saved = (await savedRes.json()) as {
@@ -793,14 +766,8 @@ export function GiftHistoryTable() {
               created_at: string;
             }[];
           };
-          const feedback = (await feedbackRes.json()) as {
-            liked: { id: string; title: string; product_url: string | null; created_at: string }[];
-            disliked: { id: string; title: string; product_url: string | null; created_at: string }[];
-          };
-
           const mapItem = (
             item: { id: string; title: string; product_url: string | null; created_at: string; suggestion_id?: string | null },
-            status: "saved" | "liked" | "disliked",
           ): SavedIdeaAggregated => ({
             id: item.id,
             recipient_id: recipient.id,
@@ -808,16 +775,11 @@ export function GiftHistoryTable() {
             recipient_relationship: recipient.relationship ?? null,
             title: item.title,
             url: item.product_url,
-            status,
             created_at: item.created_at,
             suggestion_id: item.suggestion_id ?? null,
           });
 
-          return [
-            ...saved.savedGifts.map((item) => mapItem(item, "saved")),
-            ...feedback.liked.map((item) => mapItem(item, "liked")),
-            ...feedback.disliked.map((item) => mapItem(item, "disliked")),
-          ];
+          return saved.savedGifts.map((item) => mapItem(item));
         });
 
         const results = await Promise.all(fetches);
@@ -1029,8 +991,8 @@ export function GiftHistoryTable() {
               </button>
             </div>
           ) : null}
-          <div className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm md:flex-row md:items-end md:justify-between">
-            <label className="flex flex-1 flex-col gap-2 text-sm font-semibold text-gp-evergreen">
+          <div className="rounded-2xl border border-gp-evergreen/15 bg-white/95 p-4 shadow-sm">
+            <label className="flex max-w-xl flex-col gap-2 text-sm font-semibold text-gp-evergreen">
               Recipient
               <select
                 value={savedRecipientFilter}
@@ -1046,28 +1008,6 @@ export function GiftHistoryTable() {
                 ))}
               </select>
             </label>
-            <div className="flex flex-wrap gap-2">
-              {(["all", "saved", "liked", "disliked"] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSavedTypeFilter(type)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
-                    savedTypeFilter === type
-                      ? "bg-gp-gold text-gp-evergreen shadow-sm"
-                      : "bg-gp-cream/70 text-gp-evergreen/70 hover:bg-gp-cream"
-                  }`}
-                >
-                  {type === "all"
-                    ? "All"
-                    : type === "saved"
-                    ? "Saved"
-                    : type === "liked"
-                    ? "Liked"
-                    : "Disliked"}
-                </button>
-              ))}
-            </div>
           </div>
 
           {filteredSavedIdeas.length === 0 ? (
@@ -1079,15 +1019,15 @@ export function GiftHistoryTable() {
               </p>
               <p className="mt-2 text-sm text-gp-evergreen/70">
                 {savedIdeas.length === 0
-                  ? "Try saving or liking suggestions from PerchPal on the Gift Ideas page. They’ll show up here so you can log them once you’ve gifted them."
-                  : "Adjust filters or clear them to see your saved, liked, and disliked ideas."}
+                  ? "Save suggestions with the heart on the Gift Ideas page. They’ll show up here so you can log them once you’ve gifted them."
+                  : "Choose another recipient or clear the filter to see your saved ideas."}
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               {filteredSavedIdeas.map((idea) => (
                 <SavedIdeaItem
-                  key={`${idea.status}-${idea.id}`}
+                  key={idea.id}
                   idea={idea}
                   onLog={() => handleLogSavedIdea(idea)}
                   onRemove={() => setSavedIdeaToDelete(idea)}
