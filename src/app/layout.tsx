@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "./app.css";
 import Link from "next/link";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 
