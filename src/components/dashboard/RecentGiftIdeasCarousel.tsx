@@ -16,7 +16,7 @@ import {
   type RecentGiftCardModel,
 } from "@/lib/dashboardRecentGifts";
 import {
-  getContinuousScrollDelta,
+  advanceContinuousScrollPosition,
   shouldRunRecentGiftAutoplay,
   wrapContinuousScrollPosition,
 } from "@/lib/recentGiftCarouselMotion";
@@ -126,6 +126,8 @@ export function RecentGiftIdeasCarousel({
     useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const previousFrameTimeRef = useRef<number | null>(null);
+  const logicalScrollPositionRef = useRef<number | null>(null);
+  const animationFrameCountRef = useRef(0);
   const [canScroll, setCanScroll] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [manualPause, setManualPause] = useState(false);
@@ -160,16 +162,22 @@ export function RecentGiftIdeasCarousel({
     return { viewport, middleStart, setWidth: nextStart - middleStart };
   }, [cards, gifts.length]);
 
-  const normalizeLoopPosition = useCallback(() => {
+  const normalizeLoopPosition = useCallback((syncFromDom = false) => {
     if (!canScroll || dragRef.current) return;
     const metrics = loopMetrics();
     if (!metrics) return;
     const { viewport, middleStart, setWidth } = metrics;
-    viewport.scrollLeft = wrapContinuousScrollPosition(
-      viewport.scrollLeft,
+    const sourcePosition =
+      syncFromDom || logicalScrollPositionRef.current === null
+        ? viewport.scrollLeft
+        : logicalScrollPositionRef.current;
+    const wrappedPosition = wrapContinuousScrollPosition(
+      sourcePosition,
       middleStart,
       setWidth,
     );
+    logicalScrollPositionRef.current = wrappedPosition;
+    viewport.scrollLeft = wrappedPosition;
   }, [canScroll, loopMetrics]);
 
   const pauseTemporarily = useCallback(() => {
@@ -219,7 +227,10 @@ export function RecentGiftIdeasCarousel({
     const frame = requestAnimationFrame(() => {
       const target = cards()[gifts.length];
       const viewport = viewportRef.current;
-      if (target && viewport) viewport.scrollLeft = target.offsetLeft;
+      if (target && viewport) {
+        logicalScrollPositionRef.current = target.offsetLeft;
+        viewport.scrollLeft = target.offsetLeft;
+      }
     });
     return () => cancelAnimationFrame(frame);
   }, [canScroll, cards, giftKey, gifts.length]);
@@ -256,9 +267,15 @@ export function RecentGiftIdeasCarousel({
       const previous = previousFrameTimeRef.current;
       previousFrameTimeRef.current = timestamp;
       if (previous !== null) {
-        viewport.scrollLeft += getContinuousScrollDelta(timestamp - previous);
+        const currentPosition =
+          logicalScrollPositionRef.current ?? viewport.scrollLeft;
+        logicalScrollPositionRef.current = advanceContinuousScrollPosition(
+          currentPosition,
+          timestamp - previous,
+        );
         normalizeLoopPosition();
       }
+      animationFrameCountRef.current += 1;
       animationFrameRef.current = requestAnimationFrame(animate);
     };
     previousFrameTimeRef.current = null;
@@ -276,6 +293,58 @@ export function RecentGiftIdeasCarousel({
     isDragging,
     manualPause,
     normalizeLoopPosition,
+    reducedMotion,
+  ]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const diagnostics = () => {
+      const viewport = viewportRef.current;
+      const autoplayEnabled = shouldRunRecentGiftAutoplay({
+        canScroll,
+        reducedMotion,
+        isDragging,
+        manualPause,
+        isDocumentHidden,
+      });
+      return {
+        autoplayEnabled,
+        disabledReason: autoplayEnabled
+          ? null
+          : !canScroll
+            ? "content-does-not-overflow"
+            : reducedMotion
+              ? "prefers-reduced-motion"
+              : isDragging
+                ? "active-drag"
+                : manualPause
+                  ? "manual-interaction-cooldown"
+                  : isDocumentHidden
+                    ? "document-hidden"
+                    : "unknown",
+        animationFrames: animationFrameCountRef.current,
+        renderedScrollLeft: viewport?.scrollLeft ?? null,
+        logicalScrollPosition: logicalScrollPositionRef.current,
+        viewportWidth: viewport?.clientWidth ?? null,
+        scrollWidth: viewport?.scrollWidth ?? null,
+        cardCount: cards().length,
+      };
+    };
+    const diagnosticWindow = window as typeof window & {
+      __giftPerchRecentGiftCarouselDiagnostics?: typeof diagnostics;
+    };
+    diagnosticWindow.__giftPerchRecentGiftCarouselDiagnostics = diagnostics;
+    return () => {
+      if (diagnosticWindow.__giftPerchRecentGiftCarouselDiagnostics === diagnostics) {
+        delete diagnosticWindow.__giftPerchRecentGiftCarouselDiagnostics;
+      }
+    };
+  }, [
+    canScroll,
+    cards,
+    isDocumentHidden,
+    isDragging,
+    manualPause,
     reducedMotion,
   ]);
 
@@ -305,7 +374,10 @@ export function RecentGiftIdeasCarousel({
     if (normalizationTimerRef.current) {
       clearTimeout(normalizationTimerRef.current);
     }
-    normalizationTimerRef.current = setTimeout(normalizeLoopPosition, 500);
+    normalizationTimerRef.current = setTimeout(
+      () => normalizeLoopPosition(true),
+      500,
+    );
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -321,6 +393,7 @@ export function RecentGiftIdeasCarousel({
       startX: event.clientX,
       startScrollLeft: event.currentTarget.scrollLeft,
     };
+    logicalScrollPositionRef.current = event.currentTarget.scrollLeft;
     draggedRef.current = false;
     setIsDragging(true);
     if (event.pointerType === "mouse") {
@@ -334,7 +407,9 @@ export function RecentGiftIdeasCarousel({
     const delta = event.clientX - drag.startX;
     if (Math.abs(delta) >= DRAG_THRESHOLD_PX) draggedRef.current = true;
     if (drag.pointerType === "mouse") {
-      event.currentTarget.scrollLeft = drag.startScrollLeft - delta;
+      const nextPosition = drag.startScrollLeft - delta;
+      logicalScrollPositionRef.current = nextPosition;
+      event.currentTarget.scrollLeft = nextPosition;
     }
   };
 
@@ -347,7 +422,7 @@ export function RecentGiftIdeasCarousel({
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    normalizeLoopPosition();
+    normalizeLoopPosition(true);
   };
 
   return (

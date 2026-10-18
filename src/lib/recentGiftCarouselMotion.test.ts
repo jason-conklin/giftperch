@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  advanceContinuousScrollPosition,
   getContinuousScrollDelta,
   shouldRunRecentGiftAutoplay,
   wrapContinuousScrollPosition,
@@ -14,6 +15,15 @@ test("computes frame-rate-independent movement at thirty pixels per second", () 
 
 test("caps long frame gaps so a restored tab cannot jump", () => {
   assert.equal(getContinuousScrollDelta(1000), 3);
+});
+
+test("accumulates subpixel frames into visible movement over time", () => {
+  let position = 0;
+  for (let frame = 0; frame < 300; frame += 1) {
+    position = advanceContinuousScrollPosition(position, 1000 / 60);
+  }
+  assert.ok(Math.abs(position - 150) < 0.000001);
+  assert.equal(Math.floor(position), 150);
 });
 
 test("wraps equivalent positions into the interactive middle card set", () => {

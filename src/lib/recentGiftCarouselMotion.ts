@@ -32,6 +32,13 @@ export function getContinuousScrollDelta(
   return speed * (Math.min(elapsedMs, 100) / 1000);
 }
 
+export function advanceContinuousScrollPosition(
+  position: number,
+  elapsedMs: number,
+) {
+  return position + getContinuousScrollDelta(elapsedMs);
+}
+
 export function wrapContinuousScrollPosition(
   position: number,
   middleStart: number,
