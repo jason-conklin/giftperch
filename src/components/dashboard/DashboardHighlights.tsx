@@ -671,7 +671,9 @@ function SummaryCard({
         <span className="flex shrink-0 items-center justify-center text-gp-app-evergreen">
           {icon}
         </span>
-        <p className="text-sm font-medium text-gp-app-evergreen/80">{label}</p>
+        <p className="min-w-0 break-words text-sm font-medium text-gp-app-evergreen/80">
+          {label}
+        </p>
       </div>
       <p className="mt-2 line-clamp-2 font-display text-[1.65rem] font-semibold leading-8 text-gp-app-evergreen">
         {value}

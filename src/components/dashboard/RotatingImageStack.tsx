@@ -8,6 +8,10 @@ import type {
   DashboardPreviewImage,
 } from "@/lib/dashboardPreviews";
 
+export const DASHBOARD_PREVIEW_ROTATION_INTERVAL_MS = 3000;
+const PREVIEW_IMAGE_SIZE_PX = 48;
+const PREVIEW_IMAGE_OVERLAP_PX = 12;
+
 function PreviewImage({ image }: { image: DashboardPreviewImage }) {
   const [src, setSrc] = useState(image.src);
   const [failed, setFailed] = useState(false);
@@ -46,7 +50,7 @@ function PreviewImage({ image }: { image: DashboardPreviewImage }) {
 export function RotatingImageStack({
   groups,
   label,
-  intervalMs = 5000,
+  intervalMs = DASHBOARD_PREVIEW_ROTATION_INTERVAL_MS,
 }: {
   groups: DashboardPreviewGroup[];
   label: string;
@@ -85,10 +89,19 @@ export function RotatingImageStack({
 
   if (!groups.length) return null;
   const visibleIndex = activeIndex % groups.length;
+  const largestGroupSize = Math.max(
+    1,
+    ...groups.map((group) => group.images.length),
+  );
+  const stackWidth =
+    PREVIEW_IMAGE_SIZE_PX +
+    (largestGroupSize - 1) *
+      (PREVIEW_IMAGE_SIZE_PX - PREVIEW_IMAGE_OVERLAP_PX);
 
   return (
     <span
-      className="relative block h-12 w-[4.75rem] shrink-0"
+      className="relative block h-12 shrink-0"
+      style={{ width: `${stackWidth}px` }}
       role="img"
       aria-label={label}
     >
