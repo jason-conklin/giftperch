@@ -1,12 +1,32 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import {
+  Bookmark,
+  CalendarDays,
+  ExternalLink,
+  Gift,
+  ListFilter,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
+import {
+  GIFT_HISTORY_IMAGE_FALLBACK,
+  formatGiftHistoryPrice,
+  resolveGiftHistoryImage,
+  resolveHistoryRecipientAvatar,
+  sortGiftHistoryEntries,
+  type GiftHistorySort,
+} from "@/lib/giftHistoryPresentation";
 
 const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
   key: string;
@@ -281,83 +301,172 @@ function GiftHistoryItem({
   onEdit,
   onDelete,
 }: GiftHistoryItemProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAbove, setMenuAbove] = useState(false);
+  const [imageSrc, setImageSrc] = useState(resolveGiftHistoryImage(gift.image_url));
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const firstMenuItemRef = useRef<HTMLAnchorElement | HTMLButtonElement | null>(null);
   const dateLabel = gift.purchased_at
     ? new Date(gift.purchased_at).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       })
-    : null;
+    : "Date not recorded";
+  const recipientAvatar = resolveHistoryRecipientAvatar(recipient);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (menuRef.current?.contains(event.target as Node)) return;
+      setMenuOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      triggerRef.current?.focus();
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    requestAnimationFrame(() => firstMenuItemRef.current?.focus());
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
+  const toggleMenu = () => {
+    if (!menuOpen && triggerRef.current) {
+      const bounds = triggerRef.current.getBoundingClientRect();
+      setMenuAbove(window.innerHeight - bounds.bottom < 170);
+    }
+    setMenuOpen((open) => !open);
+  };
 
   return (
-    <div className="gp-card flex w-full gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 px-4 py-3 shadow-sm">
-      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gp-cream text-sm font-semibold text-gp-evergreen shadow-sm overflow-hidden">
-        {recipient?.avatar_url ? (
-          <Image
-            src={recipient.avatar_url}
-            alt={recipient.name}
-            width={48}
-            height={48}
-            className="h-full w-full object-cover"
-          />
-        ) : recipient?.avatar_icon ? (
-          <Image
-            src={`/${recipient.avatar_icon}_icon.png`}
-            alt={recipient.name}
-            width={48}
-            height={48}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          getInitials(recipient?.name ?? "")
-        )}
+    <article className="relative grid min-w-0 gap-3 rounded-2xl border border-gp-app-evergreen/10 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.045)] transition hover:border-gp-app-evergreen/16 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-center lg:grid-cols-[8.75rem_minmax(13rem,1.4fr)_minmax(7rem,0.45fr)_minmax(9rem,0.55fr)_auto] lg:gap-0 lg:px-4 lg:py-2.5">
+      <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-gp-app-surface-warm sm:aspect-[7/5] lg:h-[5.25rem] lg:w-[8.75rem]">
+        <Image
+          src={imageSrc}
+          alt={imageSrc === GIFT_HISTORY_IMAGE_FALLBACK ? "Gift placeholder" : gift.title}
+          fill
+          sizes="(min-width: 1024px) 140px, (min-width: 640px) 120px, 90vw"
+          className="object-contain p-1"
+          unoptimized={imageSrc.startsWith("https://")}
+          onError={() => setImageSrc(GIFT_HISTORY_IMAGE_FALLBACK)}
+        />
       </div>
-      <div className="flex-1 space-y-2">
-        <div className="flex items-start gap-2">
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gp-evergreen">
-              {gift.title}
-            </p>
-          </div>
-          {gift.url ? (
-            <Link
-              href={gift.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 rounded-full bg-gp-cream/80 px-2 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream"
-            >
-              Link
-            </Link>
-          ) : null}
+
+      <div className="min-w-0 sm:pr-2 lg:px-5">
+        <h2 className="line-clamp-2 font-display text-lg font-semibold leading-6 text-gp-app-evergreen">
+          {gift.title}
+        </h2>
+        <div className="mt-2 flex min-w-0 items-center gap-2">
+          <span className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-app-gold/45 bg-[#eef4e9] text-[11px] font-bold text-gp-app-evergreen">
+            {recipientAvatar.kind === "image" && !avatarFailed ? (
+              <Image
+                src={recipientAvatar.src}
+                alt=""
+                fill
+                sizes="32px"
+                className="object-cover"
+                unoptimized={recipientAvatar.src.startsWith("https://")}
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : recipientAvatar.kind === "image" ? (
+              recipientAvatar.fallbackInitials
+            ) : (
+              recipientAvatar.initials
+            )}
+          </span>
+          <p className="min-w-0 truncate text-sm text-gp-app-muted">
+            For {recipient?.name ?? "Unknown recipient"}
+            {recipient?.relationship ? ` (${recipient.relationship})` : ""}
+          </p>
         </div>
-        <p className="text-xs text-gp-evergreen/70">
-          For: {recipient?.name ?? "Unknown"}
-          {recipient?.relationship ? ` (${recipient.relationship})` : ""}
+      </div>
+
+      <div className="border-gp-app-evergreen/8 sm:col-start-2 sm:flex sm:items-center sm:justify-between sm:gap-4 lg:col-auto lg:block lg:border-x lg:px-5">
+        <p className={`font-bold text-gp-app-evergreen ${gift.price === null ? "text-xs" : "text-base"}`}>
+          {formatGiftHistoryPrice(gift.price)}
         </p>
-        {dateLabel ? (
-          <p className="text-xs text-gp-evergreen/70">Purchased: {dateLabel}</p>
-        ) : null}
-        {gift.notes ? (
-          <p className="text-xs text-gp-evergreen/80">{gift.notes}</p>
-        ) : null}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(gift)}
-            className="rounded-full border border-gp-evergreen/25 px-3 py-1 text-[11px] font-semibold text-gp-evergreen transition hover:bg-gp-cream/70 cursor-pointer"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(gift)}
-            className="text-[11px] font-semibold text-red-600 underline-offset-4 hover:underline cursor-pointer"
-          >
-            Delete
-          </button>
-        </div>
       </div>
-    </div>
+
+      <div className="flex min-w-0 items-center gap-2 text-xs text-gp-app-muted sm:col-start-2 lg:col-auto lg:border-r lg:border-gp-app-evergreen/8 lg:px-5">
+        <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0 text-gp-app-evergreen/60" />
+        <span>
+          <span className="block text-[10px] uppercase tracking-[0.08em] text-gp-app-muted/75">
+            Purchased
+          </span>
+          <span className="block">{dateLabel}</span>
+        </span>
+      </div>
+
+      <div ref={menuRef} className="absolute right-3 top-3 sm:relative sm:right-auto sm:top-auto sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:self-center lg:col-auto lg:row-auto lg:row-span-1 lg:px-3">
+        <button
+          ref={triggerRef}
+          type="button"
+          aria-label={`Actions for ${gift.title}`}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={toggleMenu}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff8e6] text-gp-app-evergreen transition hover:bg-[#fff1c8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+        >
+          <MoreHorizontal aria-hidden="true" className="h-5 w-5" />
+        </button>
+        {menuOpen ? (
+          <div
+            role="menu"
+            aria-label={`Actions for ${gift.title}`}
+            className={`absolute right-0 z-30 min-w-48 overflow-hidden rounded-xl border border-gp-app-evergreen/10 bg-white p-1.5 shadow-[0_14px_35px_rgba(15,61,62,0.16)] ${
+              menuAbove ? "bottom-12" : "top-12"
+            }`}
+          >
+            {gift.url ? (
+              <a
+                ref={firstMenuItemRef as React.RefObject<HTMLAnchorElement>}
+                role="menuitem"
+                href={gift.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-gp-app-evergreen transition hover:bg-gp-app-surface-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+              >
+                <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                Open product link
+              </a>
+            ) : null}
+            <button
+              ref={gift.url ? undefined : firstMenuItemRef as React.RefObject<HTMLButtonElement>}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onEdit(gift);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-gp-app-evergreen transition hover:bg-gp-app-surface-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+            >
+              <Pencil aria-hidden="true" className="h-4 w-4" />
+              Edit
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setMenuOpen(false);
+                onDelete(gift);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            >
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+              Delete
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </article>
   );
 }
 
@@ -475,6 +584,7 @@ export function GiftHistoryTable() {
   const [error, setError] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<GiftHistorySort>("recent");
   const [showAddModal, setShowAddModal] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [activeGift, setActiveGift] = useState<GiftHistoryEntry | null>(null);
@@ -575,7 +685,7 @@ export function GiftHistoryTable() {
   }, [savedIdeas, savedRecipientFilter]);
 
   const filteredGifts = useMemo(() => {
-    return gifts.filter((gift) => {
+    const matches = gifts.filter((gift) => {
       if (recipientFilter !== "all" && gift.recipient_id !== recipientFilter) {
         return false;
       }
@@ -583,14 +693,14 @@ export function GiftHistoryTable() {
       const term = search.trim().toLowerCase();
       if (term) {
         const matchTitle = gift.title.toLowerCase().includes(term);
-        const matchNotes =
-          gift.notes?.toLowerCase().includes(term) ?? false;
+        const matchNotes = gift.notes?.toLowerCase().includes(term) ?? false;
         if (!matchTitle && !matchNotes) return false;
       }
 
       return true;
     });
-  }, [gifts, recipientFilter, search]);
+    return sortGiftHistoryEntries(matches, sort);
+  }, [gifts, recipientFilter, search, sort]);
 
   const openCreateForm = () => {
     setFormMode("create");
@@ -836,51 +946,82 @@ export function GiftHistoryTable() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition cursor-pointer ${
-              activeTab === "history"
-                ? "bg-gp-gold text-gp-evergreen shadow-sm"
-                : "text-gp-evergreen/60 hover:text-gp-evergreen"
-            }`}
-          >
-            Gift history
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("saved")}
-            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition cursor-pointer ${
-              activeTab === "saved"
-                ? "bg-gp-gold text-gp-evergreen shadow-sm"
-                : "text-gp-evergreen/60 hover:text-gp-evergreen"
-            }`}
-          >
-            Saved ideas
-          </button>
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-app-gold-strong">
+            Gift log &amp; saved ideas
+          </p>
+          <h1 className="mt-2 font-display text-3xl font-semibold leading-tight text-gp-app-evergreen sm:text-4xl lg:text-[2.75rem]">
+            Your gifting history
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gp-app-muted sm:text-base">
+            Track every gift you&apos;ve given and every idea you&apos;ve saved—so
+            PerchPal can avoid repeats and surface better, more personalized
+            suggestions.
+          </p>
         </div>
         {activeTab === "history" ? (
           <button
             type="button"
             onClick={openCreateForm}
-            className="gp-primary-button cursor-pointer rounded-full px-5 py-2 text-sm font-semibold"
+            className="gp-btn gp-btn--primary gp-btn--md shrink-0 self-start px-5"
           >
+            <Plus aria-hidden="true" className="h-4 w-4" />
             Add gift
           </button>
         ) : null}
+      </header>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className="inline-flex rounded-full border border-gp-app-evergreen/8 bg-white p-1 shadow-sm"
+          role="tablist"
+          aria-label="History views"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "history"}
+            onClick={() => setActiveTab("history")}
+            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "history"
+                ? "bg-[#fff1c7] text-gp-app-evergreen shadow-sm"
+                : "text-gp-app-muted hover:text-gp-app-evergreen"
+            }`}
+          >
+            <Gift aria-hidden="true" className="h-4 w-4" />
+            Gift history
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "saved"}
+            onClick={() => setActiveTab("saved")}
+            className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+              activeTab === "saved"
+                ? "bg-[#fff1c7] text-gp-app-evergreen shadow-sm"
+                : "text-gp-app-muted hover:text-gp-app-evergreen"
+            }`}
+          >
+            <Bookmark aria-hidden="true" className="h-4 w-4" />
+            Saved ideas
+          </button>
+        </div>
       </div>
 
       {activeTab === "history" ? (
-        <div className="gp-card space-y-3 rounded-2xl border border-gp-evergreen/10 bg-white/95 p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-              Recipient
+        <div className="rounded-2xl border border-gp-app-evergreen/8 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.04)]">
+          <div className="grid gap-3 lg:grid-cols-[minmax(14rem,0.85fr)_minmax(18rem,1.5fr)_minmax(13rem,0.65fr)]">
+            <label className="relative block min-w-0">
+              <span className="sr-only">Recipient</span>
+              <Users
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+              />
               <select
                 value={recipientFilter}
                 onChange={(event) => setRecipientFilter(event.target.value)}
-                className="gp-input cursor-pointer"
+                className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
               >
                 <option value="all">All recipients</option>
                 {recipients.map((recipient) => (
@@ -892,15 +1033,37 @@ export function GiftHistoryTable() {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-semibold text-gp-evergreen">
-              Search
+            <label className="relative block min-w-0">
+              <span className="sr-only">Search gift history</span>
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+              />
               <input
                 type="text"
                 placeholder="Search by gift title or notes..."
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="gp-input"
+                className="gp-input h-12 w-full bg-white pl-10"
               />
+            </label>
+
+            <label className="relative block min-w-0">
+              <span className="sr-only">Sort gift history</span>
+              <ListFilter
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
+              />
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value as GiftHistorySort)}
+                className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
+              >
+                <option value="recent">Recently added</option>
+                <option value="oldest">Oldest first</option>
+                <option value="price-high">Price: high to low</option>
+                <option value="price-low">Price: low to high</option>
+              </select>
             </label>
           </div>
         </div>

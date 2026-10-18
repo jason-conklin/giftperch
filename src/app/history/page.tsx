@@ -20,10 +20,7 @@ export default function GiftHistoryPage() {
     >
       <AuthGuard>
         <AppLayout>
-          <PageShell
-            title="Gift Log & Saved Ideas"
-            subtitle="Track every gift you've given and every idea you’ve saved—so PerchPal can avoid repeats and surface better, more personalized suggestions."
-          >
+          <PageShell>
             <GiftHistoryTable />
           </PageShell>
         </AppLayout>
