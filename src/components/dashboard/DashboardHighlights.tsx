@@ -675,16 +675,20 @@ function SummaryCard({
           {label}
         </p>
       </div>
-      <p className="mt-2 line-clamp-2 font-display text-[1.65rem] font-semibold leading-8 text-gp-app-evergreen">
-        {value}
-      </p>
-      <div className="mt-1 flex min-h-8 flex-wrap items-center gap-2">
-        <p className="text-xs leading-4 text-gp-app-muted">{detail}</p>
-        {badge ? (
-          <span className="rounded-full bg-[#fff3c8] px-2 py-1 text-[10px] font-semibold text-[#805a16]">
-            {badge}
-          </span>
-        ) : null}
+      <div className="mt-2 flex min-h-8 max-w-full flex-wrap items-baseline gap-x-3 gap-y-1">
+        <p className="max-w-full shrink-0 break-words font-display text-[1.65rem] font-semibold leading-8 text-gp-app-evergreen">
+          {value}
+        </p>
+        <div className="flex min-w-fit max-w-full flex-wrap items-center gap-2">
+          <p className="break-words text-xs leading-4 text-gp-app-muted">
+            {detail}
+          </p>
+          {badge ? (
+            <span className="shrink-0 rounded-full bg-[#fff3c8] px-2 py-1 text-[10px] font-semibold text-[#805a16]">
+              {badge}
+            </span>
+          ) : null}
+        </div>
       </div>
       <Link
         href={href}
