@@ -365,7 +365,7 @@ export function DashboardHighlights() {
 
     return upcoming
       .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 4);
+      .slice(0, 5);
   }, [events, recipients]);
 
   const recipientMap = useMemo(
@@ -687,7 +687,7 @@ function SummaryCard({
         <div className="flex min-w-fit max-w-full flex-wrap items-center gap-2">
           <p
             className={`break-words leading-4 text-gp-app-muted ${
-              emphasizeDetail ? "text-[13px]" : "text-xs"
+              emphasizeDetail ? "text-[14px]" : "text-xs"
             }`}
           >
             {detail}
