@@ -17,6 +17,7 @@ import {
 } from "@/lib/dashboardRecentGifts";
 import {
   getContinuousScrollDelta,
+  shouldRunRecentGiftAutoplay,
   wrapContinuousScrollPosition,
 } from "@/lib/recentGiftCarouselMotion";
 import styles from "./RecentGiftIdeasCarousel.module.css";
@@ -127,8 +128,6 @@ export function RecentGiftIdeasCarousel({
   const previousFrameTimeRef = useRef<number | null>(null);
   const [canScroll, setCanScroll] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [hasFocus, setHasFocus] = useState(false);
   const [manualPause, setManualPause] = useState(false);
   const [isDocumentHidden, setIsDocumentHidden] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -192,17 +191,27 @@ export function RecentGiftIdeasCarousel({
         setCanScroll(false);
         return;
       }
-      const track = firstCard.parentElement;
-      const gap = track ? Number.parseFloat(getComputedStyle(track).gap) || 0 : 0;
+      const lastUniqueCard = cards()[gifts.length - 1];
+      if (!lastUniqueCard) {
+        setCanScroll(false);
+        return;
+      }
       const uniqueWidth =
-        firstCard.offsetWidth * gifts.length + gap * (gifts.length - 1);
+        lastUniqueCard.offsetLeft +
+        lastUniqueCard.offsetWidth -
+        firstCard.offsetLeft;
       setCanScroll(uniqueWidth > viewport.clientWidth + 1);
     };
 
     const observer = new ResizeObserver(measure);
     observer.observe(viewport);
-    measure();
-    return () => observer.disconnect();
+    const track = viewport.firstElementChild;
+    if (track) observer.observe(track);
+    const frame = requestAnimationFrame(measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [cards, gifts.length]);
 
   useLayoutEffect(() => {
@@ -231,13 +240,13 @@ export function RecentGiftIdeasCarousel({
 
   useEffect(() => {
     if (
-      !canScroll ||
-      reducedMotion ||
-      isHovered ||
-      hasFocus ||
-      isDragging ||
-      manualPause ||
-      isDocumentHidden
+      !shouldRunRecentGiftAutoplay({
+        canScroll,
+        reducedMotion,
+        isDragging,
+        manualPause,
+        isDocumentHidden,
+      })
     ) {
       return;
     }
@@ -263,10 +272,8 @@ export function RecentGiftIdeasCarousel({
     };
   }, [
     canScroll,
-    hasFocus,
     isDocumentHidden,
     isDragging,
-    isHovered,
     manualPause,
     normalizeLoopPosition,
     reducedMotion,
@@ -348,12 +355,6 @@ export function RecentGiftIdeasCarousel({
       className={styles.carousel}
       aria-roledescription="carousel"
       aria-label="Recent saved gift ideas"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onFocusCapture={() => setHasFocus(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setHasFocus(false);
-      }}
     >
       <div
         ref={viewportRef}

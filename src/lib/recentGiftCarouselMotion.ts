@@ -1,5 +1,29 @@
 export const RECENT_GIFT_AUTOPLAY_SPEED_PX_PER_SECOND = 30;
 
+export type RecentGiftAutoplayState = {
+  canScroll: boolean;
+  isDragging: boolean;
+  manualPause: boolean;
+  isDocumentHidden: boolean;
+  reducedMotion: boolean;
+};
+
+export function shouldRunRecentGiftAutoplay({
+  canScroll,
+  isDragging,
+  manualPause,
+  isDocumentHidden,
+  reducedMotion,
+}: RecentGiftAutoplayState) {
+  return (
+    canScroll &&
+    !isDragging &&
+    !manualPause &&
+    !isDocumentHidden &&
+    !reducedMotion
+  );
+}
+
 export function getContinuousScrollDelta(
   elapsedMs: number,
   speed = RECENT_GIFT_AUTOPLAY_SPEED_PX_PER_SECOND,
