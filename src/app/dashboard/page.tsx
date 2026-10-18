@@ -6,52 +6,12 @@ import { PageShell } from "@/components/layout/PageShell";
 import { DashboardHighlights } from "@/components/dashboard/DashboardHighlights";
 import { AdminMetrics } from "./AdminMetrics";
 import { WelcomeOnboardingModal } from "@/components/dashboard/WelcomeOnboardingModal";
-import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
-import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
 export const metadata: Metadata = {
   title: "GiftPerch - Dashboard",
 };
 
-export default async function DashboardHome() {
-  const supabase = getSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let recipientCountValue = 0;
-  let suggestionCountValue = 0;
-  let savedGiftCountValue = 0;
-
-  if (user?.id) {
-    const userId = user.id;
-
-    const [{ count: recipientCount }, { count: suggestionCount }, { count: savedCount }] =
-      await Promise.all([
-      supabase
-        .from("recipient_profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_self", false),
-      supabase
-        .from("gift_suggestions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-      supabase
-        .from("recipient_saved_gift_ideas")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-    ]);
-
-    recipientCountValue = recipientCount ?? 0;
-    suggestionCountValue = suggestionCount ?? 0;
-    savedGiftCountValue = savedCount ?? 0;
-  }
-
-  const onboardingCompletedByData =
-    recipientCountValue > 0 &&
-    (suggestionCountValue > 0 || savedGiftCountValue > 0);
-
+export default function DashboardHome() {
   const heroBanner = (
     <section className="relative isolate min-h-[22rem] overflow-hidden rounded-[18px] border border-gp-app-evergreen/10 bg-[#f7eed8] shadow-[0_18px_45px_rgba(15,61,62,0.08)] sm:min-h-[21rem] lg:min-h-[18rem]">
       <Image
@@ -107,16 +67,7 @@ export default async function DashboardHome() {
     <PageShell hero={heroBanner}>
       <WelcomeOnboardingModal />
       <section className="space-y-5">
-        <GettingStartedCard
-          recipientCount={recipientCountValue}
-          userId={user?.id ?? null}
-          onboardingCompleted={onboardingCompletedByData}
-        />
-        <DashboardHighlights
-          recipientCount={recipientCountValue}
-          suggestionCount={suggestionCountValue}
-          savedGiftCount={savedGiftCountValue}
-        />
+        <DashboardHighlights />
         <AdminMetrics />
       </section>
     </PageShell>

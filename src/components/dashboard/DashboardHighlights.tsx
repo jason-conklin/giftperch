@@ -20,12 +20,11 @@ import {
   getSafeImageUrl,
 } from "@/lib/affiliateProduct";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-
-type DashboardHighlightsProps = {
-  recipientCount: number;
-  suggestionCount: number;
-  savedGiftCount: number;
-};
+import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
+import {
+  fetchDashboardStats,
+  type DashboardStats,
+} from "@/lib/dashboardStats";
 
 type RecipientSummary = {
   id: string;
@@ -201,11 +200,7 @@ function DashboardPanel({ children }: { children: ReactNode }) {
   );
 }
 
-export function DashboardHighlights({
-  recipientCount,
-  suggestionCount,
-  savedGiftCount,
-}: DashboardHighlightsProps) {
+export function DashboardHighlights() {
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
@@ -213,6 +208,7 @@ export function DashboardHighlights({
   const [recentGifts, setRecentGifts] = useState<SavedGiftSummary[]>([]);
   const [latestInteraction, setLatestInteraction] =
     useState<AiInteraction | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -224,7 +220,7 @@ export function DashboardHighlights({
       setLoading(true);
       setError("");
       try {
-        const [recipientResult, interactionResult, savedGiftResult] =
+        const [recipientResult, interactionResult, savedGiftResult, statsResult] =
           await Promise.all([
             supabase
               .from("recipient_profiles")
@@ -247,6 +243,7 @@ export function DashboardHighlights({
               .eq("user_id", user.id)
               .order("created_at", { ascending: false })
               .limit(3),
+            fetchDashboardStats(supabase, user.id),
           ]);
 
         if (recipientResult.error) throw recipientResult.error;
@@ -258,6 +255,7 @@ export function DashboardHighlights({
         setRecipients(recipientList);
         setLatestInteraction(interactionResult.data ?? null);
         setRecentGifts((savedGiftResult.data ?? []) as SavedGiftSummary[]);
+        setStats(statsResult);
 
         if (recipientList.length) {
           const { data: eventRows, error: eventError } = await supabase
@@ -363,14 +361,23 @@ export function DashboardHighlights({
   }
 
   const nextOccasion = upcomingOccasions[0] ?? null;
+  const dashboardStats = stats as DashboardStats;
+  const onboardingCompletedByData =
+    dashboardStats.recipientCount > 0 &&
+    (dashboardStats.suggestionRunCount > 0 || dashboardStats.savedGiftCount > 0);
 
   return (
     <div className="space-y-5">
+      <GettingStartedCard
+        recipientCount={dashboardStats.recipientCount}
+        userId={user?.id ?? null}
+        onboardingCompleted={onboardingCompletedByData}
+      />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           icon={<Users aria-hidden="true" className="h-5 w-5" />}
           label="Recipients"
-          value={recipientCount.toLocaleString()}
+          value={dashboardStats.recipientCount.toLocaleString()}
           detail="People in your gift list"
           href="/recipients"
           action="Manage recipients"
@@ -391,7 +398,7 @@ export function DashboardHighlights({
         <SummaryCard
           icon={<Gift aria-hidden="true" className="h-5 w-5" />}
           label="Saved gifts"
-          value={savedGiftCount.toLocaleString()}
+          value={dashboardStats.savedGiftCount.toLocaleString()}
           detail="Ideas you have saved"
           href="/history"
           action="View saved gifts"
@@ -399,7 +406,7 @@ export function DashboardHighlights({
         <SummaryCard
           icon={<Sparkles aria-hidden="true" className="h-5 w-5" />}
           label="Gift idea runs"
-          value={suggestionCount.toLocaleString()}
+          value={dashboardStats.suggestionRunCount.toLocaleString()}
           detail="Personalized recommendation runs"
           href="/history"
           action="View history"
