@@ -1,0 +1,61 @@
+.carousel {
+  container-type: inline-size;
+  position: relative;
+  min-width: 0;
+}
+
+.viewport {
+  cursor: grab;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.viewportDragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+  scroll-snap-type: none;
+}
+
+.track {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.card {
+  flex: 0 0 88%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+@container (min-width: 32rem) {
+  .card {
+    flex-basis: calc((100% - 0.75rem) / 2);
+  }
+}
+
+@container (min-width: 50rem) {
+  .card {
+    flex-basis: calc((100% - 1.5rem) / 3);
+  }
+}
+
+@container (min-width: 68rem) {
+  .card {
+    flex-basis: calc((100% - 2.25rem) / 4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    scroll-behavior: auto;
+  }
+}

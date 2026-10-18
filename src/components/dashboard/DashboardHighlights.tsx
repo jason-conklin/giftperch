@@ -15,13 +15,10 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
-import {
-  getMatchedProductPresentation,
-  getSafeImageUrl,
-} from "@/lib/affiliateProduct";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
 import { RotatingImageStack } from "@/components/dashboard/RotatingImageStack";
+import { RecentGiftIdeasCarousel } from "@/components/dashboard/RecentGiftIdeasCarousel";
 import {
   fetchDashboardStats,
   type DashboardStats,
@@ -32,6 +29,11 @@ import {
   buildSuggestionRunPreviewGroups,
   type DashboardSuggestionRunPreview,
 } from "@/lib/dashboardPreviews";
+import {
+  RECENT_GIFT_LIMIT,
+  prepareRecentGiftCards,
+  type RecentSavedGift,
+} from "@/lib/dashboardRecentGifts";
 
 type RecipientSummary = {
   id: string;
@@ -50,17 +52,6 @@ type RecipientEventRow = {
 
 type AiInteraction = {
   message: string;
-  created_at: string;
-};
-
-type SavedGiftSummary = {
-  id: string;
-  recipient_id: string;
-  title: string;
-  estimated_price_min: number | null;
-  estimated_price_max: number | null;
-  image_url: string | null;
-  product_match: unknown;
   created_at: string;
 };
 
@@ -192,16 +183,6 @@ const getOccasionIcon = (type: OccasionType) => {
   return icons[type];
 };
 
-const formatEstimatedPrice = (gift: SavedGiftSummary) => {
-  const min = gift.estimated_price_min;
-  const max = gift.estimated_price_max;
-  if (min === null && max === null) return null;
-  if (min !== null && max !== null && min !== max) {
-    return `$${min.toFixed(0)}–$${max.toFixed(0)}`;
-  }
-  return `$${(min ?? max ?? 0).toFixed(2)}`;
-};
-
 function DashboardPanel({ children }: { children: ReactNode }) {
   return (
     <section className="rounded-2xl border border-gp-app-evergreen/10 bg-white/94 p-4 shadow-[0_10px_30px_rgba(15,61,62,0.055)] sm:p-5">
@@ -215,7 +196,7 @@ export function DashboardHighlights() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
   const [events, setEvents] = useState<RecipientEventRow[]>([]);
-  const [recentGifts, setRecentGifts] = useState<SavedGiftSummary[]>([]);
+  const [recentGifts, setRecentGifts] = useState<RecentSavedGift[]>([]);
   const [recentRuns, setRecentRuns] = useState<
     DashboardSuggestionRunPreview[]
   >([]);
@@ -260,7 +241,7 @@ export function DashboardHighlights() {
               )
               .eq("user_id", user.id)
               .order("created_at", { ascending: false })
-              .limit(10),
+              .limit(RECENT_GIFT_LIMIT),
             supabase
               .from("gift_suggestions")
               .select("id, recipient_id, suggestions")
@@ -279,7 +260,7 @@ export function DashboardHighlights() {
           (recipientResult.data ?? []) as RecipientSummary[];
         setRecipients(recipientList);
         setLatestInteraction(interactionResult.data ?? null);
-        setRecentGifts((savedGiftResult.data ?? []) as SavedGiftSummary[]);
+        setRecentGifts((savedGiftResult.data ?? []) as RecentSavedGift[]);
         setRecentRuns(
           (suggestionRunResult.data ?? []) as DashboardSuggestionRunPreview[],
         );
@@ -383,6 +364,10 @@ export function DashboardHighlights() {
   const suggestionRunPreviews = useMemo(
     () => buildSuggestionRunPreviewGroups(recentRuns, recipientMap),
     [recentRuns, recipientMap],
+  );
+  const recentGiftCards = useMemo(
+    () => prepareRecentGiftCards(recentGifts, recipientMap),
+    [recentGifts, recipientMap],
   );
 
   if (loading) {
@@ -598,11 +583,9 @@ export function DashboardHighlights() {
             title="Recent gift ideas"
             href="/history"
           />
-          {recentGifts.length ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {recentGifts.slice(0, 3).map((gift) => (
-                <RecentGiftCard key={gift.id} gift={gift} />
-              ))}
+          {recentGiftCards.length ? (
+            <div className="mt-4 px-2 sm:px-3">
+              <RecentGiftIdeasCarousel gifts={recentGiftCards} />
             </div>
           ) : (
             <div className="mt-4 flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-gp-app-evergreen/15 bg-gp-app-surface-warm p-6 text-center">
@@ -737,50 +720,6 @@ function PanelHeading({
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
       </Link>
     </div>
-  );
-}
-
-function RecentGiftCard({ gift }: { gift: SavedGiftSummary }) {
-  const product = getMatchedProductPresentation(gift.product_match);
-  const imageUrl =
-    product?.match.imageUrl ?? getSafeImageUrl(gift.image_url) ?? null;
-  const price = product?.priceDisplay ?? formatEstimatedPrice(gift);
-
-  return (
-    <article className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-gp-app-evergreen/10 bg-white">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#f4f0e5]">
-        <Image
-          src={imageUrl ?? "/gift-thumbnails/default-gift.svg"}
-          alt={imageUrl ? gift.title : "Gift idea placeholder"}
-          fill
-          sizes="(min-width: 1280px) 15vw, (min-width: 640px) 28vw, 90vw"
-          className="object-cover"
-          unoptimized={Boolean(imageUrl)}
-        />
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-gp-app-evergreen">
-          {gift.title}
-        </h3>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5">
-          <span className="text-sm font-bold text-gp-app-evergreen">
-            {price ?? "Saved idea"}
-          </span>
-          {product ? (
-            <span className="truncate text-[11px] text-gp-app-muted">
-              {product.match.merchant}
-            </span>
-          ) : null}
-        </div>
-        <Link
-          href="/history"
-          className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-gp-app-evergreen px-3 py-2 text-xs font-semibold text-white transition hover:bg-gp-app-evergreen-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
-        >
-          View saved idea
-          <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </article>
   );
 }
 
