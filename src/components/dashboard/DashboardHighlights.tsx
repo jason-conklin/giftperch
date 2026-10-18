@@ -21,15 +21,24 @@ import {
 } from "@/lib/affiliateProduct";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GettingStartedCard } from "@/components/dashboard/GettingStartedCard";
+import { RotatingImageStack } from "@/components/dashboard/RotatingImageStack";
 import {
   fetchDashboardStats,
   type DashboardStats,
 } from "@/lib/dashboardStats";
+import {
+  buildRecipientPreviewGroups,
+  buildSavedGiftPreviewGroups,
+  buildSuggestionRunPreviewGroups,
+  type DashboardSuggestionRunPreview,
+} from "@/lib/dashboardPreviews";
 
 type RecipientSummary = {
   id: string;
   name: string;
   birthday: string | null;
+  avatar_url: string | null;
+  avatar_icon: string | null;
 };
 
 type RecipientEventRow = {
@@ -46,6 +55,7 @@ type AiInteraction = {
 
 type SavedGiftSummary = {
   id: string;
+  recipient_id: string;
   title: string;
   estimated_price_min: number | null;
   estimated_price_max: number | null;
@@ -206,6 +216,9 @@ export function DashboardHighlights() {
   const [recipients, setRecipients] = useState<RecipientSummary[]>([]);
   const [events, setEvents] = useState<RecipientEventRow[]>([]);
   const [recentGifts, setRecentGifts] = useState<SavedGiftSummary[]>([]);
+  const [recentRuns, setRecentRuns] = useState<
+    DashboardSuggestionRunPreview[]
+  >([]);
   const [latestInteraction, setLatestInteraction] =
     useState<AiInteraction | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -220,11 +233,16 @@ export function DashboardHighlights() {
       setLoading(true);
       setError("");
       try {
-        const [recipientResult, interactionResult, savedGiftResult, statsResult] =
-          await Promise.all([
+        const [
+          recipientResult,
+          interactionResult,
+          savedGiftResult,
+          suggestionRunResult,
+          statsResult,
+        ] = await Promise.all([
             supabase
               .from("recipient_profiles")
-              .select("id, name, birthday")
+              .select("id, name, birthday, avatar_url, avatar_icon")
               .eq("user_id", user.id)
               .eq("is_self", false)
               .order("created_at", { ascending: true }),
@@ -238,16 +256,23 @@ export function DashboardHighlights() {
             supabase
               .from("recipient_saved_gift_ideas")
               .select(
-                "id, title, estimated_price_min, estimated_price_max, image_url, product_match, created_at",
+                "id, recipient_id, title, estimated_price_min, estimated_price_max, image_url, product_match, created_at",
               )
               .eq("user_id", user.id)
               .order("created_at", { ascending: false })
-              .limit(3),
+              .limit(10),
+            supabase
+              .from("gift_suggestions")
+              .select("id, recipient_id, suggestions")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false })
+              .limit(10),
             fetchDashboardStats(supabase, user.id),
           ]);
 
         if (recipientResult.error) throw recipientResult.error;
         if (savedGiftResult.error) throw savedGiftResult.error;
+        if (suggestionRunResult.error) throw suggestionRunResult.error;
         if (!active) return;
 
         const recipientList =
@@ -255,6 +280,9 @@ export function DashboardHighlights() {
         setRecipients(recipientList);
         setLatestInteraction(interactionResult.data ?? null);
         setRecentGifts((savedGiftResult.data ?? []) as SavedGiftSummary[]);
+        setRecentRuns(
+          (suggestionRunResult.data ?? []) as DashboardSuggestionRunPreview[],
+        );
         setStats(statsResult);
 
         if (recipientList.length) {
@@ -340,6 +368,23 @@ export function DashboardHighlights() {
       .slice(0, 4);
   }, [events, recipients]);
 
+  const recipientMap = useMemo(
+    () => new Map(recipients.map((recipient) => [recipient.id, recipient])),
+    [recipients],
+  );
+  const recipientPreviews = useMemo(
+    () => buildRecipientPreviewGroups(recipients),
+    [recipients],
+  );
+  const savedGiftPreviews = useMemo(
+    () => buildSavedGiftPreviewGroups(recentGifts, recipientMap),
+    [recentGifts, recipientMap],
+  );
+  const suggestionRunPreviews = useMemo(
+    () => buildSuggestionRunPreviewGroups(recentRuns, recipientMap),
+    [recentRuns, recipientMap],
+  );
+
   if (loading) {
     return (
       <div className="rounded-2xl border border-gp-app-evergreen/10 bg-white/80 p-6">
@@ -361,6 +406,9 @@ export function DashboardHighlights() {
   }
 
   const nextOccasion = upcomingOccasions[0] ?? null;
+  const nextOccasionIcon = getOccasionIcon(
+    nextOccasion ? getOccasionType(nextOccasion.label) : "gift",
+  );
   const dashboardStats = stats as DashboardStats;
   const onboardingCompletedByData =
     dashboardStats.recipientCount > 0 &&
@@ -375,7 +423,16 @@ export function DashboardHighlights() {
       />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          icon={<Users aria-hidden="true" className="h-5 w-5" />}
+          icon={
+            recipientPreviews.length ? (
+              <RotatingImageStack
+                groups={recipientPreviews}
+                label="Recipient avatars"
+              />
+            ) : (
+              <Users aria-hidden="true" className="h-5 w-5" />
+            )
+          }
           label="Recipients"
           value={dashboardStats.recipientCount.toLocaleString()}
           detail="People in your gift list"
@@ -383,7 +440,17 @@ export function DashboardHighlights() {
           action="Manage recipients"
         />
         <SummaryCard
-          icon={<CalendarDays aria-hidden="true" className="h-5 w-5" />}
+          icon={
+            <span className="relative block h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-[#eef4e9] shadow-[0_3px_10px_rgba(15,61,62,0.14)]">
+              <Image
+                src={nextOccasionIcon.src}
+                alt=""
+                fill
+                sizes="48px"
+                className="object-contain p-1"
+              />
+            </span>
+          }
           label="Next occasion"
           value={nextOccasion?.label ?? "Nothing scheduled"}
           detail={
@@ -396,7 +463,16 @@ export function DashboardHighlights() {
           action="View occasions"
         />
         <SummaryCard
-          icon={<Gift aria-hidden="true" className="h-5 w-5" />}
+          icon={
+            savedGiftPreviews.length ? (
+              <RotatingImageStack
+                groups={savedGiftPreviews}
+                label="Saved gift previews"
+              />
+            ) : (
+              <Gift aria-hidden="true" className="h-5 w-5" />
+            )
+          }
           label="Saved gifts"
           value={dashboardStats.savedGiftCount.toLocaleString()}
           detail="Ideas you have saved"
@@ -404,7 +480,16 @@ export function DashboardHighlights() {
           action="View saved gifts"
         />
         <SummaryCard
-          icon={<Sparkles aria-hidden="true" className="h-5 w-5" />}
+          icon={
+            suggestionRunPreviews.length ? (
+              <RotatingImageStack
+                groups={suggestionRunPreviews}
+                label="Gift idea run previews"
+              />
+            ) : (
+              <Sparkles aria-hidden="true" className="h-5 w-5" />
+            )
+          }
           label="Gift idea runs"
           value={dashboardStats.suggestionRunCount.toLocaleString()}
           detail="Personalized recommendation runs"
@@ -512,7 +597,7 @@ export function DashboardHighlights() {
           />
           {recentGifts.length ? (
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {recentGifts.map((gift) => (
+              {recentGifts.slice(0, 3).map((gift) => (
                 <RecentGiftCard key={gift.id} gift={gift} />
               ))}
             </div>
@@ -582,8 +667,8 @@ function SummaryCard({
 }) {
   return (
     <article className="flex min-h-44 flex-col rounded-2xl border border-gp-app-evergreen/10 bg-white/94 p-4 shadow-[0_10px_30px_rgba(15,61,62,0.05)]">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fff3c8] text-gp-app-evergreen">
+      <div className="flex min-h-12 items-center gap-3">
+        <span className="flex shrink-0 items-center justify-center text-gp-app-evergreen">
           {icon}
         </span>
         <p className="text-sm font-medium text-gp-app-evergreen/80">{label}</p>
@@ -601,7 +686,7 @@ function SummaryCard({
       </div>
       <Link
         href={href}
-        className="mt-auto flex items-center justify-center gap-2 rounded-lg bg-[#faf5e7] px-3 py-2 text-xs font-semibold text-gp-app-evergreen transition hover:bg-[#f5ecd5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+        className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-[#d8a628]/70 bg-[linear-gradient(180deg,#f4cf62_0%,#e6b438_100%)] px-3 py-2 text-xs font-semibold text-gp-app-evergreen shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_3px_8px_rgba(154,111,24,0.16)] transition hover:border-[#c68f17] hover:bg-[linear-gradient(180deg,#f7d979_0%,#e9ba42_100%)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_5px_12px_rgba(154,111,24,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-evergreen focus-visible:ring-offset-2 active:translate-y-px active:shadow-[inset_0_1px_2px_rgba(128,90,22,0.18)]"
       >
         {action}
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
