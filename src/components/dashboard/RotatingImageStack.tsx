@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Gift, Users } from "lucide-react";
+import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import type {
   DashboardPreviewGroup,
   DashboardPreviewImage,
@@ -26,6 +27,13 @@ function PreviewImage({ image }: { image: DashboardPreviewImage }) {
             <Gift aria-hidden="true" className="h-5 w-5" />
           )}
         </span>
+      ) : image.kind === "gift" && image.previewSource ? (
+        <GiftPreviewImage
+          source={image.previewSource}
+          alt=""
+          sizes="48px"
+          className="object-cover"
+        />
       ) : (
         <Image
           src={src}

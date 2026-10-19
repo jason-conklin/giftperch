@@ -28,10 +28,8 @@ import {
   isExpectedAmazonAffiliateUrl,
 } from "@/lib/affiliateProduct";
 import {
-  GIFT_HISTORY_IMAGE_FALLBACK,
   formatGiftHistoryPrice,
   formatSavedIdeaPrice,
-  resolveGiftHistoryImage,
   resolveHistoryRecipientAvatar,
   sortGiftHistoryEntries,
   sortSavedIdeas,
@@ -289,7 +287,6 @@ function GiftHistoryItem({
 }: GiftHistoryItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAbove, setMenuAbove] = useState(false);
-  const [imageSrc, setImageSrc] = useState(resolveGiftHistoryImage(gift.image_url));
   const [avatarFailed, setAvatarFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -302,6 +299,13 @@ function GiftHistoryItem({
       })
     : "Date not recorded";
   const recipientAvatar = resolveHistoryRecipientAvatar(recipient);
+  const previewSource = resolveGiftPreviewSource({
+    metadata: {
+      title: gift.title,
+      rationale: gift.notes,
+    },
+    imageUrl: gift.image_url,
+  });
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -334,14 +338,11 @@ function GiftHistoryItem({
   return (
     <article className="relative grid min-w-0 gap-3 rounded-2xl border border-gp-app-evergreen/10 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.045)] transition hover:border-gp-app-evergreen/16 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-center lg:grid-cols-[8.75rem_minmax(13rem,1.4fr)_minmax(7rem,0.45fr)_minmax(9rem,0.55fr)_auto] lg:gap-0 lg:px-4 lg:py-2.5">
       <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-gp-app-surface-warm sm:aspect-[7/5] lg:h-[5.25rem] lg:w-[8.75rem]">
-        <Image
-          src={imageSrc}
-          alt={imageSrc === GIFT_HISTORY_IMAGE_FALLBACK ? "Gift placeholder" : gift.title}
-          fill
+        <GiftPreviewImage
+          source={previewSource}
+          alt={gift.title}
           sizes="(min-width: 1024px) 140px, (min-width: 640px) 120px, 90vw"
           className="object-contain p-1"
-          unoptimized={imageSrc.startsWith("https://")}
-          onError={() => setImageSrc(GIFT_HISTORY_IMAGE_FALLBACK)}
         />
       </div>
 

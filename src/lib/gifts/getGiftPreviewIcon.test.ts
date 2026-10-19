@@ -66,3 +66,30 @@ test("does not assign unrelated themed artwork without matching metadata", () =>
   assert.equal(source.primary, "/icons/previews/preview-gift-box.png");
   assert.equal(source.fallback, "/icons/previews/preview-gift-box.png");
 });
+
+test("resolves legacy gift-history metadata without an explicit image", () => {
+  const fishing = resolveGiftPreviewSource({
+    metadata: {
+      title: "Deluxe Fishing Rod",
+      rationale: "Purchased for weekend trips.",
+    },
+    imageUrl: null,
+  });
+  const pet = resolveGiftPreviewSource({
+    metadata: { title: "Pet Camera with Treat Dispenser" },
+    imageUrl: null,
+  });
+  const recipeBook = resolveGiftPreviewSource({
+    metadata: { title: "Personalized Family Recipe Book" },
+    imageUrl: null,
+  });
+  const fitness = resolveGiftPreviewSource({
+    metadata: { title: "Fitness Tracker Watch" },
+    imageUrl: null,
+  });
+
+  assert.equal(fishing.primary, "/icons/previews/preview-fishing.png");
+  assert.equal(pet.primary, "/icons/previews/preview-paw.png");
+  assert.equal(recipeBook.primary, "/icons/previews/preview-book.png");
+  assert.equal(fitness.primary, "/icons/previews/preview-fitness.png");
+});

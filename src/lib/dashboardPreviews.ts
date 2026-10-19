@@ -1,10 +1,11 @@
+import { getSafeImageUrl } from "@/lib/affiliateProduct";
 import {
-  getMatchedProductPresentation,
-  getSafeImageUrl,
-} from "@/lib/affiliateProduct";
+  resolveGiftPreviewSource,
+  type GiftPreviewMetadata,
+  type GiftPreviewSource,
+} from "@/lib/gifts/getGiftPreviewIcon";
 
 export const DASHBOARD_PREVIEW_LIMIT = 10;
-export const DASHBOARD_GIFT_PLACEHOLDER = "/gift-thumbnails/default-gift.svg";
 
 const RECIPIENT_AVATARS: Record<string, string> = {
   babyboy: "/babyboy_icon.png",
@@ -30,6 +31,8 @@ export type DashboardSavedGiftPreview = {
   title: string;
   image_url: string | null;
   product_match: unknown;
+  rationale?: string | null;
+  tier?: string | null;
 };
 
 export type DashboardSuggestionRunPreview = {
@@ -43,6 +46,7 @@ export type DashboardPreviewImage = {
   alt: string;
   kind: "recipient" | "gift";
   fallbackSrc?: string;
+  previewSource?: GiftPreviewSource;
 };
 
 export type DashboardPreviewGroup = {
@@ -52,9 +56,19 @@ export type DashboardPreviewGroup = {
 
 type SuggestionRecord = {
   title?: unknown;
+  subtitle?: unknown;
+  why_it_fits?: unknown;
+  rationale?: unknown;
+  short_description?: unknown;
+  price_hint?: unknown;
+  price_guidance?: unknown;
+  tier?: unknown;
+  tags?: unknown;
   image_url?: unknown;
   productMatch?: unknown;
+  product_match?: unknown;
   amazonProduct?: unknown;
+  amazon_product?: unknown;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -79,13 +93,33 @@ function getRecipientAvatar(
   };
 }
 
-function getSuggestionImage(suggestion: SuggestionRecord) {
-  return (
-    getMatchedProductPresentation(
-      suggestion.productMatch,
-      suggestion.amazonProduct,
-    )?.match.imageUrl ?? getSafeImageUrl(suggestion.image_url)
-  );
+function optionalString(value: unknown) {
+  return typeof value === "string" ? value : null;
+}
+
+function getSuggestionMetadata(suggestion: SuggestionRecord): GiftPreviewMetadata {
+  return {
+    title: optionalString(suggestion.title),
+    subtitle: optionalString(suggestion.subtitle),
+    why_it_fits: optionalString(suggestion.why_it_fits),
+    rationale: optionalString(suggestion.rationale),
+    short_description: optionalString(suggestion.short_description),
+    price_hint: optionalString(suggestion.price_hint),
+    price_guidance: optionalString(suggestion.price_guidance),
+    tier: optionalString(suggestion.tier),
+    tags: Array.isArray(suggestion.tags)
+      ? suggestion.tags.filter((tag): tag is string => typeof tag === "string")
+      : null,
+  };
+}
+
+function getSuggestionPreviewSource(suggestion: SuggestionRecord) {
+  return resolveGiftPreviewSource({
+    metadata: getSuggestionMetadata(suggestion),
+    imageUrl: suggestion.image_url,
+    productMatch: suggestion.productMatch ?? suggestion.product_match,
+    amazonProduct: suggestion.amazonProduct ?? suggestion.amazon_product,
+  });
 }
 
 export function buildRecipientPreviewGroups(
@@ -119,10 +153,15 @@ export function buildSavedGiftPreviewGroups(
     const avatar = recipient ? getRecipientAvatar(recipient) : null;
     if (!avatar) return [];
 
-    const productImage =
-      getMatchedProductPresentation(gift.product_match)?.match.imageUrl ??
-      getSafeImageUrl(gift.image_url) ??
-      DASHBOARD_GIFT_PLACEHOLDER;
+    const previewSource = resolveGiftPreviewSource({
+      metadata: {
+        title: gift.title,
+        rationale: gift.rationale,
+        tier: gift.tier,
+      },
+      imageUrl: gift.image_url,
+      productMatch: gift.product_match,
+    });
 
     return [
       {
@@ -130,10 +169,11 @@ export function buildSavedGiftPreviewGroups(
         images: [
           avatar,
           {
-            src: productImage,
+            src: previewSource.primary,
             alt: gift.title,
             kind: "gift" as const,
-            fallbackSrc: DASHBOARD_GIFT_PLACEHOLDER,
+            fallbackSrc: previewSource.fallback,
+            previewSource,
           },
         ],
       },
@@ -153,8 +193,15 @@ export function buildSuggestionRunPreviewGroups(
 
     const suggestions = run.suggestions.filter(isRecord) as SuggestionRecord[];
     const suggestion =
-      suggestions.find((item) => Boolean(getSuggestionImage(item))) ??
-      suggestions.find((item) => typeof item.title === "string");
+      suggestions.find(
+        (item) =>
+          typeof item.title === "string" &&
+          item.title.trim() &&
+          getSuggestionPreviewSource(item).isProductImage,
+      ) ??
+      suggestions.find(
+        (item) => typeof item.title === "string" && item.title.trim(),
+      );
     if (!suggestion) return [];
 
     const title =
@@ -162,16 +209,19 @@ export function buildSuggestionRunPreviewGroups(
         ? suggestion.title.trim()
         : "Gift suggestion";
 
+    const previewSource = getSuggestionPreviewSource(suggestion);
+
     return [
       {
         id: `run-${run.id}`,
         images: [
           avatar,
           {
-            src: getSuggestionImage(suggestion) ?? DASHBOARD_GIFT_PLACEHOLDER,
+            src: previewSource.primary,
             alt: title,
             kind: "gift" as const,
-            fallbackSrc: DASHBOARD_GIFT_PLACEHOLDER,
+            fallbackSrc: previewSource.fallback,
+            previewSource,
           },
         ],
       },

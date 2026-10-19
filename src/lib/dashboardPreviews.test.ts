@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  DASHBOARD_GIFT_PLACEHOLDER,
   buildRecipientPreviewGroups,
   buildSavedGiftPreviewGroups,
   buildSuggestionRunPreviewGroups,
@@ -47,6 +46,8 @@ test("saved gift previews preserve recipient and product association", () => {
         title: "Travel mug",
         image_url: "https://images.example.com/mug.jpg",
         product_match: null,
+        rationale: null,
+        tier: null,
       },
       {
         id: "other-user-gift",
@@ -54,6 +55,8 @@ test("saved gift previews preserve recipient and product association", () => {
         title: "Should not appear",
         image_url: "https://images.example.com/other.jpg",
         product_match: null,
+        rationale: null,
+        tier: null,
       },
     ],
     new Map(recipients.map((recipient) => [recipient.id, recipient])),
@@ -64,7 +67,7 @@ test("saved gift previews preserve recipient and product association", () => {
   assert.equal(groups[0]?.images[1]?.src, "https://images.example.com/mug.jpg");
 });
 
-test("saved gifts and suggestion runs use a reliable missing-image fallback", () => {
+test("saved gifts and suggestion runs use themed missing-image previews", () => {
   const recipientMap = new Map(
     recipients.map((recipient) => [recipient.id, recipient]),
   );
@@ -73,9 +76,11 @@ test("saved gifts and suggestion runs use a reliable missing-image fallback", ()
       {
         id: "gift-1",
         recipient_id: "recipient-1",
-        title: "Unknown image",
+        title: "Watercolor art kit",
         image_url: null,
         product_match: null,
+        rationale: "For painting and sketching",
+        tier: "thoughtful",
       },
     ],
     recipientMap,
@@ -85,14 +90,78 @@ test("saved gifts and suggestion runs use a reliable missing-image fallback", ()
       {
         id: "run-1",
         recipient_id: "recipient-2",
-        suggestions: [{ title: "Sample gift", image_url: null }],
+        suggestions: [
+          {
+            title: "Noise-canceling headphones",
+            image_url: null,
+            short_description: "Comfortable audio for travel",
+          },
+        ],
       },
     ],
     recipientMap,
   );
 
-  assert.equal(saved[0]?.images[1]?.src, DASHBOARD_GIFT_PLACEHOLDER);
-  assert.equal(runs[0]?.images[1]?.src, DASHBOARD_GIFT_PLACEHOLDER);
+  assert.equal(saved[0]?.images[1]?.src, "/icons/previews/preview-art.png");
+  assert.equal(
+    runs[0]?.images[1]?.src,
+    "/icons/previews/preview-headphones.png",
+  );
+});
+
+test("dashboard previews preserve merchant images and recipient associations", () => {
+  const groups = buildSavedGiftPreviewGroups(
+    [
+      {
+        id: "gift-1",
+        recipient_id: "recipient-2",
+        title: "Fishing multi-tool",
+        image_url: null,
+        rationale: "Useful at the lake",
+        tier: "practical",
+        product_match: {
+          provider: "awin",
+          productId: "piscifun-1",
+          merchant: "Piscifun",
+          productTitle: "Fishing multi-tool",
+          imageUrl: "https://merchant.example.com/tool.jpg",
+          price: 31.99,
+          currency: "USD",
+          affiliateUrl: "https://www.awin1.com/cread.php?awinmid=1&awinaffid=2",
+        },
+      },
+    ],
+    new Map(recipients.map((recipient) => [recipient.id, recipient])),
+  );
+
+  assert.equal(groups[0]?.images[0]?.src, "/man_icon.png");
+  assert.equal(
+    groups[0]?.images[1]?.src,
+    "https://merchant.example.com/tool.jpg",
+  );
+  assert.equal(
+    groups[0]?.images[1]?.fallbackSrc,
+    "/icons/previews/preview-fishing.png",
+  );
+});
+
+test("unknown dashboard gifts retain the generic fallback", () => {
+  const saved = buildSavedGiftPreviewGroups(
+    [
+      {
+        id: "gift-1",
+        recipient_id: "recipient-1",
+        title: "An unusual surprise",
+        image_url: null,
+        product_match: null,
+        rationale: null,
+        tier: null,
+      },
+    ],
+    new Map(recipients.map((recipient) => [recipient.id, recipient])),
+  );
+
+  assert.equal(saved[0]?.images[1]?.src, "/icons/previews/preview-gift-box.png");
 });
 
 test("suggestion run previews select one image per bounded recent run", () => {
