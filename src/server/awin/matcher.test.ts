@@ -6,7 +6,6 @@ import {
   findBestAwinProductMatch,
   type AwinCatalogProduct,
 } from "./matcher";
-import { resolveAwinAdvertiser } from "./advertisers";
 
 function product(
   overrides: Partial<AwinCatalogProduct> = {},
@@ -37,12 +36,6 @@ const fishingSuggestion = {
   price_min: 40,
   price_max: 80,
 };
-
-const fosiAdvertiser = {
-  ...resolveAwinAdvertiser("fosi-audio"),
-  recommendationEnabled: true,
-};
-const fosiTestRegistry = [fosiAdvertiser];
 
 function fosiProduct(
   overrides: Partial<AwinCatalogProduct> = {},
@@ -101,7 +94,7 @@ test("rejects a Piscifun product for an unrelated gift concept", () => {
   assert.equal(match, null);
 });
 
-test("production matching excludes Fosi Audio while it is recommendation-disabled", () => {
+test("production matching includes Fosi Audio when its audio policy has a relevant intent", () => {
   const match = findBestAwinProductMatch({
     suggestion: {
       title: "Desktop audio amplifier upgrade",
@@ -111,7 +104,7 @@ test("production matching excludes Fosi Audio while it is recommendation-disable
     products: [fosiProduct()],
   });
 
-  assert.equal(match, null);
+  assert.equal(match?.advertiserId, "119395");
 });
 
 test("the Fosi policy matches specific audio equipment intents", () => {
@@ -144,7 +137,6 @@ test("the Fosi policy matches specific audio equipment intents", () => {
         tier: "thoughtful",
       },
       products: [candidate.product],
-      advertiserRegistry: fosiTestRegistry,
     });
     assert.equal(match?.advertiserId, "119395");
     assert.equal(match?.locale, "en_US");
@@ -164,7 +156,6 @@ test("the Fosi policy rejects unrelated and generic-only gift intents", () => {
       findBestAwinProductMatch({
         suggestion: { title, short_description, tier: "thoughtful" },
         products: [fosiProduct()],
-        advertiserRegistry: fosiTestRegistry,
       }),
       null,
     );
@@ -194,7 +185,6 @@ test("the Fosi policy excludes administrative listings and gift cards", () => {
     findBestAwinProductMatch({
       suggestion,
       products,
-      advertiserRegistry: fosiTestRegistry,
     }),
     null,
   );
@@ -218,7 +208,6 @@ test("the Fosi policy retains relevant audio accessories and standard filters", 
   const match = findBestAwinProductMatch({
     suggestion,
     products: [accessory],
-    advertiserRegistry: fosiTestRegistry,
   });
   const unavailable = findBestAwinProductMatch({
     suggestion,
@@ -226,7 +215,6 @@ test("the Fosi policy retains relevant audio accessories and standard filters", 
       { ...accessory, availability: "out_of_stock" },
       { ...accessory, externalProductId: "over-budget", price: 55 },
     ],
-    advertiserRegistry: fosiTestRegistry,
   });
 
   assert.equal(match?.productId, "power-supply");

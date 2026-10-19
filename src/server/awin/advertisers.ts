@@ -36,7 +36,7 @@ export const AWIN_ADVERTISERS = [
     displayName: "Fosi Audio",
     locale: "en_US",
     importEnabled: true,
-    recommendationEnabled: false,
+    recommendationEnabled: true,
     matchingPolicy: "fosi-audio",
     importSafeguards: {
       minimumValidProducts: 300,

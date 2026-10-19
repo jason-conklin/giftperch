@@ -31,14 +31,14 @@ test("Piscifun remains the default enabled Awin advertiser", () => {
   assert.equal(explicitAdvertiser.key, defaultAdvertiser.key);
 });
 
-test("Fosi Audio is import-ready but disabled for runtime recommendations", () => {
+test("Fosi Audio is import-ready and enabled for runtime recommendations", () => {
   const fosi = resolveAwinAdvertiser("fosi-audio");
 
   assert.equal(fosi.advertiserId, "119395");
   assert.equal(fosi.displayName, "Fosi Audio");
   assert.equal(fosi.locale, "en_US");
   assert.equal(fosi.importEnabled, true);
-  assert.equal(fosi.recommendationEnabled, false);
+  assert.equal(fosi.recommendationEnabled, true);
   assert.equal(fosi.matchingPolicy, "fosi-audio");
   assert.equal(fosi.importSafeguards?.minimumValidProducts, 300);
 });
