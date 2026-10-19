@@ -367,6 +367,152 @@ test("administrative products are excluded for every advertiser policy", () => {
   );
 });
 
+test("LOOMY matches specific decor gifts and excludes zero-price swatches", () => {
+  const pillow = advertiserProduct("90515", "LOOMY Home", {
+    title: "Aurora Silk Ikat Lumbar Pillow",
+    description: "A decorative lumbar pillow for a colorful living room.",
+    price: 119,
+  });
+  const swatch = {
+    ...pillow,
+    title: "Aurora Silk Ikat Pillow Swatch",
+    price: 0,
+  };
+  const suggestion = {
+    title: "Decorative lumbar pillow for a living room",
+    short_description: "A housewarming decor gift with a colorful accent.",
+    tier: "thoughtful",
+    price_max: 150,
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [pillow] })?.advertiserId,
+    "90515",
+  );
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [swatch] }),
+    null,
+  );
+});
+
+test("BONHEUR matches jewelry gifts without opening unrelated accessories", () => {
+  const necklace = advertiserProduct("90759", "BONHEUR JEWELRY", {
+    title: "Laurel Gold Anniversary Necklace",
+    description: "A gold plated necklace for an anniversary jewelry gift.",
+    price: 198,
+  });
+  const match = findBestAwinProductMatch({
+    suggestion: {
+      title: "Gold anniversary necklace jewelry gift",
+      short_description: "A special necklace for their anniversary.",
+      tier: "thoughtful",
+      price_max: 250,
+    },
+    products: [necklace],
+  });
+  const unrelated = findBestAwinProductMatch({
+    suggestion: {
+      title: "Leather travel wallet accessory",
+      short_description: "A compact wallet for frequent trips.",
+      tier: "thoughtful",
+    },
+    products: [necklace],
+  });
+
+  assert.equal(match?.advertiserId, "90759");
+  assert.equal(unrelated, null);
+});
+
+test("Fan Ink requires a team-specific title match", () => {
+  const manchesterCityHat = advertiserProduct("103359", "Fan Ink", {
+    title: "Manchester City Classic Snapback Hat",
+    description: "A Manchester City fan hat for match days.",
+    price: 32,
+  });
+  const specificMatch = findBestAwinProductMatch({
+    suggestion: {
+      title: "Manchester City soccer fan snapback hat",
+      short_description: "Team merchandise for a devoted Manchester City supporter.",
+      tier: "thoughtful",
+    },
+    products: [manchesterCityHat],
+  });
+  const genericSports = findBestAwinProductMatch({
+    suggestion: {
+      title: "Sports fan hat",
+      short_description: "A cap for someone who enjoys soccer.",
+      tier: "thoughtful",
+    },
+    products: [manchesterCityHat],
+  });
+  const otherTeam = findBestAwinProductMatch({
+    suggestion: {
+      title: "Inter Miami soccer fan snapback hat",
+      short_description: "Team merchandise for an Inter Miami supporter.",
+      tier: "thoughtful",
+    },
+    products: [manchesterCityHat],
+  });
+  const interestSupported = findBestAwinProductMatch({
+    suggestion: {
+      title: "Soccer fan hat",
+      short_description: "A team hat for match days.",
+      tier: "thoughtful",
+    },
+    recipientInterests: [{ label: "Manchester City", category: "Soccer" }],
+    products: [manchesterCityHat],
+  });
+
+  assert.equal(specificMatch?.advertiserId, "103359");
+  assert.equal(genericSports, null);
+  assert.equal(otherTeam, null);
+  assert.equal(interestSupported?.advertiserId, "103359");
+});
+
+test("Beyond Memories requires a keepsake context and gates memorial products", () => {
+  const photoCrystal = advertiserProduct("87175", "Beyond Memories", {
+    title: "3D Memory Crystal Photo Keepsake",
+    description: "A personalized family photo crystal for anniversaries.",
+    price: 89.99,
+  });
+  const memorialCrystal = {
+    ...photoCrystal,
+    title: "Memorial Photo Crystal Keepsake",
+  };
+  const anniversarySuggestion = {
+    title: "Personalized family photo keepsake for an anniversary",
+    short_description: "A custom commemorative gift with a favorite photo.",
+    tier: "thoughtful",
+  };
+  const memorialSuggestion = {
+    title: "Memorial photo keepsake in remembrance",
+    short_description: "A custom commemorative gift to honor a loved one.",
+    tier: "thoughtful",
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: anniversarySuggestion,
+      products: [photoCrystal],
+    })?.advertiserId,
+    "87175",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: anniversarySuggestion,
+      products: [memorialCrystal],
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: memorialSuggestion,
+      products: [memorialCrystal],
+    })?.advertiserId,
+    "87175",
+  );
+});
+
 test("broad fishing context alone cannot substitute a different product", () => {
   const match = findBestAwinProductMatch({
     suggestion: {

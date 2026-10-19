@@ -7,6 +7,10 @@ export type AwinMatchingPolicy =
   | "imarku-kitchen"
   | "baby-shusher"
   | "mojo-fun"
+  | "loomy-home"
+  | "bonheur-jewelry"
+  | "fan-ink"
+  | "beyond-memories"
   | "standard";
 
 export type AwinAdvertiserConfig = {
@@ -92,6 +96,54 @@ export const AWIN_ADVERTISERS = [
     matchingPolicy: "mojo-fun",
     importSafeguards: {
       minimumValidProducts: 300,
+    },
+  },
+  {
+    key: "loomy-home",
+    advertiserId: "90515",
+    displayName: "LOOMY Home",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "loomy-home",
+    importSafeguards: {
+      minimumValidProducts: 1800,
+    },
+  },
+  {
+    key: "bonheur-jewelry",
+    advertiserId: "90759",
+    displayName: "BONHEUR JEWELRY",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "bonheur-jewelry",
+    importSafeguards: {
+      minimumValidProducts: 220,
+    },
+  },
+  {
+    key: "fan-ink",
+    advertiserId: "103359",
+    displayName: "Fan Ink",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "fan-ink",
+    importSafeguards: {
+      minimumValidProducts: 650,
+    },
+  },
+  {
+    key: "beyond-memories",
+    advertiserId: "87175",
+    displayName: "Beyond Memories",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "beyond-memories",
+    importSafeguards: {
+      minimumValidProducts: 700,
     },
   },
 ] as const satisfies readonly AwinAdvertiserConfig[];

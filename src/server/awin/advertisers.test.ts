@@ -49,6 +49,10 @@ test("the validated batch advertisers are enabled with scoped safeguards", () =>
     ["imarku", "78080", "imarku-kitchen", 180],
     ["baby-shusher", "118079", "baby-shusher", 20],
     ["mojo-fun", "122958", "mojo-fun", 300],
+    ["loomy-home", "90515", "loomy-home", 1800],
+    ["bonheur-jewelry", "90759", "bonheur-jewelry", 220],
+    ["fan-ink", "103359", "fan-ink", 650],
+    ["beyond-memories", "87175", "beyond-memories", 700],
   ] as const;
 
   for (const [key, advertiserId, matchingPolicy, minimumValidProducts] of expected) {

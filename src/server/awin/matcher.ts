@@ -177,18 +177,95 @@ const MOJO_TOY_INTENT_WORDS = new Set([
   "toy",
 ]);
 
+const LOOMY_HOME_INTENT_WORDS = new Set([
+  "bedroom",
+  "cushion",
+  "decor",
+  "housewarming",
+  "interior",
+  "living",
+  "pillow",
+  "rug",
+  "throw",
+]);
+
+const BONHEUR_JEWELRY_INTENT_WORDS = new Set([
+  "anniversary",
+  "bracelet",
+  "earring",
+  "jewelry",
+  "necklace",
+  "ring",
+]);
+
+const FAN_INK_INTENT_WORDS = new Set([
+  "baseball",
+  "basketball",
+  "fan",
+  "football",
+  "hockey",
+  "soccer",
+  "snapback",
+  "sport",
+  "sports",
+  "team",
+]);
+
+const FAN_INK_GENERIC_CONTEXT_WORDS = new Set([
+  "apparel",
+  "baseball",
+  "basketball",
+  "cap",
+  "city",
+  "club",
+  "collectible",
+  "fan",
+  "fans",
+  "football",
+  "hat",
+  "hockey",
+  "jersey",
+  "merchandise",
+  "soccer",
+  "snapback",
+  "sport",
+  "sports",
+  "team",
+  "teams",
+  "united",
+]);
+
+const BEYOND_MEMORIES_INTENT_WORDS = new Set([
+  "anniversary",
+  "commemorate",
+  "custom",
+  "family",
+  "graduation",
+  "keepsake",
+  "memorial",
+  "personalized",
+  "photo",
+  "remembrance",
+  "wedding",
+]);
+
+const MEMORIAL_INTENT_WORDS = new Set(["memorial", "remembrance"]);
+
 const TOKEN_ALIASES: Record<string, string> = {
   amplifiers: "amplifier",
   anglers: "angler",
   baits: "bait",
   blankets: "blanket",
+  bracelets: "bracelet",
   cooking: "cook",
   dinosaurs: "dinosaur",
+  earrings: "earring",
   figurines: "figurine",
   fishes: "fish",
   fishermen: "fisherman",
   lures: "lure",
   knives: "knife",
+  necklaces: "necklace",
   headphones: "headphone",
   headsets: "headset",
   preamplifiers: "preamplifier",
@@ -374,6 +451,23 @@ function isMedicalBabyProduct(title: string): boolean {
   );
 }
 
+function isLoomySwatch(title: string): boolean {
+  return /\bswatch\b/i.test(title);
+}
+
+function isMemorialProduct(title: string): boolean {
+  return /\b(?:memorial|remembrance|in loving memory)\b/i.test(title);
+}
+
+function hasSpecificFanTeamMatch(
+  teamContextTokens: Set<string>,
+  productTitleTokens: Set<string>,
+): boolean {
+  return [...intersection(teamContextTokens, productTitleTokens)].some(
+    (token) => !FAN_INK_GENERIC_CONTEXT_WORDS.has(token),
+  );
+}
+
 function passesAdvertiserPolicy(args: {
   advertiser: AwinAdvertiserConfig;
   product: AwinCatalogProduct;
@@ -383,6 +477,13 @@ function passesAdvertiserPolicy(args: {
   imarkuKitchenIntent: Set<string>;
   babyIntent: Set<string>;
   mojoToyIntent: Set<string>;
+  loomyHomeIntent: Set<string>;
+  bonheurJewelryIntent: Set<string>;
+  fanInkIntent: Set<string>;
+  beyondMemoriesIntent: Set<string>;
+  memorialIntent: Set<string>;
+  teamContextTokens: Set<string>;
+  productTitleTokens: Set<string>;
 }): boolean {
   const { advertiser, product } = args;
   if (isAdministrativeOrGiftCardProduct(product.title)) return false;
@@ -403,6 +504,23 @@ function passesAdvertiserPolicy(args: {
       return args.babyIntent.size > 0 && !isMedicalBabyProduct(product.title);
     case "mojo-fun":
       return args.mojoToyIntent.size > 0;
+    case "loomy-home":
+      return args.loomyHomeIntent.size > 0 && !isLoomySwatch(product.title);
+    case "bonheur-jewelry":
+      return args.bonheurJewelryIntent.size > 0;
+    case "fan-ink":
+      return (
+        args.fanInkIntent.size > 0 &&
+        hasSpecificFanTeamMatch(
+          args.teamContextTokens,
+          args.productTitleTokens,
+        )
+      );
+    case "beyond-memories":
+      return (
+        args.beyondMemoriesIntent.size > 0 &&
+        (!isMemorialProduct(product.title) || args.memorialIntent.size > 0)
+      );
     case "standard":
       return true;
   }
@@ -476,6 +594,23 @@ export function findBestAwinProductMatch(args: {
   );
   const babyIntent = intersection(suggestionIntentTokens, BABY_INTENT_WORDS);
   const mojoToyIntent = intersection(suggestionIntentTokens, MOJO_TOY_INTENT_WORDS);
+  const loomyHomeIntent = intersection(
+    suggestionIntentTokens,
+    LOOMY_HOME_INTENT_WORDS,
+  );
+  const bonheurJewelryIntent = intersection(
+    suggestionIntentTokens,
+    BONHEUR_JEWELRY_INTENT_WORDS,
+  );
+  const fanInkIntent = intersection(suggestionIntentTokens, FAN_INK_INTENT_WORDS);
+  const beyondMemoriesIntent = intersection(
+    suggestionIntentTokens,
+    BEYOND_MEMORIES_INTENT_WORDS,
+  );
+  const memorialIntent = intersection(
+    suggestionIntentTokens,
+    MEMORIAL_INTENT_WORDS,
+  );
   const budget = effectiveBudget(
     suggestion,
     args.budgetMin,
@@ -502,12 +637,15 @@ export function findBestAwinProductMatch(args: {
       !getSafeImageUrl(product.imageUrl) ||
       !isExpectedAwinTrackingUrl(product.affiliateUrl) ||
       product.currency !== "USD" ||
+      product.price <= 0 ||
       (budget.min !== null && product.price < budget.min) ||
       (budget.max !== null && product.price > budget.max)
     ) {
       continue;
     }
 
+    const productTitleTokens = tokens(product.title);
+    const productDescriptionTokens = tokens(product.description);
     if (
       !passesAdvertiserPolicy({
         advertiser,
@@ -518,11 +656,16 @@ export function findBestAwinProductMatch(args: {
         imarkuKitchenIntent,
         babyIntent,
         mojoToyIntent,
+        loomyHomeIntent,
+        bonheurJewelryIntent,
+        fanInkIntent,
+        beyondMemoriesIntent,
+        memorialIntent,
+        teamContextTokens: union(titleTokens, interestTokens),
+        productTitleTokens,
       })
     ) continue;
 
-    const productTitleTokens = tokens(product.title);
-    const productDescriptionTokens = tokens(product.description);
     const titleTitle = intersection(titleTokens, productTitleTokens);
     const titleDescription = intersection(titleTokens, productDescriptionTokens);
     const detailTitle = intersection(detailTokens, productTitleTokens);
