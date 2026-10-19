@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { Database } from "@/lib/database.types";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
+import { resolveGiftProductDestination } from "@/lib/gifts/resolveGiftProductDestination";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import {
@@ -10,8 +11,6 @@ import {
   AFFILIATE_LINK_REL,
   AFFILIATE_SHOPPING_BUTTON_CLASS,
   getMatchedProductPresentation,
-  getSafeExternalUrl,
-  isExpectedAmazonAffiliateUrl,
 } from "@/lib/affiliateProduct";
 
 type SavedGiftIdea =
@@ -516,21 +515,11 @@ export function SavedGiftIdeasModal({
                     imageUrl: gift.image_url,
                     productMatch: gift.product_match,
                   });
-                  const legacyProductUrl = getSafeExternalUrl(gift.product_url);
-                  const shoppingHref =
-                    matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
-                  const shoppingLabel = matchedProduct
-                    ? matchedProduct.shoppingLabel
-                    : legacyProductUrl &&
-                      isExpectedAmazonAffiliateUrl(legacyProductUrl)
-                    ? "View on Amazon"
-                    : "View product";
-                  const isAffiliateShoppingLink =
-                    Boolean(matchedProduct) ||
-                    Boolean(
-                      legacyProductUrl &&
-                        isExpectedAmazonAffiliateUrl(legacyProductUrl),
-                    );
+                  const productDestination = resolveGiftProductDestination({
+                    title: gift.title,
+                    productUrl: gift.product_url,
+                    productMatch: gift.product_match,
+                  });
                   const displayedPrice =
                     matchedProduct?.priceDisplay ??
                     (priceMin !== null || priceMax !== null
@@ -577,22 +566,22 @@ export function SavedGiftIdeasModal({
                         ) : null}
                         <div className="flex flex-wrap items-center gap-3 pt-1 text-xs font-semibold text-gp-evergreen/70">
                           {displayedPrice ? <span>{displayedPrice}</span> : null}
-                          {shoppingHref ? (
+                          {productDestination ? (
                             <a
-                              href={shoppingHref}
+                              href={productDestination.href}
                               target="_blank"
                               rel={
-                                isAffiliateShoppingLink
+                                productDestination.isAffiliate
                                   ? AFFILIATE_LINK_REL
                                   : "noopener noreferrer"
                               }
                               className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} mt-1`}
                             >
-                              {shoppingLabel}
+                              {productDestination.label}
                             </a>
                           ) : null}
                         </div>
-                        {isAffiliateShoppingLink ? (
+                        {productDestination?.isAffiliate ? (
                           <p className="pt-1 text-[11px] text-gp-evergreen/60">
                             {AFFILIATE_DISCLOSURE}
                           </p>

@@ -36,6 +36,7 @@ const gift = (
   estimated_price_min: 25,
   estimated_price_max: 35,
   image_url: "https://images.example.com/mug.jpg",
+  product_url: null,
   product_match: null,
   rationale: "Useful for morning coffee on the commute.",
   tier: "thoughtful",
@@ -49,6 +50,25 @@ test("prepares empty and single-item collections", () => {
   assert.equal(cards.length, 1);
   assert.equal(cards[0]?.recipientName, "Maya Stone");
   assert.equal(cards[0]?.recipientAvatar.kind, "image");
+  assert.match(cards[0]?.destination?.href ?? "", /amazon\.com\/s\?/);
+});
+
+test("replaces placeholder destinations without disturbing recipient data", () => {
+  const cards = prepareRecentGiftCards(
+    [
+      gift({
+        title: "Gardening tool organizer",
+        product_url: "https://example.com/gardening-tool-organizer",
+      }),
+    ],
+    recipients,
+  );
+
+  assert.equal(cards[0]?.recipientName, "Maya Stone");
+  assert.equal(
+    new URL(cards[0]?.destination?.href ?? "").searchParams.get("k"),
+    "Gardening tool organizer",
+  );
 });
 
 test("keeps recipient and gift associations scoped by recipient id", () => {

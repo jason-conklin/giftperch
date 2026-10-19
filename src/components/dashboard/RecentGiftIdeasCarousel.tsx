@@ -9,7 +9,6 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import {
@@ -96,14 +95,26 @@ function GiftCard({ gift }: { gift: RecentGiftCardModel }) {
             {gift.recipientName ? `For ${gift.recipientName}` : "Recipient unavailable"}
           </span>
         </div>
-        <Link
-          href="/history"
-          draggable={false}
-          className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-gp-app-evergreen px-3 py-2 text-xs font-semibold text-white transition hover:bg-gp-app-evergreen-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
-        >
-          View saved idea
-          <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
-        </Link>
+        {gift.destination ? (
+          <a
+            href={gift.destination.href}
+            target="_blank"
+            rel={
+              gift.destination.isAffiliate
+                ? "sponsored noopener noreferrer"
+                : "noopener noreferrer"
+            }
+            draggable={false}
+            className="mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-gp-app-evergreen px-3 py-2 text-xs font-semibold text-white transition hover:bg-gp-app-evergreen-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+          >
+            {gift.destination.label}
+            <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
+          </a>
+        ) : (
+          <span className="mt-3 flex items-center justify-center rounded-lg bg-gp-app-evergreen/45 px-3 py-2 text-xs font-semibold text-white">
+            Product unavailable
+          </span>
+        )}
       </div>
     </article>
   );

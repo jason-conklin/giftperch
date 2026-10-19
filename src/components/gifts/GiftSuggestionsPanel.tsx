@@ -6,11 +6,11 @@ import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
+import { resolveGiftProductDestination } from "@/lib/gifts/resolveGiftProductDestination";
 import {
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
@@ -427,12 +427,14 @@ function GiftSuggestionCard({
   const priceDisplay =
     matchedProduct?.priceDisplay || basePriceDisplay || "Not specified";
 
-  const amazonHref = buildAmazonAffiliateUrl({
-    productUrl: amazon?.detailPageUrl ?? undefined,
+  const productDestination = resolveGiftProductDestination({
     title: suggestion.title,
+    productUrl: suggestion.suggested_url,
+    productMatch: suggestion.productMatch,
+    amazonProduct: amazon,
   });
-  const shoppingHref = matchedProduct?.match.affiliateUrl ?? amazonHref;
-  const shoppingLabel = matchedProduct?.shoppingLabel ?? "View on Amazon";
+  const shoppingHref = productDestination?.href ?? "";
+  const shoppingLabel = productDestination?.label ?? "Product unavailable";
 
   return (
     <article className="group flex min-w-0 self-start flex-col overflow-hidden rounded-2xl border border-gp-evergreen/10 bg-white shadow-[0_12px_32px_rgba(15,61,62,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-gp-gold/45 hover:shadow-[0_18px_38px_rgba(15,61,62,0.11)]">

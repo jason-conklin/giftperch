@@ -24,8 +24,6 @@ import {
 import {
   AFFILIATE_LINK_REL,
   getMatchedProductPresentation,
-  getSafeExternalUrl,
-  isExpectedAmazonAffiliateUrl,
 } from "@/lib/affiliateProduct";
 import {
   formatGiftHistoryPrice,
@@ -37,6 +35,7 @@ import {
   type SavedIdeaSort,
 } from "@/lib/giftHistoryPresentation";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
+import { resolveGiftProductDestination } from "@/lib/gifts/resolveGiftProductDestination";
 
 export type GiftHistoryEntry = {
   id: string;
@@ -486,11 +485,11 @@ function SavedIdeaItem({
   const recipient = recipientMap[idea.recipient_id];
   const recipientAvatar = resolveHistoryRecipientAvatar(recipient);
   const matchedProduct = getMatchedProductPresentation(idea.product_match);
-  const legacyProductUrl = getSafeExternalUrl(idea.url);
-  const shoppingHref = matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
-  const isAffiliateLink =
-    Boolean(matchedProduct) ||
-    Boolean(legacyProductUrl && isExpectedAmazonAffiliateUrl(legacyProductUrl));
+  const productDestination = resolveGiftProductDestination({
+    title: idea.title,
+    productUrl: idea.url,
+    productMatch: idea.product_match,
+  });
   const previewSource = resolveGiftPreviewSource({
     metadata: {
       title: idea.title,
@@ -600,14 +599,18 @@ function SavedIdeaItem({
       </div>
 
       <div className="flex items-center gap-2 sm:col-start-2 xl:col-auto xl:px-3">
-        {shoppingHref ? (
+        {productDestination ? (
           <a
-            href={shoppingHref}
+            href={productDestination.href}
             target="_blank"
-            rel={isAffiliateLink ? AFFILIATE_LINK_REL : "noopener noreferrer"}
+            rel={
+              productDestination.isAffiliate
+                ? AFFILIATE_LINK_REL
+                : "noopener noreferrer"
+            }
             className="gp-btn gp-btn--primary gp-btn--sm whitespace-nowrap"
           >
-            View product
+            {productDestination.label}
             <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
           </a>
         ) : (

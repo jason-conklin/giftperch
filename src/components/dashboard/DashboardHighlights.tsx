@@ -237,7 +237,7 @@ export function DashboardHighlights() {
             supabase
               .from("recipient_saved_gift_ideas")
               .select(
-                "id, recipient_id, title, estimated_price_min, estimated_price_max, image_url, product_match, rationale, tier, created_at",
+                "id, recipient_id, title, estimated_price_min, estimated_price_max, product_url, image_url, product_match, rationale, tier, created_at",
               )
               .eq("user_id", user.id)
               .order("created_at", { ascending: false })

@@ -10,6 +10,10 @@ import {
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
 } from "@/lib/savedGiftIdentity";
+import {
+  resolveGiftProductDestination,
+  type GiftProductDestination,
+} from "@/lib/gifts/resolveGiftProductDestination";
 
 export const RECENT_GIFT_LIMIT = 16;
 
@@ -38,6 +42,7 @@ export type RecentSavedGift = {
   estimated_price_min: number | null;
   estimated_price_max: number | null;
   image_url: string | null;
+  product_url: string | null;
   product_match: unknown;
   rationale: string | null;
   tier: string | null;
@@ -50,6 +55,7 @@ export type RecentGiftCardModel = {
   imageSource: GiftPreviewSource;
   price: string;
   merchant: string | null;
+  destination: GiftProductDestination | null;
   recipientName: string | null;
   recipientAvatar:
     | { kind: "image"; src: string; fallbackInitials: string }
@@ -124,6 +130,11 @@ export function prepareRecentGiftCards(
       }),
       price: product?.priceDisplay ?? formatEstimatedPrice(gift),
       merchant: product?.match.merchant ?? null,
+      destination: resolveGiftProductDestination({
+        title: gift.title,
+        productUrl: gift.product_url,
+        productMatch: gift.product_match,
+      }),
       recipientName: recipient?.name ?? null,
       recipientAvatar: getRecipientAvatar(recipient),
     });
