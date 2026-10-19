@@ -3,12 +3,15 @@ import {
   getSafeImageUrl,
 } from "@/lib/affiliateProduct";
 import {
+  resolveGiftPreviewSource,
+  type GiftPreviewSource,
+} from "@/lib/gifts/getGiftPreviewIcon";
+import {
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
 } from "@/lib/savedGiftIdentity";
 
 export const RECENT_GIFT_LIMIT = 16;
-export const RECENT_GIFT_IMAGE_FALLBACK = "/gift-thumbnails/default-gift.svg";
 
 const RECIPIENT_AVATARS: Record<string, string> = {
   babyboy: "/babyboy_icon.png",
@@ -36,13 +39,15 @@ export type RecentSavedGift = {
   estimated_price_max: number | null;
   image_url: string | null;
   product_match: unknown;
+  rationale: string | null;
+  tier: string | null;
   created_at: string;
 };
 
 export type RecentGiftCardModel = {
   id: string;
   title: string;
-  imageUrl: string;
+  imageSource: GiftPreviewSource;
   price: string;
   merchant: string | null;
   recipientName: string | null;
@@ -108,10 +113,15 @@ export function prepareRecentGiftCards(
     cards.push({
       id: gift.id,
       title: gift.title,
-      imageUrl:
-        product?.match.imageUrl ??
-        getSafeImageUrl(gift.image_url) ??
-        RECENT_GIFT_IMAGE_FALLBACK,
+      imageSource: resolveGiftPreviewSource({
+        metadata: {
+          title: gift.title,
+          rationale: gift.rationale,
+          tier: gift.tier,
+        },
+        imageUrl: gift.image_url,
+        productMatch: gift.product_match,
+      }),
       price: product?.priceDisplay ?? formatEstimatedPrice(gift),
       merchant: product?.match.merchant ?? null,
       recipientName: recipient?.name ?? null,

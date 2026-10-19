@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type { Database } from "@/lib/database.types";
-import type { GiftSuggestion } from "@/components/gifts/GiftSuggestionsPanel";
-import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
+import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
+import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import {
@@ -11,9 +11,7 @@ import {
   AFFILIATE_SHOPPING_BUTTON_CLASS,
   getMatchedProductPresentation,
   getSafeExternalUrl,
-  getSafeImageUrl,
   isExpectedAmazonAffiliateUrl,
-  normalizeProductMatch,
 } from "@/lib/affiliateProduct";
 
 type SavedGiftIdea =
@@ -92,29 +90,6 @@ export function SavedGiftIdeasModal({
       recipientOptions.find((item) => item.id === selectedRecipientId) ?? null
     );
   }, [fallbackRecipientOption, recipientOptions, selectedRecipientId]);
-
-  const mapToSuggestionShape = (gift: SavedGiftIdea): GiftSuggestion => ({
-    id: gift.id,
-    title: gift.title,
-    short_description: "",
-    tier:
-      (gift as { tier?: string | null }).tier === "experience"
-        ? "experience"
-        : (gift as { tier?: string | null }).tier === "splurge"
-        ? "splurge"
-        : (gift as { tier?: string | null }).tier === "safe"
-        ? "safe"
-        : "thoughtful",
-    price_min: gift.estimated_price_min,
-    price_max: gift.estimated_price_max,
-    price_hint: null,
-    price_guidance: null,
-    why_it_fits: gift.rationale ?? "",
-    suggested_url: gift.product_url,
-    image_url: gift.image_url,
-    productMatch: normalizeProductMatch(gift.product_match),
-    initialSaved: true,
-  });
 
   const headers = useMemo(() => {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -529,14 +504,18 @@ export function SavedGiftIdeasModal({
                 {gifts.map((gift) => {
                   const priceMin = gift.estimated_price_min;
                   const priceMax = gift.estimated_price_max;
-                  const suggestionShape = mapToSuggestionShape(gift);
-                  const previewIcon = getGiftPreviewIcon(suggestionShape);
                   const matchedProduct = getMatchedProductPresentation(
                     gift.product_match,
                   );
-                  const savedImage =
-                    matchedProduct?.match.imageUrl ??
-                    getSafeImageUrl(gift.image_url);
+                  const previewSource = resolveGiftPreviewSource({
+                    metadata: {
+                      title: gift.title,
+                      rationale: gift.rationale,
+                      tier: gift.tier,
+                    },
+                    imageUrl: gift.image_url,
+                    productMatch: gift.product_match,
+                  });
                   const legacyProductUrl = getSafeExternalUrl(gift.product_url);
                   const shoppingHref =
                     matchedProduct?.match.affiliateUrl ?? legacyProductUrl;
@@ -563,17 +542,12 @@ export function SavedGiftIdeasModal({
                       className="flex flex-col gap-3 rounded-2xl border border-gp-evergreen/10 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-start"
                     >
                       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-gp-evergreen/10 bg-gp-cream">
-                        <Image
-                          src={savedImage ?? previewIcon}
-                          alt={
-                            savedImage
-                              ? matchedProduct?.match.productTitle ?? gift.title
-                              : gift.title
-                          }
-                          fill
+                        <GiftPreviewImage
+                          key={previewSource.primary}
+                          source={previewSource}
+                          alt={gift.title}
                           sizes="80px"
-                          className={savedImage ? "object-contain" : "object-cover"}
-                          unoptimized
+                          className="object-contain p-1"
                         />
                       </div>
 

@@ -1,7 +1,28 @@
-import type { GiftSuggestion } from "@/components/gifts/GiftSuggestionsPanel";
+import {
+  getSafeImageUrl,
+  resolveProductMatch,
+} from "@/lib/affiliateProduct";
 
 const ICON_BASE = "/icons/previews";
 const FALLBACK = `${ICON_BASE}/preview-gift-box.png`;
+
+export type GiftPreviewMetadata = {
+  title?: string | null;
+  subtitle?: string | null;
+  why_it_fits?: string | null;
+  rationale?: string | null;
+  short_description?: string | null;
+  price_hint?: string | null;
+  price_guidance?: string | null;
+  tier?: string | null;
+  tags?: string[] | null;
+};
+
+export type GiftPreviewSource = {
+  primary: string;
+  fallback: string;
+  isProductImage: boolean;
+};
 
 const hasKeyword = (text: string, keyword: string): boolean => {
   const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -13,17 +34,16 @@ const hasKeyword = (text: string, keyword: string): boolean => {
 const hasAny = (text: string, keywords: string[]): boolean =>
   keywords.some((kw) => hasKeyword(text, kw));
 
-export function getGiftPreviewIcon(suggestion: GiftSuggestion): string {
+export function getGiftPreviewIcon(suggestion: GiftPreviewMetadata): string {
   const textParts = [
     suggestion.title,
-    (suggestion as { subtitle?: string }).subtitle,
+    suggestion.subtitle,
     suggestion.why_it_fits,
-    (suggestion as { short_description?: string }).short_description,
-    (suggestion as { price_hint?: string }).price_hint,
-    (suggestion as { price_guidance?: string }).price_guidance,
-    Array.isArray((suggestion as { tags?: string[] }).tags)
-      ? (suggestion as { tags?: string[] }).tags?.join(" ")
-      : "",
+    suggestion.rationale,
+    suggestion.short_description,
+    suggestion.price_hint,
+    suggestion.price_guidance,
+    Array.isArray(suggestion.tags) ? suggestion.tags.join(" ") : "",
   ];
 
   const text = textParts
@@ -259,4 +279,26 @@ export function getGiftPreviewIcon(suggestion: GiftSuggestion): string {
 
   // Fallback
   return FALLBACK;
+}
+
+export function resolveGiftPreviewSource({
+  metadata,
+  imageUrl,
+  productMatch,
+  amazonProduct,
+}: {
+  metadata: GiftPreviewMetadata;
+  imageUrl?: unknown;
+  productMatch?: unknown;
+  amazonProduct?: unknown;
+}): GiftPreviewSource {
+  const fallback = getGiftPreviewIcon(metadata);
+  const productImage = resolveProductMatch(productMatch, amazonProduct)?.imageUrl;
+  const persistedImage = getSafeImageUrl(imageUrl);
+  const primary = productImage ?? persistedImage ?? fallback;
+  return {
+    primary,
+    fallback,
+    isProductImage: primary !== fallback,
+  };
 }

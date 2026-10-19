@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
+import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
@@ -24,7 +25,6 @@ import {
   AFFILIATE_LINK_REL,
   getMatchedProductPresentation,
   getSafeExternalUrl,
-  getSafeImageUrl,
   isExpectedAmazonAffiliateUrl,
 } from "@/lib/affiliateProduct";
 import {
@@ -38,6 +38,7 @@ import {
   type GiftHistorySort,
   type SavedIdeaSort,
 } from "@/lib/giftHistoryPresentation";
+import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
 
 export type GiftHistoryEntry = {
   id: string;
@@ -82,6 +83,7 @@ type SavedIdeaAggregated = {
   estimated_price_max: number | null;
   product_match: unknown;
   tier: string | null;
+  rationale: string | null;
   created_at: string;
   suggestion_id?: string | null;
 };
@@ -469,7 +471,6 @@ function SavedIdeaItem({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAbove, setMenuAbove] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -489,10 +490,15 @@ function SavedIdeaItem({
   const isAffiliateLink =
     Boolean(matchedProduct) ||
     Boolean(legacyProductUrl && isExpectedAmazonAffiliateUrl(legacyProductUrl));
-  const savedImage =
-    matchedProduct?.match.imageUrl ?? getSafeImageUrl(idea.image_url);
-  const imageSrc =
-    imageFailed || !savedImage ? GIFT_HISTORY_IMAGE_FALLBACK : savedImage;
+  const previewSource = resolveGiftPreviewSource({
+    metadata: {
+      title: idea.title,
+      rationale: idea.rationale,
+      tier: idea.tier,
+    },
+    imageUrl: idea.image_url,
+    productMatch: idea.product_match,
+  });
   const displayedPrice = formatSavedIdeaPrice(idea);
 
   useEffect(() => {
@@ -526,18 +532,12 @@ function SavedIdeaItem({
   return (
     <article className="relative grid min-w-0 gap-3 rounded-2xl border border-gp-app-evergreen/10 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.045)] transition hover:border-gp-app-evergreen/16 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-center xl:grid-cols-[8.75rem_minmax(12rem,1.25fr)_minmax(7.5rem,0.45fr)_minmax(8rem,0.45fr)_minmax(7rem,auto)_minmax(8rem,auto)_auto] xl:gap-0 xl:px-4 xl:py-2.5">
       <div className="relative aspect-[5/3] overflow-hidden rounded-xl bg-gp-app-surface-warm sm:aspect-[7/5] xl:h-[5.25rem] xl:w-[8.75rem]">
-        <Image
-          src={imageSrc}
-          alt={
-            imageSrc === GIFT_HISTORY_IMAGE_FALLBACK
-              ? "Gift placeholder"
-              : idea.title
-          }
-          fill
+        <GiftPreviewImage
+          key={previewSource.primary}
+          source={previewSource}
+          alt={idea.title}
           sizes="(min-width: 1024px) 140px, (min-width: 640px) 120px, 90vw"
           className="object-contain p-1"
-          unoptimized={imageSrc.startsWith("https://")}
-          onError={() => setImageFailed(true)}
         />
       </div>
 
@@ -975,6 +975,7 @@ export function GiftHistoryTable() {
               estimated_price_max: number | null;
               product_match: unknown;
               tier: string | null;
+              rationale: string | null;
               created_at: string;
               suggestion_id?: string | null;
             }[];
@@ -993,6 +994,7 @@ export function GiftHistoryTable() {
             estimated_price_max: item.estimated_price_max,
             product_match: item.product_match,
             tier: item.tier,
+            rationale: item.rationale,
             created_at: item.created_at,
             suggestion_id: item.suggestion_id ?? null,
           });

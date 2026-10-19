@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function DashboardHome() {
   const heroBanner = (
-    <section className="relative isolate min-h-[22rem] overflow-hidden rounded-[18px] border border-gp-app-evergreen/10 bg-[#f7eed8] shadow-[0_18px_45px_rgba(15,61,62,0.08)] sm:min-h-[21rem] lg:min-h-[18rem]">
+    <section className="relative isolate min-h-[22rem] overflow-hidden rounded-[18px] border border-gp-app-evergreen/10 bg-[#f7eed8] shadow-[0_18px_45px_rgba(15,61,62,0.08)] sm:min-h-[21rem] lg:min-h-[15.75rem]">
       <Image
         src="/dashboard-scenic-hero.png"
         alt="Mountain lake surrounded by evergreen trees at sunset"
@@ -24,14 +24,14 @@ export default function DashboardHome() {
       />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,251,240,0.98)_0%,rgba(255,251,240,0.91)_35%,rgba(255,251,240,0.35)_66%,rgba(255,251,240,0.04)_100%)] max-sm:bg-[linear-gradient(90deg,rgba(255,251,240,0.97)_0%,rgba(255,251,240,0.85)_62%,rgba(255,251,240,0.48)_100%)]" />
 
-      <div className="relative z-10 flex min-h-[22rem] max-w-3xl flex-col justify-end px-6 pb-7 pt-28 sm:min-h-[21rem] sm:justify-center sm:px-8 sm:py-10 lg:min-h-[18rem] lg:max-w-[64%] lg:px-10">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#8b6218]">
+      <div className="relative z-10 flex min-h-[22rem] max-w-3xl flex-col justify-end px-6 pb-7 pt-28 sm:min-h-[21rem] sm:justify-center sm:px-8 sm:py-10 lg:min-h-[15.75rem] lg:max-w-[64%] lg:px-10 lg:py-8">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#8b6218]">
           Welcome back
         </p>
-        <h1 className="font-display text-4xl font-semibold leading-[1.05] text-gp-app-evergreen sm:text-5xl">
+        <h1 className="font-display text-4xl font-semibold leading-[1.05] text-gp-app-evergreen sm:text-[2.75rem]">
           Your gifting command center
         </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-gp-app-evergreen/75 sm:text-base">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gp-app-evergreen/75 sm:text-[0.9375rem]">
           Track your recipients, upcoming occasions, saved gifts, and get
           personalized recommendations from PerchPal, all in one place.
         </p>

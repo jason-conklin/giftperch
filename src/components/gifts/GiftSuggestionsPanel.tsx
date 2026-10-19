@@ -9,7 +9,8 @@ import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
-import { getGiftPreviewIcon } from "@/lib/gifts/getGiftPreviewIcon";
+import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
+import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
 import {
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
@@ -405,13 +406,17 @@ function GiftSuggestionCard({
   onOpenSaved,
   onDismissSave,
 }: SuggestionCardProps) {
-  const previewIcon = getGiftPreviewIcon(suggestion);
   const amazon = suggestion.amazonProduct;
   const matchedProduct = getMatchedProductPresentation(
     suggestion.productMatch,
     amazon,
   );
-  const matchedImage = matchedProduct?.match.imageUrl ?? null;
+  const previewSource = resolveGiftPreviewSource({
+    metadata: suggestion,
+    imageUrl: suggestion.image_url,
+    productMatch: suggestion.productMatch,
+    amazonProduct: amazon,
+  });
 
   const basePriceDisplay = buildPriceDisplay(
     suggestion.price_min,
@@ -439,16 +444,16 @@ function GiftSuggestionCard({
           aria-label={`${shoppingLabel}: ${matchedProduct?.match.productTitle || suggestion.title} (opens in a new tab)`}
           className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-gp-gold/80"
         >
-          <Image
-            src={matchedImage ?? previewIcon}
+          <GiftPreviewImage
+            key={previewSource.primary}
+            source={previewSource}
             alt={
-              matchedImage
+              previewSource.isProductImage
                 ? matchedProduct?.match.productTitle || suggestion.title
                 : suggestion.title
                 ? `${suggestion.title} preview icon`
                 : "Gift preview icon"
             }
-            fill
             sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 25vw"
             className="object-contain p-3 transition duration-300 group-hover:scale-[1.025]"
           />

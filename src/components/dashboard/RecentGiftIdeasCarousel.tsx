@@ -11,8 +11,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import {
-  RECENT_GIFT_IMAGE_FALLBACK,
   type RecentGiftCardModel,
 } from "@/lib/dashboardRecentGifts";
 import {
@@ -32,19 +32,15 @@ type DragState = {
   startScrollLeft: number;
 };
 
-function ProductImage({ title, src }: { title: string; src: string }) {
-  const [imageSrc, setImageSrc] = useState(src);
-
+function ProductImage({ gift }: { gift: RecentGiftCardModel }) {
   return (
-    <Image
-      src={imageSrc}
-      alt={imageSrc === RECENT_GIFT_IMAGE_FALLBACK ? "Gift idea placeholder" : title}
-      fill
+    <GiftPreviewImage
+      key={gift.imageSource.primary}
+      source={gift.imageSource}
+      alt={gift.title}
       sizes="(min-width: 1536px) 18vw, (min-width: 768px) 28vw, 82vw"
       className="object-contain p-2"
-      unoptimized={imageSrc.startsWith("https://")}
       draggable={false}
-      onError={() => setImageSrc(RECENT_GIFT_IMAGE_FALLBACK)}
     />
   );
 }
@@ -78,7 +74,7 @@ function GiftCard({ gift }: { gift: RecentGiftCardModel }) {
   return (
     <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-gp-app-evergreen/10 bg-white shadow-[0_7px_20px_rgba(15,61,62,0.045)]">
       <div className="relative aspect-[4/3] overflow-hidden bg-[#f7f4eb]">
-        <ProductImage title={gift.title} src={gift.imageUrl} />
+        <ProductImage gift={gift} />
       </div>
       <div className="flex flex-1 flex-col p-3.5">
         <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-gp-app-evergreen">

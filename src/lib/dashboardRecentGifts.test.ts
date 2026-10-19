@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  RECENT_GIFT_IMAGE_FALLBACK,
   prepareRecentGiftCards,
   type RecentGiftRecipient,
   type RecentSavedGift,
@@ -38,6 +37,8 @@ const gift = (
   estimated_price_max: 35,
   image_url: "https://images.example.com/mug.jpg",
   product_match: null,
+  rationale: "Useful for morning coffee on the commute.",
+  tier: "thoughtful",
   created_at: "2026-10-18T12:00:00Z",
   ...overrides,
 });
@@ -99,7 +100,8 @@ test("uses local image and avatar fallbacks without fabricating recipients", () 
     recipients,
   );
 
-  assert.equal(cards[0]?.imageUrl, RECENT_GIFT_IMAGE_FALLBACK);
+  assert.equal(cards[0]?.imageSource.primary, "/icons/previews/preview-mug.png");
+  assert.equal(cards[0]?.imageSource.fallback, "/icons/previews/preview-mug.png");
   assert.equal(cards[0]?.price, "Saved idea");
   assert.equal(cards[0]?.recipientName, null);
 });
