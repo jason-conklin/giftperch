@@ -513,6 +513,113 @@ test("Beyond Memories requires a keepsake context and gates memorial products", 
   );
 });
 
+test("Magicshine matches cycling equipment but rejects generic lighting", () => {
+  const bikeLight = advertiserProduct("107838", "Magicshine", {
+    title: "Magicshine SEEMEE 200 Bike Taillight",
+    description: "A compact cycling taillight for road and mountain bikes.",
+    price: 39.99,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Bike taillight for a road cyclist",
+        short_description: "A visibility upgrade for evening cycling rides.",
+        tier: "thoughtful",
+      },
+      products: [bikeLight],
+    })?.advertiserId,
+    "107838",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Desk lamp for a home office",
+        short_description: "A useful light for reading at home.",
+        tier: "thoughtful",
+      },
+      products: [bikeLight],
+    }),
+    null,
+  );
+});
+
+test("Hula Daddy matches coffee gifts and retains availability and budget guards", () => {
+  const coffee = advertiserProduct("122368", "Hula Daddy Kona Coffee", {
+    title: "Hula Daddy Kona Coffee Cold Brew Whole Bean",
+    description: "Kona coffee beans for cold brew and coffee enthusiasts.",
+    price: 29.95,
+  });
+  const suggestion = {
+    title: "Kona coffee gift for an espresso enthusiast",
+    short_description: "Specialty coffee beans for a favorite morning brew.",
+    tier: "thoughtful",
+    price_max: 35,
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [coffee] })?.advertiserId,
+    "122368",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion,
+      products: [{ ...coffee, availability: "out_of_stock" }],
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Chef knife for meal prep",
+        short_description: "A practical kitchen gift.",
+        tier: "thoughtful",
+      },
+      products: [coffee],
+    }),
+    null,
+  );
+});
+
+test("Coziwow matches specific pet furniture while excluding unsuitable pet equipment", () => {
+  const catTree = advertiserProduct("121696", "Coziwow", {
+    title: "Coziwow Multi-Level Cat Tree with Condo",
+    description: "A cat tree and condo for a kitten's indoor play space.",
+    price: 109.99,
+  });
+  const petTreadmill = {
+    ...catTree,
+    externalProductId: "cat-treadmill",
+    title: "Coziwow Cat Running Treadmill",
+  };
+  const suggestion = {
+    title: "Cat tree condo for a kitten",
+    short_description: "Pet furniture for an indoor cat's play space.",
+    tier: "thoughtful",
+    price_max: 150,
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [catTree] })?.advertiserId,
+    "121696",
+  );
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [petTreadmill] }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Living room storage cabinet",
+        short_description: "A furniture gift for a new apartment.",
+        tier: "thoughtful",
+      },
+      products: [catTree],
+    }),
+    null,
+  );
+});
+
 test("broad fishing context alone cannot substitute a different product", () => {
   const match = findBestAwinProductMatch({
     suggestion: {

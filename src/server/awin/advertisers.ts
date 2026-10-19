@@ -11,6 +11,9 @@ export type AwinMatchingPolicy =
   | "bonheur-jewelry"
   | "fan-ink"
   | "beyond-memories"
+  | "magicshine-cycling"
+  | "hula-daddy-coffee"
+  | "coziwow-pets"
   | "standard";
 
 export type AwinAdvertiserConfig = {
@@ -144,6 +147,42 @@ export const AWIN_ADVERTISERS = [
     matchingPolicy: "beyond-memories",
     importSafeguards: {
       minimumValidProducts: 700,
+    },
+  },
+  {
+    key: "magicshine",
+    advertiserId: "107838",
+    displayName: "Magicshine",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "magicshine-cycling",
+    importSafeguards: {
+      minimumValidProducts: 220,
+    },
+  },
+  {
+    key: "hula-daddy-kona-coffee",
+    advertiserId: "122368",
+    displayName: "Hula Daddy Kona Coffee",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "hula-daddy-coffee",
+    importSafeguards: {
+      minimumValidProducts: 30,
+    },
+  },
+  {
+    key: "coziwow",
+    advertiserId: "121696",
+    displayName: "Coziwow",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "coziwow-pets",
+    importSafeguards: {
+      minimumValidProducts: 190,
     },
   },
 ] as const satisfies readonly AwinAdvertiserConfig[];

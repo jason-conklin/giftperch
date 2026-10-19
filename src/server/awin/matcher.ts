@@ -251,6 +251,43 @@ const BEYOND_MEMORIES_INTENT_WORDS = new Set([
 
 const MEMORIAL_INTENT_WORDS = new Set(["memorial", "remembrance"]);
 
+const MAGICSHINE_CYCLING_INTENT_WORDS = new Set([
+  "bicycle",
+  "bike",
+  "cycling",
+  "cyclist",
+  "ebike",
+  "headlight",
+  "helmet",
+  "mountain",
+  "mtb",
+  "road",
+  "taillight",
+  "visibility",
+]);
+
+const HULA_DADDY_COFFEE_INTENT_WORDS = new Set([
+  "brew",
+  "coffee",
+  "espresso",
+  "kona",
+  "pour",
+  "roast",
+]);
+
+const COZIWOW_PET_INTENT_WORDS = new Set([
+  "bird",
+  "bunny",
+  "cat",
+  "dog",
+  "guinea",
+  "hamster",
+  "kitten",
+  "pet",
+  "puppy",
+  "rabbit",
+]);
+
 const TOKEN_ALIASES: Record<string, string> = {
   amplifiers: "amplifier",
   anglers: "angler",
@@ -273,6 +310,11 @@ const TOKEN_ALIASES: Record<string, string> = {
   reels: "reel",
   rods: "rod",
   speakers: "speaker",
+  bicycles: "bicycle",
+  bikes: "bike",
+  cats: "cat",
+  dogs: "dog",
+  rabbits: "rabbit",
   subwoofers: "subwoofer",
   turntables: "turntable",
   waders: "wader",
@@ -459,6 +501,12 @@ function isMemorialProduct(title: string): boolean {
   return /\b(?:memorial|remembrance|in loving memory)\b/i.test(title);
 }
 
+function isUnsuitableCoziwowProduct(title: string): boolean {
+  return /\b(?:air purifier|dryer box|food maker|heated|heating pad|medical|nebulization|treadmill)\b/i.test(
+    title,
+  );
+}
+
 function hasSpecificFanTeamMatch(
   teamContextTokens: Set<string>,
   productTitleTokens: Set<string>,
@@ -481,6 +529,9 @@ function passesAdvertiserPolicy(args: {
   bonheurJewelryIntent: Set<string>;
   fanInkIntent: Set<string>;
   beyondMemoriesIntent: Set<string>;
+  magicshineCyclingIntent: Set<string>;
+  hulaDaddyCoffeeIntent: Set<string>;
+  coziwowPetIntent: Set<string>;
   memorialIntent: Set<string>;
   teamContextTokens: Set<string>;
   productTitleTokens: Set<string>;
@@ -520,6 +571,15 @@ function passesAdvertiserPolicy(args: {
       return (
         args.beyondMemoriesIntent.size > 0 &&
         (!isMemorialProduct(product.title) || args.memorialIntent.size > 0)
+      );
+    case "magicshine-cycling":
+      return args.magicshineCyclingIntent.size > 0;
+    case "hula-daddy-coffee":
+      return args.hulaDaddyCoffeeIntent.size > 0;
+    case "coziwow-pets":
+      return (
+        args.coziwowPetIntent.size > 0 &&
+        !isUnsuitableCoziwowProduct(product.title)
       );
     case "standard":
       return true;
@@ -611,6 +671,18 @@ export function findBestAwinProductMatch(args: {
     suggestionIntentTokens,
     MEMORIAL_INTENT_WORDS,
   );
+  const magicshineCyclingIntent = intersection(
+    suggestionIntentTokens,
+    MAGICSHINE_CYCLING_INTENT_WORDS,
+  );
+  const hulaDaddyCoffeeIntent = intersection(
+    suggestionIntentTokens,
+    HULA_DADDY_COFFEE_INTENT_WORDS,
+  );
+  const coziwowPetIntent = intersection(
+    suggestionIntentTokens,
+    COZIWOW_PET_INTENT_WORDS,
+  );
   const budget = effectiveBudget(
     suggestion,
     args.budgetMin,
@@ -660,6 +732,9 @@ export function findBestAwinProductMatch(args: {
         bonheurJewelryIntent,
         fanInkIntent,
         beyondMemoriesIntent,
+        magicshineCyclingIntent,
+        hulaDaddyCoffeeIntent,
+        coziwowPetIntent,
         memorialIntent,
         teamContextTokens: union(titleTokens, interestTokens),
         productTitleTokens,
