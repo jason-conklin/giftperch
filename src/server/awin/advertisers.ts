@@ -3,6 +3,10 @@ import { AWIN_PROVIDER, type AwinImportContext } from "./types";
 export type AwinMatchingPolicy =
   | "piscifun-fishing"
   | "fosi-audio"
+  | "mosaic-comfort"
+  | "imarku-kitchen"
+  | "baby-shusher"
+  | "mojo-fun"
   | "standard";
 
 export type AwinAdvertiserConfig = {
@@ -38,6 +42,54 @@ export const AWIN_ADVERTISERS = [
     importEnabled: true,
     recommendationEnabled: true,
     matchingPolicy: "fosi-audio",
+    importSafeguards: {
+      minimumValidProducts: 300,
+    },
+  },
+  {
+    key: "mosaic-weighted-blankets",
+    advertiserId: "87403",
+    displayName: "Mosaic Weighted Blankets",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "mosaic-comfort",
+    importSafeguards: {
+      minimumValidProducts: 600,
+    },
+  },
+  {
+    key: "imarku",
+    advertiserId: "78080",
+    displayName: "Imarku",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "imarku-kitchen",
+    importSafeguards: {
+      minimumValidProducts: 180,
+    },
+  },
+  {
+    key: "baby-shusher",
+    advertiserId: "118079",
+    displayName: "Baby Shusher",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "baby-shusher",
+    importSafeguards: {
+      minimumValidProducts: 20,
+    },
+  },
+  {
+    key: "mojo-fun",
+    advertiserId: "122958",
+    displayName: "Mojo Fun",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "mojo-fun",
     importSafeguards: {
       minimumValidProducts: 300,
     },

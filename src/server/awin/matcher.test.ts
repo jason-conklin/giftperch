@@ -54,6 +54,24 @@ function fosiProduct(
   });
 }
 
+function advertiserProduct(
+  advertiserId: string,
+  merchantName: string,
+  overrides: Partial<AwinCatalogProduct> = {},
+): AwinCatalogProduct {
+  return product({
+    advertiserId,
+    merchantName,
+    externalProductId: `${advertiserId}-product-1`,
+    title: `${merchantName} Sample Product`,
+    description: `A ${merchantName} product.`,
+    imageUrl: `https://images.example.test/${advertiserId}.jpg`,
+    affiliateUrl: `https://www.awin1.com/cread.php?awinmid=${advertiserId}&product=${advertiserId}-product-1`,
+    price: 49.99,
+    ...overrides,
+  });
+}
+
 test("selects a strong relevant in-stock Awin product", () => {
   const match = findBestAwinProductMatch({
     suggestion: fishingSuggestion,
@@ -220,6 +238,133 @@ test("the Fosi policy retains relevant audio accessories and standard filters", 
   assert.equal(match?.productId, "power-supply");
   assert.equal(match?.advertiserId, "119395");
   assert.equal(unavailable, null);
+});
+
+test("Mosaic only matches specific comfort and bedding intents", () => {
+  const blanket = advertiserProduct("87403", "Mosaic Weighted Blankets", {
+    title: "Mosaic Weighted Blanket for Cozy Evenings",
+    description: "A weighted blanket for comfortable relaxation at home.",
+    price: 89.99,
+  });
+
+  const match = findBestAwinProductMatch({
+    suggestion: {
+      title: "Weighted blanket for cozy relaxation",
+      short_description: "A comfort gift for restful evenings at home.",
+      tier: "thoughtful",
+      price_max: 100,
+    },
+    products: [blanket],
+  });
+  const unrelated = findBestAwinProductMatch({
+    suggestion: {
+      title: "Modern home decor vase",
+      short_description: "A decorative accent for their living room.",
+      tier: "thoughtful",
+    },
+    products: [blanket],
+  });
+
+  assert.equal(match?.advertiserId, "87403");
+  assert.equal(unrelated, null);
+});
+
+test("Imarku matches kitchen gifts but excludes restricted and gift-card listings", () => {
+  const kitchenKnife = advertiserProduct("78080", "Imarku", {
+    title: "Imarku Japanese Chef Knife for Cooking",
+    description: "A kitchen knife for home chefs and meal preparation.",
+    price: 59.99,
+  });
+  const restrictedKnife = { ...kitchenKnife, title: "Imarku Tactical Hunting Knife" };
+  const giftCard = { ...kitchenKnife, title: "Imarku Gift Card - $50" };
+  const suggestion = {
+    title: "Chef knife for a cooking enthusiast",
+    short_description: "A useful kitchen tool for meal preparation.",
+    tier: "thoughtful",
+    price_max: 80,
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [kitchenKnife] })?.advertiserId,
+    "78080",
+  );
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [restrictedKnife, giftCard] }),
+    null,
+  );
+});
+
+test("Baby Shusher excludes medical products while retaining relevant baby gifts", () => {
+  const soundMachine = advertiserProduct("118079", "Baby Shusher", {
+    title: "Baby Shusher Sound Machine for Nursery Sleep Routines",
+    description: "A soothing sound machine for new parents and their nursery.",
+    price: 34.99,
+  });
+  const saline = {
+    ...soundMachine,
+    title: "Baby Saline Nasal Ampoules",
+  };
+  const suggestion = {
+    title: "Baby shower sound machine for new parents",
+    short_description: "A nursery gift for a newborn sleep routine.",
+    tier: "thoughtful",
+  };
+
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [soundMachine] })?.advertiserId,
+    "118079",
+  );
+  assert.equal(
+    findBestAwinProductMatch({ suggestion, products: [saline] }),
+    null,
+  );
+});
+
+test("Mojo Fun requires toy or collectible context rather than animal alone", () => {
+  const dinosaur = advertiserProduct("122958", "Mojo Fun", {
+    title: "Mojo Fun Dinosaur Figurine",
+    description: "A detailed dinosaur toy figure for imaginative play.",
+    price: 14.99,
+  });
+  const match = findBestAwinProductMatch({
+    suggestion: {
+      title: "Dinosaur figurine for a young collector",
+      short_description: "A toy animal figure for imaginative play.",
+      tier: "safe",
+    },
+    products: [dinosaur],
+  });
+  const unrelated = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized pet portrait of their dog",
+      short_description: "Custom artwork celebrating a beloved animal.",
+      tier: "thoughtful",
+    },
+    products: [dinosaur],
+  });
+
+  assert.equal(match?.advertiserId, "122958");
+  assert.equal(unrelated, null);
+});
+
+test("administrative products are excluded for every advertiser policy", () => {
+  const productAdjustment = advertiserProduct("87403", "Mosaic Weighted Blankets", {
+    title: "Make Up the Price Difference",
+    description: "A payment adjustment.",
+    price: 5,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Weighted blanket for comfort",
+        short_description: "A cozy bedding gift.",
+        tier: "safe",
+      },
+      products: [productAdjustment],
+    }),
+    null,
+  );
 });
 
 test("broad fishing context alone cannot substitute a different product", () => {

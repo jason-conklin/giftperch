@@ -124,13 +124,71 @@ const AUDIO_INTENT_WORDS = new Set([
   "vinyl",
 ]);
 
+const MOSAIC_COMFORT_INTENT_WORDS = new Set([
+  "bedding",
+  "blanket",
+  "cozy",
+  "comfort",
+  "duvet",
+  "pillow",
+  "relaxation",
+  "relaxing",
+  "sleep",
+  "weighted",
+]);
+
+const IMARKU_KITCHEN_INTENT_WORDS = new Set([
+  "bake",
+  "baking",
+  "barbecue",
+  "bbq",
+  "chef",
+  "cook",
+  "cooking",
+  "cookware",
+  "culinary",
+  "cutlery",
+  "grill",
+  "kitchen",
+  "knife",
+  "meal",
+  "pan",
+  "skillet",
+]);
+
+const BABY_INTENT_WORDS = new Set([
+  "baby",
+  "infant",
+  "newborn",
+  "nursery",
+  "parent",
+  "parents",
+  "shower",
+  "toddler",
+]);
+
+const MOJO_TOY_INTENT_WORDS = new Set([
+  "collectible",
+  "collection",
+  "dinosaur",
+  "figure",
+  "figurine",
+  "play",
+  "toy",
+]);
+
 const TOKEN_ALIASES: Record<string, string> = {
   amplifiers: "amplifier",
   anglers: "angler",
   baits: "bait",
+  blankets: "blanket",
+  cooking: "cook",
+  dinosaurs: "dinosaur",
+  figurines: "figurine",
   fishes: "fish",
   fishermen: "fisherman",
   lures: "lure",
+  knives: "knife",
   headphones: "headphone",
   headsets: "headset",
   preamplifiers: "preamplifier",
@@ -297,13 +355,57 @@ function hasAny(source: Set<string>, candidates: Set<string>): boolean {
   return [...source].some((token) => candidates.has(token));
 }
 
-function isUnsuitableFosiProduct(title: string): boolean {
+function isAdministrativeOrGiftCardProduct(title: string): boolean {
   const normalized = title.normalize("NFKD").toLowerCase();
   return (
     /\b(?:make up|makeup) the price difference\b/.test(normalized) ||
     /\bpayment adjustment\b/.test(normalized) ||
     /\bgift cards?\b/.test(normalized)
   );
+}
+
+function isRestrictedImarkuProduct(title: string): boolean {
+  return /\b(?:combat|dagger|hunting|tactical|weapon)\b/i.test(title);
+}
+
+function isMedicalBabyProduct(title: string): boolean {
+  return /\b(?:first aid|health|medical|nasal|nebul|piercing|respiratory|saline|wound)\b/i.test(
+    title,
+  );
+}
+
+function passesAdvertiserPolicy(args: {
+  advertiser: AwinAdvertiserConfig;
+  product: AwinCatalogProduct;
+  fishingIntent: Set<string>;
+  audioIntent: Set<string>;
+  mosaicComfortIntent: Set<string>;
+  imarkuKitchenIntent: Set<string>;
+  babyIntent: Set<string>;
+  mojoToyIntent: Set<string>;
+}): boolean {
+  const { advertiser, product } = args;
+  if (isAdministrativeOrGiftCardProduct(product.title)) return false;
+
+  switch (advertiser.matchingPolicy) {
+    case "piscifun-fishing":
+      return args.fishingIntent.size > 0;
+    case "fosi-audio":
+      return args.audioIntent.size > 0;
+    case "mosaic-comfort":
+      return args.mosaicComfortIntent.size > 0;
+    case "imarku-kitchen":
+      return (
+        args.imarkuKitchenIntent.size > 0 &&
+        !isRestrictedImarkuProduct(product.title)
+      );
+    case "baby-shusher":
+      return args.babyIntent.size > 0 && !isMedicalBabyProduct(product.title);
+    case "mojo-fun":
+      return args.mojoToyIntent.size > 0;
+    case "standard":
+      return true;
+  }
 }
 
 function finiteNonNegative(value: unknown): number | null {
@@ -364,6 +466,16 @@ export function findBestAwinProductMatch(args: {
     FISHING_INTENT_WORDS,
   );
   const audioIntent = intersection(suggestionIntentTokens, AUDIO_INTENT_WORDS);
+  const mosaicComfortIntent = intersection(
+    suggestionIntentTokens,
+    MOSAIC_COMFORT_INTENT_WORDS,
+  );
+  const imarkuKitchenIntent = intersection(
+    suggestionIntentTokens,
+    IMARKU_KITCHEN_INTENT_WORDS,
+  );
+  const babyIntent = intersection(suggestionIntentTokens, BABY_INTENT_WORDS);
+  const mojoToyIntent = intersection(suggestionIntentTokens, MOJO_TOY_INTENT_WORDS);
   const budget = effectiveBudget(
     suggestion,
     args.budgetMin,
@@ -397,11 +509,17 @@ export function findBestAwinProductMatch(args: {
     }
 
     if (
-      advertiser.matchingPolicy === "fosi-audio" &&
-      (audioIntent.size === 0 || isUnsuitableFosiProduct(product.title))
-    ) {
-      continue;
-    }
+      !passesAdvertiserPolicy({
+        advertiser,
+        product,
+        fishingIntent,
+        audioIntent,
+        mosaicComfortIntent,
+        imarkuKitchenIntent,
+        babyIntent,
+        mojoToyIntent,
+      })
+    ) continue;
 
     const productTitleTokens = tokens(product.title);
     const productDescriptionTokens = tokens(product.description);
@@ -409,13 +527,6 @@ export function findBestAwinProductMatch(args: {
     const titleDescription = intersection(titleTokens, productDescriptionTokens);
     const detailTitle = intersection(detailTokens, productTitleTokens);
     const interestTitle = intersection(interestTokens, productTitleTokens);
-    if (
-      advertiser.matchingPolicy === "piscifun-fishing" &&
-      fishingIntent.size === 0
-    ) {
-      continue;
-    }
-
     const distinctiveTitleMatch = [...titleTitle].some(
       (token) =>
         !BROAD_FISHING_CONTEXT_WORDS.has(token) &&

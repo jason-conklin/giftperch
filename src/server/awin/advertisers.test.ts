@@ -43,6 +43,28 @@ test("Fosi Audio is import-ready and enabled for runtime recommendations", () =>
   assert.equal(fosi.importSafeguards?.minimumValidProducts, 300);
 });
 
+test("the validated batch advertisers are enabled with scoped safeguards", () => {
+  const expected = [
+    ["mosaic-weighted-blankets", "87403", "mosaic-comfort", 600],
+    ["imarku", "78080", "imarku-kitchen", 180],
+    ["baby-shusher", "118079", "baby-shusher", 20],
+    ["mojo-fun", "122958", "mojo-fun", 300],
+  ] as const;
+
+  for (const [key, advertiserId, matchingPolicy, minimumValidProducts] of expected) {
+    const advertiser = resolveAwinAdvertiser(key);
+    assert.equal(advertiser.advertiserId, advertiserId);
+    assert.equal(advertiser.locale, "en_US");
+    assert.equal(advertiser.importEnabled, true);
+    assert.equal(advertiser.recommendationEnabled, true);
+    assert.equal(advertiser.matchingPolicy, matchingPolicy);
+    assert.equal(
+      advertiser.importSafeguards?.minimumValidProducts,
+      minimumValidProducts,
+    );
+  }
+});
+
 test("unknown and disabled advertiser selections fail closed", () => {
   assert.throws(() => resolveAwinAdvertiser("unknown"), /Unknown Awin advertiser/);
   assert.throws(
