@@ -1,6 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import { isExpectedAwinTrackingUrl } from "../src/server/awin/feed";
+import { resolveAwinAdvertiser } from "../src/server/awin/advertisers";
 
 loadEnvConfig(process.cwd());
 
@@ -8,6 +9,12 @@ function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is not configured.`);
   return value;
+}
+
+function argumentValue(name: string): string | null {
+  const prefix = `--${name}=`;
+  const argument = process.argv.slice(2).find((value) => value.startsWith(prefix));
+  return argument ? argument.slice(prefix.length) : null;
 }
 
 function sanitizedAffiliateHost(value: unknown): string | null {
@@ -35,6 +42,9 @@ function sanitizedMessage(error: unknown): string {
 }
 
 async function main() {
+  const advertiser = resolveAwinAdvertiser(
+    argumentValue("advertiser") ?? undefined,
+  );
   const supabaseUrl =
     process.env.SUPABASE_URL?.trim() || requiredEnv("NEXT_PUBLIC_SUPABASE_URL");
   const supabase = createClient(
@@ -50,8 +60,8 @@ async function main() {
       { count: "exact" },
     )
     .eq("provider", "awin")
-    .eq("advertiser_id", "89509")
-    .eq("locale", "en_US")
+    .eq("advertiser_id", advertiser.advertiserId)
+    .eq("locale", advertiser.locale)
     .eq("active", true)
     .order("title")
     .limit(5);
@@ -68,7 +78,19 @@ async function main() {
     affiliateHost: sanitizedAffiliateHost(product.affiliate_url),
     importedAt: product.imported_at,
   }));
-  console.log(JSON.stringify({ activeProductCount: count ?? 0, sample }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        advertiser: advertiser.displayName,
+        advertiserId: advertiser.advertiserId,
+        locale: advertiser.locale,
+        activeProductCount: count ?? 0,
+        sample,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main().catch((error) => {

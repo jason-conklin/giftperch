@@ -14,6 +14,7 @@ import {
 const piscifunProduct: AwinCatalogProduct = {
   provider: "awin",
   advertiserId: "89509",
+  locale: "en_US",
   merchantName: "Piscifun",
   externalProductId: "piscifun-reel-1",
   title: "Piscifun Carbon X Fishing Reel",

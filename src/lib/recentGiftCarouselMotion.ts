@@ -8,6 +8,18 @@ export type RecentGiftAutoplayState = {
   reducedMotion: boolean;
 };
 
+export function shouldStartRecentGiftDrag({
+  canScroll,
+  isPrimaryMouseButton,
+  isInteractiveTarget,
+}: {
+  canScroll: boolean;
+  isPrimaryMouseButton: boolean;
+  isInteractiveTarget: boolean;
+}) {
+  return canScroll && isPrimaryMouseButton && !isInteractiveTarget;
+}
+
 export function shouldRunRecentGiftAutoplay({
   canScroll,
   isDragging,

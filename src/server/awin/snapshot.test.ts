@@ -125,6 +125,28 @@ test("snapshot validation rejects checksum mismatches", async () => {
   });
 });
 
+test("snapshot validation rejects advertiser and locale mismatches", async () => {
+  await withTempDirectory(async (directory) => {
+    const { snapshotPath } = await createSnapshot(directory);
+    await assert.rejects(
+      validateAwinSnapshot({
+        snapshotPath,
+        expectedContext: { ...context, advertiserId: "90002" },
+        now: new Date("2026-10-16T13:00:00.000Z"),
+      }),
+      /does not match the requested feed/,
+    );
+    await assert.rejects(
+      validateAwinSnapshot({
+        snapshotPath,
+        expectedContext: { ...context, locale: "en_GB" },
+        now: new Date("2026-10-16T13:00:00.000Z"),
+      }),
+      /does not match the requested feed/,
+    );
+  });
+});
+
 test("snapshot download rejects truncated JSONL without publishing artifacts", async () => {
   await withTempDirectory(async (directory) => {
     const snapshotPath = path.join(directory, "truncated.jsonl");

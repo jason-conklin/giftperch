@@ -71,6 +71,32 @@ test("replaces placeholder destinations without disturbing recipient data", () =
   );
 });
 
+test("propagates a validated merchant destination to dashboard cards", () => {
+  const affiliateUrl =
+    "https://www.awin1.com/cread.php?product=piscifun-dashboard";
+  const cards = prepareRecentGiftCards(
+    [
+      gift({
+        product_match: {
+          provider: "awin",
+          productId: "piscifun-dashboard",
+          merchant: "Piscifun",
+          productTitle: "Carbon spinning reel",
+          imageUrl: "https://merchant-images.example.test/reel.jpg",
+          price: 89.99,
+          currency: "USD",
+          affiliateUrl,
+        },
+      }),
+    ],
+    recipients,
+  );
+
+  assert.equal(cards[0]?.destination?.href, affiliateUrl);
+  assert.equal(cards[0]?.destination?.label, "View at Piscifun");
+  assert.equal(cards[0]?.destination?.isAffiliate, true);
+});
+
 test("keeps recipient and gift associations scoped by recipient id", () => {
   const cards = prepareRecentGiftCards(
     [

@@ -117,6 +117,8 @@ export function productMatchFromCatalogRow(value: unknown): ProductMatch | null 
   const price = typeof row.price === "number" ? row.price : Number(row.price);
   return normalizeProductMatch({
     provider: "awin",
+    advertiserId: row.advertiser_id,
+    locale: row.locale,
     productId: row.external_product_id,
     merchant: row.merchant_name,
     productTitle: row.title,

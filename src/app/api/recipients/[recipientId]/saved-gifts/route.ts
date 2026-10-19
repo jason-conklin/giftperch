@@ -11,6 +11,7 @@ import {
   type AuthoritativeGiftSuggestion,
 } from "@/server/savedGifts/productSnapshot";
 import { findMatchingSavedGift } from "@/server/savedGifts/deduplication";
+import { resolveAwinProductScope } from "@/server/awin/productIdentity";
 
 type RecipientSavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -194,14 +195,20 @@ export async function POST(
     canonicalProductMatch = getSuggestionProductMatch(authoritativeSuggestion);
 
     if (canonicalProductMatch?.provider === "awin") {
+      const productScope = resolveAwinProductScope(canonicalProductMatch);
+      if (!productScope) {
+        return badRequest("Matched product identity could not be verified");
+      }
       const { data: catalogRows, error: catalogError } = await (
         supabase as SupabaseClient
       )
         .from("affiliate_products")
         .select(
-          "external_product_id, merchant_name, title, image_url, affiliate_url, price, currency",
+          "advertiser_id, locale, external_product_id, merchant_name, title, image_url, affiliate_url, price, currency",
         )
         .eq("provider", "awin")
+        .eq("advertiser_id", productScope.advertiserId)
+        .eq("locale", productScope.locale)
         .eq("external_product_id", canonicalProductMatch.productId)
         .eq("affiliate_url", canonicalProductMatch.affiliateUrl)
         .eq("active", true)

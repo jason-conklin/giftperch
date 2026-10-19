@@ -1,4 +1,5 @@
 import {
+  areSavedGiftProductsEquivalent,
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
 } from "@/lib/savedGiftIdentity";
@@ -21,7 +22,10 @@ export function findMatchingSavedGift<T extends SavedGiftIdentity>(
     savedGifts.find((savedGift) => {
       const savedProduct = getSavedGiftProductKey(savedGift.product_match);
       if (requestedProduct && savedProduct) {
-        return requestedProduct === savedProduct;
+        return (
+          requestedProduct === savedProduct ||
+          areSavedGiftProductsEquivalent(productMatch, savedGift.product_match)
+        );
       }
       return normalizeSavedGiftTitle(savedGift.title) === requestedTitle;
     }) ?? null

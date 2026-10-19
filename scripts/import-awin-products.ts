@@ -10,15 +10,16 @@ import {
   validateAwinSnapshot,
 } from "../src/server/awin/snapshot";
 import {
-  AWIN_PROVIDER,
   type AffiliateProduct,
   type AffiliateProductImportRepository,
   type AwinImportContext,
   type ImportStats,
 } from "../src/server/awin/types";
+import {
+  createAwinImportContext,
+  resolveAwinAdvertiser,
+} from "../src/server/awin/advertisers";
 
-const PISCIFUN_ADVERTISER_ID = "89509";
-const PISCIFUN_LOCALE = "en_US";
 const REQUEST_TIMEOUT_MS = 120_000;
 
 loadEnvConfig(process.cwd());
@@ -164,12 +165,10 @@ async function main() {
     ? Number(minimumProductsArgument)
     : null;
   const publisherId = requiredEnv("AWIN_PUBLISHER_ID");
-  const context: AwinImportContext = {
-    provider: AWIN_PROVIDER,
-    publisherId,
-    advertiserId: PISCIFUN_ADVERTISER_ID,
-    locale: PISCIFUN_LOCALE,
-  };
+  const advertiser = resolveAwinAdvertiser(
+    argumentValue("advertiser") ?? undefined,
+  );
+  const context = createAwinImportContext(publisherId, advertiser);
 
   let repository: AffiliateProductImportRepository | null = null;
   let validatedSnapshot:
@@ -254,16 +253,16 @@ async function main() {
 
   const response = await fetchAwinEnhancedFeed({
     publisherId,
-    advertiserId: PISCIFUN_ADVERTISER_ID,
-    locale: PISCIFUN_LOCALE,
+    advertiserId: advertiser.advertiserId,
+    locale: advertiser.locale,
     apiToken: requiredEnv("AWIN_API_TOKEN"),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!repository) {
     const stats = await inspectAwinProductFeed({
-      advertiserId: PISCIFUN_ADVERTISER_ID,
-      locale: PISCIFUN_LOCALE,
+      advertiserId: advertiser.advertiserId,
+      locale: advertiser.locale,
       records: response.records,
     });
     console.log(JSON.stringify({ httpStatus: response.status, ...stats }, null, 2));

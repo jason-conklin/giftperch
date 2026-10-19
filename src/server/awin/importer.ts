@@ -1,5 +1,9 @@
 import { normalizeAwinProduct } from "./feed";
 import {
+  assertAwinImportContext,
+  type AwinAdvertiserConfig,
+} from "./advertisers";
+import {
   type AffiliateProduct,
   type AffiliateProductImportRepository,
   type AwinImportContext,
@@ -23,18 +27,38 @@ function safeErrorMessage(error: unknown): string {
 
 export async function runAwinProductImport(options: {
   context: AwinImportContext;
+  advertiserRegistry?: readonly AwinAdvertiserConfig[];
   records: AsyncIterable<unknown>;
   repository: AffiliateProductImportRepository;
   importedAt?: string;
   batchSize?: number;
   minimumValidProducts?: number;
 }): Promise<{ importId: string; activatedProducts: number; stats: ImportStats }> {
+  const advertiser = assertAwinImportContext(
+    options.context,
+    options.advertiserRegistry,
+  );
   const importedAt = options.importedAt ?? new Date().toISOString();
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
-  const minimumValidProducts = options.minimumValidProducts ?? 1;
-  if (!Number.isInteger(minimumValidProducts) || minimumValidProducts < 1) {
+  const configuredMinimum =
+    advertiser.importSafeguards?.minimumValidProducts ?? 1;
+  if (
+    options.minimumValidProducts !== undefined &&
+    (!Number.isInteger(options.minimumValidProducts) ||
+      options.minimumValidProducts < 1)
+  ) {
     throw new Error("minimumValidProducts must be a positive integer");
   }
+  if (
+    options.minimumValidProducts !== undefined &&
+    options.minimumValidProducts < configuredMinimum
+  ) {
+    throw new Error(
+      `minimumValidProducts must be at least ${configuredMinimum} for ${advertiser.displayName}`,
+    );
+  }
+  const minimumValidProducts =
+    options.minimumValidProducts ?? configuredMinimum;
   const stats: ImportStats = {
     recordsRead: 0,
     validProducts: 0,

@@ -2,6 +2,8 @@ export type ProductProvider = "awin" | "amazon";
 
 export type ProductMatch = {
   provider: ProductProvider;
+  advertiserId?: string;
+  locale?: string;
   productId: string;
   merchant: string;
   productTitle: string;
@@ -131,6 +133,14 @@ export function normalizeProductMatch(value: unknown): ProductMatch | null {
     value.imageUrl === null || value.imageUrl === undefined
       ? null
       : getSafeImageUrl(value.imageUrl);
+  const advertiserId =
+    value.advertiserId === undefined || value.advertiserId === null
+      ? null
+      : requiredText(value.advertiserId, 100);
+  const locale =
+    value.locale === undefined || value.locale === null
+      ? null
+      : requiredText(value.locale, 20);
 
   if (!provider || !productId || !merchant || !productTitle || !affiliateUrl) {
     return null;
@@ -146,12 +156,22 @@ export function normalizeProductMatch(value: unknown): ProductMatch | null {
     return null;
   }
   if (value.imageUrl && !imageUrl) return null;
+  if (
+    (value.advertiserId !== undefined &&
+      value.advertiserId !== null &&
+      !advertiserId) ||
+    (value.locale !== undefined && value.locale !== null && !locale)
+  ) {
+    return null;
+  }
   if (provider === "awin" && (price === null || currency === null || !imageUrl)) {
     return null;
   }
 
   return {
     provider,
+    ...(provider === "awin" && advertiserId ? { advertiserId } : {}),
+    ...(provider === "awin" && locale ? { locale } : {}),
     productId,
     merchant,
     productTitle,

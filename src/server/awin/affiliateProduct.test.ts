@@ -56,6 +56,20 @@ test("supports provider-neutral Amazon and legacy Amazon products", () => {
   assert.equal(legacy?.priceDisplay, "$29.95 USD");
 });
 
+test("preserves optional Awin advertiser identity without requiring it for legacy matches", () => {
+  const identified = normalizeProductMatch({
+    ...awinMatch,
+    advertiserId: "89509",
+    locale: "en_US",
+  });
+  const legacy = normalizeProductMatch(awinMatch);
+
+  assert.equal(identified?.advertiserId, "89509");
+  assert.equal(identified?.locale, "en_US");
+  assert.equal(legacy?.advertiserId, undefined);
+  assert.equal(legacy?.locale, undefined);
+});
+
 test("returns no matched presentation when product metadata is absent", () => {
   assert.equal(getMatchedProductPresentation(null, null), null);
 });

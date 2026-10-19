@@ -3,9 +3,29 @@ import test from "node:test";
 import {
   advanceContinuousScrollPosition,
   getContinuousScrollDelta,
+  shouldStartRecentGiftDrag,
   shouldRunRecentGiftAutoplay,
   wrapContinuousScrollPosition,
 } from "./recentGiftCarouselMotion";
+
+test("does not capture product-link clicks as carousel drags", () => {
+  assert.equal(
+    shouldStartRecentGiftDrag({
+      canScroll: true,
+      isPrimaryMouseButton: true,
+      isInteractiveTarget: true,
+    }),
+    false,
+  );
+  assert.equal(
+    shouldStartRecentGiftDrag({
+      canScroll: true,
+      isPrimaryMouseButton: true,
+      isInteractiveTarget: false,
+    }),
+    true,
+  );
+});
 
 test("computes frame-rate-independent movement at thirty pixels per second", () => {
   assert.equal(getContinuousScrollDelta(1000 / 60), 0.5);

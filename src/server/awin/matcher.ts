@@ -5,6 +5,10 @@ import {
   isExpectedAwinTrackingUrl,
   type ProductMatch,
 } from "@/lib/affiliateProduct";
+import {
+  findRecommendationEnabledAwinAdvertiserById,
+  type AwinAdvertiserConfig,
+} from "./advertisers";
 
 const CATALOG_PAGE_SIZE = 1_000;
 const MINIMUM_MATCH_SCORE = 10;
@@ -77,9 +81,6 @@ const PHYSICAL_PRODUCT_EXCLUSIONS = new Set([
   "workshop",
 ]);
 
-// Piscifun's catalog is fishing-specific. Requiring explicit fishing intent
-// prevents a generic overlap such as "waterproof" from replacing another idea.
-const PISCIFUN_ADVERTISER_ID = "89509";
 const FISHING_INTENT_WORDS = new Set([
   "angler",
   "angling",
@@ -103,20 +104,49 @@ const BROAD_FISHING_CONTEXT_WORDS = new Set([
   "fishing",
 ]);
 
+const AUDIO_INTENT_WORDS = new Set([
+  "amp",
+  "amplifier",
+  "audio",
+  "audiophile",
+  "dac",
+  "headphone",
+  "headset",
+  "music",
+  "phono",
+  "preamp",
+  "preamplifier",
+  "receiver",
+  "speaker",
+  "stereo",
+  "subwoofer",
+  "turntable",
+  "vinyl",
+]);
+
 const TOKEN_ALIASES: Record<string, string> = {
+  amplifiers: "amplifier",
   anglers: "angler",
   baits: "bait",
   fishes: "fish",
   fishermen: "fisherman",
   lures: "lure",
+  headphones: "headphone",
+  headsets: "headset",
+  preamplifiers: "preamplifier",
+  receivers: "receiver",
   reels: "reel",
   rods: "rod",
+  speakers: "speaker",
+  subwoofers: "subwoofer",
+  turntables: "turntable",
   waders: "wader",
 };
 
 export type AwinCatalogProduct = {
   provider: "awin";
   advertiserId: string;
+  locale: string;
   merchantName: string;
   externalProductId: string;
   title: string;
@@ -146,6 +176,7 @@ export type RecipientInterestForMatching = {
 type CatalogRow = {
   provider: unknown;
   advertiser_id: unknown;
+  locale: unknown;
   merchant_name: unknown;
   external_product_id: unknown;
   title: unknown;
@@ -170,6 +201,7 @@ function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
   if (
     row.provider !== "awin" ||
     typeof row.advertiser_id !== "string" ||
+    typeof row.locale !== "string" ||
     typeof row.merchant_name !== "string" ||
     typeof row.external_product_id !== "string" ||
     typeof row.title !== "string" ||
@@ -187,6 +219,7 @@ function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
   return {
     provider: "awin",
     advertiserId: row.advertiser_id,
+    locale: row.locale,
     merchantName: row.merchant_name.trim(),
     externalProductId: row.external_product_id.trim(),
     title: row.title.trim(),
@@ -212,7 +245,7 @@ export async function loadAwinProductCandidates(
     const { data, error } = await supabase
       .from("affiliate_products")
       .select(
-        "provider, advertiser_id, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active",
+        "provider, advertiser_id, locale, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active",
       )
       .eq("provider", "awin")
       .eq("active", true)
@@ -264,6 +297,15 @@ function hasAny(source: Set<string>, candidates: Set<string>): boolean {
   return [...source].some((token) => candidates.has(token));
 }
 
+function isUnsuitableFosiProduct(title: string): boolean {
+  const normalized = title.normalize("NFKD").toLowerCase();
+  return (
+    /\b(?:make up|makeup) the price difference\b/.test(normalized) ||
+    /\bpayment adjustment\b/.test(normalized) ||
+    /\bgift cards?\b/.test(normalized)
+  );
+}
+
 function finiteNonNegative(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0
     ? value
@@ -300,6 +342,7 @@ export function findBestAwinProductMatch(args: {
   products: AwinCatalogProduct[];
   budgetMin?: number | null;
   budgetMax?: number | null;
+  advertiserRegistry?: readonly AwinAdvertiserConfig[];
 }): ProductMatch | null {
   const { suggestion, products } = args;
   if (!suggestion.title.trim() || !isPhysicalProductConcept(suggestion)) {
@@ -316,6 +359,11 @@ export function findBestAwinProductMatch(args: {
       .join(" "),
   );
   const suggestionIntentTokens = union(titleTokens, detailTokens);
+  const fishingIntent = intersection(
+    suggestionIntentTokens,
+    FISHING_INTENT_WORDS,
+  );
+  const audioIntent = intersection(suggestionIntentTokens, AUDIO_INTENT_WORDS);
   const budget = effectiveBudget(
     suggestion,
     args.budgetMin,
@@ -330,7 +378,13 @@ export function findBestAwinProductMatch(args: {
     | undefined;
 
   for (const product of products) {
+    const advertiser = findRecommendationEnabledAwinAdvertiserById(
+      product.advertiserId,
+      args.advertiserRegistry,
+    );
     if (
+      !advertiser ||
+      product.locale !== advertiser.locale ||
       !product.active ||
       product.availability !== "in_stock" ||
       !getSafeImageUrl(product.imageUrl) ||
@@ -342,19 +396,21 @@ export function findBestAwinProductMatch(args: {
       continue;
     }
 
+    if (
+      advertiser.matchingPolicy === "fosi-audio" &&
+      (audioIntent.size === 0 || isUnsuitableFosiProduct(product.title))
+    ) {
+      continue;
+    }
+
     const productTitleTokens = tokens(product.title);
     const productDescriptionTokens = tokens(product.description);
     const titleTitle = intersection(titleTokens, productTitleTokens);
     const titleDescription = intersection(titleTokens, productDescriptionTokens);
     const detailTitle = intersection(detailTokens, productTitleTokens);
     const interestTitle = intersection(interestTokens, productTitleTokens);
-    const fishingIntent = intersection(
-      suggestionIntentTokens,
-      FISHING_INTENT_WORDS,
-    );
-
     if (
-      product.advertiserId === PISCIFUN_ADVERTISER_ID &&
+      advertiser.matchingPolicy === "piscifun-fishing" &&
       fishingIntent.size === 0
     ) {
       continue;
@@ -409,6 +465,8 @@ export function findBestAwinProductMatch(args: {
   if (!best) return null;
   return {
     provider: "awin",
+    advertiserId: best.product.advertiserId,
+    locale: best.product.locale,
     productId: best.product.externalProductId,
     merchant: best.product.merchantName,
     productTitle: best.product.title,

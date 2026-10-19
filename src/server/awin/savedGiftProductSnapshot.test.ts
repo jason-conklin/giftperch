@@ -80,6 +80,8 @@ test("legacy Amazon suggestion metadata is upgraded to a product snapshot", () =
 
 test("canonical Awin catalog rows replace browser-provided metadata", () => {
   const canonical = productMatchFromCatalogRow({
+    advertiser_id: "89509",
+    locale: "en_US",
     external_product_id: "piscifun-1",
     merchant_name: "Piscifun",
     title: "Canonical Carbon X3 Reel",
@@ -90,4 +92,6 @@ test("canonical Awin catalog rows replace browser-provided metadata", () => {
   });
   assert.equal(canonical?.productTitle, "Canonical Carbon X3 Reel");
   assert.equal(canonical?.price, 109.99);
+  assert.equal(canonical?.advertiserId, "89509");
+  assert.equal(canonical?.locale, "en_US");
 });

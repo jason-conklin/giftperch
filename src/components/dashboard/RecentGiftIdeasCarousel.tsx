@@ -16,6 +16,7 @@ import {
 } from "@/lib/dashboardRecentGifts";
 import {
   advanceContinuousScrollPosition,
+  shouldStartRecentGiftDrag,
   shouldRunRecentGiftAutoplay,
   wrapContinuousScrollPosition,
 } from "@/lib/recentGiftCarouselMotion";
@@ -23,6 +24,8 @@ import styles from "./RecentGiftIdeasCarousel.module.css";
 
 const MANUAL_IDLE_MS = 1200;
 const DRAG_THRESHOLD_PX = 7;
+const INTERACTIVE_TARGET_SELECTOR =
+  "a, button, input, select, textarea, [role='button']";
 
 type DragState = {
   pointerId: number;
@@ -388,10 +391,16 @@ export function RecentGiftIdeasCarousel({
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (
-      (event.pointerType === "mouse" && event.button !== 0) ||
-      !canScroll
-    ) {
+    const target = event.target;
+    const isInteractiveTarget =
+      target instanceof Element &&
+      Boolean(target.closest(INTERACTIVE_TARGET_SELECTOR));
+    if (!shouldStartRecentGiftDrag({
+      canScroll,
+      isPrimaryMouseButton:
+        event.pointerType !== "mouse" || event.button === 0,
+      isInteractiveTarget,
+    })) {
       return;
     }
     dragRef.current = {

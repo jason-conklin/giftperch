@@ -21,10 +21,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import {
-  AFFILIATE_LINK_REL,
-  getMatchedProductPresentation,
-} from "@/lib/affiliateProduct";
+import { AFFILIATE_LINK_REL } from "@/lib/affiliateProduct";
 import {
   formatGiftHistoryPrice,
   formatSavedIdeaPrice,
@@ -484,7 +481,6 @@ function SavedIdeaItem({
     : "Date unavailable";
   const recipient = recipientMap[idea.recipient_id];
   const recipientAvatar = resolveHistoryRecipientAvatar(recipient);
-  const matchedProduct = getMatchedProductPresentation(idea.product_match);
   const productDestination = resolveGiftProductDestination({
     title: idea.title,
     productUrl: idea.url,

@@ -2,10 +2,12 @@ import { loadEnvConfig } from "@next/env";
 import os from "node:os";
 import path from "node:path";
 import { downloadAndValidateAwinSnapshot, snapshotMetadataPath } from "../src/server/awin/snapshot";
-import { AWIN_PROVIDER, type AwinImportContext } from "../src/server/awin/types";
+import {
+  createAwinImportContext,
+  resolveAwinAdvertiser,
+  snapshotSlug,
+} from "../src/server/awin/advertisers";
 
-const PISCIFUN_ADVERTISER_ID = "89509";
-const PISCIFUN_LOCALE = "en_US";
 const REQUEST_TIMEOUT_MS = 120_000;
 
 loadEnvConfig(process.cwd());
@@ -33,16 +35,21 @@ function sanitizedMessage(error: unknown): string {
 }
 
 async function main() {
+  const advertiser = resolveAwinAdvertiser(
+    argumentValue("advertiser") ?? undefined,
+  );
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const outputPath =
     argumentValue("output") ??
-    path.join(os.tmpdir(), "giftperch-awin", `piscifun-${stamp}.jsonl`);
-  const context: AwinImportContext = {
-    provider: AWIN_PROVIDER,
-    publisherId: requiredEnv("AWIN_PUBLISHER_ID"),
-    advertiserId: PISCIFUN_ADVERTISER_ID,
-    locale: PISCIFUN_LOCALE,
-  };
+    path.join(
+      os.tmpdir(),
+      "giftperch-awin",
+      `${snapshotSlug(advertiser)}-${stamp}.jsonl`,
+    );
+  const context = createAwinImportContext(
+    requiredEnv("AWIN_PUBLISHER_ID"),
+    advertiser,
+  );
   const metadata = await downloadAndValidateAwinSnapshot({
     context,
     apiToken: requiredEnv("AWIN_API_TOKEN"),
