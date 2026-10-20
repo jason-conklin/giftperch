@@ -639,7 +639,7 @@ export default function AnimationPage() {
               </h1>
               <div className="gp-animation-wordmark-rule" aria-hidden="true" />
               <p className="gp-animation-wordmark-subtitle">
-                AI-Powered Gifting Workspace
+                Finding the Perfect Gift, Made Easy
               </p>
             </div>
           </div>

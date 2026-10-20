@@ -167,7 +167,7 @@ export function HeroBrandMark() {
           >
             <Image
               src="/giftperch-home-page-no-bg.png"
-              alt="GiftPerch AI-Powered Gifting Workspace"
+              alt="GiftPerch Finding the Perfect Gift, Made Easy"
               width={1600}
               height={760}
               className="gp-media-static gp-landing-hero-art h-auto w-full max-w-[min(88vw,62rem)] object-contain"

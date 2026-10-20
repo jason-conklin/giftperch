@@ -585,7 +585,7 @@ export function GiftPerchHeroIntro({ onComplete }: GiftPerchHeroIntroProps) {
               <h1 className="gp-home-intro-wordmark-title">GiftPerch</h1>
               <div className="gp-home-intro-wordmark-rule" aria-hidden="true" />
               <p className="gp-home-intro-wordmark-subtitle">
-                AI-Powered Gifting Workspace
+                Finding the Perfect Gift, Made Easy
               </p>
             </div>
           </div>
