@@ -481,8 +481,8 @@ export function DashboardHighlights() {
           value={dashboardStats.suggestionRunCount.toLocaleString()}
           detail="Personalized recommendation runs"
           emphasizeDetail
-          href="/history"
-          action="View history"
+          href="/gifts"
+          action="Generate new ideas"
         />
       </div>
 
