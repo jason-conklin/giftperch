@@ -427,6 +427,24 @@ export function DashboardHighlights() {
         />
         <SummaryCard
           icon={
+            suggestionRunPreviews.length ? (
+              <RotatingImageStack
+                groups={suggestionRunPreviews}
+                label="Gift idea run previews"
+              />
+            ) : (
+              <Sparkles aria-hidden="true" className="h-5 w-5" />
+            )
+          }
+          label="Gift idea runs"
+          value={dashboardStats.suggestionRunCount.toLocaleString()}
+          detail="Personalized recommendation runs"
+          emphasizeDetail
+          href="/gifts"
+          action="Generate new ideas"
+        />
+        <SummaryCard
+          icon={
             <span className="relative block h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-[#eef4e9] shadow-[0_3px_10px_rgba(15,61,62,0.14)]">
               <Image
                 src={nextOccasionIcon.src}
@@ -465,24 +483,6 @@ export function DashboardHighlights() {
           emphasizeDetail
           href="/history"
           action="View saved gifts"
-        />
-        <SummaryCard
-          icon={
-            suggestionRunPreviews.length ? (
-              <RotatingImageStack
-                groups={suggestionRunPreviews}
-                label="Gift idea run previews"
-              />
-            ) : (
-              <Sparkles aria-hidden="true" className="h-5 w-5" />
-            )
-          }
-          label="Gift idea runs"
-          value={dashboardStats.suggestionRunCount.toLocaleString()}
-          detail="Personalized recommendation runs"
-          emphasizeDetail
-          href="/gifts"
-          action="Generate new ideas"
         />
       </div>
 
