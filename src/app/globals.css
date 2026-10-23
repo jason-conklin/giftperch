@@ -1133,25 +1133,72 @@ body {
     margin-top: 0.55rem;
   }
 
-  .gp-tour-idea-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.55rem;
+  .gp-tour-carousel-shell {
+    min-width: 0;
   }
 
-  .gp-tour-idea-card {
-    min-width: 0;
+  .gp-tour-carousel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .gp-tour-carousel-header > span {
+    color: rgba(15, 61, 62, 0.56);
+    font-size: 0.66rem;
+    font-weight: 600;
+  }
+
+  .gp-tour-carousel-frame {
+    position: relative;
+    margin-top: 0.55rem;
+  }
+
+  .gp-tour-carousel-viewport {
+    --gp-tour-card-gap: 0.55rem;
+    display: flex;
+    gap: var(--gp-tour-card-gap);
+    overflow-x: auto;
+    scrollbar-width: none;
+    cursor: grab;
+    overscroll-behavior-x: contain;
+    scroll-behavior: auto;
+    touch-action: pan-y;
+  }
+
+  .gp-tour-carousel-viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gp-tour-carousel-viewport:active {
+    cursor: grabbing;
+  }
+
+  .gp-tour-carousel-set {
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--gp-tour-card-gap);
+  }
+
+  .gp-tour-carousel-card {
+    display: flex;
+    width: clamp(9.4rem, 15.2vw, 12rem);
+    min-height: 15.6rem;
+    flex: 0 0 auto;
+    flex-direction: column;
     overflow: hidden;
     border: 1px solid rgba(15, 61, 62, 0.1);
-    border-radius: 0.75rem;
+    border-radius: 0.7rem;
     background: #fff;
+    box-shadow: 0 5px 14px rgba(15, 61, 62, 0.06);
   }
 
-  .gp-tour-idea-image {
+  .gp-tour-carousel-image {
     position: relative;
-    height: 5.75rem;
-    padding: 0.5rem;
-    background: linear-gradient(145deg, #f7f0df, #fffaf0);
+    aspect-ratio: 1.3 / 0.86;
+    overflow: hidden;
+    background: #f7f0df;
   }
 
   .gp-tour-save-button {
@@ -1187,64 +1234,198 @@ body {
     height: 1rem;
   }
 
-  .gp-tour-idea-copy {
-    padding: 0.65rem;
+  .gp-tour-carousel-copy {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    padding: 0.55rem 0.6rem 0.6rem;
   }
 
-  .gp-tour-idea-copy h5 {
+  .gp-tour-carousel-copy h5 {
     color: #123f40;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.25;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .gp-tour-idea-copy p {
-    margin-top: 0.25rem;
+  .gp-tour-carousel-copy > p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-top: 0.22rem;
     color: rgba(15, 61, 62, 0.66);
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .gp-tour-more-row {
+  .gp-tour-carousel-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    margin-top: 0.6rem;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: 0.45rem;
   }
 
-  .gp-tour-more-row > span,
-  .gp-tour-more-link {
+  .gp-tour-carousel-footer strong {
+    color: #0f3d3e;
+    font-size: 0.8rem;
+    line-height: 1;
+  }
+
+  .gp-tour-view-product {
+    min-height: 1.7rem;
+    padding: 0.28rem 0.45rem;
+    border: 1px solid rgba(15, 61, 62, 0.16);
+    border-radius: 0.42rem;
+    background: #0f3d3e;
+    color: #fffaf0;
+    font-size: 0.59rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 160ms ease, transform 160ms ease;
+  }
+
+  .gp-tour-view-product:hover,
+  .gp-tour-view-product:focus-visible {
+    background: #1a5753;
+    transform: translateY(-1px);
+  }
+
+  .gp-tour-view-product:focus-visible,
+  .gp-tour-carousel-arrow:focus-visible,
+  .gp-tour-preview-close:focus-visible {
+    outline: 2px solid rgba(217, 193, 137, 0.9);
+    outline-offset: 2px;
+  }
+
+  .gp-tour-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
     display: inline-flex;
+    width: 2rem;
+    height: 2rem;
     align-items: center;
-    gap: 0.35rem;
-    color: rgba(15, 61, 62, 0.7);
-    font-size: 0.7rem;
-    font-weight: 600;
-  }
-
-  .gp-tour-more-row svg,
-  .gp-tour-more-link svg {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-
-  .gp-tour-more-link {
-    padding: 0.45rem 0.75rem;
-    border: 1px solid rgba(201, 145, 36, 0.46);
+    justify-content: center;
+    border: 1px solid rgba(15, 61, 62, 0.16);
     border-radius: 999px;
-    background: #fffaf0;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f3d3e;
+    box-shadow: 0 4px 12px rgba(15, 61, 62, 0.14);
+    transform: translateY(-50%);
+    transition: background-color 160ms ease, color 160ms ease;
+  }
+
+  .gp-tour-carousel-arrow:hover {
+    background: #0f3d3e;
+    color: #fffaf0;
+  }
+
+  .gp-tour-carousel-arrow svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .gp-tour-carousel-arrow--left {
+    left: -0.85rem;
+  }
+
+  .gp-tour-carousel-arrow--right {
+    right: -0.85rem;
+  }
+
+  .gp-tour-preview-backdrop {
+    position: fixed;
+    z-index: 80;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(8, 36, 37, 0.54);
+  }
+
+  .gp-tour-preview-dialog {
+    position: relative;
+    width: min(100%, 27rem);
+    overflow: hidden;
+    border: 1px solid rgba(201, 145, 36, 0.4);
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 24px 64px rgba(8, 36, 37, 0.3);
+  }
+
+  .gp-tour-preview-image {
+    position: relative;
+    aspect-ratio: 1.3 / 0.8;
+    background: #f7f0df;
+  }
+
+  .gp-tour-preview-dialog > .gp-tour-panel-label,
+  .gp-tour-preview-dialog > h5,
+  .gp-tour-preview-dialog > p,
+  .gp-tour-preview-dialog > strong,
+  .gp-tour-preview-dialog > small {
+    display: block;
+    margin-inline: 1rem;
+  }
+
+  .gp-tour-preview-dialog > .gp-tour-panel-label {
+    margin-top: 0.9rem;
+  }
+
+  .gp-tour-preview-dialog > h5 {
+    margin-top: 0.28rem;
+    color: #0f3d3e;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.25rem;
+  }
+
+  .gp-tour-preview-dialog > p {
+    margin-top: 0.4rem;
+    color: rgba(15, 61, 62, 0.72);
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .gp-tour-preview-dialog > strong {
+    margin-top: 0.65rem;
     color: #0f3d3e;
   }
 
-  .gp-tour-more-link:hover,
-  .gp-tour-more-link:focus-visible {
-    background: #f8edcf;
+  .gp-tour-preview-dialog > small {
+    margin-top: 0.7rem;
+    margin-bottom: 1rem;
+    color: rgba(15, 61, 62, 0.58);
+    font-size: 0.7rem;
   }
 
-  .gp-tour-more-link:focus-visible {
-    outline: 2px solid rgba(217, 193, 137, 0.8);
-    outline-offset: 2px;
+  .gp-tour-preview-close {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    z-index: 1;
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(15, 61, 62, 0.15);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #0f3d3e;
+  }
+
+  .gp-tour-preview-close svg {
+    width: 1rem;
+    height: 1rem;
   }
 
   .gp-tour-decoration {
@@ -2160,22 +2341,17 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .gp-tour-idea-grid {
-    grid-auto-columns: minmax(14rem, 82%);
-    grid-auto-flow: column;
-    grid-template-columns: none;
-    overflow-x: auto;
-    padding-bottom: 0.45rem;
-    scroll-snap-type: x proximity;
+  .gp-tour-carousel-card {
+    width: min(14.5rem, 78vw);
+    min-height: 17rem;
   }
 
-  .gp-tour-idea-card {
-    scroll-snap-align: start;
+  .gp-tour-carousel-arrow--left {
+    left: -0.55rem;
   }
 
-  .gp-tour-more-row {
-    align-items: flex-start;
-    flex-wrap: wrap;
+  .gp-tour-carousel-arrow--right {
+    right: -0.55rem;
   }
 
   .gp-comparison-heading h2 {

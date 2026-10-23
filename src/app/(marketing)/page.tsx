@@ -8,7 +8,6 @@ import {
   BookOpen,
   CalendarDays,
   Check,
-  ChevronRight,
   Gift,
   Heart,
   MessageCircleQuestion,
@@ -16,13 +15,14 @@ import {
   NotebookText,
   Plus,
   RefreshCcw,
-  Sparkles,
   ShieldCheck,
   UsersRound,
   X,
 } from "lucide-react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GiftPerchHeroIntro } from "@/components/marketing/GiftPerchHeroIntro";
+import { ProductTourGiftCarousel } from "@/components/marketing/ProductTourGiftCarousel";
+import { PRODUCT_TOUR_PROFILES } from "@/components/marketing/productTourDemoData";
 
 const workflowSteps = [
   {
@@ -48,9 +48,6 @@ const workflowSteps = [
 type WorkflowStepId = (typeof workflowSteps)[number]["id"];
 type WorkflowStep = (typeof workflowSteps)[number];
 type ComparisonIconKey = "profile" | "repeat" | "history" | "calendar";
-
-const DEMO_VISIBLE_IDEAS = 3;
-const DEMO_TOTAL_IDEAS = 12;
 
 function ProfileIcon() {
   return (
@@ -234,99 +231,6 @@ const faqs = [
   },
 ] as const;
 
-const SAMPLE_PROFILES = [
-  {
-    id: "maya",
-    name: "Maya",
-    relationship: "Sister",
-    avatarSrc: "/icons/avatars/maya.png",
-    description:
-      "Loves scented candles, nature hikes, and makeup. Appreciates small, meaningful things.",
-    interests: ["Candles", "Hiking", "Beauty", "Outdoors"],
-    occasion: "Birthday",
-    occasionDate: "May 18",
-    notes: "Meaningful and practical gifts",
-    ideasLabel: "Gift ideas for Maya",
-    ideas: [
-      {
-        text: "Essential oils candle set",
-        description: "A calming pick for cozy evenings at home.",
-        icon: "/icons/previews/preview-candle.png",
-      },
-      {
-        text: "Lightweight Hiking Backpack",
-        description: "Practical storage for her next trail day.",
-        icon: "/icons/previews/preview-backpack.png",
-      },
-      {
-        text: "Clean Beauty Essentials Kit",
-        description: "A thoughtful set for her everyday routine.",
-        icon: "/icons/previews/preview-makeup.png",
-      },
-    ],
-  },
-  {
-    id: "mocha",
-    name: "Mocha",
-    relationship: "Pet (Dog)",
-    avatarSrc: "/icons/avatars/mocha.png",
-    description:
-      "Small dog, loves squeaky animatronic toys, cozy blankets, and chicken jerky treats.",
-    interests: ["Puzzle toys", "Blankets", "Fetch", "Treats"],
-    occasion: "Gotcha day",
-    occasionDate: "June 12",
-    notes: "Small-dog friendly picks",
-    ideasLabel: "Gift ideas for Mocha",
-    ideas: [
-      {
-        text: "Small interactive puzzle dog toy",
-        description: "A playful challenge sized for curious paws.",
-        icon: "/icons/previews/preview-dog-toy.png",
-      },
-      {
-        text: "Plush Rabbit Animatronic Dog Toy",
-        description: "A soft, squeaky companion for indoor play.",
-        icon: "/icons/previews/preview-paw.png",
-      },
-      {
-        text: "Automatic ball launcher for indoor fetch",
-        description: "Keeps fetch going when space is limited.",
-        icon: "/icons/previews/preview-sports.png",
-      },
-    ],
-  },
-  {
-    id: "dad",
-    name: "Dad",
-    relationship: "Father",
-    avatarSrc: "/icons/avatars/dad.png",
-    description:
-      "Weekend griller, football watcher, and fan of practical gadgets that actually get used.",
-    interests: ["Grilling", "Football", "Gadgets", "Game day"],
-    occasion: "Birthday",
-    occasionDate: "November 4",
-    notes: "Useful gifts with a personal touch",
-    ideasLabel: "Gift ideas for Dad",
-    ideas: [
-      {
-        text: "Personalized grill tool set",
-        description: "A practical upgrade for weekend cookouts.",
-        icon: "/icons/previews/preview-diy.png",
-      },
-      {
-        text: "Cozy game-day throw blanket",
-        description: "Warm comfort for football afternoons.",
-        icon: "/icons/previews/preview-blanket.png",
-      },
-      {
-        text: "Father/Son Game day tickets",
-        description: "A memorable experience to enjoy together.",
-        icon: "/icons/previews/preview-ticket.png",
-      },
-    ],
-  },
-] as const;
-
 function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
   return (
     <div className="gp-tour-profile">
@@ -334,7 +238,7 @@ function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
         Sample profile
       </p>
       <div className="gp-tour-profile-stage">
-        {SAMPLE_PROFILES.map((profile, index) => (
+        {PRODUCT_TOUR_PROFILES.map((profile, index) => (
           <div
             key={profile.id}
             aria-hidden={activeIndex === index ? undefined : true}
@@ -443,74 +347,17 @@ function ProductTourIdeasSlice({
   savedIdeas: ReadonlySet<string>;
   onToggleSaved: (ideaKey: string) => void;
 }) {
-  const remaining = Math.max(0, DEMO_TOTAL_IDEAS - DEMO_VISIBLE_IDEAS);
+  const profile = PRODUCT_TOUR_PROFILES[activeIndex];
 
   return (
     <div className="gp-tour-ideas">
-      <p className="gp-tour-panel-label">
-        {SAMPLE_PROFILES[activeIndex].ideasLabel}
-      </p>
       <div className="gp-tour-ideas-stage">
-        {SAMPLE_PROFILES.map((profile, index) => (
-          <div
-            key={`${profile.id}-ideas`}
-            aria-hidden={activeIndex === index ? undefined : true}
-            className={`gp-tour-ideas-slide ${
-              activeIndex === index
-                ? "gp-tour-ideas-slide--active"
-                : "gp-tour-ideas-slide--hidden"
-            }`}
-          >
-            <div className="gp-tour-idea-grid">
-              {profile.ideas.slice(0, DEMO_VISIBLE_IDEAS).map((idea) => {
-                const ideaKey = `${profile.id}:${idea.text}`;
-                const isSaved = savedIdeas.has(ideaKey);
-
-                return (
-                  <article key={idea.text} className="gp-tour-idea-card">
-                    <div className="gp-tour-idea-image">
-                      <Image
-                        src={idea.icon}
-                        alt=""
-                        width={144}
-                        height={144}
-                        className="h-full w-full object-contain"
-                        unoptimized
-                      />
-                      <button
-                        type="button"
-                        className="gp-tour-save-button"
-                        aria-label={`${isSaved ? "Remove" : "Save"} ${idea.text} in this demonstration`}
-                        aria-pressed={isSaved}
-                        tabIndex={activeIndex === index ? 0 : -1}
-                        onClick={() => onToggleSaved(ideaKey)}
-                      >
-                        <Heart aria-hidden="true" className={isSaved ? "fill-current" : ""} />
-                      </button>
-                    </div>
-                    <div className="gp-tour-idea-copy">
-                      <h5>{idea.text}</h5>
-                      <p>{idea.description}</p>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-            {remaining > 0 ? (
-              <div className="gp-tour-more-row">
-                <span><Sparkles aria-hidden="true" /> +{remaining} more sample ideas</span>
-                <Link
-                  href="/auth/signup"
-                  className="gp-tour-more-link"
-                  tabIndex={activeIndex === index ? 0 : -1}
-                >
-                  View more ideas
-                  <ChevronRight aria-hidden="true" />
-                </Link>
-              </div>
-            ) : null}
-          </div>
-        ))}
+        <ProductTourGiftCarousel
+          key={profile.id}
+          profile={profile}
+          savedIdeas={savedIdeas}
+          onToggleSaved={onToggleSaved}
+        />
       </div>
     </div>
   );
@@ -683,7 +530,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
     clearTimer();
     timerRef.current = setTimeout(() => {
       setActiveIndex((prev) => {
-        const next = (prev + 1) % SAMPLE_PROFILES.length;
+        const next = (prev + 1) % PRODUCT_TOUR_PROFILES.length;
         firstCycleRef.current = false;
         return next;
       });
@@ -695,8 +542,8 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 
   const handleStepSelect = useCallback((stepIndex: number) => {
     const normalizedIndex =
-      ((stepIndex % SAMPLE_PROFILES.length) + SAMPLE_PROFILES.length) %
-      SAMPLE_PROFILES.length;
+      ((stepIndex % PRODUCT_TOUR_PROFILES.length) + PRODUCT_TOUR_PROFILES.length) %
+      PRODUCT_TOUR_PROFILES.length;
     setActiveIndex(normalizedIndex);
     firstCycleRef.current = false;
     setManualPauseUntil(Date.now() + 8000);
@@ -736,7 +583,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
               <p className="gp-tour-demo-eyebrow">A quick walkthrough</p>
             </div>
             <div className="gp-tour-recipient-tabs" aria-label="Choose a sample recipient">
-              {SAMPLE_PROFILES.map((profile, index) => (
+              {PRODUCT_TOUR_PROFILES.map((profile, index) => (
                 <button
                   key={`${profile.id}-tab`}
                   type="button"
