@@ -791,7 +791,7 @@ export default function MarketingHome() {
               <span />
             </div>
             <h2 id="giftperch-difference-title">Why GiftPerch is different</h2>
-            <p>Same question. A completely different experience.</p>
+            <p>Go beyond generic gift ideas.</p>
           </header>
 
           <div className="gp-difference-grid">
