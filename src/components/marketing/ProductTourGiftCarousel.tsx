@@ -13,6 +13,7 @@ import {
 import type { ProductTourIdea, ProductTourProfile } from "./productTourDemoData";
 import {
   getProductTourCarouselDurationMs,
+  hasProductTourCarouselDragged,
   shouldAutoplayProductTourCarousel,
 } from "./productTourCarouselMotion";
 const MANUAL_PAUSE_MS = 3_500;
@@ -135,7 +136,7 @@ export function ProductTourGiftCarousel({
     const viewport = viewportRef.current;
     if (!viewport || !viewport.hasPointerCapture(event.pointerId)) return;
     const distance = event.clientX - pointerStartRef.current.x;
-    if (Math.abs(distance) > 5) {
+    if (hasProductTourCarouselDragged(distance)) {
       draggingRef.current = true;
       suppressClickRef.current = true;
     }
@@ -180,7 +181,7 @@ export function ProductTourGiftCarousel({
     return (
       <article className="gp-tour-carousel-card" key={`${copy}-${idea.id}`} aria-hidden={!isPrimaryCopy || undefined}>
         <div className="gp-tour-carousel-image">
-          <Image src={idea.imageSrc} alt="" fill sizes="(max-width: 640px) 78vw, (max-width: 1024px) 34vw, 13rem" className="object-cover" />
+          <Image src={idea.imageSrc} alt="" fill draggable={false} sizes="(max-width: 640px) 78vw, (max-width: 1024px) 34vw, 13rem" className="object-cover" />
           <button type="button" className="gp-tour-save-button" aria-label={`${isSaved ? "Remove" : "Save"} ${idea.title} in this demonstration`} aria-pressed={isSaved} tabIndex={isPrimaryCopy ? 0 : -1} onClick={() => { onToggleSaved(ideaKey); pauseAfterManualAction(); }}>
             <Heart aria-hidden="true" className={isSaved ? "fill-current" : ""} />
           </button>
@@ -205,7 +206,7 @@ export function ProductTourGiftCarousel({
       </div>
       <div className="gp-tour-carousel-frame">
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--left" aria-label="Show previous sample gift ideas" onClick={() => moveByCard(-1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronLeft aria-hidden="true" /></button>
-        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
+        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onDragStart={(event) => event.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
           <div ref={trackRef} className={`gp-tour-carousel-track${cycleWidth > 0 ? " gp-tour-carousel-track--autoplay" : ""}${autoplayActive ? "" : " gp-tour-carousel-track--paused"}`} style={carouselStyle}>
             {[0, 1, 2].map((copy) => <div className="gp-tour-carousel-set" data-tour-copy={copy} key={copy}>{profile.ideas.map((idea) => renderCard(idea, copy))}</div>)}
           </div>

@@ -1142,6 +1142,8 @@ body {
 
   .gp-tour-carousel-shell {
     min-width: 0;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .gp-tour-carousel-header {
@@ -1238,6 +1240,11 @@ body {
     aspect-ratio: 1.3 / 0.86;
     overflow: hidden;
     background: #f7f0df;
+  }
+
+  .gp-tour-carousel-image img {
+    -webkit-user-drag: none;
+    user-drag: none;
   }
 
   .gp-tour-save-button {
