@@ -2142,6 +2142,7 @@ body {
     grid-template-columns: 2.75rem minmax(0, 1fr) 2.6rem;
     width: 100%;
     min-height: 4.5rem;
+    cursor: pointer;
     align-items: center;
     gap: 1rem;
     padding: 0.85rem 1.25rem;
