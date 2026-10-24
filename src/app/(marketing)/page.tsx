@@ -887,7 +887,7 @@ export default function MarketingHome() {
           <div className="gp-faq-layout">
             <aside className="gp-faq-help" aria-label="GiftPerch benefits">
               <p className="gp-faq-help-eyebrow">Still have questions?</p>
-              <h3>We&apos;re here to help.</h3>
+              <h3>Here to make gifting easier.</h3>
               <span className="gp-faq-help-divider" aria-hidden="true" />
               <ul className="gp-faq-help-list">
                 <li>

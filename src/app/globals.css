@@ -1723,7 +1723,7 @@ body {
   }
 
   .gp-faq-heading {
-    max-width: 62rem;
+    max-width: 76rem;
     margin-inline: auto;
     text-align: center;
   }
@@ -1787,9 +1787,9 @@ body {
 
   .gp-faq-layout {
     display: grid;
-    grid-template-columns: minmax(16rem, 0.3fr) minmax(0, 0.7fr);
+    grid-template-columns: minmax(19rem, 0.32fr) minmax(0, 0.68fr);
     align-items: start;
-    gap: clamp(2.5rem, 5vw, 5.5rem);
+    gap: clamp(1.75rem, 3vw, 3.5rem);
     margin-top: clamp(2.75rem, 5vw, 4.25rem);
   }
 
@@ -1799,7 +1799,7 @@ body {
   }
 
   .gp-faq-help h3 {
-    max-width: 18rem;
+    max-width: 26rem;
     margin-top: 0.65rem;
     color: #0f3d3e;
     font-family: Georgia, "Times New Roman", serif;
