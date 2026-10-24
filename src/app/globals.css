@@ -1510,12 +1510,12 @@ body {
   .gp-comparison-inner {
     position: relative;
     z-index: 2;
-    width: min(calc(100% - 2rem), 76rem);
+    width: min(calc(100% - 2rem), 88rem);
     padding-block: clamp(4.75rem, 7vw, 6.75rem) clamp(5.5rem, 8vw, 7.5rem);
   }
 
   .gp-comparison-heading {
-    max-width: 60rem;
+    max-width: 68rem;
     margin-inline: auto;
     text-align: center;
   }
@@ -1713,8 +1713,8 @@ body {
 
   .gp-difference-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: clamp(1rem, 2.25vw, 1.75rem);
+    grid-template-columns: minmax(0, 0.39fr) minmax(0, 0.61fr);
+    gap: clamp(1.25rem, 2.25vw, 2rem);
     margin-top: clamp(2.5rem, 4vw, 3.75rem);
     align-items: stretch;
   }
@@ -1803,7 +1803,7 @@ body {
     grid-template-columns: 3rem minmax(0, 1fr);
     gap: 0.75rem;
     margin-top: 1.2rem;
-    padding: 1rem;
+    padding: clamp(0.95rem, 1.5vw, 1.2rem);
     border: 1px solid rgba(118, 130, 145, 0.1);
     border-radius: 1rem;
     background: rgba(255, 255, 255, 0.66);
@@ -1853,9 +1853,10 @@ body {
 
   .gp-difference-offer-body {
     display: grid;
-    grid-template-columns: minmax(10.5rem, 0.66fr) minmax(19rem, 1.34fr);
+    grid-template-columns: minmax(11.5rem, 0.72fr) minmax(0, 1.75fr);
     gap: clamp(0.9rem, 2vw, 1.5rem);
     min-width: 0;
+    flex: 1;
     margin-top: clamp(1.25rem, 2.2vw, 1.75rem);
   }
 
@@ -1898,8 +1899,33 @@ body {
   .gp-difference-product-stack {
     position: relative;
     min-width: 0;
-    min-height: 19.25rem;
+    min-height: clamp(21rem, 28vw, 25rem);
     isolation: isolate;
+  }
+
+  .gp-difference-product-stack::before,
+  .gp-difference-product-stack::after {
+    position: absolute;
+    z-index: 4;
+    width: 1.4rem;
+    height: 0.8rem;
+    border-top: 2px solid rgba(207, 151, 36, 0.88);
+    content: "";
+    pointer-events: none;
+  }
+
+  .gp-difference-product-stack::before {
+    top: 0.55rem;
+    left: 43%;
+    transform: rotate(28deg);
+    box-shadow: 0.55rem 0.42rem 0 -1px rgba(207, 151, 36, 0.82);
+  }
+
+  .gp-difference-product-stack::after {
+    right: 6%;
+    bottom: 1.1rem;
+    transform: rotate(-34deg);
+    box-shadow: 0.55rem -0.38rem 0 -1px rgba(207, 151, 36, 0.72);
   }
 
   .gp-difference-product-card {
@@ -1916,9 +1942,9 @@ body {
     will-change: transform, box-shadow;
   }
 
-  .gp-difference-product-card--mom { z-index: 3; top: 2.4rem; left: 0; width: 50%; animation-delay: -1.2s; }
-  .gp-difference-product-card--sofi { z-index: 2; top: 1.15rem; left: 31%; width: 44%; animation-delay: -4.7s; }
-  .gp-difference-product-card--nick { z-index: 1; top: 2.55rem; right: 0; width: 37%; animation-delay: -8.2s; }
+  .gp-difference-product-card--mom { z-index: 3; top: 0.65rem; left: 0; width: 48%; animation-delay: -1.2s; }
+  .gp-difference-product-card--sofi { z-index: 2; top: 2.4rem; left: 46%; width: 35%; animation-delay: -4.7s; }
+  .gp-difference-product-card--nick { z-index: 1; top: 4.85rem; right: 0; width: 27%; animation-delay: -8.2s; }
 
   .gp-difference-product-recipient {
     display: grid;
@@ -2383,6 +2409,29 @@ body {
   }
 }
 
+@media (min-width: 861px) and (max-width: 1180px) {
+  .gp-difference-offer-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gp-difference-benefits {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .gp-difference-benefits li {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 0.55rem;
+    padding: 0;
+    border: 0;
+  }
+
+  .gp-difference-product-stack {
+    min-height: clamp(20rem, 42vw, 23rem);
+    margin-top: 0.35rem;
+  }
+}
+
 @media (min-width: 1440px) {
   .gp-tour-decoration {
     opacity: 1;
@@ -2728,10 +2777,63 @@ body {
   .gp-difference-benefits strong { font-size: 0.87rem; }
   .gp-difference-benefits small { font-size: 0.68rem; }
 
-  .gp-difference-product-stack { min-height: min(19rem, 71vw); }
-  .gp-difference-product-card--mom { top: 1.55rem; width: 51%; }
-  .gp-difference-product-card--sofi { top: 0.4rem; left: 31%; width: 45%; }
-  .gp-difference-product-card--nick { top: 1.85rem; width: 38%; }
+  .gp-difference-product-stack {
+    display: grid;
+    min-height: 0;
+    gap: 0.7rem;
+  }
+
+  .gp-difference-product-stack::before,
+  .gp-difference-product-stack::after {
+    display: none;
+  }
+
+  .gp-difference-product-card,
+  .gp-difference-product-card--mom,
+  .gp-difference-product-card--sofi,
+  .gp-difference-product-card--nick {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    display: grid;
+    width: 100%;
+    min-height: 7.5rem;
+    grid-template-columns: 5.25rem minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .gp-difference-product-recipient {
+    grid-column: 2 / -1;
+    grid-row: 1;
+  }
+
+  .gp-difference-product-image {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    min-height: 7.25rem;
+    aspect-ratio: auto;
+  }
+
+  .gp-difference-product-details {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .gp-difference-product-details h4 {
+    font-size: 0.84rem;
+  }
+
+  .gp-difference-product-cta {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: end;
+    margin: 0.45rem;
+    padding-inline: 0.55rem;
+    white-space: nowrap;
+  }
+
   .gp-difference-disclosure { margin-top: 0.35rem; }
 
   .gp-comparison-card {
@@ -2823,8 +2925,8 @@ body {
   }
   10%,
   16% {
-    transform: translate3d(0, -0.35rem, 0) scale(1.025);
-    box-shadow: 0 22px 32px rgba(30, 54, 45, 0.28);
+    transform: translate3d(0, -0.22rem, 0) scale(1.012);
+    box-shadow: 0 20px 30px rgba(30, 54, 45, 0.25);
   }
 }
 
