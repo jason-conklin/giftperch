@@ -131,9 +131,9 @@ const differenceBenefits = [
     icon: ShoppingCart,
   },
   {
-    title: "Stay organized",
-    description: "Save ideas and remember occasions.",
-    icon: CalendarDays,
+    title: "Remember every recipient",
+    description: "Keep their profile ready, year after year.",
+    icon: UsersRound,
   },
 ] as const;
 
