@@ -2919,8 +2919,8 @@ body {
   }
   10%,
   16% {
-    transform: translate3d(0, -0.18rem, 0) rotate(var(--gp-difference-card-rotation)) scale(1.01);
-    box-shadow: 0 20px 30px rgba(30, 54, 45, 0.25);
+    transform: translate3d(0, -0.25rem, 0) rotate(var(--gp-difference-card-rotation)) scale(1.03);
+    box-shadow: 0 24px 38px rgba(30, 54, 45, 0.28);
   }
 }
 
