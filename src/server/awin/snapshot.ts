@@ -21,6 +21,9 @@ import {
   parseAwinJsonlStream,
 } from "./feed";
 import {
+  getConfiguredLegacyAwinFeedId,
+} from "./advertisers";
+import {
   normalizeAwinLegacyProduct,
   parseAwinLegacyCsvGzipStream,
 } from "./legacyFeed";
@@ -50,6 +53,7 @@ export type AwinSnapshotMetadata = {
   httpStatus: number;
   contentType: string | null;
   snapshotFile: string;
+  legacyFeedId?: string;
   inspection: FeedInspection;
 };
 
@@ -59,23 +63,43 @@ function snapshotFormat(metadata: AwinSnapshotMetadata): AwinSnapshotFormat {
 
 function normalizerForSnapshotFormat(
   format: AwinSnapshotFormat,
+  legacyFeedId?: string,
 ): AwinProductNormalizer | undefined {
-  return format === "legacy-csv-gzip" ? normalizeAwinLegacyProduct : undefined;
+  if (format !== "legacy-csv-gzip") return undefined;
+  return (record, options) =>
+    normalizeAwinLegacyProduct(record, {
+      ...options,
+      expectedLegacyFeedId: legacyFeedId,
+    });
 }
 
 export function getAwinSnapshotNormalizer(
   metadata: AwinSnapshotMetadata,
 ): AwinProductNormalizer | undefined {
-  return normalizerForSnapshotFormat(snapshotFormat(metadata));
+  return normalizerForSnapshotFormat(
+    snapshotFormat(metadata),
+    metadata.legacyFeedId,
+  );
 }
 
 function parseSnapshotRecords(
   stream: ReadableStream<Uint8Array>,
   format: AwinSnapshotFormat,
+  legacyFeedId?: string,
 ): AsyncGenerator<unknown> {
   return format === "legacy-csv-gzip"
-    ? parseAwinLegacyCsvGzipStream(stream)
+    ? parseAwinLegacyCsvGzipStream(stream, { expectedFeedId: legacyFeedId })
     : parseAwinJsonlStream(stream);
+}
+
+function requiredLegacyFeedId(context: Pick<AwinImportContext, "advertiserId" | "locale">): string {
+  const feedId = getConfiguredLegacyAwinFeedId(context);
+  if (!feedId) {
+    throw new Error(
+      `No configured Legacy Awin feed ID exists for advertiser ${context.advertiserId}.`,
+    );
+  }
+  return feedId;
 }
 
 export function snapshotMetadataPath(snapshotPath: string): string {
@@ -236,6 +260,7 @@ export async function createAndValidateAwinLegacySnapshot(options: {
   workspace?: string;
   now?: Date;
 }): Promise<AwinSnapshotMetadata> {
+  const legacyFeedId = requiredLegacyFeedId(options.context);
   const sourcePath = assertSnapshotOutsideWorkspace(
     options.sourcePath,
     options.workspace,
@@ -285,8 +310,11 @@ export async function createAndValidateAwinLegacySnapshot(options: {
       inspectAwinProductFeed({
         advertiserId: options.context.advertiserId,
         locale: options.context.locale,
-        records: parseAwinLegacyCsvGzipStream(fileWebStream(sourcePath)),
+        records: parseAwinLegacyCsvGzipStream(fileWebStream(sourcePath), {
+          expectedFeedId: legacyFeedId,
+        }),
         normalizeProduct: normalizeAwinLegacyProduct,
+        expectedLegacyFeedId: legacyFeedId,
       }),
     ]);
     if (fileResult.status === "rejected") throw fileResult.reason;
@@ -300,6 +328,8 @@ export async function createAndValidateAwinLegacySnapshot(options: {
       provider: AWIN_PROVIDER,
       publisherId: options.context.publisherId,
       advertiserId: options.context.advertiserId,
+      // Legacy CSV language values are not reliable; locale is the trusted
+      // configured import scope and is checked again at import time.
       locale: options.context.locale,
       downloadedAt: now.toISOString(),
       validatedAt: now.toISOString(),
@@ -308,6 +338,7 @@ export async function createAndValidateAwinLegacySnapshot(options: {
       httpStatus: 200,
       contentType: "application/gzip",
       snapshotFile: path.basename(outputPath),
+      legacyFeedId,
       inspection: inspectionResult.value,
     };
 
@@ -460,11 +491,26 @@ export async function validateAwinSnapshot(options: {
   }
 
   const format = snapshotFormat(metadata as AwinSnapshotMetadata);
+  const expectedLegacyFeedId =
+    format === "legacy-csv-gzip"
+      ? requiredLegacyFeedId(options.expectedContext)
+      : undefined;
+  if (
+    expectedLegacyFeedId &&
+    metadata.legacyFeedId !== expectedLegacyFeedId
+  ) {
+    throw new Error("Awin Legacy snapshot feed identity does not match configuration.");
+  }
   const inspection = await inspectAwinProductFeed({
     advertiserId: metadata.advertiserId,
     locale: metadata.locale,
-    records: parseSnapshotRecords(fileWebStream(snapshotPath), format),
-    normalizeProduct: normalizerForSnapshotFormat(format),
+    records: parseSnapshotRecords(
+      fileWebStream(snapshotPath),
+      format,
+      expectedLegacyFeedId,
+    ),
+    normalizeProduct: normalizerForSnapshotFormat(format, expectedLegacyFeedId),
+    expectedLegacyFeedId,
   });
   if (!isDeepStrictEqual(inspection, metadata.inspection)) {
     throw new Error("Awin snapshot validation results do not match metadata.");
@@ -498,6 +544,9 @@ export async function* readValidatedSnapshotRecords(
   for await (const record of parseSnapshotRecords(
     checkedStream,
     snapshotFormat(metadata),
+    snapshotFormat(metadata) === "legacy-csv-gzip"
+      ? requiredLegacyFeedId(metadata)
+      : undefined,
   )) {
     yield record;
   }

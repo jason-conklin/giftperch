@@ -65,6 +65,26 @@ export function isApprovedAwinAdvertiserId(advertiserId: string): boolean {
   return APPROVED_AWIN_ADVERTISER_IDS.has(advertiserId.trim());
 }
 
+export function getConfiguredLegacyAwinFeedId(options: {
+  advertiserId: string;
+  locale: string;
+}): string | null {
+  const advertiser: AwinAdvertiserConfig | undefined = AWIN_ADVERTISERS.find(
+    (candidate) =>
+      candidate.advertiserId === options.advertiserId &&
+      candidate.locale === options.locale,
+  );
+  if (advertiser?.feed?.format !== "legacy-csv-gzip") return null;
+
+  const feedId = advertiser.feed.feedId?.trim();
+  if (!feedId || !/^\d+$/.test(feedId)) {
+    throw new Error(
+      `Legacy Awin feed ID is invalid for ${advertiser.displayName}.`,
+    );
+  }
+  return feedId;
+}
+
 export const AWIN_ADVERTISERS = [
   {
     key: DEFAULT_AWIN_ADVERTISER_KEY,

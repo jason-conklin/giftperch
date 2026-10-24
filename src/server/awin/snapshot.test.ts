@@ -123,13 +123,14 @@ test("Legacy gzip snapshots validate and import through the existing staged impo
       "aw_deep_link", "product_name", "aw_product_id", "merchant_image_url",
       "description", "merchant_category", "search_price", "merchant_name",
       "merchant_id", "aw_image_url", "currency", "merchant_deep_link",
-      "in_stock", "is_for_sale", "stock_status",
+      "in_stock", "is_for_sale", "stock_status", "data_feed_id",
     ];
     const values = [
       "https://www.awin1.com/cread.php?awinmid=95201", "Custom Photo Mug",
       "giftlab-1", "https://images.example.test/mug.jpg", "A photo mug", "Gifts",
       "19.95", "Giftlab", "95201", "https://images.example.test/mug.jpg", "USD",
       "https://giftlab.example.test/mug", "1", "1", "instock",
+      "105668",
     ];
     await writeFile(sourcePath, gzipSync(`${headers.join(",")}\n${values.map((value) => `\"${value}\"`).join(",")}\n`));
     const giftlabContext = { ...context, advertiserId: "95201" };
@@ -141,6 +142,7 @@ test("Legacy gzip snapshots validate and import through the existing staged impo
       now: new Date("2026-10-24T12:00:00.000Z"),
     });
     assert.equal(metadata.format, "legacy-csv-gzip");
+    assert.equal(metadata.legacyFeedId, "105668");
     assert.equal(metadata.inspection.validProducts, 1);
     const validated = await validateAwinSnapshot({
       snapshotPath,
@@ -175,6 +177,60 @@ test("Legacy gzip snapshots validate and import through the existing staged impo
     });
     assert.equal(result.activatedProducts, 1);
     assert.equal(staged[0]?.externalProductId, "giftlab-1");
+  });
+});
+
+test("Legacy snapshot validation rejects missing or mismatched feed identity metadata", async () => {
+  await withTempDirectory(async (directory) => {
+    const sourcePath = path.join(directory, "source.csv.gz");
+    const snapshotPath = path.join(directory, "giftlab.csv.gz");
+    const headers = [
+      "aw_deep_link", "product_name", "aw_product_id", "merchant_image_url",
+      "description", "merchant_category", "search_price", "merchant_name",
+      "merchant_id", "aw_image_url", "currency", "merchant_deep_link",
+      "in_stock", "is_for_sale", "stock_status", "data_feed_id",
+    ];
+    const values = [
+      "https://www.awin1.com/cread.php?awinmid=95201", "Custom Photo Mug",
+      "giftlab-1", "https://images.example.test/mug.jpg", "A photo mug", "Gifts",
+      "19.95", "Giftlab", "95201", "https://images.example.test/mug.jpg", "USD",
+      "https://giftlab.example.test/mug", "1", "1", "instock", "105668",
+    ];
+    await writeFile(sourcePath, gzipSync(`${headers.join(",")}\n${values.map((value) => `\"${value}\"`).join(",")}\n`));
+    const giftlabContext = { ...context, advertiserId: "95201" };
+    await createAndValidateAwinLegacySnapshot({
+      context: giftlabContext,
+      sourcePath,
+      outputPath: snapshotPath,
+      workspace: path.join(directory, "workspace"),
+      now: new Date("2026-10-24T12:00:00.000Z"),
+    });
+    const metadataPath = snapshotMetadataPath(snapshotPath);
+    const metadata = JSON.parse(await readFile(metadataPath, "utf8")) as Record<string, unknown>;
+
+    delete metadata.legacyFeedId;
+    await writeFile(metadataPath, `${JSON.stringify(metadata)}\n`);
+    await assert.rejects(
+      validateAwinSnapshot({
+        snapshotPath,
+        expectedContext: giftlabContext,
+        workspace: path.join(directory, "workspace"),
+        now: new Date("2026-10-24T13:00:00.000Z"),
+      }),
+      /feed identity does not match configuration/,
+    );
+
+    metadata.legacyFeedId = "999999";
+    await writeFile(metadataPath, `${JSON.stringify(metadata)}\n`);
+    await assert.rejects(
+      validateAwinSnapshot({
+        snapshotPath,
+        expectedContext: giftlabContext,
+        workspace: path.join(directory, "workspace"),
+        now: new Date("2026-10-24T13:00:00.000Z"),
+      }),
+      /feed identity does not match configuration/,
+    );
   });
 });
 test("snapshot validation rejects checksum mismatches", async () => {

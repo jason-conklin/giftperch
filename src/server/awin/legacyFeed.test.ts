@@ -25,6 +25,7 @@ const headers = [
   "in_stock",
   "is_for_sale",
   "stock_status",
+  "data_feed_id",
 ];
 
 function csvRow(values: Record<string, string>): string {
@@ -51,6 +52,7 @@ function record(overrides: Record<string, string> = {}) {
     in_stock: "1",
     is_for_sale: "1",
     stock_status: "instock",
+    data_feed_id: "105668",
     ...overrides,
   };
 }
@@ -62,7 +64,9 @@ function gzipStream(text: string): ReadableStream<Uint8Array> {
 test("streams gzip Legacy CSV records with BOM, commas, and embedded newlines", async () => {
   const source = `\uFEFF${headers.join(",")}\n${csvRow(record())}\n`;
   const rows = [];
-  for await (const row of parseAwinLegacyCsvGzipStream(gzipStream(source))) {
+  for await (const row of parseAwinLegacyCsvGzipStream(gzipStream(source), {
+    expectedFeedId: "105668",
+  })) {
     rows.push(row);
   }
   assert.equal(rows.length, 1);
@@ -75,6 +79,7 @@ test("validates Legacy required columns and malformed gzip input", async () => {
     async () => {
       for await (const _row of parseAwinLegacyCsvGzipStream(
         gzipStream("aw_product_id,product_name\n1,Necklace\n"),
+        { expectedFeedId: "105668" },
       )) {
         void _row;
       }
@@ -93,11 +98,63 @@ test("validates Legacy required columns and malformed gzip input", async () => {
   );
 });
 
+test("enforces the configured Legacy feed identity for every row", async () => {
+  const source = [
+    headers.join(","),
+    csvRow(record()),
+    csvRow(record({ aw_product_id: "95201-2", data_feed_id: "999999" })),
+  ].join("\n");
+
+  await assert.rejects(
+    async () => {
+      for await (const _row of parseAwinLegacyCsvGzipStream(gzipStream(source), {
+        expectedFeedId: "105668",
+      })) {
+        void _row;
+      }
+    },
+    /legacy feed mismatch/,
+  );
+
+  for (const [feedId, expectedMessage] of [
+    ["", /missing legacy feed id/],
+    ["not-a-feed", /invalid legacy feed id/],
+  ] as const) {
+    await assert.rejects(
+      async () => {
+        for await (const _row of parseAwinLegacyCsvGzipStream(
+          gzipStream(`${headers.join(",")}\n${csvRow(record({ data_feed_id: feedId }))}\n`),
+          { expectedFeedId: "105668" },
+        )) {
+          void _row;
+        }
+      },
+      expectedMessage,
+    );
+  }
+
+  const headersWithoutFeedId = headers.filter(
+    (header) => header !== "data_feed_id",
+  );
+  await assert.rejects(
+    async () => {
+      for await (const _row of parseAwinLegacyCsvGzipStream(
+        gzipStream(`${headersWithoutFeedId.join(",")}\n`),
+        { expectedFeedId: "105668" },
+      )) {
+        void _row;
+      }
+    },
+    /missing required columns: data_feed_id/,
+  );
+});
+
 test("normalizes Legacy identity, price, availability, and optional descriptions", () => {
   const normalized = normalizeAwinLegacyProduct(record(), {
     advertiserId: "95201",
     locale: "en_US",
     importedAt: "2026-10-24T00:00:00.000Z",
+    expectedLegacyFeedId: "105668",
   });
   assert.equal(normalized.ok, true);
   if (normalized.ok) {
@@ -113,6 +170,7 @@ test("normalizes Legacy identity, price, availability, and optional descriptions
       advertiserId: "95201",
       locale: "en_US",
       importedAt: "2026-10-24T00:00:00.000Z",
+      expectedLegacyFeedId: "105668",
     }),
     { ok: false, reason: "advertiser_mismatch" },
   );
@@ -121,6 +179,7 @@ test("normalizes Legacy identity, price, availability, and optional descriptions
       advertiserId: "95201",
       locale: "en_US",
       importedAt: "2026-10-24T00:00:00.000Z",
+      expectedLegacyFeedId: "105668",
     }),
     { ok: false, reason: "invalid_availability" },
   );
@@ -129,8 +188,18 @@ test("normalizes Legacy identity, price, availability, and optional descriptions
       advertiserId: "95201",
       locale: "en_US",
       importedAt: "2026-10-24T00:00:00.000Z",
+      expectedLegacyFeedId: "105668",
     }),
     { ok: false, reason: "invalid_affiliate_url" },
+  );
+  assert.deepEqual(
+    normalizeAwinLegacyProduct(record({ data_feed_id: "wrong" }), {
+      advertiserId: "95201",
+      locale: "en_US",
+      importedAt: "2026-10-24T00:00:00.000Z",
+      expectedLegacyFeedId: "105668",
+    }),
+    { ok: false, reason: "invalid_legacy_feed_id" },
   );
 });
 

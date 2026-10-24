@@ -20,7 +20,13 @@ export const LEGACY_AWIN_REQUIRED_COLUMNS = [
   "is_for_sale",
 ] as const;
 
+export const LEGACY_AWIN_FEED_ID_COLUMN = "data_feed_id";
+
 export type AwinLegacyCsvRecord = Record<string, string>;
+
+export type LegacyFeedIdentityOptions = {
+  expectedFeedId?: string;
+};
 
 type CsvParserState = "unquoted" | "quoted" | "after-quote";
 
@@ -28,6 +34,25 @@ function normalizeRequiredText(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const text = value.trim();
   return text.length > 0 ? text : null;
+}
+
+function normalizeExpectedFeedId(value: string | undefined): string | null {
+  if (value === undefined) return null;
+  const feedId = value.trim();
+  if (!/^\d+$/.test(feedId)) {
+    throw new AwinFeedError("Expected Awin Legacy feed ID is invalid.");
+  }
+  return feedId;
+}
+
+function legacyFeedIdError(
+  feedId: string | undefined,
+  expectedFeedId: string,
+): "missing_legacy_feed_id" | "invalid_legacy_feed_id" | "legacy_feed_mismatch" | null {
+  const normalized = feedId?.trim() ?? "";
+  if (!normalized) return "missing_legacy_feed_id";
+  if (!/^\d+$/.test(normalized)) return "invalid_legacy_feed_id";
+  return normalized === expectedFeedId ? null : "legacy_feed_mismatch";
 }
 
 function normalizeHttpsUrl(value: unknown): string | null {
@@ -180,9 +205,11 @@ async function* parseCsvRows(
 
 export async function* parseAwinLegacyCsvStream(
   stream: ReadableStream<Uint8Array>,
+  options: LegacyFeedIdentityOptions = {},
 ): AsyncGenerator<AwinLegacyCsvRecord> {
   let headers: string[] | null = null;
   let rowNumber = 0;
+  const expectedFeedId = normalizeExpectedFeedId(options.expectedFeedId);
 
   for await (const row of parseCsvRows(stream)) {
     rowNumber += 1;
@@ -192,7 +219,10 @@ export async function* parseAwinLegacyCsvStream(
         index === 0 ? value.replace(/^\uFEFF/, "").trim() : value.trim(),
       );
       const available = new Set(headers);
-      const missing = LEGACY_AWIN_REQUIRED_COLUMNS.filter(
+      const requiredColumns = expectedFeedId
+        ? [...LEGACY_AWIN_REQUIRED_COLUMNS, LEGACY_AWIN_FEED_ID_COLUMN]
+        : LEGACY_AWIN_REQUIRED_COLUMNS;
+      const missing = requiredColumns.filter(
         (column) => !available.has(column),
       );
       if (missing.length > 0) {
@@ -207,7 +237,21 @@ export async function* parseAwinLegacyCsvStream(
         `Awin Legacy CSV row ${rowNumber} has ${row.length} fields; expected ${headers.length}.`,
       );
     }
-    yield Object.fromEntries(headers.map((header, index) => [header, row[index]]));
+    const record = Object.fromEntries(
+      headers.map((header, index) => [header, row[index]]),
+    );
+    if (expectedFeedId) {
+      const reason = legacyFeedIdError(
+        record[LEGACY_AWIN_FEED_ID_COLUMN],
+        expectedFeedId,
+      );
+      if (reason) {
+        throw new AwinFeedError(
+          `Awin Legacy CSV row ${rowNumber} has ${reason.replaceAll("_", " ")}.`,
+        );
+      }
+    }
+    yield record;
   }
 
   if (!headers) throw new AwinFeedError("Awin Legacy CSV is empty.");
@@ -215,12 +259,16 @@ export async function* parseAwinLegacyCsvStream(
 
 export async function* parseAwinLegacyCsvGzipStream(
   stream: ReadableStream<Uint8Array>,
+  options: LegacyFeedIdentityOptions = {},
 ): AsyncGenerator<AwinLegacyCsvRecord> {
   const source = Readable.fromWeb(stream as never);
   const gunzip = createGunzip();
   const decompressed = source.pipe(gunzip);
   try {
-    yield* parseAwinLegacyCsvStream(Readable.toWeb(decompressed) as ReadableStream<Uint8Array>);
+    yield* parseAwinLegacyCsvStream(
+      Readable.toWeb(decompressed) as ReadableStream<Uint8Array>,
+      options,
+    );
   } catch (error) {
     if (error instanceof AwinFeedError) throw error;
     throw new AwinFeedError("Awin Legacy CSV gzip decompression failed.");
@@ -232,7 +280,12 @@ export async function* parseAwinLegacyCsvGzipStream(
 
 export function normalizeAwinLegacyProduct(
   record: unknown,
-  options: { advertiserId: string; locale: string; importedAt: string },
+  options: {
+    advertiserId: string;
+    locale: string;
+    importedAt: string;
+    expectedLegacyFeedId?: string;
+  },
 ): NormalizeResult {
   if (
     typeof record !== "object" ||
@@ -243,9 +296,17 @@ export function normalizeAwinLegacyProduct(
     return { ok: false, reason: "record_not_object" };
   }
   const legacyRecord = record as AwinLegacyCsvRecord;
+  const expectedFeedId = normalizeExpectedFeedId(options.expectedLegacyFeedId);
   const merchantId = normalizeRequiredText(legacyRecord.merchant_id);
   if (merchantId !== options.advertiserId) {
     return { ok: false, reason: "advertiser_mismatch" };
+  }
+  if (expectedFeedId) {
+    const reason = legacyFeedIdError(
+      legacyRecord[LEGACY_AWIN_FEED_ID_COLUMN],
+      expectedFeedId,
+    );
+    if (reason) return { ok: false, reason };
   }
   const externalProductId = normalizeRequiredText(legacyRecord.aw_product_id);
   const title = normalizeRequiredText(legacyRecord.product_name);

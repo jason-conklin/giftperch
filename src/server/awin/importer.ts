@@ -17,6 +17,7 @@ export type AwinProductNormalizer = (
     advertiserId: string;
     locale: string;
     importedAt: string;
+    expectedLegacyFeedId?: string;
   },
 ) => ReturnType<typeof normalizeAwinProduct>;
 
@@ -88,6 +89,10 @@ export async function runAwinProductImport(options: {
         advertiserId: options.context.advertiserId,
         locale: options.context.locale,
         importedAt,
+        expectedLegacyFeedId:
+          advertiser.feed?.format === "legacy-csv-gzip"
+            ? advertiser.feed.feedId
+            : undefined,
       });
       if (!normalized.ok) {
         stats.skippedProducts += 1;
@@ -132,6 +137,7 @@ export async function inspectAwinProductFeed(options: {
   records: AsyncIterable<unknown>;
   importedAt?: string;
   normalizeProduct?: AwinProductNormalizer;
+  expectedLegacyFeedId?: string;
 }): Promise<FeedInspection> {
   const importedAt = options.importedAt ?? new Date().toISOString();
   const normalizeProduct = options.normalizeProduct ?? normalizeAwinProduct;
@@ -155,6 +161,7 @@ export async function inspectAwinProductFeed(options: {
       advertiserId: options.advertiserId,
       locale: options.locale,
       importedAt,
+      expectedLegacyFeedId: options.expectedLegacyFeedId,
     });
     if (normalized.ok) {
       stats.validProducts += 1;
