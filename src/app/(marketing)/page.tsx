@@ -130,7 +130,7 @@ const differenceBenefits = [
   {
     title: "Made personal",
     description: "Tailored to their interests and history.",
-    icon: UserRound,
+    icon: UsersRound,
   },
   {
     title: "Remember every recipient",
