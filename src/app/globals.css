@@ -1901,31 +1901,10 @@ body {
     min-width: 0;
     min-height: clamp(19.5rem, 25vw, 23rem);
     isolation: isolate;
-  }
-
-  .gp-difference-product-stack::before,
-  .gp-difference-product-stack::after {
-    position: absolute;
-    z-index: 0;
-    width: 1.4rem;
-    height: 0.8rem;
-    border-top: 2px solid rgba(207, 151, 36, 0.88);
-    content: "";
-    pointer-events: none;
-  }
-
-  .gp-difference-product-stack::before {
-    top: 0.2rem;
-    right: 6%;
-    transform: rotate(28deg);
-    box-shadow: 0.55rem 0.42rem 0 -1px rgba(207, 151, 36, 0.82);
-  }
-
-  .gp-difference-product-stack::after {
-    right: 42%;
-    bottom: 0.35rem;
-    transform: rotate(-34deg);
-    box-shadow: 0.55rem -0.38rem 0 -1px rgba(207, 151, 36, 0.72);
+    --gp-difference-mom-width: 46%;
+    --gp-difference-sofi-width: 31%;
+    --gp-difference-nick-width: 28%;
+    --gp-difference-edge-overlap: clamp(0.75rem, 1.15vw, 1.1rem);
   }
 
   .gp-difference-product-card {
@@ -1944,9 +1923,9 @@ body {
     will-change: transform, box-shadow;
   }
 
-  .gp-difference-product-card--mom { z-index: 3; top: 0.55rem; left: 0; width: 46%; animation-delay: -1.2s; }
-  .gp-difference-product-card--sofi { z-index: 2; top: 2.15rem; left: 48%; width: 31%; animation-delay: -4.7s; }
-  .gp-difference-product-card--nick { z-index: 1; top: 4.4rem; right: 0.65rem; width: 27%; --gp-difference-card-rotation: 5deg; animation-delay: -8.2s; }
+  .gp-difference-product-card--mom { z-index: 3; top: 0.55rem; left: 0; width: var(--gp-difference-mom-width); animation-delay: -1.2s; }
+  .gp-difference-product-card--sofi { z-index: 2; top: 1.9rem; left: calc(var(--gp-difference-mom-width) - var(--gp-difference-edge-overlap)); width: var(--gp-difference-sofi-width); --gp-difference-card-rotation: -3deg; transform-origin: 10% 50%; animation-delay: -4.7s; }
+  .gp-difference-product-card--nick { z-index: 1; top: 4rem; right: 1rem; width: var(--gp-difference-nick-width); --gp-difference-card-rotation: 5deg; transform-origin: 88% 50%; animation-delay: -8.2s; }
 
   .gp-difference-product-recipient {
     display: grid;
@@ -2783,11 +2762,6 @@ body {
     display: grid;
     min-height: 0;
     gap: 0.7rem;
-  }
-
-  .gp-difference-product-stack::before,
-  .gp-difference-product-stack::after {
-    display: none;
   }
 
   .gp-difference-product-card,
