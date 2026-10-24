@@ -1924,7 +1924,7 @@ body {
   }
 
   .gp-difference-product-card--mom { z-index: 3; top: 0.55rem; left: 0; width: var(--gp-difference-mom-width); animation-delay: -1.2s; }
-  .gp-difference-product-card--sofi { z-index: 2; top: 1.9rem; left: calc(var(--gp-difference-mom-width) - var(--gp-difference-edge-overlap)); width: var(--gp-difference-sofi-width); --gp-difference-card-rotation: -3deg; transform-origin: 10% 50%; animation-delay: -4.7s; }
+  .gp-difference-product-card--sofi { z-index: 2; top: 1.9rem; left: calc(var(--gp-difference-mom-width) - var(--gp-difference-edge-overlap)); width: var(--gp-difference-sofi-width); --gp-difference-card-rotation: 3deg; transform-origin: 10% 50%; animation-delay: -4.7s; }
   .gp-difference-product-card--nick { z-index: 1; top: 4rem; right: 1rem; width: var(--gp-difference-nick-width); --gp-difference-card-rotation: 5deg; transform-origin: 88% 50%; animation-delay: -8.2s; }
 
   .gp-difference-product-recipient {
