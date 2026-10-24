@@ -31,3 +31,40 @@ test("Product Tour preview paths resolve to the supplied local assets", () => {
     }
   }
 });
+
+test("Product Tour uses the intended illustrative product names", () => {
+  assert.deepEqual(
+    Object.fromEntries(
+      PRODUCT_TOUR_PROFILES.map((profile) => [
+        profile.id,
+        profile.ideas.map((idea) => idea.title),
+      ]),
+    ),
+    {
+      maya: [
+        "Solenne Amber Glow Candle",
+        "Northline Everyday Backpack",
+        "Lumiere Radiance Skincare Set",
+        "MiraBelle Insulated Tumbler",
+        "Veloura Essential Brush Set",
+        "Hearthvale Cozy Knit Throw",
+      ],
+      mocha: [
+        "Pawlio Squeaky Play Balls",
+        "PurrNest Cloud Donut Bed",
+        "Wagwell Treat Puzzle",
+        "TrailPup Adventure Harness",
+        "Bark & Bloom Gourmet Bites",
+        "TrailPup Travel Water Bottle",
+      ],
+      dad: [
+        "GrillForge Digital Thermometer",
+        "Roastwell Signature Coffee Sampler",
+        "Sonivo Portable Bluetooth Speaker",
+        "Castline Tackle Organizer",
+        "Oakmont Classic Leather Wallet",
+        "GrillForge BBQ Tool Set",
+      ],
+    },
+  );
+});
