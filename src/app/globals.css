@@ -936,11 +936,14 @@ body {
 
   .gp-tour-demo-content {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
     gap: 0.65rem;
     padding: 0.8rem;
   }
 
   .gp-tour-demo-section {
+    min-width: 0;
     border-radius: 1rem;
     transition: box-shadow 220ms ease, transform 220ms ease;
   }
@@ -950,6 +953,7 @@ body {
   }
 
   .gp-tour-profile {
+    min-width: 0;
     padding: 1rem;
     border: 1px solid rgba(201, 145, 36, 0.16);
     border-radius: 1rem;
@@ -1090,6 +1094,7 @@ body {
   }
 
   .gp-tour-loader {
+    min-width: 0;
     padding: 0.75rem 1rem;
     border: 1px solid rgba(201, 145, 36, 0.18);
     border-radius: 1rem;
@@ -1122,6 +1127,7 @@ body {
   }
 
   .gp-tour-ideas {
+    min-width: 0;
     padding: 0.8rem;
     border: 1px solid rgba(15, 61, 62, 0.1);
     border-radius: 1rem;
@@ -1130,6 +1136,7 @@ body {
 
   .gp-tour-ideas-stage {
     position: relative;
+    min-width: 0;
     margin-top: 0.55rem;
   }
 
@@ -1152,12 +1159,15 @@ body {
 
   .gp-tour-carousel-frame {
     position: relative;
+    min-width: 0;
     margin-top: 0.55rem;
   }
 
   .gp-tour-carousel-viewport {
     --gp-tour-card-gap: 0.55rem;
     display: flex;
+    width: 100%;
+    min-width: 0;
     gap: var(--gp-tour-card-gap);
     overflow-x: auto;
     scrollbar-width: none;

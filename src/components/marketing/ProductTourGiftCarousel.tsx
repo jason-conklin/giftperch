@@ -10,8 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { ProductTourIdea, ProductTourProfile } from "./productTourDemoData";
-
-const AUTO_SCROLL_PIXELS_PER_SECOND = 14;
+import { advanceProductTourCarouselScroll } from "./productTourCarouselMotion";
 const MANUAL_PAUSE_MS = 3_500;
 
 function cardKey(profile: ProductTourProfile, idea: ProductTourIdea) {
@@ -31,6 +30,7 @@ export function ProductTourGiftCarousel({
   const frameRef = useRef<number | null>(null);
   const previousFrameRef = useRef<number | null>(null);
   const resetWidthRef = useRef(0);
+  const hasCenteredLoopRef = useRef(false);
   const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
   const pointerStartRef = useRef({ x: 0, scrollLeft: 0 });
@@ -46,12 +46,15 @@ export function ProductTourGiftCarousel({
     if (!viewport) return;
 
     const firstSet = viewport.querySelector<HTMLElement>("[data-tour-copy='0']");
-    const width = firstSet?.offsetWidth ?? 0;
-    if (!width) return;
+    const secondSet = viewport.querySelector<HTMLElement>("[data-tour-copy='1']");
+    const cycleWidth =
+      firstSet && secondSet ? secondSet.offsetLeft - firstSet.offsetLeft : 0;
+    if (!cycleWidth) return;
 
-    resetWidthRef.current = width;
-    if (center) {
-      viewport.scrollLeft = width;
+    resetWidthRef.current = cycleWidth;
+    if (center || !hasCenteredLoopRef.current) {
+      viewport.scrollLeft = cycleWidth;
+      hasCenteredLoopRef.current = true;
     }
   }, []);
 
@@ -85,9 +88,11 @@ export function ProductTourGiftCarousel({
       if (document.visibilityState === "visible" && now >= resumeAtRef.current) {
         const width = resetWidthRef.current;
         if (width > 0) {
-          viewport.scrollLeft += (AUTO_SCROLL_PIXELS_PER_SECOND * elapsed) / 1000;
-          if (viewport.scrollLeft >= width * 2) viewport.scrollLeft -= width;
-          if (viewport.scrollLeft <= 0) viewport.scrollLeft += width;
+          viewport.scrollLeft = advanceProductTourCarouselScroll({
+            scrollLeft: viewport.scrollLeft,
+            elapsedMs: elapsed,
+            cycleWidth: width,
+          });
         }
       }
 
