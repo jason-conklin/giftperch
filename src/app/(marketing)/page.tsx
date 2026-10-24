@@ -820,7 +820,10 @@ export default function MarketingHome() {
                     <li>A cozy blanket</li>
                     <li>A nice water bottle</li>
                   </ol>
-                  <p className="gp-difference-chat-note">Just basic ideas. Finding the actual gifts is up to you.</p>
+                  <p className="gp-difference-chat-note">
+                    <span>Just basic ideas.</span>
+                    <span>Finding the actual gifts is up to you.</span>
+                  </p>
                 </div>
               </div>
             </article>

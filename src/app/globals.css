@@ -1727,6 +1727,8 @@ body {
   }
 
   .gp-difference-panel--typical {
+    display: flex;
+    flex-direction: column;
     border: 1px solid rgba(97, 111, 126, 0.19);
     background: linear-gradient(145deg, rgba(251, 252, 254, 0.97), rgba(242, 244, 247, 0.96));
   }
@@ -1810,8 +1812,15 @@ body {
   }
 
   .gp-difference-chat--response {
+    flex: 1;
     margin-top: 0.9rem;
     background: rgba(249, 250, 252, 0.78);
+  }
+
+  .gp-difference-chat--response > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
   }
 
   .gp-difference-chat-icon {
@@ -1846,9 +1855,16 @@ body {
   }
 
   .gp-difference-chat-note {
-    margin-top: 1rem;
+    margin-top: auto;
+    padding-top: 0.9rem;
     color: rgba(54, 68, 84, 0.72) !important;
-    font-size: 0.88rem !important;
+    font-size: clamp(0.95rem, 1.1vw, 1rem) !important;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .gp-difference-chat-note span {
+    display: block;
   }
 
   .gp-difference-offer-body {
