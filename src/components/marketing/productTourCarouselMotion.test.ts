@@ -5,6 +5,7 @@ import {
   hasProductTourCarouselDragged,
   PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND,
   PRODUCT_TOUR_DRAG_THRESHOLD_PX,
+  shouldPauseProductTourCarouselForFocus,
   shouldAutoplayProductTourCarousel,
 } from "./productTourCarouselMotion";
 
@@ -21,6 +22,11 @@ test("recognizes deliberate carousel drags without suppressing ordinary clicks",
   assert.equal(hasProductTourCarouselDragged(-5), false);
   assert.equal(hasProductTourCarouselDragged(6), true);
   assert.equal(hasProductTourCarouselDragged(-6), true);
+});
+
+test("keeps the marquee running after pointer-originated button focus", () => {
+  assert.equal(shouldPauseProductTourCarouselForFocus(true), false);
+  assert.equal(shouldPauseProductTourCarouselForFocus(false), true);
 });
 
 test("starts the marquee only when the visible carousel is not paused", () => {

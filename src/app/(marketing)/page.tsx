@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
@@ -349,12 +348,12 @@ function ProductTourIdeasSlice({
   activeIndex,
   savedIdeas,
   onToggleSaved,
-  onViewProduct,
+  productEntryPath,
 }: {
   activeIndex: number;
   savedIdeas: ReadonlySet<string>;
   onToggleSaved: (ideaKey: string) => void;
-  onViewProduct: () => void;
+  productEntryPath: string;
 }) {
   const profile = PRODUCT_TOUR_PROFILES[activeIndex];
 
@@ -366,7 +365,7 @@ function ProductTourIdeasSlice({
           profile={profile}
           savedIdeas={savedIdeas}
           onToggleSaved={onToggleSaved}
-          onViewProduct={onViewProduct}
+          productEntryPath={productEntryPath}
         />
       </div>
     </div>
@@ -492,7 +491,6 @@ function ProductTourTimeline({
 }
 
 function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
-  const router = useRouter();
   const { status } = useSupabaseSession();
   const [activeIndex, setActiveIndex] = useState(0);
   const [manualPauseUntil, setManualPauseUntil] = useState(0);
@@ -574,9 +572,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
     });
   }, []);
 
-  const handleViewProduct = useCallback(() => {
-    router.push(getProductTourEntryPath(status));
-  }, [router, status]);
+  const productEntryPath = getProductTourEntryPath(status);
 
   return (
     <div className="gp-tour-layout">
@@ -635,7 +631,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
                 activeIndex={activeIndex}
                 savedIdeas={savedIdeas}
                 onToggleSaved={handleToggleSaved}
-                onViewProduct={handleViewProduct}
+                productEntryPath={productEntryPath}
               />
             </div>
           </div>

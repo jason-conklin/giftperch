@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import {
   useCallback,
@@ -14,6 +15,7 @@ import type { ProductTourIdea, ProductTourProfile } from "./productTourDemoData"
 import {
   getProductTourCarouselDurationMs,
   hasProductTourCarouselDragged,
+  shouldPauseProductTourCarouselForFocus,
   shouldAutoplayProductTourCarousel,
 } from "./productTourCarouselMotion";
 const MANUAL_PAUSE_MS = 3_500;
@@ -26,18 +28,19 @@ export function ProductTourGiftCarousel({
   profile,
   savedIdeas,
   onToggleSaved,
-  onViewProduct,
+  productEntryPath,
 }: {
   profile: ProductTourProfile;
   savedIdeas: ReadonlySet<string>;
   onToggleSaved: (ideaKey: string) => void;
-  onViewProduct: () => void;
+  productEntryPath: string;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const hasCenteredLoopRef = useRef(false);
   const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
+  const pointerInitiatedFocusRef = useRef(false);
   const pointerStartRef = useRef({ x: 0, scrollLeft: 0 });
   const manualPauseTimerRef = useRef<number | null>(null);
   const [isFocusWithin, setIsFocusWithin] = useState(false);
@@ -126,6 +129,7 @@ export function ProductTourGiftCarousel({
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     const viewport = viewportRef.current;
     if (!viewport || event.button !== 0) return;
+    pointerInitiatedFocusRef.current = true;
     pointerStartRef.current = { x: event.clientX, scrollLeft: viewport.scrollLeft };
     draggingRef.current = false;
     viewport.setPointerCapture(event.pointerId);
@@ -148,10 +152,19 @@ export function ProductTourGiftCarousel({
     if (viewport?.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
     if (draggingRef.current) {
       pauseAfterManualAction();
-      window.setTimeout(() => { suppressClickRef.current = false; }, 0);
     }
     draggingRef.current = false;
     setIsDragging(false);
+    window.setTimeout(() => {
+      pointerInitiatedFocusRef.current = false;
+      suppressClickRef.current = false;
+    }, 0);
+  };
+
+  const handleFocusCapture = () => {
+    if (shouldPauseProductTourCarouselForFocus(pointerInitiatedFocusRef.current)) {
+      setIsFocusWithin(true);
+    }
   };
 
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -191,7 +204,7 @@ export function ProductTourGiftCarousel({
           <p>{idea.description}</p>
           <div className="gp-tour-carousel-footer">
             <strong>{idea.price}</strong>
-            <button type="button" className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1} onClick={() => { pauseAfterManualAction(); onViewProduct(); }}>View Product</button>
+            <Link href={productEntryPath} className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1}>View Product</Link>
           </div>
         </div>
       </article>
@@ -206,7 +219,7 @@ export function ProductTourGiftCarousel({
       </div>
       <div className="gp-tour-carousel-frame">
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--left" aria-label="Show previous sample gift ideas" onClick={() => moveByCard(-1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronLeft aria-hidden="true" /></button>
-        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onDragStart={(event) => event.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
+        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onFocusCapture={handleFocusCapture} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onDragStart={(event) => event.preventDefault()} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
           <div ref={trackRef} className={`gp-tour-carousel-track${cycleWidth > 0 ? " gp-tour-carousel-track--autoplay" : ""}${autoplayActive ? "" : " gp-tour-carousel-track--paused"}`} style={carouselStyle}>
             {[0, 1, 2].map((copy) => <div className="gp-tour-carousel-set" data-tour-copy={copy} key={copy}>{profile.ideas.map((idea) => renderCard(idea, copy))}</div>)}
           </div>
