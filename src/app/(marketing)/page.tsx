@@ -122,14 +122,14 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
 
 const differenceBenefits = [
   {
-    title: "Made personal",
-    description: "Tailored to their interests and history.",
-    icon: UserRound,
-  },
-  {
     title: "Real products",
     description: "Actual items with prices and links.",
     icon: ShoppingCart,
+  },
+  {
+    title: "Made personal",
+    description: "Tailored to their interests and history.",
+    icon: UserRound,
   },
   {
     title: "Remember every recipient",

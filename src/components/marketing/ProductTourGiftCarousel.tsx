@@ -239,7 +239,7 @@ export function ProductTourGiftCarousel({
     <div className="gp-tour-carousel-shell">
       <div className="gp-tour-carousel-header">
         <p className="gp-tour-panel-label">{profile.ideasLabel}</p>
-        <span>Illustrative gift ideas</span>
+        <span>Demo examples</span>
       </div>
       <div className="gp-tour-carousel-frame">
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--left" aria-label="Show previous sample gift ideas" onClick={() => moveByCard(-1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronLeft aria-hidden="true" /></button>
