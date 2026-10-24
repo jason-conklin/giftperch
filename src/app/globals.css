@@ -1511,7 +1511,7 @@ body {
     position: relative;
     z-index: 2;
     width: min(calc(100% - 2rem), 88rem);
-    padding-block: clamp(4.75rem, 7vw, 6.75rem) clamp(5.5rem, 8vw, 7.5rem);
+    padding-block: clamp(4.25rem, 6vw, 5.5rem) clamp(4.5rem, 6vw, 5.75rem);
   }
 
   .gp-comparison-heading {
@@ -1713,16 +1713,16 @@ body {
 
   .gp-difference-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.39fr) minmax(0, 0.61fr);
+    grid-template-columns: minmax(0, 0.37fr) minmax(0, 0.63fr);
     gap: clamp(1.25rem, 2.25vw, 2rem);
-    margin-top: clamp(2.5rem, 4vw, 3.75rem);
+    margin-top: clamp(2.25rem, 3vw, 3rem);
     align-items: stretch;
   }
 
   .gp-difference-panel {
     min-width: 0;
     border-radius: 1.25rem;
-    padding: clamp(1.25rem, 2.35vw, 2rem);
+    padding: clamp(1.2rem, 2.1vw, 1.85rem);
     box-shadow: 0 16px 38px rgba(55, 67, 51, 0.1);
   }
 
@@ -1899,14 +1899,14 @@ body {
   .gp-difference-product-stack {
     position: relative;
     min-width: 0;
-    min-height: clamp(21rem, 28vw, 25rem);
+    min-height: clamp(19.5rem, 25vw, 23rem);
     isolation: isolate;
   }
 
   .gp-difference-product-stack::before,
   .gp-difference-product-stack::after {
     position: absolute;
-    z-index: 4;
+    z-index: 0;
     width: 1.4rem;
     height: 0.8rem;
     border-top: 2px solid rgba(207, 151, 36, 0.88);
@@ -1915,15 +1915,15 @@ body {
   }
 
   .gp-difference-product-stack::before {
-    top: 0.55rem;
-    left: 43%;
+    top: 0.2rem;
+    right: 6%;
     transform: rotate(28deg);
     box-shadow: 0.55rem 0.42rem 0 -1px rgba(207, 151, 36, 0.82);
   }
 
   .gp-difference-product-stack::after {
-    right: 6%;
-    bottom: 1.1rem;
+    right: 42%;
+    bottom: 0.35rem;
     transform: rotate(-34deg);
     box-shadow: 0.55rem -0.38rem 0 -1px rgba(207, 151, 36, 0.72);
   }
@@ -1938,13 +1938,15 @@ body {
     border-radius: 1rem;
     background: #fff;
     box-shadow: 0 14px 25px rgba(30, 54, 45, 0.18);
+    --gp-difference-card-rotation: 0deg;
     animation: gp-difference-spotlight 10.5s ease-in-out infinite;
+    transform-origin: center center;
     will-change: transform, box-shadow;
   }
 
-  .gp-difference-product-card--mom { z-index: 3; top: 0.65rem; left: 0; width: 48%; animation-delay: -1.2s; }
-  .gp-difference-product-card--sofi { z-index: 2; top: 2.4rem; left: 46%; width: 35%; animation-delay: -4.7s; }
-  .gp-difference-product-card--nick { z-index: 1; top: 4.85rem; right: 0; width: 27%; animation-delay: -8.2s; }
+  .gp-difference-product-card--mom { z-index: 3; top: 0.55rem; left: 0; width: 46%; animation-delay: -1.2s; }
+  .gp-difference-product-card--sofi { z-index: 2; top: 2.15rem; left: 48%; width: 31%; animation-delay: -4.7s; }
+  .gp-difference-product-card--nick { z-index: 1; top: 4.4rem; right: 0.65rem; width: 27%; --gp-difference-card-rotation: 5deg; animation-delay: -8.2s; }
 
   .gp-difference-product-recipient {
     display: grid;
@@ -2427,7 +2429,7 @@ body {
   }
 
   .gp-difference-product-stack {
-    min-height: clamp(20rem, 42vw, 23rem);
+    min-height: clamp(19rem, 38vw, 21.5rem);
     margin-top: 0.35rem;
   }
 }
@@ -2801,6 +2803,7 @@ body {
     min-height: 7.5rem;
     grid-template-columns: 5.25rem minmax(0, 1fr) auto;
     grid-template-rows: auto minmax(0, 1fr);
+    --gp-difference-card-rotation: 0deg;
   }
 
   .gp-difference-product-recipient {
@@ -2920,12 +2923,12 @@ body {
   0%,
   23%,
   100% {
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0) rotate(var(--gp-difference-card-rotation)) scale(1);
     box-shadow: 0 14px 25px rgba(30, 54, 45, 0.18);
   }
   10%,
   16% {
-    transform: translate3d(0, -0.22rem, 0) scale(1.012);
+    transform: translate3d(0, -0.18rem, 0) rotate(var(--gp-difference-card-rotation)) scale(1.01);
     box-shadow: 0 20px 30px rgba(30, 54, 45, 0.25);
   }
 }
