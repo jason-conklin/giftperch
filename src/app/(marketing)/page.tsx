@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
@@ -22,7 +23,13 @@ import {
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GiftPerchHeroIntro } from "@/components/marketing/GiftPerchHeroIntro";
 import { ProductTourGiftCarousel } from "@/components/marketing/ProductTourGiftCarousel";
+import { getProductTourEntryPath } from "@/components/marketing/productTourNavigation";
+import {
+  canAutoRotateProductTourProfile,
+  normalizeProductTourProfileIndex,
+} from "@/components/marketing/productTourRotation";
 import { PRODUCT_TOUR_PROFILES } from "@/components/marketing/productTourDemoData";
+import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 
 const workflowSteps = [
   {
@@ -342,10 +349,12 @@ function ProductTourIdeasSlice({
   activeIndex,
   savedIdeas,
   onToggleSaved,
+  onViewProduct,
 }: {
   activeIndex: number;
   savedIdeas: ReadonlySet<string>;
   onToggleSaved: (ideaKey: string) => void;
+  onViewProduct: () => void;
 }) {
   const profile = PRODUCT_TOUR_PROFILES[activeIndex];
 
@@ -357,6 +366,7 @@ function ProductTourIdeasSlice({
           profile={profile}
           savedIdeas={savedIdeas}
           onToggleSaved={onToggleSaved}
+          onViewProduct={onViewProduct}
         />
       </div>
     </div>
@@ -482,8 +492,9 @@ function ProductTourTimeline({
 }
 
 function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
+  const router = useRouter();
+  const { status } = useSupabaseSession();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [manualPauseUntil, setManualPauseUntil] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     () =>
@@ -511,14 +522,15 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   }, []);
 
   useEffect(() => {
-    if (isHovered || prefersReducedMotion) {
-      clearTimer();
-      return;
-    }
-
     const now = Date.now();
-    if (manualPauseUntil > now) {
+    if (!canAutoRotateProductTourProfile({
+      manualPauseUntil,
+      now,
+      prefersReducedMotion,
+    })) {
       clearTimer();
+      if (prefersReducedMotion) return;
+
       const resumeTimer = setTimeout(
         () => setManualPauseUntil(0),
         manualPauseUntil - now,
@@ -536,14 +548,15 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       });
     }, delay);
     return () => clearTimer();
-  }, [activeIndex, clearTimer, isHovered, manualPauseUntil, prefersReducedMotion]);
+  }, [activeIndex, clearTimer, manualPauseUntil, prefersReducedMotion]);
 
   const activeStep = activeIndex % stepCount;
 
   const handleStepSelect = useCallback((stepIndex: number) => {
-    const normalizedIndex =
-      ((stepIndex % PRODUCT_TOUR_PROFILES.length) + PRODUCT_TOUR_PROFILES.length) %
-      PRODUCT_TOUR_PROFILES.length;
+    const normalizedIndex = normalizeProductTourProfileIndex(
+      stepIndex,
+      PRODUCT_TOUR_PROFILES.length,
+    );
     setActiveIndex(normalizedIndex);
     firstCycleRef.current = false;
     setManualPauseUntil(Date.now() + 8000);
@@ -561,6 +574,10 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
     });
   }, []);
 
+  const handleViewProduct = useCallback(() => {
+    router.push(getProductTourEntryPath(status));
+  }, [router, status]);
+
   return (
     <div className="gp-tour-layout">
       <div className="gp-tour-timeline-column">
@@ -572,11 +589,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       </div>
 
       <div className="gp-tour-demo-column">
-        <div
-          className="gp-tour-demo"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className="gp-tour-demo">
           <header className="gp-tour-demo-header">
             <div>
               <p className="gp-tour-demo-title">From Profile to Perfect Gift</p>
@@ -622,6 +635,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
                 activeIndex={activeIndex}
                 savedIdeas={savedIdeas}
                 onToggleSaved={handleToggleSaved}
+                onViewProduct={handleViewProduct}
               />
             </div>
           </div>

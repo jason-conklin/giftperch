@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -25,10 +25,12 @@ export function ProductTourGiftCarousel({
   profile,
   savedIdeas,
   onToggleSaved,
+  onViewProduct,
 }: {
   profile: ProductTourProfile;
   savedIdeas: ReadonlySet<string>;
   onToggleSaved: (ideaKey: string) => void;
+  onViewProduct: () => void;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -37,14 +39,12 @@ export function ProductTourGiftCarousel({
   const suppressClickRef = useRef(false);
   const pointerStartRef = useRef({ x: 0, scrollLeft: 0 });
   const manualPauseTimerRef = useRef<number | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [cycleWidth, setCycleWidth] = useState(0);
-  const [selectedIdea, setSelectedIdea] = useState<ProductTourIdea | null>(null);
 
   const updateLoopMetrics = useCallback((center = false) => {
     const viewport = viewportRef.current;
@@ -101,15 +101,6 @@ export function ProductTourGiftCarousel({
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!selectedIdea) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedIdea(null);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIdea]);
 
   const pauseAfterManualAction = useCallback(() => {
     if (manualPauseTimerRef.current !== null) {
@@ -173,7 +164,6 @@ export function ProductTourGiftCarousel({
     documentVisible,
     isDragging,
     isFocusWithin,
-    isHovered,
     isManuallyPaused,
     reducedMotion,
   });
@@ -200,7 +190,7 @@ export function ProductTourGiftCarousel({
           <p>{idea.description}</p>
           <div className="gp-tour-carousel-footer">
             <strong>{idea.price}</strong>
-            <button type="button" className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1} onClick={() => { setSelectedIdea(idea); pauseAfterManualAction(); }}>View Product</button>
+            <button type="button" className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1} onClick={() => { pauseAfterManualAction(); onViewProduct(); }}>View Product</button>
           </div>
         </div>
       </article>
@@ -215,14 +205,13 @@ export function ProductTourGiftCarousel({
       </div>
       <div className="gp-tour-carousel-frame">
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--left" aria-label="Show previous sample gift ideas" onClick={() => moveByCard(-1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronLeft aria-hidden="true" /></button>
-        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
+        <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
           <div ref={trackRef} className={`gp-tour-carousel-track${cycleWidth > 0 ? " gp-tour-carousel-track--autoplay" : ""}${autoplayActive ? "" : " gp-tour-carousel-track--paused"}`} style={carouselStyle}>
             {[0, 1, 2].map((copy) => <div className="gp-tour-carousel-set" data-tour-copy={copy} key={copy}>{profile.ideas.map((idea) => renderCard(idea, copy))}</div>)}
           </div>
         </div>
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--right" aria-label="Show next sample gift ideas" onClick={() => moveByCard(1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronRight aria-hidden="true" /></button>
       </div>
-      {selectedIdea ? <div className="gp-tour-preview-backdrop" role="presentation" onMouseDown={() => setSelectedIdea(null)}><section className="gp-tour-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="gp-tour-preview-title" onMouseDown={(event) => event.stopPropagation()}><button type="button" className="gp-tour-preview-close" aria-label="Close sample product preview" onClick={() => setSelectedIdea(null)}><X aria-hidden="true" /></button><div className="gp-tour-preview-image"><Image src={selectedIdea.imageSrc} alt="" fill sizes="min(92vw, 30rem)" className="object-cover" /></div><p className="gp-tour-panel-label">Sample listing</p><h5 id="gp-tour-preview-title">{selectedIdea.title}</h5><p>{selectedIdea.description}</p><strong>{selectedIdea.price}</strong><small>Illustrative gift idea. Not a purchasable product listing.</small></section></div> : null}
     </div>
   );
 }

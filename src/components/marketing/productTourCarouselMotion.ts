@@ -12,7 +12,6 @@ export function shouldAutoplayProductTourCarousel({
   documentVisible,
   isDragging,
   isFocusWithin,
-  isHovered,
   isManuallyPaused,
   reducedMotion,
 }: {
@@ -20,7 +19,6 @@ export function shouldAutoplayProductTourCarousel({
   documentVisible: boolean;
   isDragging: boolean;
   isFocusWithin: boolean;
-  isHovered: boolean;
   isManuallyPaused: boolean;
   reducedMotion: boolean;
 }): boolean {
@@ -29,7 +27,6 @@ export function shouldAutoplayProductTourCarousel({
     documentVisible &&
     !isDragging &&
     !isFocusWithin &&
-    !isHovered &&
     !isManuallyPaused &&
     !reducedMotion
   );

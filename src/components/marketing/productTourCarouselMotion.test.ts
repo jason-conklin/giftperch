@@ -19,13 +19,11 @@ test("starts the marquee only when the visible carousel is not paused", () => {
     documentVisible: true,
     isDragging: false,
     isFocusWithin: false,
-    isHovered: false,
     isManuallyPaused: false,
     reducedMotion: false,
   };
 
   assert.equal(shouldAutoplayProductTourCarousel(ready), true);
-  assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isHovered: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isFocusWithin: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isDragging: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isManuallyPaused: true }), false);
