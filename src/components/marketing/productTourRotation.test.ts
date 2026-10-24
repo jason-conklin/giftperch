@@ -1,38 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  canAutoRotateProductTourProfile,
+  getNextProductTourProfileIndex,
   normalizeProductTourProfileIndex,
+  PRODUCT_TOUR_RECIPIENT_CYCLE_DURATION_MS,
 } from "./productTourRotation";
 
-test("keeps profile rotation eligible without a hover state", () => {
-  assert.equal(
-    canAutoRotateProductTourProfile({
-      manualPauseUntil: 0,
-      now: 1_000,
-      prefersReducedMotion: false,
-    }),
-    true,
-  );
+test("uses one nine-second cycle for each Product Tour recipient", () => {
+  assert.equal(PRODUCT_TOUR_RECIPIENT_CYCLE_DURATION_MS, 9_000);
 });
 
-test("pauses profile rotation only for manual selection and reduced motion", () => {
-  assert.equal(
-    canAutoRotateProductTourProfile({
-      manualPauseUntil: 1_500,
-      now: 1_000,
-      prefersReducedMotion: false,
-    }),
-    false,
-  );
-  assert.equal(
-    canAutoRotateProductTourProfile({
-      manualPauseUntil: 0,
-      now: 1_000,
-      prefersReducedMotion: true,
-    }),
-    false,
-  );
+test("cycles Maya, Mocha, Dad, then Maya", () => {
+  assert.equal(getNextProductTourProfileIndex(0, 3), 1);
+  assert.equal(getNextProductTourProfileIndex(1, 3), 2);
+  assert.equal(getNextProductTourProfileIndex(2, 3), 0);
 });
 
 test("normalizes manual recipient selection to an available profile", () => {

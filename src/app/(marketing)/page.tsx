@@ -25,8 +25,9 @@ import { GiftPerchHeroIntro } from "@/components/marketing/GiftPerchHeroIntro";
 import { ProductTourGiftCarousel } from "@/components/marketing/ProductTourGiftCarousel";
 import { getProductTourEntryPath } from "@/components/marketing/productTourNavigation";
 import {
-  canAutoRotateProductTourProfile,
+  getNextProductTourProfileIndex,
   normalizeProductTourProfileIndex,
+  PRODUCT_TOUR_RECIPIENT_CYCLE_DURATION_MS,
 } from "@/components/marketing/productTourRotation";
 import { PRODUCT_TOUR_PROFILES } from "@/components/marketing/productTourDemoData";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
@@ -294,35 +295,18 @@ function ProductTourProfileSlice({ activeIndex }: { activeIndex: number }) {
   );
 }
 
-function ProductTourLoaderSlice() {
-  const [demoProgress, setDemoProgress] = useState(0);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const frameId = window.requestAnimationFrame(() => setDemoProgress(72));
-      return () => window.cancelAnimationFrame(frameId);
-    }
-
-    const intervalId = window.setInterval(() => {
-      setDemoProgress((prev) => {
-        if (prev >= 94) {
-          return 0;
-        }
-
-        if (prev < 65) {
-          return prev + 6;
-        }
-
-        if (prev < 85) {
-          return prev + 3;
-        }
-
-        return prev + 1;
-      });
-    }, 220);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
+function ProductTourLoaderSlice({
+  cycleKey,
+  onCycleComplete,
+  prefersReducedMotion,
+  isDocumentVisible,
+}: {
+  cycleKey: number;
+  onCycleComplete: () => void;
+  prefersReducedMotion: boolean;
+  isDocumentVisible: boolean;
+}) {
+  const isCyclePaused = prefersReducedMotion || !isDocumentVisible;
 
   return (
     <div className="gp-tour-loader">
@@ -337,11 +321,26 @@ function ProductTourLoaderSlice() {
         aria-label="PerchPal gift idea progress"
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={Math.round(demoProgress)}
+        aria-valuenow={prefersReducedMotion ? 72 : undefined}
+        aria-valuetext={
+          isCyclePaused
+            ? "Gift idea demo progress paused"
+            : "Gift idea demo progress"
+        }
       >
         <div
-          className="gp-tour-progress-value"
-          style={{ width: `${Math.min(100, demoProgress)}%` }}
+          key={cycleKey}
+          className={`gp-tour-progress-value${
+            isCyclePaused ? " gp-tour-progress-value--paused" : ""
+          }${prefersReducedMotion ? " gp-tour-progress-value--reduced" : ""}`}
+          style={{
+            animationDuration: `${PRODUCT_TOUR_RECIPIENT_CYCLE_DURATION_MS}ms`,
+          }}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget && !isCyclePaused) {
+              onCycleComplete();
+            }
+          }}
         />
       </div>
     </div>
@@ -497,23 +496,17 @@ function ProductTourTimeline({
 function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   const { status } = useSupabaseSession();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [manualPauseUntil, setManualPauseUntil] = useState(0);
+  const [cycleKey, setCycleKey] = useState(0);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(
     () =>
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+  const [isDocumentVisible, setIsDocumentVisible] = useState(
+    () => typeof document === "undefined" || document.visibilityState !== "hidden",
+  );
   const [savedIdeas, setSavedIdeas] = useState<Set<string>>(() => new Set());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const firstCycleRef = useRef(true);
   const stepCount = steps.length > 0 ? steps.length : 1;
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -524,35 +517,26 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
   }, []);
 
   useEffect(() => {
-    const now = Date.now();
-    if (!canAutoRotateProductTourProfile({
-      manualPauseUntil,
-      now,
-      prefersReducedMotion,
-    })) {
-      clearTimer();
-      if (prefersReducedMotion) return;
+    const updateVisibility = () => {
+      setIsDocumentVisible(document.visibilityState !== "hidden");
+    };
 
-      const resumeTimer = setTimeout(
-        () => setManualPauseUntil(0),
-        manualPauseUntil - now,
-      );
-      return () => clearTimeout(resumeTimer);
-    }
-
-    const delay = firstCycleRef.current ? 3000 : 6000;
-    clearTimer();
-    timerRef.current = setTimeout(() => {
-      setActiveIndex((prev) => {
-        const next = (prev + 1) % PRODUCT_TOUR_PROFILES.length;
-        firstCycleRef.current = false;
-        return next;
-      });
-    }, delay);
-    return () => clearTimer();
-  }, [activeIndex, clearTimer, manualPauseUntil, prefersReducedMotion]);
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
 
   const activeStep = activeIndex % stepCount;
+
+  const handleCycleComplete = useCallback(() => {
+    setActiveIndex((current) =>
+      getNextProductTourProfileIndex(
+        current,
+        PRODUCT_TOUR_PROFILES.length,
+      ),
+    );
+    setCycleKey((current) => current + 1);
+  }, []);
 
   const handleStepSelect = useCallback((stepIndex: number) => {
     const normalizedIndex = normalizeProductTourProfileIndex(
@@ -560,8 +544,7 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
       PRODUCT_TOUR_PROFILES.length,
     );
     setActiveIndex(normalizedIndex);
-    firstCycleRef.current = false;
-    setManualPauseUntil(Date.now() + 8000);
+    setCycleKey((current) => current + 1);
   }, []);
 
   const handleToggleSaved = useCallback((ideaKey: string) => {
@@ -626,7 +609,12 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
             <div
               className={`gp-tour-demo-section ${activeStep === 1 ? "gp-tour-demo-section--active" : ""}`}
             >
-              <ProductTourLoaderSlice />
+              <ProductTourLoaderSlice
+                cycleKey={cycleKey}
+                onCycleComplete={handleCycleComplete}
+                prefersReducedMotion={prefersReducedMotion}
+                isDocumentVisible={isDocumentVisible}
+              />
             </div>
             <div
               className={`gp-tour-demo-section ${activeStep === 2 ? "gp-tour-demo-section--active" : ""}`}

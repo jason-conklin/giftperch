@@ -1120,10 +1120,24 @@ body {
   }
 
   .gp-tour-progress-value {
+    width: 100%;
     height: 100%;
     border-radius: inherit;
     background: linear-gradient(90deg, #d6a345, #e8c978);
-    transition: width 300ms ease-out;
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation-name: gp-tour-progress-fill;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+
+  .gp-tour-progress-value--paused {
+    animation-play-state: paused;
+  }
+
+  .gp-tour-progress-value--reduced {
+    animation: none;
+    transform: scaleX(0.72);
   }
 
   .gp-tour-ideas {
@@ -2924,6 +2938,11 @@ body {
   }
 }
 
+@keyframes gp-tour-progress-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gp-difference-product-card {
     animation: none;
@@ -3265,6 +3284,11 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gp-tour-progress-value {
+    animation: none;
+    transform: scaleX(0.72);
+  }
+
   .gp-tour-profile-slide,
   .gp-tour-ideas-slide,
   .gp-tour-progress-value,
