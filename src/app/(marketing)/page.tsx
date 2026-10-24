@@ -830,7 +830,13 @@ export default function MarketingHome() {
             <article className="gp-difference-panel gp-difference-panel--giftperch">
               <header className="gp-difference-panel-heading">
                 <span className="gp-difference-panel-mark gp-difference-panel-mark--giftperch" aria-hidden="true">
-                  <Image src="/giftperch_logo_only.png" alt="" width={48} height={48} />
+                  <Image
+                    src="/giftperch_logo_only.png"
+                    alt=""
+                    width={76}
+                    height={76}
+                    sizes="(max-width: 640px) 54px, 76px"
+                  />
                 </span>
                 <div>
                   <h3>GiftPerch offers</h3>
