@@ -4,8 +4,10 @@ import type { AmazonProduct } from "@/lib/amazonPaapi";
 import {
   enrichGiftSuggestionsWithProducts,
   findBestAwinProductMatch,
+  getRelevantAwinAdvertiserIds,
   type AwinCatalogProduct,
 } from "./matcher";
+import type { AwinAdvertiserConfig } from "./advertisers";
 
 function product(
   overrides: Partial<AwinCatalogProduct> = {},
@@ -787,4 +789,128 @@ test("a strong Awin match avoids Amazon and preserves generated content", async 
   assert.equal(result.suggested_url, original.suggested_url);
   assert.equal(result.productMatch?.provider, "awin");
   assert.equal(result.amazonProduct, null);
+});
+
+test("preselects only advertiser policies that can pass the current suggestion intent", () => {
+  const ids = getRelevantAwinAdvertiserIds([
+    {
+      title: "Portable DAC headphone amplifier for an audiophile",
+      short_description: "A desktop audio upgrade for music listening.",
+      tier: "thoughtful",
+    },
+    {
+      title: "Bike taillight for a road cyclist",
+      short_description: "A visibility upgrade for evening cycling rides.",
+      tier: "safe",
+    },
+  ]).sort();
+
+  assert.deepEqual(ids, ["107838", "119395"]);
+  assert.deepEqual(
+    getRelevantAwinAdvertiserIds([
+      {
+        title: "Mechanical keyboard for a programmer",
+        short_description: "A comfortable typing upgrade for a home office.",
+        tier: "thoughtful",
+      },
+    ]),
+    [],
+  );
+});
+
+test("retains standard advertisers in candidate retrieval when no specialized policy applies", () => {
+  const registry: readonly AwinAdvertiserConfig[] = [
+    {
+      key: "standard-test",
+      advertiserId: "standard-1",
+      displayName: "Standard Test",
+      locale: "en_US",
+      importEnabled: true,
+      recommendationEnabled: true,
+      matchingPolicy: "standard",
+    },
+  ];
+
+  assert.deepEqual(
+    getRelevantAwinAdvertiserIds(
+      [
+        {
+          title: "Handwritten recipe collection",
+          short_description: "A personal collection of family recipes.",
+          tier: "thoughtful",
+        },
+      ],
+      registry,
+    ),
+    ["standard-1"],
+  );
+});
+
+test("candidate preselection preserves matcher results for mixed advertiser intents", () => {
+  const products = [
+    product(),
+    fosiProduct(),
+    advertiserProduct("107838", "Magicshine", {
+      title: "Magicshine SEEMEE 200 Bike Taillight",
+      description: "A compact cycling taillight for road bikes.",
+      price: 39.99,
+    }),
+    advertiserProduct("87403", "Mosaic Weighted Blankets", {
+      title: "Mosaic Weighted Blanket",
+      description: "A weighted blanket for cozy relaxation.",
+      price: 89.99,
+    }),
+  ];
+  const suggestions = [
+    fishingSuggestion,
+    {
+      title: "Desktop DAC headphone amplifier",
+      short_description: "An audio upgrade for music listening.",
+      tier: "thoughtful",
+      price_max: 100,
+    },
+    {
+      title: "Bike taillight for a cyclist",
+      short_description: "A visibility upgrade for evening rides.",
+      tier: "safe",
+      price_max: 60,
+    },
+  ];
+  const relevantIds = new Set(getRelevantAwinAdvertiserIds(suggestions));
+  const reducedCatalog = products.filter((candidate) =>
+    relevantIds.has(candidate.advertiserId),
+  );
+
+  for (const suggestion of suggestions) {
+    assert.deepEqual(
+      findBestAwinProductMatch({ suggestion, products }),
+      findBestAwinProductMatch({ suggestion, products: reducedCatalog }),
+    );
+  }
+});
+
+test("enrichment passes the union of eligible advertisers to the shared catalog load", async () => {
+  let requestedAdvertiserIds: readonly string[] | undefined;
+  const suggestions = [
+    fishingSuggestion,
+    {
+      title: "Desktop DAC headphone amplifier",
+      short_description: "An audio upgrade for music listening.",
+      tier: "thoughtful",
+      price_max: 100,
+    },
+  ];
+
+  const enriched = await enrichGiftSuggestionsWithProducts({
+    suggestions,
+    loadAwinProducts: async ({ advertiserIds }) => {
+      requestedAdvertiserIds = advertiserIds;
+      return [product(), fosiProduct()];
+    },
+    searchAmazon: async () => null,
+  });
+
+  assert.deepEqual([...requestedAdvertiserIds!].sort(), ["119395", "89509"]);
+  assert.equal(enriched[0].productMatch?.advertiserId, "89509");
+  assert.equal(enriched[1].productMatch?.advertiserId, "119395");
 });

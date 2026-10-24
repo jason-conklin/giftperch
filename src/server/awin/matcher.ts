@@ -6,7 +6,7 @@ import {
   type ProductMatch,
 } from "@/lib/affiliateProduct";
 import {
-  findRecommendationEnabledAwinAdvertiserById,
+  AWIN_ADVERTISERS,
   type AwinAdvertiserConfig,
 } from "./advertisers";
 
@@ -372,6 +372,14 @@ type AmazonSearch = (params: {
   maxPriceCents?: number;
 }) => Promise<AmazonProduct | null>;
 
+export type AwinCandidateLoadOptions = {
+  /**
+   * Restricts the catalog read to advertisers whose policy can match one of
+   * the current suggestions. Undefined retains the complete active catalog.
+   */
+  advertiserIds?: readonly string[];
+};
+
 function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
   const price = typeof row.price === "number" ? row.price : Number(row.price);
   const imageUrl = getSafeImageUrl(row.image_url);
@@ -415,18 +423,30 @@ function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
 
 export async function loadAwinProductCandidates(
   supabase: SupabaseClient,
+  options: AwinCandidateLoadOptions = {},
 ): Promise<AwinCatalogProduct[]> {
   const products: AwinCatalogProduct[] = [];
+  const advertiserIds = [...new Set(options.advertiserIds ?? [])];
+
+  if (options.advertiserIds && advertiserIds.length === 0) {
+    return products;
+  }
 
   for (let offset = 0; ; offset += CATALOG_PAGE_SIZE) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("affiliate_products")
       .select(
         "provider, advertiser_id, locale, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active",
       )
       .eq("provider", "awin")
       .eq("active", true)
-      .eq("availability", "in_stock")
+      .eq("availability", "in_stock");
+
+    if (advertiserIds.length > 0) {
+      query = query.in("advertiser_id", advertiserIds);
+    }
+
+    const { data, error } = await query
       .order("id", { ascending: true })
       .range(offset, offset + CATALOG_PAGE_SIZE - 1);
 
@@ -616,6 +636,128 @@ function isPhysicalProductConcept(suggestion: MatchableGiftSuggestion): boolean 
   return !hasAny(titleTokens, PHYSICAL_PRODUCT_EXCLUSIONS);
 }
 
+type SuggestionPolicyIntent = {
+  fishing: Set<string>;
+  audio: Set<string>;
+  mosaicComfort: Set<string>;
+  imarkuKitchen: Set<string>;
+  baby: Set<string>;
+  mojoToy: Set<string>;
+  loomyHome: Set<string>;
+  bonheurJewelry: Set<string>;
+  fanInk: Set<string>;
+  beyondMemories: Set<string>;
+  magicshineCycling: Set<string>;
+  hulaDaddyCoffee: Set<string>;
+  coziwowPets: Set<string>;
+};
+
+function getSuggestionPolicyIntent(
+  suggestion: MatchableGiftSuggestion,
+): SuggestionPolicyIntent {
+  const suggestionIntentTokens = union(
+    tokens(suggestion.title),
+    tokens(`${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`),
+  );
+
+  return {
+    fishing: intersection(suggestionIntentTokens, FISHING_INTENT_WORDS),
+    audio: intersection(suggestionIntentTokens, AUDIO_INTENT_WORDS),
+    mosaicComfort: intersection(
+      suggestionIntentTokens,
+      MOSAIC_COMFORT_INTENT_WORDS,
+    ),
+    imarkuKitchen: intersection(
+      suggestionIntentTokens,
+      IMARKU_KITCHEN_INTENT_WORDS,
+    ),
+    baby: intersection(suggestionIntentTokens, BABY_INTENT_WORDS),
+    mojoToy: intersection(suggestionIntentTokens, MOJO_TOY_INTENT_WORDS),
+    loomyHome: intersection(suggestionIntentTokens, LOOMY_HOME_INTENT_WORDS),
+    bonheurJewelry: intersection(
+      suggestionIntentTokens,
+      BONHEUR_JEWELRY_INTENT_WORDS,
+    ),
+    fanInk: intersection(suggestionIntentTokens, FAN_INK_INTENT_WORDS),
+    beyondMemories: intersection(
+      suggestionIntentTokens,
+      BEYOND_MEMORIES_INTENT_WORDS,
+    ),
+    magicshineCycling: intersection(
+      suggestionIntentTokens,
+      MAGICSHINE_CYCLING_INTENT_WORDS,
+    ),
+    hulaDaddyCoffee: intersection(
+      suggestionIntentTokens,
+      HULA_DADDY_COFFEE_INTENT_WORDS,
+    ),
+    coziwowPets: intersection(suggestionIntentTokens, COZIWOW_PET_INTENT_WORDS),
+  };
+}
+
+function policyCanMatchSuggestion(
+  policy: AwinAdvertiserConfig["matchingPolicy"],
+  intent: SuggestionPolicyIntent,
+): boolean {
+  switch (policy) {
+    case "piscifun-fishing":
+      return intent.fishing.size > 0;
+    case "fosi-audio":
+      return intent.audio.size > 0;
+    case "mosaic-comfort":
+      return intent.mosaicComfort.size > 0;
+    case "imarku-kitchen":
+      return intent.imarkuKitchen.size > 0;
+    case "baby-shusher":
+      return intent.baby.size > 0;
+    case "mojo-fun":
+      return intent.mojoToy.size > 0;
+    case "loomy-home":
+      return intent.loomyHome.size > 0;
+    case "bonheur-jewelry":
+      return intent.bonheurJewelry.size > 0;
+    case "fan-ink":
+      return intent.fanInk.size > 0;
+    case "beyond-memories":
+      return intent.beyondMemories.size > 0;
+    case "magicshine-cycling":
+      return intent.magicshineCycling.size > 0;
+    case "hula-daddy-coffee":
+      return intent.hulaDaddyCoffee.size > 0;
+    case "coziwow-pets":
+      return intent.coziwowPets.size > 0;
+    case "standard":
+      return true;
+  }
+}
+
+/**
+ * Selects only catalog partitions that can pass the same intent gate used by
+ * the matcher. Product-level exclusions and scoring remain in the matcher.
+ */
+export function getRelevantAwinAdvertiserIds(
+  suggestions: readonly MatchableGiftSuggestion[],
+  advertiserRegistry: readonly AwinAdvertiserConfig[] = AWIN_ADVERTISERS,
+): string[] {
+  const relevantAdvertisers = new Set<string>();
+
+  for (const suggestion of suggestions) {
+    if (!isPhysicalProductConcept(suggestion)) continue;
+
+    const intent = getSuggestionPolicyIntent(suggestion);
+    for (const advertiser of advertiserRegistry) {
+      if (
+        advertiser.recommendationEnabled &&
+        policyCanMatchSuggestion(advertiser.matchingPolicy, intent)
+      ) {
+        relevantAdvertisers.add(advertiser.advertiserId);
+      }
+    }
+  }
+
+  return [...relevantAdvertisers];
+}
+
 export function findBestAwinProductMatch(args: {
   suggestion: MatchableGiftSuggestion;
   recipientInterests?: RecipientInterestForMatching[];
@@ -638,50 +780,10 @@ export function findBestAwinProductMatch(args: {
       .flatMap((interest) => [interest.label, interest.category ?? ""])
       .join(" "),
   );
-  const suggestionIntentTokens = union(titleTokens, detailTokens);
-  const fishingIntent = intersection(
-    suggestionIntentTokens,
-    FISHING_INTENT_WORDS,
-  );
-  const audioIntent = intersection(suggestionIntentTokens, AUDIO_INTENT_WORDS);
-  const mosaicComfortIntent = intersection(
-    suggestionIntentTokens,
-    MOSAIC_COMFORT_INTENT_WORDS,
-  );
-  const imarkuKitchenIntent = intersection(
-    suggestionIntentTokens,
-    IMARKU_KITCHEN_INTENT_WORDS,
-  );
-  const babyIntent = intersection(suggestionIntentTokens, BABY_INTENT_WORDS);
-  const mojoToyIntent = intersection(suggestionIntentTokens, MOJO_TOY_INTENT_WORDS);
-  const loomyHomeIntent = intersection(
-    suggestionIntentTokens,
-    LOOMY_HOME_INTENT_WORDS,
-  );
-  const bonheurJewelryIntent = intersection(
-    suggestionIntentTokens,
-    BONHEUR_JEWELRY_INTENT_WORDS,
-  );
-  const fanInkIntent = intersection(suggestionIntentTokens, FAN_INK_INTENT_WORDS);
-  const beyondMemoriesIntent = intersection(
-    suggestionIntentTokens,
-    BEYOND_MEMORIES_INTENT_WORDS,
-  );
+  const policyIntent = getSuggestionPolicyIntent(suggestion);
   const memorialIntent = intersection(
-    suggestionIntentTokens,
+    union(titleTokens, detailTokens),
     MEMORIAL_INTENT_WORDS,
-  );
-  const magicshineCyclingIntent = intersection(
-    suggestionIntentTokens,
-    MAGICSHINE_CYCLING_INTENT_WORDS,
-  );
-  const hulaDaddyCoffeeIntent = intersection(
-    suggestionIntentTokens,
-    HULA_DADDY_COFFEE_INTENT_WORDS,
-  );
-  const coziwowPetIntent = intersection(
-    suggestionIntentTokens,
-    COZIWOW_PET_INTENT_WORDS,
   );
   const budget = effectiveBudget(
     suggestion,
@@ -695,12 +797,14 @@ export function findBestAwinProductMatch(args: {
   let best:
     | { product: AwinCatalogProduct; score: number; budgetDistance: number }
     | undefined;
+  const advertisersById = new Map(
+    (args.advertiserRegistry ?? AWIN_ADVERTISERS)
+      .filter((advertiser) => advertiser.recommendationEnabled)
+      .map((advertiser) => [advertiser.advertiserId, advertiser]),
+  );
 
   for (const product of products) {
-    const advertiser = findRecommendationEnabledAwinAdvertiserById(
-      product.advertiserId,
-      args.advertiserRegistry,
-    );
+    const advertiser = advertisersById.get(product.advertiserId);
     if (
       !advertiser ||
       product.locale !== advertiser.locale ||
@@ -722,19 +826,19 @@ export function findBestAwinProductMatch(args: {
       !passesAdvertiserPolicy({
         advertiser,
         product,
-        fishingIntent,
-        audioIntent,
-        mosaicComfortIntent,
-        imarkuKitchenIntent,
-        babyIntent,
-        mojoToyIntent,
-        loomyHomeIntent,
-        bonheurJewelryIntent,
-        fanInkIntent,
-        beyondMemoriesIntent,
-        magicshineCyclingIntent,
-        hulaDaddyCoffeeIntent,
-        coziwowPetIntent,
+        fishingIntent: policyIntent.fishing,
+        audioIntent: policyIntent.audio,
+        mosaicComfortIntent: policyIntent.mosaicComfort,
+        imarkuKitchenIntent: policyIntent.imarkuKitchen,
+        babyIntent: policyIntent.baby,
+        mojoToyIntent: policyIntent.mojoToy,
+        loomyHomeIntent: policyIntent.loomyHome,
+        bonheurJewelryIntent: policyIntent.bonheurJewelry,
+        fanInkIntent: policyIntent.fanInk,
+        beyondMemoriesIntent: policyIntent.beyondMemories,
+        magicshineCyclingIntent: policyIntent.magicshineCycling,
+        hulaDaddyCoffeeIntent: policyIntent.hulaDaddyCoffee,
+        coziwowPetIntent: policyIntent.coziwowPets,
         memorialIntent,
         teamContextTokens: union(titleTokens, interestTokens),
         productTitleTokens,
@@ -770,7 +874,7 @@ export function findBestAwinProductMatch(args: {
       titleDescription.size * 2 +
       detailTitle.size * 2 +
       interestTitle.size * 3 +
-      (fishingIntent.size > 0 ? 4 : 0);
+      (policyIntent.fishing.size > 0 ? 4 : 0);
     if (score < MINIMUM_MATCH_SCORE) continue;
 
     const budgetMidpoint =
@@ -832,12 +936,20 @@ export async function enrichGiftSuggestionsWithProducts<
   recipientInterests?: RecipientInterestForMatching[];
   budgetMin?: number | null;
   budgetMax?: number | null;
-  loadAwinProducts: () => Promise<AwinCatalogProduct[]>;
+  advertiserRegistry?: readonly AwinAdvertiserConfig[];
+  loadAwinProducts: (
+    options: AwinCandidateLoadOptions,
+  ) => Promise<AwinCatalogProduct[]>;
   searchAmazon: AmazonSearch;
 }): Promise<Array<T & { productMatch: ProductMatch | null; amazonProduct: AmazonProduct | null }>> {
   let awinProducts: AwinCatalogProduct[] = [];
   try {
-    awinProducts = await args.loadAwinProducts();
+    awinProducts = await args.loadAwinProducts({
+      advertiserIds: getRelevantAwinAdvertiserIds(
+        args.suggestions,
+        args.advertiserRegistry,
+      ),
+    });
   } catch {
     console.warn(
       "[perchpal] Awin catalog lookup failed; continuing with Amazon fallback.",
@@ -858,6 +970,7 @@ export async function enrichGiftSuggestionsWithProducts<
           products: awinProducts,
           budgetMin: args.budgetMin,
           budgetMax: args.budgetMax,
+          advertiserRegistry: args.advertiserRegistry,
         });
       } catch {
         console.warn(
