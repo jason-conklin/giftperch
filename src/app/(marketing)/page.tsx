@@ -152,10 +152,10 @@ const differenceProducts = [
     recipient: "Sofi",
     occasion: "Just Because",
     avatarSrc: "/icons/avatars/sofi.png",
-    name: "Cozy Cat Tree",
+    name: "PawHaven Plush Cat Tower",
     price: "$89.99",
     imageSrc: "/icons/previews/sofi-cat-tree.png",
-    imageAlt: "Cozy Cat Tree illustrative preview",
+    imageAlt: "PawHaven Plush Cat Tower illustrative preview",
     className: "gp-difference-product-card--sofi",
   },
   {
