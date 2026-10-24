@@ -7,7 +7,7 @@ import {
   BadgeCheck,
   BookOpen,
   CalendarDays,
-  Check,
+  FileText,
   Gift,
   Heart,
   MessageCircleQuestion,
@@ -16,8 +16,9 @@ import {
   Plus,
   RefreshCcw,
   ShieldCheck,
+  ShoppingCart,
+  UserRound,
   UsersRound,
-  X,
 } from "lucide-react";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GiftPerchHeroIntro } from "@/components/marketing/GiftPerchHeroIntro";
@@ -53,7 +54,6 @@ const workflowSteps = [
 
 type WorkflowStepId = (typeof workflowSteps)[number]["id"];
 type WorkflowStep = (typeof workflowSteps)[number];
-type ComparisonIconKey = "profile" | "repeat" | "history" | "calendar";
 
 function ProfileIcon() {
   return (
@@ -119,93 +119,104 @@ function WorkflowStepBadge({ stepId }: { stepId: WorkflowStepId }) {
   );
 }
 
-function ComparisonBulletIcon({ icon }: { icon: ComparisonIconKey }) {
-  if (icon === "profile") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-        <path
-          d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4ZM4.5 20.4a7.5 7.5 0 0 1 15 0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
+const differenceBenefits = [
+  {
+    title: "Made personal",
+    description: "Tailored to their interests and history.",
+    icon: UserRound,
+  },
+  {
+    title: "Real products",
+    description: "Actual items with prices and links.",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Stay organized",
+    description: "Save ideas and remember occasions.",
+    icon: CalendarDays,
+  },
+] as const;
 
-  if (icon === "repeat") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-        <path
-          d="M7 7h9l-2-2m2 14H7l2 2M5 16a5 5 0 0 1 0-8m14 0a5 5 0 0 1 0 8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
+const differenceProducts = [
+  {
+    recipient: "Mom",
+    occasion: "Birthday",
+    avatarSrc: "/icons/avatars/mom.png",
+    name: "Amber & Vanilla Candle",
+    price: "$28.00",
+    imageSrc: "/product-tour-previews/maya-candle.png",
+    imageAlt: "Amber & Vanilla Candle illustrative preview",
+    imagePending: false,
+    className: "gp-difference-product-card--mom",
+  },
+  {
+    recipient: "Sofi",
+    occasion: "Just Because",
+    avatarSrc: "/icons/avatars/sofi.png",
+    name: "Cozy Cat Tree",
+    price: "$89.99",
+    imageSrc: "/cat_icon.png",
+    imageAlt: "Temporary cat tree preview placeholder",
+    imagePending: true,
+    className: "gp-difference-product-card--sofi",
+  },
+  {
+    recipient: "Nick",
+    occasion: "Father's Day",
+    avatarSrc: "/icons/avatars/nick.png",
+    name: "Everyday Trail Backpack",
+    price: "$54.00",
+    imageSrc: "/product-tour-previews/maya-backpack.png",
+    imageAlt: "Everyday Trail Backpack illustrative preview",
+    imagePending: false,
+    className: "gp-difference-product-card--nick",
+  },
+] as const;
 
-  if (icon === "history") {
-    return (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-        <circle
-          cx="12"
-          cy="12"
-          r="8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-        />
-        <path
-          d="M12 7.5v4.7l3 1.8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-
+function DifferenceProductCard({
+  product,
+  productEntryPath,
+}: {
+  product: (typeof differenceProducts)[number];
+  productEntryPath: string;
+}) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-      <rect
-        x="3.5"
-        y="4.5"
-        width="17"
-        height="16"
-        rx="2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      />
-      <path
-        d="M8 2.8v3.4M16 2.8v3.4M3.5 9.5h17"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function ComparisonXIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-      <path
-        d="M8 8l8 8M16 8l-8 8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-    </svg>
+    <article className={`gp-difference-product-card ${product.className}`}>
+      <div className="gp-difference-product-recipient">
+        <Image
+          src={product.avatarSrc}
+          alt=""
+          width={32}
+          height={32}
+          className="gp-difference-product-avatar"
+        />
+        <span>
+          <strong>For {product.recipient}</strong>
+          <small>{product.occasion}</small>
+        </span>
+        <Heart className="gp-difference-product-heart" aria-hidden="true" />
+      </div>
+      <div className="gp-difference-product-image">
+        <Image
+          src={product.imageSrc}
+          alt={product.imageAlt}
+          fill
+          sizes="(max-width: 640px) 42vw, (max-width: 980px) 26vw, 12vw"
+          className={product.imagePending ? "gp-difference-product-image--pending" : ""}
+          draggable={false}
+        />
+        {product.imagePending ? (
+          <span className="gp-difference-product-pending">Preview image pending</span>
+        ) : null}
+      </div>
+      <div className="gp-difference-product-details">
+        <h4>{product.name}</h4>
+        <p>{product.price}</p>
+      </div>
+      <Link href={productEntryPath} className="gp-difference-product-cta">
+        View Product
+      </Link>
+    </article>
   );
 }
 
@@ -642,33 +653,9 @@ function LandingSampleProfiles({ steps }: { steps: readonly WorkflowStep[] }) {
 }
 
 export default function MarketingHome() {
+  const { status } = useSupabaseSession();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const comparisonRows: ReadonlyArray<{
-    icon: ComparisonIconKey;
-    typical: string;
-    giftperch: string;
-  }> = [
-    {
-      icon: "profile",
-      typical: "One-time prompts with no memory between searches",
-      giftperch: "Saved recipient profiles with preferences",
-    },
-    {
-      icon: "repeat",
-      typical: "Repeats gift suggestions with no feedback loop",
-      giftperch: "Saved gifts + gift history to avoid repeats",
-    },
-    {
-      icon: "history",
-      typical: "No gift history or context",
-      giftperch: "Occasion context (birthday, holiday, etc.)",
-    },
-    {
-      icon: "calendar",
-      typical: "No built-in planning for upcoming occasions",
-      giftperch: "Plan ahead with a calendar view",
-    },
-  ];
+  const productEntryPath = getProductTourEntryPath(status);
   const handleProductTourLinkClick = useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
       if (
@@ -811,55 +798,68 @@ export default function MarketingHome() {
               <span />
             </div>
             <h2 id="giftperch-difference-title">Why GiftPerch is different</h2>
-            <p>
-              Powered by memory and context — not guesswork.
-            </p>
+            <p>Same question. A completely different experience.</p>
           </header>
 
-          <div className="gp-comparison-grid">
-            <article className="gp-comparison-card gp-comparison-card--typical">
-              <header className="gp-comparison-card-header">
-                <span className="gp-comparison-card-mark gp-comparison-card-mark--typical" aria-hidden="true">
-                  <X />
+          <div className="gp-difference-grid">
+            <article className="gp-difference-panel gp-difference-panel--typical">
+              <header className="gp-difference-panel-heading">
+                <span className="gp-difference-panel-mark gp-difference-panel-mark--typical" aria-hidden="true">
+                  <FileText />
                 </span>
                 <div>
                   <h3>Typical gift generators</h3>
-                  <p>Generic suggestions. No memory. No context.</p>
+                  <p>Generic suggestions. No memory. No real products.</p>
                 </div>
               </header>
-              <div className="gp-comparison-card-divider" />
-              <ul className="gp-comparison-list">
-                {comparisonRows.map((row) => (
-                  <li key={`typical-${row.typical}`}>
-                    <span className="gp-comparison-list-icon gp-comparison-list-icon--typical">
-                      <ComparisonXIcon />
-                    </span>
-                    <span>{row.typical}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="gp-difference-chat gp-difference-chat--prompt">
+                <span className="gp-difference-chat-icon" aria-hidden="true"><UserRound /></span>
+                <p>I need a birthday gift for my mom.<br />She loves cooking and gardening.</p>
+              </div>
+              <div className="gp-difference-chat gp-difference-chat--response">
+                <span className="gp-difference-chat-icon" aria-hidden="true"><Gift /></span>
+                <div>
+                  <p>Here are some gift ideas for your mom:</p>
+                  <ol>
+                    <li>A cookbook</li>
+                    <li>A set of gardening tools</li>
+                    <li>A scented candle</li>
+                    <li>A cozy blanket</li>
+                    <li>A nice water bottle</li>
+                  </ol>
+                  <p className="gp-difference-chat-note">These are thoughtful options, but they&apos;re just text suggestions. You&apos;ll still need to search for real products and prices on your own.</p>
+                </div>
+              </div>
             </article>
-            <article className="gp-comparison-card gp-comparison-card--giftperch">
-              <header className="gp-comparison-card-header">
-                <span className="gp-comparison-card-mark gp-comparison-card-mark--giftperch" aria-hidden="true">
-                  <Check />
+            <article className="gp-difference-panel gp-difference-panel--giftperch">
+              <header className="gp-difference-panel-heading">
+                <span className="gp-difference-panel-mark gp-difference-panel-mark--giftperch" aria-hidden="true">
+                  <Image src="/giftperch_logo_only.png" alt="" width={48} height={48} />
                 </span>
                 <div>
                   <h3>GiftPerch offers</h3>
-                  <p>Thoughtful, personalized gifting — all in one place.</p>
+                  <p>Personalized ideas, <strong>real products, all in one place.</strong></p>
                 </div>
               </header>
-              <div className="gp-comparison-card-divider" />
-              <ul className="gp-comparison-list">
-                {comparisonRows.map((row) => (
-                  <li key={`giftperch-${row.giftperch}`}>
-                    <span className="gp-comparison-list-icon gp-comparison-list-icon--giftperch">
-                      <ComparisonBulletIcon icon={row.icon} />
-                    </span>
-                    <span>{row.giftperch}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="gp-difference-offer-body">
+                <ul className="gp-difference-benefits">
+                  {differenceBenefits.map((benefit) => {
+                    const Icon = benefit.icon;
+                    return (
+                      <li key={benefit.title}>
+                        <span className="gp-difference-benefit-icon" aria-hidden="true"><Icon /></span>
+                        <span><strong>{benefit.title}</strong><small>{benefit.description}</small></span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="gp-difference-product-stack" aria-label="Illustrative product examples">
+                  {differenceProducts.map((product) => (
+                    <DifferenceProductCard key={product.recipient} product={product} productEntryPath={productEntryPath} />
+                  ))}
+                </div>
+              </div>
+              <p className="gp-difference-disclosure">Illustrative examples</p>
             </article>
           </div>
         </div>
