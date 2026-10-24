@@ -7,6 +7,7 @@ import {
   BadgeCheck,
   BookOpen,
   CalendarDays,
+  Clock3,
   FileText,
   Gift,
   Heart,
@@ -134,7 +135,7 @@ const differenceBenefits = [
   {
     title: "Remember every recipient",
     description: "Keep their profile ready, year after year.",
-    icon: UsersRound,
+    icon: Clock3,
   },
 ] as const;
 
