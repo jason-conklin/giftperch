@@ -167,6 +167,138 @@ test("BONHEUR matches jewelry gifts without opening unrelated accessories", () =
   assert.equal(unrelated, null);
 });
 
+test("Giftlab requires personalized context and excludes sensitive or incompatible products", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const necklace = advertiserProduct("95201", "Giftlab", {
+    title: "Custom Name Anniversary Necklace",
+    description: "Category: Jewelry. A personalized anniversary necklace.",
+    price: 29.95,
+  });
+  const memorial = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "giftlab-memorial",
+    title: "Custom Photo Pet Memorial Candle",
+    description: "Category: Sympathy.",
+    price: 24.95,
+  });
+  const sympathy = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "giftlab-sympathy",
+    title: "Custom Pet Sympathy Gift Candle",
+    description: "Category: Sympathy.",
+    price: 24.95,
+  });
+  const deviceCase = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "giftlab-case",
+    title: "Custom Photo AirPods Case",
+    description: "Category: Accessories.",
+    price: 15.95,
+  });
+  const registry = [giftlab];
+
+  const positive = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized anniversary necklace",
+      short_description: "A custom keepsake for their anniversary.",
+      tier: "thoughtful",
+      price_max: 50,
+    },
+    products: [necklace],
+    advertiserRegistry: registry,
+  });
+  const unrelated = findBestAwinProductMatch({
+    suggestion: {
+      title: "Cozy throw blanket",
+      short_description: "A warm home gift for relaxing evenings.",
+      tier: "thoughtful",
+    },
+    products: [necklace],
+    advertiserRegistry: registry,
+  });
+  const memorialWithoutContext = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized pet photo keepsake",
+      short_description: "A custom gift for a dog owner.",
+      tier: "thoughtful",
+    },
+    products: [memorial],
+    advertiserRegistry: registry,
+  });
+  const caseWithoutDevice = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized photo gift",
+      short_description: "A custom gift for a friend.",
+      tier: "thoughtful",
+    },
+    products: [deviceCase],
+    advertiserRegistry: registry,
+  });
+  const sympathyWithoutContext = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized pet photo keepsake",
+      short_description: "A custom gift for a dog owner.",
+      tier: "thoughtful",
+    },
+    products: [sympathy],
+    advertiserRegistry: registry,
+  });
+
+  assert.equal(positive?.advertiserId, "95201");
+  assert.equal(unrelated, null);
+  assert.equal(memorialWithoutContext, null);
+  assert.equal(sympathyWithoutContext, null);
+  assert.equal(caseWithoutDevice, null);
+});
+
+test("Giftlab near-identical color variants are not repeated within one suggestion set", async () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const blue = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "blue-necklace",
+    title: "Custom Photo Necklace Blue",
+    description: "Category: Jewelry.",
+    price: 29.95,
+  });
+  const red = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "red-necklace",
+    title: "Custom Photo Necklace Red",
+    description: "Category: Jewelry.",
+    price: 29.95,
+  });
+  const results = await enrichGiftSuggestionsWithProducts({
+    suggestions: [
+      {
+        title: "Personalized photo necklace",
+        short_description: "A custom jewelry gift.",
+        tier: "thoughtful",
+      },
+      {
+        title: "Personalized photo necklace",
+        short_description: "A custom jewelry gift.",
+        tier: "thoughtful",
+      },
+    ],
+    advertiserRegistry: [giftlab],
+    loadAwinProducts: async () => [blue, red],
+    searchAmazon: async () => null,
+  });
+  assert.equal(results[0]?.productMatch?.productId, "blue-necklace");
+  assert.equal(results[1]?.productMatch, null);
+});
+
 test("broad fishing context alone cannot substitute a different product", () => {
   const match = findBestAwinProductMatch({
     suggestion: {

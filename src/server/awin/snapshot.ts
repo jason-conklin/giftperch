@@ -12,11 +12,18 @@ import {
 import path from "node:path";
 import { Readable } from "node:stream";
 import { isDeepStrictEqual } from "node:util";
-import { inspectAwinProductFeed } from "./importer";
+import {
+  type AwinProductNormalizer,
+  inspectAwinProductFeed,
+} from "./importer";
 import {
   openAwinEnhancedFeed,
   parseAwinJsonlStream,
 } from "./feed";
+import {
+  normalizeAwinLegacyProduct,
+  parseAwinLegacyCsvGzipStream,
+} from "./legacyFeed";
 import {
   AWIN_PROVIDER,
   type AwinImportContext,
@@ -26,9 +33,12 @@ import {
 const SNAPSHOT_SCHEMA_VERSION = 1;
 export const DEFAULT_SNAPSHOT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+export type AwinSnapshotFormat = "enhanced-jsonl" | "legacy-csv-gzip";
+
 export type AwinSnapshotMetadata = {
   schemaVersion: typeof SNAPSHOT_SCHEMA_VERSION;
   complete: true;
+  format?: AwinSnapshotFormat;
   provider: typeof AWIN_PROVIDER;
   publisherId: string;
   advertiserId: string;
@@ -42,6 +52,31 @@ export type AwinSnapshotMetadata = {
   snapshotFile: string;
   inspection: FeedInspection;
 };
+
+function snapshotFormat(metadata: AwinSnapshotMetadata): AwinSnapshotFormat {
+  return metadata.format ?? "enhanced-jsonl";
+}
+
+function normalizerForSnapshotFormat(
+  format: AwinSnapshotFormat,
+): AwinProductNormalizer | undefined {
+  return format === "legacy-csv-gzip" ? normalizeAwinLegacyProduct : undefined;
+}
+
+export function getAwinSnapshotNormalizer(
+  metadata: AwinSnapshotMetadata,
+): AwinProductNormalizer | undefined {
+  return normalizerForSnapshotFormat(snapshotFormat(metadata));
+}
+
+function parseSnapshotRecords(
+  stream: ReadableStream<Uint8Array>,
+  format: AwinSnapshotFormat,
+): AsyncGenerator<unknown> {
+  return format === "legacy-csv-gzip"
+    ? parseAwinLegacyCsvGzipStream(stream)
+    : parseAwinJsonlStream(stream);
+}
 
 export function snapshotMetadataPath(snapshotPath: string): string {
   return `${snapshotPath}.metadata.json`;
@@ -159,6 +194,7 @@ export async function downloadAndValidateAwinSnapshot(options: {
     const metadata: AwinSnapshotMetadata = {
       schemaVersion: SNAPSHOT_SCHEMA_VERSION,
       complete: true,
+      format: "enhanced-jsonl",
       provider: AWIN_PROVIDER,
       publisherId: options.context.publisherId,
       advertiserId: options.context.advertiserId,
@@ -171,6 +207,108 @@ export async function downloadAndValidateAwinSnapshot(options: {
       contentType: response.contentType,
       snapshotFile: path.basename(outputPath),
       inspection,
+    };
+
+    await writePrivateJson(partialMetadata, metadata);
+    await link(partialSnapshot, outputPath);
+    snapshotPublished = true;
+    await rm(partialSnapshot);
+    await link(partialMetadata, metadataPath);
+    metadataPublished = true;
+    await rm(partialMetadata);
+    await Promise.all([chmod(outputPath, 0o600), chmod(metadataPath, 0o600)]);
+    return metadata;
+  } catch (error) {
+    await Promise.all([
+      rm(partialSnapshot, { force: true }),
+      rm(partialMetadata, { force: true }),
+      snapshotPublished ? rm(outputPath, { force: true }) : Promise.resolve(),
+      metadataPublished ? rm(metadataPath, { force: true }) : Promise.resolve(),
+    ]);
+    throw error;
+  }
+}
+
+export async function createAndValidateAwinLegacySnapshot(options: {
+  context: AwinImportContext;
+  sourcePath: string;
+  outputPath: string;
+  workspace?: string;
+  now?: Date;
+}): Promise<AwinSnapshotMetadata> {
+  const sourcePath = assertSnapshotOutsideWorkspace(
+    options.sourcePath,
+    options.workspace,
+  );
+  const outputPath = assertSnapshotOutsideWorkspace(
+    options.outputPath,
+    options.workspace,
+  );
+  if (!sourcePath.endsWith(".csv.gz") || !outputPath.endsWith(".csv.gz")) {
+    throw new Error("Awin Legacy snapshots must use a .csv.gz extension.");
+  }
+  if (sourcePath === outputPath) {
+    throw new Error("Awin Legacy snapshot output must differ from its source file.");
+  }
+
+  const sourceInfo = await lstat(sourcePath);
+  if (!sourceInfo.isFile() || sourceInfo.isSymbolicLink()) {
+    throw new Error(`Awin Legacy feed source must be a regular file: ${sourcePath}`);
+  }
+
+  const metadataPath = snapshotMetadataPath(outputPath);
+  const unique = randomUUID();
+  const partialSnapshot = `${outputPath}.${unique}.partial`;
+  const partialMetadata = `${metadataPath}.${unique}.partial`;
+  await mkdir(path.dirname(outputPath), { recursive: true, mode: 0o700 });
+  for (const candidate of [outputPath, metadataPath]) {
+    try {
+      await lstat(candidate);
+      throw new Error(`Snapshot output already exists: ${candidate}`);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  let snapshotPublished = false;
+  let metadataPublished = false;
+  try {
+    const [fileResult, inspectionResult] = await Promise.allSettled([
+      writeStreamWithChecksum(fileWebStream(sourcePath), partialSnapshot),
+      inspectAwinProductFeed({
+        advertiserId: options.context.advertiserId,
+        locale: options.context.locale,
+        records: parseAwinLegacyCsvGzipStream(fileWebStream(sourcePath)),
+        normalizeProduct: normalizeAwinLegacyProduct,
+      }),
+    ]);
+    if (fileResult.status === "rejected") throw fileResult.reason;
+    if (inspectionResult.status === "rejected") throw inspectionResult.reason;
+
+    const now = options.now ?? new Date();
+    const metadata: AwinSnapshotMetadata = {
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+      complete: true,
+      format: "legacy-csv-gzip",
+      provider: AWIN_PROVIDER,
+      publisherId: options.context.publisherId,
+      advertiserId: options.context.advertiserId,
+      locale: options.context.locale,
+      downloadedAt: now.toISOString(),
+      validatedAt: now.toISOString(),
+      sha256: fileResult.value.sha256,
+      byteLength: fileResult.value.byteLength,
+      httpStatus: 200,
+      contentType: "application/gzip",
+      snapshotFile: path.basename(outputPath),
+      inspection: inspectionResult.value,
     };
 
     await writePrivateJson(partialMetadata, metadata);
@@ -227,6 +365,9 @@ function parseMetadata(value: string): AwinSnapshotMetadata {
   if (
     metadata.schemaVersion !== SNAPSHOT_SCHEMA_VERSION ||
     metadata.complete !== true ||
+    (metadata.format !== undefined &&
+      metadata.format !== "enhanced-jsonl" &&
+      metadata.format !== "legacy-csv-gzip") ||
     metadata.provider !== AWIN_PROVIDER ||
     typeof metadata.publisherId !== "string" ||
     !/^\d+$/.test(metadata.publisherId) ||
@@ -318,10 +459,12 @@ export async function validateAwinSnapshot(options: {
     throw new Error("Awin snapshot checksum or byte length does not match metadata.");
   }
 
+  const format = snapshotFormat(metadata as AwinSnapshotMetadata);
   const inspection = await inspectAwinProductFeed({
     advertiserId: metadata.advertiserId,
     locale: metadata.locale,
-    records: parseAwinJsonlStream(fileWebStream(snapshotPath)),
+    records: parseSnapshotRecords(fileWebStream(snapshotPath), format),
+    normalizeProduct: normalizerForSnapshotFormat(format),
   });
   if (!isDeepStrictEqual(inspection, metadata.inspection)) {
     throw new Error("Awin snapshot validation results do not match metadata.");
@@ -352,7 +495,10 @@ export async function* readValidatedSnapshotRecords(
     }),
   );
 
-  for await (const record of parseAwinJsonlStream(checkedStream)) {
+  for await (const record of parseSnapshotRecords(
+    checkedStream,
+    snapshotFormat(metadata),
+  )) {
     yield record;
   }
   if (

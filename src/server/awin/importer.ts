@@ -11,6 +11,15 @@ import {
   type ImportStats,
 } from "./types";
 
+export type AwinProductNormalizer = (
+  record: unknown,
+  options: {
+    advertiserId: string;
+    locale: string;
+    importedAt: string;
+  },
+) => ReturnType<typeof normalizeAwinProduct>;
+
 const DEFAULT_BATCH_SIZE = 100;
 
 function safeErrorMessage(error: unknown): string {
@@ -33,6 +42,7 @@ export async function runAwinProductImport(options: {
   importedAt?: string;
   batchSize?: number;
   minimumValidProducts?: number;
+  normalizeProduct?: AwinProductNormalizer;
 }): Promise<{ importId: string; activatedProducts: number; stats: ImportStats }> {
   const advertiser = assertAwinImportContext(
     options.context,
@@ -59,6 +69,7 @@ export async function runAwinProductImport(options: {
   }
   const minimumValidProducts =
     options.minimumValidProducts ?? configuredMinimum;
+  const normalizeProduct = options.normalizeProduct ?? normalizeAwinProduct;
   const stats: ImportStats = {
     recordsRead: 0,
     validProducts: 0,
@@ -73,7 +84,7 @@ export async function runAwinProductImport(options: {
   try {
     for await (const record of options.records) {
       stats.recordsRead += 1;
-      const normalized = normalizeAwinProduct(record, {
+      const normalized = normalizeProduct(record, {
         advertiserId: options.context.advertiserId,
         locale: options.context.locale,
         importedAt,
@@ -120,8 +131,10 @@ export async function inspectAwinProductFeed(options: {
   locale: string;
   records: AsyncIterable<unknown>;
   importedAt?: string;
+  normalizeProduct?: AwinProductNormalizer;
 }): Promise<FeedInspection> {
   const importedAt = options.importedAt ?? new Date().toISOString();
+  const normalizeProduct = options.normalizeProduct ?? normalizeAwinProduct;
   const stats: FeedInspection = {
     recordsRead: 0,
     validProducts: 0,
@@ -138,7 +151,7 @@ export async function inspectAwinProductFeed(options: {
 
   for await (const record of options.records) {
     stats.recordsRead += 1;
-    const normalized = normalizeAwinProduct(record, {
+    const normalized = normalizeProduct(record, {
       advertiserId: options.advertiserId,
       locale: options.locale,
       importedAt,

@@ -6,6 +6,7 @@ import {
   runAwinProductImport,
 } from "../src/server/awin/importer";
 import {
+  getAwinSnapshotNormalizer,
   readValidatedSnapshotRecords,
   validateAwinSnapshot,
 } from "../src/server/awin/snapshot";
@@ -177,7 +178,7 @@ async function main() {
   if (writeMode) {
     if (!snapshotPath) {
       throw new Error(
-        "Write mode requires --snapshot=<validated-jsonl-path>. No database writes were attempted.",
+        "Write mode requires --snapshot=<validated-snapshot-path>. No database writes were attempted.",
       );
     }
     if (
@@ -235,6 +236,7 @@ async function main() {
       records: readValidatedSnapshotRecords(snapshotPath, validatedSnapshot),
       repository,
       minimumValidProducts: minimumValidProducts as number,
+      normalizeProduct: getAwinSnapshotNormalizer(validatedSnapshot),
     });
     console.log(
       JSON.stringify(

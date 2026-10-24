@@ -289,6 +289,60 @@ const COZIWOW_PET_INTENT_WORDS = new Set([
   "rabbit",
 ]);
 
+const GIFTLAB_PERSONALIZED_INTENT_WORDS = new Set([
+  "anniversary",
+  "birthday",
+  "bracelet",
+  "christmas",
+  "custom",
+  "engraved",
+  "family",
+  "holiday",
+  "jewelry",
+  "keepsake",
+  "memorial",
+  "mug",
+  "necklace",
+  "personalized",
+  "pet",
+  "photo",
+  "wedding",
+]);
+
+const GIFTLAB_DEVICE_WORDS = new Set([
+  "airpods",
+  "airtag",
+  "iphone",
+  "ipad",
+  "phone",
+  "samsung",
+]);
+
+const GIFTLAB_PRODUCT_SIGNALS = new Set([
+  "bracelet",
+  "custom",
+  "engraved",
+  "jewelry",
+  "keepsake",
+  "mug",
+  "necklace",
+  "personalized",
+  "photo",
+]);
+
+const GIFTLAB_GENERIC_MATCH_WORDS = new Set([
+  "anniversary",
+  "birthday",
+  "christmas",
+  "custom",
+  "family",
+  "gift",
+  "gifts",
+  "holiday",
+  "personalized",
+  "photo",
+]);
+
 const TOKEN_ALIASES: Record<string, string> = {
   amplifiers: "amplifier",
   anglers: "angler",
@@ -304,6 +358,8 @@ const TOKEN_ALIASES: Record<string, string> = {
   lures: "lure",
   knives: "knife",
   necklaces: "necklace",
+  photos: "photo",
+  personalized: "personalized",
   headphones: "headphone",
   headsets: "headset",
   preamplifiers: "preamplifier",
@@ -533,13 +589,55 @@ function isLoomySwatch(title: string): boolean {
 }
 
 function isMemorialProduct(title: string): boolean {
-  return /\b(?:memorial|remembrance|in loving memory)\b/i.test(title);
+  return /\b(?:memorial|remembrance|in loving memory|sympathy|pet loss|gravestone|funeral|condolence)\b/i.test(
+    title,
+  );
 }
 
 function isUnsuitableCoziwowProduct(title: string): boolean {
   return /\b(?:air purifier|dryer box|food maker|heated|heating pad|medical|nebulization|treadmill)\b/i.test(
     title,
   );
+}
+
+function isUnsuitableGiftlabProduct(title: string): boolean {
+  return /\b(?:lingerie|pant(?:y|ies)|underwear|bikini|swimsuit|costume)\b/i.test(
+    title,
+  );
+}
+
+function isGiftlabDeviceSpecificProduct(title: string): boolean {
+  return /\b(?:airpods?|airtag|iphone|ipad|phone case|earphone case|samsung)\b/i.test(
+    title,
+  );
+}
+
+function productDiversityKey(
+  product: Pick<AwinCatalogProduct, "advertiserId" | "externalProductId" | "title">,
+  advertiser: AwinAdvertiserConfig,
+): string {
+  if (advertiser.matchingPolicy !== "giftlab-personalized") {
+    return `${product.advertiserId}:${product.externalProductId}`;
+  }
+  const baseTitle = product.title
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/\b(?:black|blue|brown|gold|gray|green|grey|large|medium|orange|pink|purple|red|silver|small|white|yellow)\b/g, " ")
+    .replace(/\b(?:xs|xl|xxl|\d+\s*(?:cm|in))\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
+}
+
+function productDescriptionTokensForMatching(
+  product: AwinCatalogProduct,
+  advertiser: AwinAdvertiserConfig,
+): Set<string> {
+  if (advertiser.matchingPolicy !== "giftlab-personalized") {
+    return tokens(product.description);
+  }
+  const category = product.description?.match(/^Category:\s*([^.]*)\./i)?.[1];
+  return tokens(category);
 }
 
 function hasSpecificFanTeamMatch(
@@ -567,6 +665,8 @@ function passesAdvertiserPolicy(args: {
   magicshineCyclingIntent: Set<string>;
   hulaDaddyCoffeeIntent: Set<string>;
   coziwowPetIntent: Set<string>;
+  giftlabPersonalizedIntent: Set<string>;
+  giftlabDeviceIntent: Set<string>;
   memorialIntent: Set<string>;
   teamContextTokens: Set<string>;
   productTitleTokens: Set<string>;
@@ -615,6 +715,15 @@ function passesAdvertiserPolicy(args: {
       return (
         args.coziwowPetIntent.size > 0 &&
         !isUnsuitableCoziwowProduct(product.title)
+      );
+    case "giftlab-personalized":
+      return (
+        args.giftlabPersonalizedIntent.size > 0 &&
+        hasAny(args.productTitleTokens, GIFTLAB_PRODUCT_SIGNALS) &&
+        !isUnsuitableGiftlabProduct(product.title) &&
+        (!isMemorialProduct(product.title) || args.memorialIntent.size > 0) &&
+        (!isGiftlabDeviceSpecificProduct(product.title) ||
+          hasAny(args.giftlabDeviceIntent, args.productTitleTokens))
       );
     case "standard":
       return true;
@@ -665,6 +774,8 @@ type SuggestionPolicyIntent = {
   magicshineCycling: Set<string>;
   hulaDaddyCoffee: Set<string>;
   coziwowPets: Set<string>;
+  giftlabPersonalized: Set<string>;
+  giftlabDevice: Set<string>;
 };
 
 function getSuggestionPolicyIntent(
@@ -707,6 +818,11 @@ function getSuggestionPolicyIntent(
       HULA_DADDY_COFFEE_INTENT_WORDS,
     ),
     coziwowPets: intersection(suggestionIntentTokens, COZIWOW_PET_INTENT_WORDS),
+    giftlabPersonalized: intersection(
+      suggestionIntentTokens,
+      GIFTLAB_PERSONALIZED_INTENT_WORDS,
+    ),
+    giftlabDevice: intersection(suggestionIntentTokens, GIFTLAB_DEVICE_WORDS),
   };
 }
 
@@ -741,6 +857,8 @@ function policyCanMatchSuggestion(
       return intent.hulaDaddyCoffee.size > 0;
     case "coziwow-pets":
       return intent.coziwowPets.size > 0;
+    case "giftlab-personalized":
+      return intent.giftlabPersonalized.size > 0;
     case "standard":
       return true;
   }
@@ -781,6 +899,7 @@ export function findBestAwinProductMatch(args: {
   budgetMin?: number | null;
   budgetMax?: number | null;
   advertiserRegistry?: readonly AwinAdvertiserConfig[];
+  excludedProductKeys?: ReadonlySet<string>;
 }): ProductMatch | null {
   const { suggestion, products } = args;
   if (!suggestion.title.trim() || !isPhysicalProductConcept(suggestion)) {
@@ -840,8 +959,15 @@ export function findBestAwinProductMatch(args: {
       continue;
     }
 
+    if (args.excludedProductKeys?.has(productDiversityKey(product, advertiser))) {
+      continue;
+    }
+
     const productTitleTokens = tokens(product.title);
-    const productDescriptionTokens = tokens(product.description);
+    const productDescriptionTokens = productDescriptionTokensForMatching(
+      product,
+      advertiser,
+    );
     if (
       !passesAdvertiserPolicy({
         advertiser,
@@ -859,6 +985,8 @@ export function findBestAwinProductMatch(args: {
         magicshineCyclingIntent: policyIntent.magicshineCycling,
         hulaDaddyCoffeeIntent: policyIntent.hulaDaddyCoffee,
         coziwowPetIntent: policyIntent.coziwowPets,
+        giftlabPersonalizedIntent: policyIntent.giftlabPersonalized,
+        giftlabDeviceIntent: policyIntent.giftlabDevice,
         memorialIntent,
         teamContextTokens: union(titleTokens, interestTokens),
         productTitleTokens,
@@ -869,6 +997,12 @@ export function findBestAwinProductMatch(args: {
     const titleDescription = intersection(titleTokens, productDescriptionTokens);
     const detailTitle = intersection(detailTokens, productTitleTokens);
     const interestTitle = intersection(interestTokens, productTitleTokens);
+    if (
+      advertiser.matchingPolicy === "giftlab-personalized" &&
+      ![...titleTitle].some((token) => !GIFTLAB_GENERIC_MATCH_WORDS.has(token))
+    ) {
+      continue;
+    }
     const distinctiveTitleMatch = [...titleTitle].some(
       (token) =>
         !BROAD_FISHING_CONTEXT_WORDS.has(token) &&
@@ -976,36 +1110,67 @@ export async function enrichGiftSuggestionsWithProducts<
     );
   }
 
+  const selectedProductKeys = new Set<string>();
+  const advertiserById = new Map(
+    (args.advertiserRegistry ?? AWIN_ADVERTISERS).map((advertiser) => [
+      advertiser.advertiserId,
+      advertiser,
+    ]),
+  );
+  const awinMatches: Array<ProductMatch | null> = [];
+
+  for (const suggestion of args.suggestions) {
+    if (!isPhysicalProductConcept(suggestion)) {
+      awinMatches.push(null);
+      continue;
+    }
+    let awinMatch: ProductMatch | null = null;
+    try {
+      awinMatch = findBestAwinProductMatch({
+        suggestion,
+        recipientInterests: args.recipientInterests,
+        products: awinProducts,
+        budgetMin: args.budgetMin,
+        budgetMax: args.budgetMax,
+        advertiserRegistry: args.advertiserRegistry,
+        excludedProductKeys: selectedProductKeys,
+      });
+    } catch {
+      console.warn(
+        "[perchpal] Awin matching failed; continuing with Amazon fallback.",
+      );
+    }
+    if (awinMatch) {
+      const advertiser = advertiserById.get(awinMatch.advertiserId ?? "");
+      if (advertiser) {
+        selectedProductKeys.add(
+          productDiversityKey(
+            {
+              advertiserId: awinMatch.advertiserId ?? "",
+              externalProductId: awinMatch.productId,
+              title: awinMatch.productTitle,
+            },
+            advertiser,
+          ),
+        );
+      }
+    }
+    awinMatches.push(awinMatch);
+  }
+
   return Promise.all(
-    args.suggestions.map(async (suggestion) => {
+    args.suggestions.map(async (suggestion, index) => {
       if (!isPhysicalProductConcept(suggestion)) {
         return { ...suggestion, productMatch: null, amazonProduct: null };
       }
-
-      let awinMatch: ProductMatch | null = null;
-      try {
-        awinMatch = findBestAwinProductMatch({
-          suggestion,
-          recipientInterests: args.recipientInterests,
-          products: awinProducts,
-          budgetMin: args.budgetMin,
-          budgetMax: args.budgetMax,
-          advertiserRegistry: args.advertiserRegistry,
-        });
-      } catch {
-        console.warn(
-          "[perchpal] Awin matching failed; continuing with Amazon fallback.",
-        );
-      }
+      const awinMatch = awinMatches[index];
       if (awinMatch) {
         return { ...suggestion, productMatch: awinMatch, amazonProduct: null };
       }
-
       const title = suggestion.title.trim();
       if (!title) {
         return { ...suggestion, productMatch: null, amazonProduct: null };
       }
-
       try {
         const amazonProduct = await args.searchAmazon({
           query: title,

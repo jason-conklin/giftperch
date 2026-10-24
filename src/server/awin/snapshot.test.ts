@@ -3,9 +3,13 @@ import { appendFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { gzipSync } from "node:zlib";
 import { runAwinProductImport } from "./importer";
+import type { AwinAdvertiserConfig } from "./advertisers";
 import {
+  createAndValidateAwinLegacySnapshot,
   downloadAndValidateAwinSnapshot,
+  getAwinSnapshotNormalizer,
   readValidatedSnapshotRecords,
   snapshotMetadataPath,
   validateAwinSnapshot,
@@ -108,6 +112,69 @@ test("validated snapshots import through the existing staged importer", async ()
     assert.equal(result.activatedProducts, 2);
     assert.equal(staged.length, 2);
     assert.equal(finalized, true);
+  });
+});
+
+test("Legacy gzip snapshots validate and import through the existing staged importer", async () => {
+  await withTempDirectory(async (directory) => {
+    const sourcePath = path.join(directory, "source.csv.gz");
+    const snapshotPath = path.join(directory, "giftlab.csv.gz");
+    const headers = [
+      "aw_deep_link", "product_name", "aw_product_id", "merchant_image_url",
+      "description", "merchant_category", "search_price", "merchant_name",
+      "merchant_id", "aw_image_url", "currency", "merchant_deep_link",
+      "in_stock", "is_for_sale", "stock_status",
+    ];
+    const values = [
+      "https://www.awin1.com/cread.php?awinmid=95201", "Custom Photo Mug",
+      "giftlab-1", "https://images.example.test/mug.jpg", "A photo mug", "Gifts",
+      "19.95", "Giftlab", "95201", "https://images.example.test/mug.jpg", "USD",
+      "https://giftlab.example.test/mug", "1", "1", "instock",
+    ];
+    await writeFile(sourcePath, gzipSync(`${headers.join(",")}\n${values.map((value) => `\"${value}\"`).join(",")}\n`));
+    const giftlabContext = { ...context, advertiserId: "95201" };
+    const metadata = await createAndValidateAwinLegacySnapshot({
+      context: giftlabContext,
+      sourcePath,
+      outputPath: snapshotPath,
+      workspace: path.join(directory, "workspace"),
+      now: new Date("2026-10-24T12:00:00.000Z"),
+    });
+    assert.equal(metadata.format, "legacy-csv-gzip");
+    assert.equal(metadata.inspection.validProducts, 1);
+    const validated = await validateAwinSnapshot({
+      snapshotPath,
+      expectedContext: giftlabContext,
+      workspace: path.join(directory, "workspace"),
+      now: new Date("2026-10-24T13:00:00.000Z"),
+    });
+    const staged: AffiliateProduct[] = [];
+    const repository: AffiliateProductImportRepository = {
+      async beginImport() { return "legacy-import"; },
+      async stageProducts(_importId, products) { staged.push(...products); },
+      async finalizeImport() { return staged.length; },
+      async failImport() { assert.fail("valid Legacy snapshot should not fail"); },
+    };
+    const result = await runAwinProductImport({
+      context: giftlabContext,
+      records: readValidatedSnapshotRecords(snapshotPath, validated),
+      repository,
+      normalizeProduct: getAwinSnapshotNormalizer(validated),
+      advertiserRegistry: [
+        {
+          key: "giftlab-test",
+          advertiserId: "95201",
+          displayName: "Giftlab",
+          locale: "en_US",
+          importEnabled: true,
+          recommendationEnabled: false,
+          matchingPolicy: "giftlab-personalized",
+          importSafeguards: { minimumValidProducts: 1 },
+        } satisfies AwinAdvertiserConfig,
+      ],
+    });
+    assert.equal(result.activatedProducts, 1);
+    assert.equal(staged[0]?.externalProductId, "giftlab-1");
   });
 });
 test("snapshot validation rejects checksum mismatches", async () => {

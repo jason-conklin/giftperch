@@ -14,6 +14,7 @@ export type AwinMatchingPolicy =
   | "magicshine-cycling"
   | "hula-daddy-coffee"
   | "coziwow-pets"
+  | "giftlab-personalized"
   | "standard";
 
 export type AwinAdvertiserConfig = {
@@ -26,6 +27,10 @@ export type AwinAdvertiserConfig = {
   matchingPolicy: AwinMatchingPolicy;
   importSafeguards?: {
     minimumValidProducts?: number;
+  };
+  feed?: {
+    format: "enhanced-jsonl" | "legacy-csv-gzip";
+    feedId?: string;
   };
 };
 
@@ -152,6 +157,22 @@ export const AWIN_ADVERTISERS = [
     matchingPolicy: "bonheur-jewelry",
     importSafeguards: {
       minimumValidProducts: 220,
+    },
+  },
+  {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: false,
+    matchingPolicy: "giftlab-personalized",
+    importSafeguards: {
+      minimumValidProducts: 2000,
+    },
+    feed: {
+      format: "legacy-csv-gzip",
+      feedId: "105668",
     },
   },
   {
