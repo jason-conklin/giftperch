@@ -1936,8 +1936,6 @@ body {
 
   .gp-difference-product-image { position: relative; aspect-ratio: 1.22 / 1; overflow: hidden; background: #edf1e8; }
   .gp-difference-product-image > img { object-fit: cover; user-select: none; -webkit-user-drag: none; }
-  .gp-difference-product-image--pending { object-fit: contain !important; padding: 18%; opacity: 0.58; }
-  .gp-difference-product-pending { position: absolute; right: 0.35rem; bottom: 0.35rem; left: 0.35rem; border-radius: 0.35rem; background: rgba(15, 61, 62, 0.75); color: #fff; font-size: 0.52rem; line-height: 1.2; padding: 0.22rem; text-align: center; }
 
   .gp-difference-product-details { padding: 0.5rem 0.55rem 0.35rem; }
   .gp-difference-product-details h4 { display: -webkit-box; overflow: hidden; color: #123f40; font-size: clamp(0.68rem, 0.92vw, 0.84rem); font-weight: 700; line-height: 1.22; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }

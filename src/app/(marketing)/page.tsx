@@ -146,7 +146,6 @@ const differenceProducts = [
     price: "$28.00",
     imageSrc: "/product-tour-previews/maya-candle.png",
     imageAlt: "Amber & Vanilla Candle illustrative preview",
-    imagePending: false,
     className: "gp-difference-product-card--mom",
   },
   {
@@ -155,9 +154,8 @@ const differenceProducts = [
     avatarSrc: "/icons/avatars/sofi.png",
     name: "Cozy Cat Tree",
     price: "$89.99",
-    imageSrc: "/cat_icon.png",
-    imageAlt: "Temporary cat tree preview placeholder",
-    imagePending: true,
+    imageSrc: "/icons/previews/sofi-cat-tree.png",
+    imageAlt: "Cozy Cat Tree illustrative preview",
     className: "gp-difference-product-card--sofi",
   },
   {
@@ -168,7 +166,6 @@ const differenceProducts = [
     price: "$54.00",
     imageSrc: "/product-tour-previews/maya-backpack.png",
     imageAlt: "Everyday Trail Backpack illustrative preview",
-    imagePending: false,
     className: "gp-difference-product-card--nick",
   },
 ] as const;
@@ -202,12 +199,8 @@ function DifferenceProductCard({
           alt={product.imageAlt}
           fill
           sizes="(max-width: 640px) 42vw, (max-width: 980px) 26vw, 12vw"
-          className={product.imagePending ? "gp-difference-product-image--pending" : ""}
           draggable={false}
         />
-        {product.imagePending ? (
-          <span className="gp-difference-product-pending">Preview image pending</span>
-        ) : null}
       </div>
       <div className="gp-difference-product-details">
         <h4>{product.name}</h4>
