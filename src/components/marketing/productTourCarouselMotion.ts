@@ -1,5 +1,22 @@
 export const PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND = 22;
 export const PRODUCT_TOUR_DRAG_THRESHOLD_PX = 5;
+export const PRODUCT_TOUR_NO_DRAG_SELECTOR =
+  "a, button, input, select, textarea, [role='button'], [data-no-carousel-drag]";
+
+export function shouldStartProductTourCarouselDrag(
+  target: unknown,
+): boolean {
+  if (
+    !target ||
+    typeof target !== "object" ||
+    !("closest" in target) ||
+    typeof target.closest !== "function"
+  ) {
+    return true;
+  }
+
+  return !target.closest(PRODUCT_TOUR_NO_DRAG_SELECTOR);
+}
 
 export function hasProductTourCarouselDragged(distance: number): boolean {
   return Math.abs(distance) > PRODUCT_TOUR_DRAG_THRESHOLD_PX;
@@ -23,6 +40,7 @@ export function shouldAutoplayProductTourCarousel({
   documentVisible,
   isDragging,
   isFocusWithin,
+  isInteractivePress,
   isManuallyPaused,
   reducedMotion,
 }: {
@@ -30,6 +48,7 @@ export function shouldAutoplayProductTourCarousel({
   documentVisible: boolean;
   isDragging: boolean;
   isFocusWithin: boolean;
+  isInteractivePress: boolean;
   isManuallyPaused: boolean;
   reducedMotion: boolean;
 }): boolean {
@@ -38,6 +57,7 @@ export function shouldAutoplayProductTourCarousel({
     documentVisible &&
     !isDragging &&
     !isFocusWithin &&
+    !isInteractivePress &&
     !isManuallyPaused &&
     !reducedMotion
   );

@@ -5,7 +5,9 @@ import {
   hasProductTourCarouselDragged,
   PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND,
   PRODUCT_TOUR_DRAG_THRESHOLD_PX,
+  PRODUCT_TOUR_NO_DRAG_SELECTOR,
   shouldPauseProductTourCarouselForFocus,
+  shouldStartProductTourCarouselDrag,
   shouldAutoplayProductTourCarousel,
 } from "./productTourCarouselMotion";
 
@@ -24,6 +26,24 @@ test("recognizes deliberate carousel drags without suppressing ordinary clicks",
   assert.equal(hasProductTourCarouselDragged(-6), true);
 });
 
+test("starts dragging only from non-interactive carousel content", () => {
+  let selector = "";
+  assert.equal(
+    shouldStartProductTourCarouselDrag({
+      closest: (value: string) => {
+        selector = value;
+        return null;
+      },
+    }),
+    true,
+  );
+  assert.equal(selector, PRODUCT_TOUR_NO_DRAG_SELECTOR);
+  assert.equal(
+    shouldStartProductTourCarouselDrag({ closest: () => ({}) }),
+    false,
+  );
+});
+
 test("keeps the marquee running after pointer-originated button focus", () => {
   assert.equal(shouldPauseProductTourCarouselForFocus(true), false);
   assert.equal(shouldPauseProductTourCarouselForFocus(false), true);
@@ -35,6 +55,7 @@ test("starts the marquee only when the visible carousel is not paused", () => {
     documentVisible: true,
     isDragging: false,
     isFocusWithin: false,
+    isInteractivePress: false,
     isManuallyPaused: false,
     reducedMotion: false,
   };
@@ -42,6 +63,7 @@ test("starts the marquee only when the visible carousel is not paused", () => {
   assert.equal(shouldAutoplayProductTourCarousel(ready), true);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isFocusWithin: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isDragging: true }), false);
+  assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isInteractivePress: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, isManuallyPaused: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, reducedMotion: true }), false);
   assert.equal(shouldAutoplayProductTourCarousel({ ...ready, documentVisible: false }), false);

@@ -16,6 +16,7 @@ import {
   getProductTourCarouselDurationMs,
   hasProductTourCarouselDragged,
   shouldPauseProductTourCarouselForFocus,
+  shouldStartProductTourCarouselDrag,
   shouldAutoplayProductTourCarousel,
 } from "./productTourCarouselMotion";
 const MANUAL_PAUSE_MS = 3_500;
@@ -45,6 +46,7 @@ export function ProductTourGiftCarousel({
   const manualPauseTimerRef = useRef<number | null>(null);
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isInteractivePress, setIsInteractivePress] = useState(false);
   const [isManuallyPaused, setIsManuallyPaused] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -77,6 +79,18 @@ export function ProductTourGiftCarousel({
     mediaQuery.addEventListener("change", update);
     return () => mediaQuery.removeEventListener("change", update);
   }, []);
+
+  useEffect(() => {
+    if (!isInteractivePress) return;
+
+    const releaseInteractivePress = () => setIsInteractivePress(false);
+    window.addEventListener("pointerup", releaseInteractivePress, { once: true });
+    window.addEventListener("pointercancel", releaseInteractivePress, { once: true });
+    return () => {
+      window.removeEventListener("pointerup", releaseInteractivePress);
+      window.removeEventListener("pointercancel", releaseInteractivePress);
+    };
+  }, [isInteractivePress]);
 
   useEffect(() => {
     const updateVisibility = () => {
@@ -130,6 +144,7 @@ export function ProductTourGiftCarousel({
     const viewport = viewportRef.current;
     if (!viewport || event.button !== 0) return;
     pointerInitiatedFocusRef.current = true;
+    if (!shouldStartProductTourCarouselDrag(event.target)) return;
     pointerStartRef.current = { x: event.clientX, scrollLeft: viewport.scrollLeft };
     draggingRef.current = false;
     viewport.setPointerCapture(event.pointerId);
@@ -167,6 +182,14 @@ export function ProductTourGiftCarousel({
     }
   };
 
+  const handleInteractivePointerDown = () => {
+    setIsInteractivePress(true);
+  };
+
+  const handleInteractivePointerEnd = () => {
+    setIsInteractivePress(false);
+  };
+
   const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!suppressClickRef.current) return;
     event.preventDefault();
@@ -178,6 +201,7 @@ export function ProductTourGiftCarousel({
     documentVisible,
     isDragging,
     isFocusWithin,
+    isInteractivePress,
     isManuallyPaused,
     reducedMotion,
   });
@@ -195,7 +219,7 @@ export function ProductTourGiftCarousel({
       <article className="gp-tour-carousel-card" key={`${copy}-${idea.id}`} aria-hidden={!isPrimaryCopy || undefined}>
         <div className="gp-tour-carousel-image">
           <Image src={idea.imageSrc} alt="" fill draggable={false} sizes="(max-width: 640px) 78vw, (max-width: 1024px) 34vw, 13rem" className="object-cover" />
-          <button type="button" className="gp-tour-save-button" aria-label={`${isSaved ? "Remove" : "Save"} ${idea.title} in this demonstration`} aria-pressed={isSaved} tabIndex={isPrimaryCopy ? 0 : -1} onClick={() => { onToggleSaved(ideaKey); pauseAfterManualAction(); }}>
+          <button type="button" className="gp-tour-save-button" aria-label={`${isSaved ? "Remove" : "Save"} ${idea.title} in this demonstration`} aria-pressed={isSaved} tabIndex={isPrimaryCopy ? 0 : -1} onPointerDown={handleInteractivePointerDown} onPointerUp={handleInteractivePointerEnd} onPointerCancel={handleInteractivePointerEnd} onClick={() => { onToggleSaved(ideaKey); pauseAfterManualAction(); }}>
             <Heart aria-hidden="true" className={isSaved ? "fill-current" : ""} />
           </button>
         </div>
@@ -204,7 +228,7 @@ export function ProductTourGiftCarousel({
           <p>{idea.description}</p>
           <div className="gp-tour-carousel-footer">
             <strong>{idea.price}</strong>
-            <Link href={productEntryPath} className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1}>View Product</Link>
+            <Link href={productEntryPath} className="gp-tour-view-product" tabIndex={isPrimaryCopy ? 0 : -1} onPointerDown={handleInteractivePointerDown} onPointerUp={handleInteractivePointerEnd} onPointerCancel={handleInteractivePointerEnd}>View Product</Link>
           </div>
         </div>
       </article>
