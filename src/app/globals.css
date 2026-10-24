@@ -1165,12 +1165,9 @@ body {
 
   .gp-tour-carousel-viewport {
     --gp-tour-card-gap: 0.55rem;
-    display: flex;
     width: 100%;
     min-width: 0;
-    gap: var(--gp-tour-card-gap);
-    overflow-x: auto;
-    scrollbar-width: none;
+    overflow: hidden;
     cursor: grab;
     overscroll-behavior-x: contain;
     scroll-behavior: auto;
@@ -1183,6 +1180,38 @@ body {
 
   .gp-tour-carousel-viewport:active {
     cursor: grabbing;
+  }
+
+  .gp-tour-carousel-track {
+    display: flex;
+    width: max-content;
+    min-width: 100%;
+    gap: var(--gp-tour-card-gap);
+    will-change: transform;
+  }
+
+  .gp-tour-carousel-track--autoplay {
+    animation: gp-tour-carousel-marquee var(--gp-tour-carousel-duration) linear infinite;
+  }
+
+  .gp-tour-carousel-track--paused {
+    animation-play-state: paused;
+  }
+
+  @keyframes gp-tour-carousel-marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+
+    to {
+      transform: translate3d(calc(-1 * var(--gp-tour-cycle-width)), 0, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gp-tour-carousel-track--autoplay {
+      animation: none;
+    }
   }
 
   .gp-tour-carousel-set {

@@ -7,10 +7,14 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { ProductTourIdea, ProductTourProfile } from "./productTourDemoData";
-import { advanceProductTourCarouselScroll } from "./productTourCarouselMotion";
+import {
+  getProductTourCarouselDurationMs,
+  shouldAutoplayProductTourCarousel,
+} from "./productTourCarouselMotion";
 const MANUAL_PAUSE_MS = 3_500;
 
 function cardKey(profile: ProductTourProfile, idea: ProductTourIdea) {
@@ -27,33 +31,37 @@ export function ProductTourGiftCarousel({
   onToggleSaved: (ideaKey: string) => void;
 }) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const previousFrameRef = useRef<number | null>(null);
-  const resetWidthRef = useRef(0);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const hasCenteredLoopRef = useRef(false);
   const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
   const pointerStartRef = useRef({ x: 0, scrollLeft: 0 });
-  const resumeAtRef = useRef(0);
+  const manualPauseTimerRef = useRef<number | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [documentVisible, setDocumentVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [cycleWidth, setCycleWidth] = useState(0);
   const [selectedIdea, setSelectedIdea] = useState<ProductTourIdea | null>(null);
 
   const updateLoopMetrics = useCallback((center = false) => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    const track = trackRef.current;
+    if (!viewport || !track) return;
 
-    const firstSet = viewport.querySelector<HTMLElement>("[data-tour-copy='0']");
-    const secondSet = viewport.querySelector<HTMLElement>("[data-tour-copy='1']");
-    const cycleWidth =
+    const firstSet = track.querySelector<HTMLElement>("[data-tour-copy='0']");
+    const secondSet = track.querySelector<HTMLElement>("[data-tour-copy='1']");
+    const nextCycleWidth =
       firstSet && secondSet ? secondSet.offsetLeft - firstSet.offsetLeft : 0;
-    if (!cycleWidth) return;
+    if (!nextCycleWidth) return;
 
-    resetWidthRef.current = cycleWidth;
+    setCycleWidth((current) =>
+      Math.abs(current - nextCycleWidth) > 0.5 ? nextCycleWidth : current,
+    );
     if (center || !hasCenteredLoopRef.current) {
-      viewport.scrollLeft = cycleWidth;
+      viewport.scrollLeft = nextCycleWidth;
       hasCenteredLoopRef.current = true;
     }
   }, []);
@@ -67,6 +75,16 @@ export function ProductTourGiftCarousel({
   }, []);
 
   useEffect(() => {
+    const updateVisibility = () => {
+      setDocumentVisible(document.visibilityState === "visible");
+    };
+
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
     updateLoopMetrics(true);
     const viewport = viewportRef.current;
     if (!viewport || typeof ResizeObserver === "undefined") return;
@@ -77,35 +95,12 @@ export function ProductTourGiftCarousel({
   }, [profile.id, updateLoopMetrics]);
 
   useEffect(() => {
-    const viewport = viewportRef.current;
-    if (!viewport || reducedMotion || isHovered || isFocusWithin || isDragging) return;
-
-    const tick = (now: number) => {
-      const previous = previousFrameRef.current ?? now;
-      const elapsed = Math.min(now - previous, 100);
-      previousFrameRef.current = now;
-
-      if (document.visibilityState === "visible" && now >= resumeAtRef.current) {
-        const width = resetWidthRef.current;
-        if (width > 0) {
-          viewport.scrollLeft = advanceProductTourCarouselScroll({
-            scrollLeft: viewport.scrollLeft,
-            elapsedMs: elapsed,
-            cycleWidth: width,
-          });
-        }
-      }
-
-      frameRef.current = window.requestAnimationFrame(tick);
-    };
-
-    frameRef.current = window.requestAnimationFrame(tick);
     return () => {
-      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-      previousFrameRef.current = null;
+      if (manualPauseTimerRef.current !== null) {
+        window.clearTimeout(manualPauseTimerRef.current);
+      }
     };
-  }, [isDragging, isFocusWithin, isHovered, reducedMotion]);
+  }, []);
 
   useEffect(() => {
     if (!selectedIdea) return;
@@ -117,7 +112,14 @@ export function ProductTourGiftCarousel({
   }, [selectedIdea]);
 
   const pauseAfterManualAction = useCallback(() => {
-    resumeAtRef.current = performance.now() + MANUAL_PAUSE_MS;
+    if (manualPauseTimerRef.current !== null) {
+      window.clearTimeout(manualPauseTimerRef.current);
+    }
+    setIsManuallyPaused(true);
+    manualPauseTimerRef.current = window.setTimeout(() => {
+      manualPauseTimerRef.current = null;
+      setIsManuallyPaused(false);
+    }, MANUAL_PAUSE_MS);
   }, []);
 
   const moveByCard = useCallback((direction: -1 | 1) => {
@@ -166,6 +168,20 @@ export function ProductTourGiftCarousel({
     event.stopPropagation();
   };
 
+  const autoplayActive = shouldAutoplayProductTourCarousel({
+    cycleWidth,
+    documentVisible,
+    isDragging,
+    isFocusWithin,
+    isHovered,
+    isManuallyPaused,
+    reducedMotion,
+  });
+  const carouselStyle = {
+    "--gp-tour-carousel-duration": `${getProductTourCarouselDurationMs(cycleWidth)}ms`,
+    "--gp-tour-cycle-width": `${cycleWidth}px`,
+  } as CSSProperties;
+
   const renderCard = (idea: ProductTourIdea, copy: number) => {
     const ideaKey = cardKey(profile, idea);
     const isSaved = savedIdeas.has(ideaKey);
@@ -200,7 +216,9 @@ export function ProductTourGiftCarousel({
       <div className="gp-tour-carousel-frame">
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--left" aria-label="Show previous sample gift ideas" onClick={() => moveByCard(-1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronLeft aria-hidden="true" /></button>
         <div ref={viewportRef} className="gp-tour-carousel-viewport" role="region" aria-label={`${profile.name}'s sample gift ideas`} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setIsFocusWithin(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocusWithin(false); }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onClickCapture={handleClickCapture}>
-          {[0, 1, 2].map((copy) => <div className="gp-tour-carousel-set" data-tour-copy={copy} key={copy}>{profile.ideas.map((idea) => renderCard(idea, copy))}</div>)}
+          <div ref={trackRef} className={`gp-tour-carousel-track${cycleWidth > 0 ? " gp-tour-carousel-track--autoplay" : ""}${autoplayActive ? "" : " gp-tour-carousel-track--paused"}`} style={carouselStyle}>
+            {[0, 1, 2].map((copy) => <div className="gp-tour-carousel-set" data-tour-copy={copy} key={copy}>{profile.ideas.map((idea) => renderCard(idea, copy))}</div>)}
+          </div>
         </div>
         <button type="button" className="gp-tour-carousel-arrow gp-tour-carousel-arrow--right" aria-label="Show next sample gift ideas" onClick={() => moveByCard(1)} onFocus={() => setIsFocusWithin(true)} onBlur={() => setIsFocusWithin(false)}><ChevronRight aria-hidden="true" /></button>
       </div>

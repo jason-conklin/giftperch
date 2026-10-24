@@ -1,23 +1,36 @@
-export const PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND = 14;
+export const PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND = 22;
 
-export function advanceProductTourCarouselScroll(args: {
-  scrollLeft: number;
-  elapsedMs: number;
+export function getProductTourCarouselDurationMs(cycleWidth: number): number {
+  if (!Number.isFinite(cycleWidth) || cycleWidth <= 0) return 0;
+  return Math.round(
+    (cycleWidth / PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND) * 1_000,
+  );
+}
+
+export function shouldAutoplayProductTourCarousel({
+  cycleWidth,
+  documentVisible,
+  isDragging,
+  isFocusWithin,
+  isHovered,
+  isManuallyPaused,
+  reducedMotion,
+}: {
   cycleWidth: number;
-}): number {
-  const { scrollLeft, cycleWidth } = args;
-  if (!Number.isFinite(scrollLeft) || cycleWidth <= 0) return scrollLeft;
-
-  const elapsedMs = Math.min(Math.max(args.elapsedMs, 0), 100);
-  let next =
-    scrollLeft +
-    (PRODUCT_TOUR_AUTO_SCROLL_PIXELS_PER_SECOND * elapsedMs) / 1_000;
-
-  // The viewport begins at the middle copy. Returning by one full copy keeps
-  // the same card at the same visual offset when the third copy is reached.
-  while (next >= cycleWidth * 2) {
-    next -= cycleWidth;
-  }
-
-  return next;
+  documentVisible: boolean;
+  isDragging: boolean;
+  isFocusWithin: boolean;
+  isHovered: boolean;
+  isManuallyPaused: boolean;
+  reducedMotion: boolean;
+}): boolean {
+  return (
+    cycleWidth > 0 &&
+    documentVisible &&
+    !isDragging &&
+    !isFocusWithin &&
+    !isHovered &&
+    !isManuallyPaused &&
+    !reducedMotion
+  );
 }
