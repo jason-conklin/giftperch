@@ -820,7 +820,7 @@ export default function MarketingHome() {
                     <li>A cozy blanket</li>
                     <li>A nice water bottle</li>
                   </ol>
-                  <p className="gp-difference-chat-note">These are thoughtful options, but they&apos;re just text suggestions. You&apos;ll still need to search for real products and prices on your own.</p>
+                  <p className="gp-difference-chat-note">Just basic ideas. Finding the actual gifts is up to you.</p>
                 </div>
               </div>
             </article>
