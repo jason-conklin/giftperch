@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  AWIN_APPROVED_ADVERTISERS,
   assertAwinImportContext,
   createAwinImportContext,
+  findAwinAdvertiserById,
+  findRecommendationEnabledAwinAdvertiserById,
+  getImportEnabledAwinAdvertisers,
+  isApprovedAwinAdvertiserId,
   resolveAwinAdvertiser,
   type AwinAdvertiserConfig,
 } from "./advertisers";
@@ -10,7 +15,7 @@ import { AWIN_PROVIDER } from "./types";
 
 const disabledAdvertiser: AwinAdvertiserConfig = {
   key: "disabled-test",
-  advertiserId: "99901",
+  advertiserId: "100833",
   displayName: "Disabled Test Advertiser",
   locale: "en_US",
   importEnabled: false,
@@ -31,45 +36,34 @@ test("Piscifun remains the default enabled Awin advertiser", () => {
   assert.equal(explicitAdvertiser.key, defaultAdvertiser.key);
 });
 
-test("Fosi Audio is import-ready and enabled for runtime recommendations", () => {
-  const fosi = resolveAwinAdvertiser("fosi-audio");
+test("the Joined-program allowlist permits only the authoritative advertiser IDs", () => {
+  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 18);
+  for (const advertiser of AWIN_APPROVED_ADVERTISERS) {
+    assert.equal(isApprovedAwinAdvertiserId(advertiser.advertiserId), true);
+  }
 
-  assert.equal(fosi.advertiserId, "119395");
-  assert.equal(fosi.displayName, "Fosi Audio");
-  assert.equal(fosi.locale, "en_US");
-  assert.equal(fosi.importEnabled, true);
-  assert.equal(fosi.recommendationEnabled, true);
-  assert.equal(fosi.matchingPolicy, "fosi-audio");
-  assert.equal(fosi.importSafeguards?.minimumValidProducts, 300);
+  assert.equal(isApprovedAwinAdvertiserId("119395"), false);
+  assert.equal(isApprovedAwinAdvertiserId("unknown"), false);
 });
 
-test("the validated batch advertisers are enabled with scoped safeguards", () => {
-  const expected = [
-    ["mosaic-weighted-blankets", "87403", "mosaic-comfort", 600],
-    ["imarku", "78080", "imarku-kitchen", 180],
-    ["baby-shusher", "118079", "baby-shusher", 20],
-    ["mojo-fun", "122958", "mojo-fun", 300],
-    ["loomy-home", "90515", "loomy-home", 1800],
-    ["bonheur-jewelry", "90759", "bonheur-jewelry", 220],
-    ["fan-ink", "103359", "fan-ink", 650],
-    ["beyond-memories", "87175", "beyond-memories", 700],
-    ["magicshine", "107838", "magicshine-cycling", 220],
-    ["hula-daddy-kona-coffee", "122368", "hula-daddy-coffee", 30],
-    ["coziwow", "121696", "coziwow-pets", 190],
-  ] as const;
+test("unjoined advertisers are unavailable to imports and runtime recommendations", () => {
+  assert.throws(
+    () => resolveAwinAdvertiser("fosi-audio"),
+    /not approved/,
+  );
+  assert.equal(findAwinAdvertiserById("119395"), null);
+  assert.equal(findRecommendationEnabledAwinAdvertiserById("119395"), null);
+  assert.equal(
+    getImportEnabledAwinAdvertisers().some(
+      (advertiser) => advertiser.advertiserId === "119395",
+    ),
+    false,
+  );
 
-  for (const [key, advertiserId, matchingPolicy, minimumValidProducts] of expected) {
-    const advertiser = resolveAwinAdvertiser(key);
-    assert.equal(advertiser.advertiserId, advertiserId);
-    assert.equal(advertiser.locale, "en_US");
-    assert.equal(advertiser.importEnabled, true);
-    assert.equal(advertiser.recommendationEnabled, true);
-    assert.equal(advertiser.matchingPolicy, matchingPolicy);
-    assert.equal(
-      advertiser.importSafeguards?.minimumValidProducts,
-      minimumValidProducts,
-    );
-  }
+  const bonheur = resolveAwinAdvertiser("bonheur-jewelry");
+  assert.equal(bonheur.advertiserId, "90759");
+  assert.equal(bonheur.importEnabled, true);
+  assert.equal(bonheur.recommendationEnabled, true);
 });
 
 test("unknown and disabled advertiser selections fail closed", () => {

@@ -86,8 +86,8 @@ async function* records(...items: unknown[]) {
 }
 
 test("imports preserve advertiser isolation when external product IDs collide", async () => {
-  const merchantA = advertiser("merchant-a", "90001");
-  const merchantB = advertiser("merchant-b", "90002");
+  const merchantA = advertiser("merchant-a", "100833");
+  const merchantB = advertiser("merchant-b", "126623");
   const repository = new IsolatedRepository();
 
   await runAwinProductImport({
@@ -103,21 +103,21 @@ test("imports preserve advertiser isolation when external product IDs collide", 
     repository,
   });
 
-  assert.equal(repository.active.get("90001:en_US")?.length, 1);
-  assert.equal(repository.active.get("90002:en_US")?.length, 1);
+  assert.equal(repository.active.get("100833:en_US")?.length, 1);
+  assert.equal(repository.active.get("126623:en_US")?.length, 1);
   assert.equal(
-    repository.active.get("90001:en_US")?.[0].advertiserId,
-    "90001",
+    repository.active.get("100833:en_US")?.[0].advertiserId,
+    "100833",
   );
   assert.equal(
-    repository.active.get("90002:en_US")?.[0].advertiserId,
-    "90002",
+    repository.active.get("126623:en_US")?.[0].advertiserId,
+    "126623",
   );
 });
 
 test("a failed import cannot finalize or replace another advertiser scope", async () => {
-  const merchantA = advertiser("merchant-a", "90001");
-  const merchantB = advertiser("merchant-b", "90002");
+  const merchantA = advertiser("merchant-a", "100833");
+  const merchantB = advertiser("merchant-b", "126623");
   const repository = new IsolatedRepository();
 
   await runAwinProductImport({
@@ -137,13 +137,13 @@ test("a failed import cannot finalize or replace another advertiser scope", asyn
     /at least 1 are required/,
   );
 
-  assert.equal(repository.active.has("90001:en_US"), false);
-  assert.equal(repository.active.get("90002:en_US")?.[0].externalProductId, "existing");
+  assert.equal(repository.active.has("100833:en_US"), false);
+  assert.equal(repository.active.get("126623:en_US")?.[0].externalProductId, "existing");
 });
 
 test("advertiser minimum-product safeguards cannot be lowered by a caller", async () => {
   const guardedAdvertiser = {
-    ...advertiser("guarded", "90003"),
+    ...advertiser("guarded", "117209"),
     importSafeguards: { minimumValidProducts: 300 },
   };
   const repository = new IsolatedRepository();

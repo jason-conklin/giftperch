@@ -7,6 +7,7 @@ import {
 } from "@/lib/affiliateProduct";
 import {
   AWIN_ADVERTISERS,
+  isApprovedAwinAdvertiserId,
   type AwinAdvertiserConfig,
 } from "./advertisers";
 
@@ -380,6 +381,20 @@ export type AwinCandidateLoadOptions = {
   advertiserIds?: readonly string[];
 };
 
+export function getCatalogEligibleAwinAdvertiserIds(
+  requestedAdvertiserIds?: readonly string[],
+): string[] {
+  const eligibleAdvertiserIds = new Set<string>(
+    AWIN_ADVERTISERS.filter(
+      (advertiser) =>
+        advertiser.recommendationEnabled &&
+        isApprovedAwinAdvertiserId(advertiser.advertiserId),
+    ).map((advertiser) => advertiser.advertiserId),
+  );
+  const requested = requestedAdvertiserIds ?? [...eligibleAdvertiserIds];
+  return [...new Set(requested.filter((id) => eligibleAdvertiserIds.has(id)))];
+}
+
 function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
   const price = typeof row.price === "number" ? row.price : Number(row.price);
   const imageUrl = getSafeImageUrl(row.image_url);
@@ -426,9 +441,11 @@ export async function loadAwinProductCandidates(
   options: AwinCandidateLoadOptions = {},
 ): Promise<AwinCatalogProduct[]> {
   const products: AwinCatalogProduct[] = [];
-  const advertiserIds = [...new Set(options.advertiserIds ?? [])];
+  const advertiserIds = getCatalogEligibleAwinAdvertiserIds(
+    options.advertiserIds,
+  );
 
-  if (options.advertiserIds && advertiserIds.length === 0) {
+  if (advertiserIds.length === 0) {
     return products;
   }
 
@@ -442,9 +459,7 @@ export async function loadAwinProductCandidates(
       .eq("active", true)
       .eq("availability", "in_stock");
 
-    if (advertiserIds.length > 0) {
-      query = query.in("advertiser_id", advertiserIds);
-    }
+    query = query.in("advertiser_id", advertiserIds);
 
     const { data, error } = await query
       .order("id", { ascending: true })
@@ -748,6 +763,7 @@ export function getRelevantAwinAdvertiserIds(
     for (const advertiser of advertiserRegistry) {
       if (
         advertiser.recommendationEnabled &&
+        isApprovedAwinAdvertiserId(advertiser.advertiserId) &&
         policyCanMatchSuggestion(advertiser.matchingPolicy, intent)
       ) {
         relevantAdvertisers.add(advertiser.advertiserId);
@@ -799,7 +815,11 @@ export function findBestAwinProductMatch(args: {
     | undefined;
   const advertisersById = new Map(
     (args.advertiserRegistry ?? AWIN_ADVERTISERS)
-      .filter((advertiser) => advertiser.recommendationEnabled)
+      .filter(
+        (advertiser) =>
+          advertiser.recommendationEnabled &&
+          isApprovedAwinAdvertiserId(advertiser.advertiserId),
+      )
       .map((advertiser) => [advertiser.advertiserId, advertiser]),
   );
 

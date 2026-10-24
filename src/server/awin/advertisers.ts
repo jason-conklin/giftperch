@@ -31,6 +31,35 @@ export type AwinAdvertiserConfig = {
 
 export const DEFAULT_AWIN_ADVERTISER_KEY = "piscifun";
 
+export const AWIN_APPROVED_ADVERTISERS = [
+  { advertiserId: "100833", displayName: "Promeed" },
+  { advertiserId: "126623", displayName: "Fantastic Tees (US)" },
+  { advertiserId: "90759", displayName: "BONHEUR JEWELRY" },
+  { advertiserId: "117209", displayName: "Janet Howard" },
+  { advertiserId: "130667", displayName: "marblefordecor" },
+  { advertiserId: "57823", displayName: "Crown and Paw" },
+  { advertiserId: "111366", displayName: "Sparkle GmbH / Hey Happiness" },
+  { advertiserId: "127139", displayName: "Vivid Customs Affiliate Program" },
+  { advertiserId: "82455", displayName: "PortraitFlip LLC" },
+  { advertiserId: "120101", displayName: "Alison US CA" },
+  { advertiserId: "89509", displayName: "Piscifun" },
+  { advertiserId: "130555", displayName: "Primeful" },
+  { advertiserId: "125856", displayName: "Nexbie" },
+  { advertiserId: "95201", displayName: "Giftlab" },
+  { advertiserId: "131404", displayName: "Chart Origin" },
+  { advertiserId: "129093", displayName: "brkox" },
+  { advertiserId: "78182", displayName: "TideWe" },
+  { advertiserId: "129497", displayName: "GRABO" },
+] as const;
+
+const APPROVED_AWIN_ADVERTISER_IDS = new Set<string>(
+  AWIN_APPROVED_ADVERTISERS.map((advertiser) => advertiser.advertiserId),
+);
+
+export function isApprovedAwinAdvertiserId(advertiserId: string): boolean {
+  return APPROVED_AWIN_ADVERTISER_IDS.has(advertiserId.trim());
+}
+
 export const AWIN_ADVERTISERS = [
   {
     key: DEFAULT_AWIN_ADVERTISER_KEY,
@@ -46,8 +75,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "119395",
     displayName: "Fosi Audio",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "fosi-audio",
     importSafeguards: {
       minimumValidProducts: 300,
@@ -58,8 +87,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "87403",
     displayName: "Mosaic Weighted Blankets",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "mosaic-comfort",
     importSafeguards: {
       minimumValidProducts: 600,
@@ -70,8 +99,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "78080",
     displayName: "Imarku",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "imarku-kitchen",
     importSafeguards: {
       minimumValidProducts: 180,
@@ -82,8 +111,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "118079",
     displayName: "Baby Shusher",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "baby-shusher",
     importSafeguards: {
       minimumValidProducts: 20,
@@ -94,8 +123,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "122958",
     displayName: "Mojo Fun",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "mojo-fun",
     importSafeguards: {
       minimumValidProducts: 300,
@@ -106,8 +135,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "90515",
     displayName: "LOOMY Home",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "loomy-home",
     importSafeguards: {
       minimumValidProducts: 1800,
@@ -130,8 +159,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "103359",
     displayName: "Fan Ink",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "fan-ink",
     importSafeguards: {
       minimumValidProducts: 650,
@@ -142,8 +171,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "87175",
     displayName: "Beyond Memories",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "beyond-memories",
     importSafeguards: {
       minimumValidProducts: 700,
@@ -154,8 +183,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "107838",
     displayName: "Magicshine",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "magicshine-cycling",
     importSafeguards: {
       minimumValidProducts: 220,
@@ -166,8 +195,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "122368",
     displayName: "Hula Daddy Kona Coffee",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "hula-daddy-coffee",
     importSafeguards: {
       minimumValidProducts: 30,
@@ -178,8 +207,8 @@ export const AWIN_ADVERTISERS = [
     advertiserId: "121696",
     displayName: "Coziwow",
     locale: "en_US",
-    importEnabled: true,
-    recommendationEnabled: true,
+    importEnabled: false,
+    recommendationEnabled: false,
     matchingPolicy: "coziwow-pets",
     importSafeguards: {
       minimumValidProducts: 190,
@@ -200,6 +229,9 @@ export function resolveAwinAdvertiser(
   if (!advertiser) {
     throw new Error(`Unknown Awin advertiser: ${selection || "(empty)"}.`);
   }
+  if (!isApprovedAwinAdvertiserId(advertiser.advertiserId)) {
+    throw new Error(`Awin advertiser is not approved: ${advertiser.displayName}.`);
+  }
   if (!advertiser.importEnabled) {
     throw new Error(`Awin imports are disabled for ${advertiser.displayName}.`);
   }
@@ -210,10 +242,12 @@ export function findAwinAdvertiserById(
   advertiserId: string,
   registry: readonly AwinAdvertiserConfig[] = AWIN_ADVERTISERS,
 ): AwinAdvertiserConfig | null {
-  return (
+  const advertiser =
     registry.find((candidate) => candidate.advertiserId === advertiserId) ??
-    null
-  );
+    null;
+  return advertiser && isApprovedAwinAdvertiserId(advertiser.advertiserId)
+    ? advertiser
+    : null;
 }
 
 export function findRecommendationEnabledAwinAdvertiserById(
@@ -223,11 +257,18 @@ export function findRecommendationEnabledAwinAdvertiserById(
   const advertiser = registry.find(
     (candidate) => candidate.advertiserId === advertiserId,
   );
-  return advertiser?.recommendationEnabled ? advertiser : null;
+  return advertiser &&
+    isApprovedAwinAdvertiserId(advertiser.advertiserId) &&
+    advertiser.recommendationEnabled
+    ? advertiser
+    : null;
 }
 
 export function getImportEnabledAwinAdvertisers(): readonly AwinAdvertiserConfig[] {
-  return AWIN_ADVERTISERS.filter((advertiser) => advertiser.importEnabled);
+  return AWIN_ADVERTISERS.filter(
+    (advertiser) =>
+      advertiser.importEnabled && isApprovedAwinAdvertiserId(advertiser.advertiserId),
+  );
 }
 
 export function createAwinImportContext(

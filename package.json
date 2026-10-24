@@ -11,7 +11,8 @@
     "awin:import": "tsx scripts/import-awin-products.ts",
     "awin:snapshot": "tsx scripts/download-awin-snapshot.ts",
     "awin:import-snapshot": "tsx scripts/import-awin-products.ts --write",
-    "awin:verify": "tsx scripts/verify-awin-products.ts"
+    "awin:verify": "tsx scripts/verify-awin-products.ts",
+    "awin:audit": "tsx scripts/audit-awin-catalog.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.81.1",
