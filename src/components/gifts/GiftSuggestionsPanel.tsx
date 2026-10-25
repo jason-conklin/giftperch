@@ -24,6 +24,7 @@ import {
   resolveProductMatch,
   type ProductMatch,
 } from "@/lib/affiliateProduct";
+import { getGiftRunEmptyMessage } from "@/lib/gifts/catalogFirst";
 import {
   Check,
   ChevronDown,
@@ -151,6 +152,7 @@ type GiftPromptContext = {
   notes_summary?: string | null;
   interests_summary?: string | null;
   last_gifts_summary?: string | null;
+  recommendation_mode?: "catalog_first";
 };
 
 type SuggestionRun = {
@@ -440,27 +442,43 @@ function GiftSuggestionCard({
   return (
     <article className="group flex min-w-0 self-start flex-col overflow-hidden rounded-2xl border border-gp-evergreen/10 bg-white shadow-[0_12px_32px_rgba(15,61,62,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-gp-gold/45 hover:shadow-[0_18px_38px_rgba(15,61,62,0.11)]">
       <div className="relative aspect-[16/10] min-h-48 w-full overflow-hidden border-b border-gp-evergreen/8 bg-[#f8f6ef]">
-        <a
-          href={shoppingHref}
-          target="_blank"
-          rel={AFFILIATE_LINK_REL}
-          aria-label={`${shoppingLabel}: ${matchedProduct?.match.productTitle || suggestion.title} (opens in a new tab)`}
-          className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-gp-gold/80"
-        >
-          <GiftPreviewImage
-            key={previewSource.primary}
-            source={previewSource}
-            alt={
-              previewSource.isProductImage
-                ? matchedProduct?.match.productTitle || suggestion.title
-                : suggestion.title
-                ? `${suggestion.title} preview icon`
-                : "Gift preview icon"
-            }
-            sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 25vw"
-            className="object-contain p-3 transition duration-300 group-hover:scale-[1.025]"
-          />
-        </a>
+        {productDestination ? (
+          <a
+            href={shoppingHref}
+            target="_blank"
+            rel={AFFILIATE_LINK_REL}
+            aria-label={`${shoppingLabel}: ${matchedProduct?.match.productTitle || suggestion.title} (opens in a new tab)`}
+            className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-gp-gold/80"
+          >
+            <GiftPreviewImage
+              key={previewSource.primary}
+              source={previewSource}
+              alt={
+                previewSource.isProductImage
+                  ? matchedProduct?.match.productTitle || suggestion.title
+                  : suggestion.title
+                    ? `${suggestion.title} preview icon`
+                    : "Gift preview icon"
+              }
+              sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 25vw"
+              className="object-contain p-3 transition duration-300 group-hover:scale-[1.025]"
+            />
+          </a>
+        ) : (
+          <div className="absolute inset-0 z-0" aria-disabled="true">
+            <GiftPreviewImage
+              key={previewSource.primary}
+              source={previewSource}
+              alt={
+                suggestion.title
+                  ? `${suggestion.title} preview icon`
+                  : "Gift preview icon"
+              }
+              sizes="(max-width: 640px) 100vw, (max-width: 1100px) 50vw, 25vw"
+              className="object-contain p-3"
+            />
+          </div>
+        )}
         <span
           className={`pointer-events-none absolute left-3 top-3 z-10 rounded-full border px-3 py-1 text-[11px] font-semibold shadow-sm ${
             tierBadgeClasses[suggestion.tier]
@@ -517,18 +535,29 @@ function GiftSuggestionCard({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <a
-            href={shoppingHref}
-            target="_blank"
-            rel={AFFILIATE_LINK_REL}
-            className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} gp-affiliate-shopping-button w-full justify-center`}
-          >
-            {shoppingLabel}
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-          </a>
-          <p className="text-center text-[10px] leading-4 text-gp-evergreen/50">
-            {AFFILIATE_DISCLOSURE}
-          </p>
+          {productDestination ? (
+            <>
+              <a
+                href={shoppingHref}
+                target="_blank"
+                rel={AFFILIATE_LINK_REL}
+                className={`${AFFILIATE_SHOPPING_BUTTON_CLASS} gp-affiliate-shopping-button w-full justify-center`}
+              >
+                {shoppingLabel}
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <p className="text-center text-[10px] leading-4 text-gp-evergreen/50">
+                {AFFILIATE_DISCLOSURE}
+              </p>
+            </>
+          ) : (
+            <span
+              className="inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-lg border border-gp-evergreen/15 bg-gp-cream/60 px-4 text-sm font-semibold text-gp-evergreen/55"
+              aria-disabled="true"
+            >
+              Product unavailable
+            </span>
+          )}
         </div>
 
         {(() => {
@@ -1703,7 +1732,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 </div>
               ) : visibleSuggestions.length === 0 ? (
                 <div className="rounded-2xl border border-gp-evergreen/20 bg-white/90 p-6 text-sm text-gp-evergreen">
-                  No suggestions were found in this run.
+                  {getGiftRunEmptyMessage(
+                    activeRun.prompt_context.recommendation_mode,
+                  )}
                 </div>
               ) : (
                 <>

@@ -50,10 +50,10 @@ test("prepares empty and single-item collections", () => {
   assert.equal(cards.length, 1);
   assert.equal(cards[0]?.recipientName, "Maya Stone");
   assert.equal(cards[0]?.recipientAvatar.kind, "image");
-  assert.match(cards[0]?.destination?.href ?? "", /amazon\.com\/s\?/);
+  assert.equal(cards[0]?.destination, null);
 });
 
-test("replaces placeholder destinations without disturbing recipient data", () => {
+test("disables placeholder destinations without disturbing recipient data", () => {
   const cards = prepareRecentGiftCards(
     [
       gift({
@@ -65,10 +65,7 @@ test("replaces placeholder destinations without disturbing recipient data", () =
   );
 
   assert.equal(cards[0]?.recipientName, "Maya Stone");
-  assert.equal(
-    new URL(cards[0]?.destination?.href ?? "").searchParams.get("k"),
-    "Gardening tool organizer",
-  );
+  assert.equal(cards[0]?.destination, null);
 });
 
 test("propagates a validated merchant destination to dashboard cards", () => {

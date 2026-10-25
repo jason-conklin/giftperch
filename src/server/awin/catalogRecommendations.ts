@@ -3,6 +3,7 @@ import {
   normalizeProductMatch,
   type ProductMatch,
 } from "@/lib/affiliateProduct";
+import { canonicalizeGiftSuggestionText } from "@/lib/giftSuggestionCanonical";
 import {
   AWIN_ADVERTISERS,
   isApprovedAwinAdvertiserId,
@@ -36,6 +37,9 @@ export type CatalogRecommendationContext = {
   budgetMin?: number | null;
   budgetMax?: number | null;
   requestedCount: number;
+  priorGiftTitles?: string[];
+  excludedProductKeys?: string[];
+  excludedProductTitles?: string[];
 };
 
 export type CatalogGiftIntent = {
@@ -150,6 +154,18 @@ function normalizeContext(
     budgetMin,
     budgetMax,
     requestedCount: normalizedRequestedCount(context.requestedCount),
+    priorGiftTitles: (context.priorGiftTitles ?? [])
+      .map((title) => optionalText(title, 1_000))
+      .filter((title): title is string => !!title)
+      .slice(0, 50),
+    excludedProductKeys: (context.excludedProductKeys ?? [])
+      .map((key) => optionalText(key, 500))
+      .filter((key): key is string => !!key)
+      .slice(0, 200),
+    excludedProductTitles: (context.excludedProductTitles ?? [])
+      .map((title) => optionalText(title, 1_000))
+      .filter((title): title is string => !!title)
+      .slice(0, 200),
   };
 }
 
@@ -399,6 +415,12 @@ export function getCatalogCandidateId(product: CatalogGroundedProduct): string {
     .join(":");
 }
 
+function getCatalogSourceProductKey(product: AwinCatalogProduct): string {
+  return [product.advertiserId, product.locale, product.externalProductId]
+    .map(encodeURIComponent)
+    .join(":");
+}
+
 function productForMatch(
   products: AwinCatalogProduct[],
   match: ProductMatch,
@@ -491,9 +513,20 @@ export async function evaluateCatalogFirstRecommendations(
     currency: "USD",
     maximumProducts: MAX_CATALOG_CANDIDATES,
   });
-  const products = loadedProducts.filter((product) =>
-    buildCatalogGroundedProduct(product, advertiserRegistry),
+  const historicalProductKeys = new Set(context.excludedProductKeys ?? []);
+  const excludedProductTitles = new Set(
+    (context.excludedProductTitles ?? [])
+      .map(canonicalizeGiftSuggestionText)
+      .filter(Boolean),
   );
+  const products = loadedProducts.filter((product) => {
+    if (!buildCatalogGroundedProduct(product, advertiserRegistry)) return false;
+    if (historicalProductKeys.has(getCatalogSourceProductKey(product))) {
+      return false;
+    }
+    const canonicalTitle = canonicalizeGiftSuggestionText(product.title);
+    return !canonicalTitle || !excludedProductTitles.has(canonicalTitle);
+  });
   const advertiserById = new Map(
     advertiserRegistry.map((advertiser) => [advertiser.advertiserId, advertiser]),
   );

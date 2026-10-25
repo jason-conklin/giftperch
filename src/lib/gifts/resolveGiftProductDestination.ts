@@ -1,8 +1,6 @@
-import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
 import {
   getMatchedProductPresentation,
   getSafeExternalUrl,
-  isExpectedAmazonAffiliateUrl,
 } from "@/lib/affiliateProduct";
 
 export type GiftProductDestination = {
@@ -34,20 +32,15 @@ export function isPlaceholderProductUrl(value: unknown): boolean {
   );
 }
 
-export function resolveGiftProductDestination({
-  title,
-  productUrl,
-  productMatch,
-  amazonProduct,
-}: {
+export function resolveGiftProductDestination(args: {
   title?: string | null;
   productUrl?: unknown;
   productMatch?: unknown;
   amazonProduct?: unknown;
 }): GiftProductDestination | null {
   const matchedProduct = getMatchedProductPresentation(
-    productMatch,
-    amazonProduct,
+    args.productMatch,
+    args.amazonProduct,
   );
   if (matchedProduct) {
     return {
@@ -57,23 +50,5 @@ export function resolveGiftProductDestination({
     };
   }
 
-  const safeProductUrl = getSafeExternalUrl(productUrl);
-  if (safeProductUrl && !isPlaceholderProductUrl(safeProductUrl)) {
-    if (isExpectedAmazonAffiliateUrl(safeProductUrl)) {
-      return {
-        href: buildAmazonAffiliateUrl({ productUrl: safeProductUrl, title }),
-        label: "View on Amazon",
-        isAffiliate: true,
-      };
-    }
-    return { href: safeProductUrl, label: "View product", isAffiliate: false };
-  }
-
-  const normalizedTitle = title?.trim();
-  if (!normalizedTitle) return null;
-  return {
-    href: buildAmazonAffiliateUrl({ title: normalizedTitle }),
-    label: "View on Amazon",
-    isAffiliate: true,
-  };
+  return null;
 }

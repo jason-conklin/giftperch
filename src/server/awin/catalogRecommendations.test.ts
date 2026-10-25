@@ -211,6 +211,38 @@ test("applies budget bounds and forwards bounded database filters", async () => 
   });
 });
 
+test("excludes products already present in saved ideas or prior runs", async () => {
+  const result = await evaluateCatalogFirstRecommendations(
+    context({
+      requestedCount: 3,
+      excludedProductKeys: ["89509:en_US:reel-saved"],
+      excludedProductTitles: ["Piscifun Prior Fishing Reel"],
+    }),
+    {
+      advertiserRegistry: [piscifun],
+      loadProducts: async () => [
+        product({
+          externalProductId: "reel-saved",
+          title: "Piscifun Saved Fishing Reel",
+        }),
+        product({
+          externalProductId: "reel-prior",
+          title: "Piscifun Prior Fishing Reel",
+        }),
+        product({
+          externalProductId: "reel-new",
+          title: "Piscifun New Fishing Reel",
+        }),
+      ],
+    },
+  );
+
+  assert.deepEqual(
+    result.recommendations.map((item) => item.product.productId),
+    ["reel-new"],
+  );
+});
+
 test("preserves product identity and does not accept AI product fields", async () => {
   const source = product();
   const result = await evaluateCatalogFirstRecommendations(context(), {
@@ -264,6 +296,23 @@ test("falls back to deterministic ranking for malformed AI output", async () => 
     advertiserRegistry: [piscifun],
     loadProducts: async () => [product()],
     selectCandidates: async () => ({ selections: "not-an-array" }),
+  });
+
+  assert.equal(result.status, "success");
+  assert.equal(result.recommendations[0].product.productId, "reel-1");
+  assert.equal(result.recommendations[0].explanation, null);
+});
+
+test("falls back to deterministic planning and ranking when AI calls fail", async () => {
+  const result = await evaluateCatalogFirstRecommendations(context(), {
+    advertiserRegistry: [piscifun],
+    loadProducts: async () => [product()],
+    planIntents: async () => {
+      throw new Error("planner unavailable");
+    },
+    selectCandidates: async () => {
+      throw new Error("selector unavailable");
+    },
   });
 
   assert.equal(result.status, "success");

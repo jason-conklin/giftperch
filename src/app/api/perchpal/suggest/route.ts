@@ -13,11 +13,26 @@ import {
   enrichGiftSuggestionsWithProducts,
   loadAwinProductCandidates,
 } from "@/server/awin/matcher";
-import type { ProductMatch } from "@/lib/affiliateProduct";
+import {
+  normalizeProductMatch,
+  type ProductMatch,
+} from "@/lib/affiliateProduct";
 import {
   parseGiftSuggestionRequestContext,
   resolveGiftSuggestionStructuredContext,
 } from "@/lib/gifts/giftSuggestionContext";
+import {
+  isCatalogFirstRecommendationsEnabled,
+  runCatalogFirstRecommendations,
+  type CatalogRecommendationContext,
+} from "@/server/awin/catalogRecommendations";
+import {
+  buildCatalogRecommendationContext,
+  catalogResultToGiftSuggestions,
+  createCatalogAiPersonalization,
+  type CatalogJsonCompletion,
+} from "@/server/awin/catalogPerchPal";
+import { getCatalogRecommendationResponseMetadata } from "@/lib/gifts/catalogFirst";
 
 type SuggestRequestBody = {
   recipientId?: string;
@@ -57,6 +72,7 @@ type GiftPromptContext = {
   notes_summary?: string | null;
   interests_summary?: string | null;
   last_gifts_summary?: string | null;
+  recommendation_mode?: "catalog_first";
 };
 
 type RecipientRecord = {
@@ -94,11 +110,12 @@ type GiftSuggestionRunRow = {
 type GiftSuggestionFromRun = {
   title?: string | null;
   tier?: string | null;
+  productMatch?: unknown;
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 
 const SUGGESTION_MODEL =
   process.env.OPENAI_SUGGESTION_MODEL?.trim() || "gpt-4o-mini";
@@ -124,6 +141,7 @@ const normalize = (str: string | null | undefined) =>
 const makeIdentity = (title: string, tier?: string | null) =>
   `${normalize(title)}::${normalize(tier) || "none"}`;
 const OPENAI_TIMEOUT_MS = 90_000;
+const CATALOG_AI_TIMEOUT_MS = 30_000;
 
 const tryParseJsonObject = (raw: string): { suggestions?: unknown } => {
   try {
@@ -143,6 +161,31 @@ const tryParseJsonObject = (raw: string): { suggestions?: unknown } => {
   }
 };
 
+const completeCatalogJson: CatalogJsonCompletion = async ({
+  purpose,
+  system,
+  input,
+}) => {
+  if (!openai) throw new Error("OpenAI is not configured");
+  const completion = await openai.chat.completions.create(
+    {
+      model: SUGGESTION_MODEL,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: system },
+        {
+          role: "user",
+          content: JSON.stringify({ purpose, input }),
+        },
+      ],
+    },
+    { timeout: CATALOG_AI_TIMEOUT_MS },
+  );
+  const raw = completion.choices[0]?.message?.content?.trim() ?? "{}";
+  return JSON.parse(raw) as unknown;
+};
+
 function buildPriceGuidance(
   min?: number | null,
   max?: number | null,
@@ -154,7 +197,8 @@ function buildPriceGuidance(
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
+  const catalogFirstEnabled = isCatalogFirstRecommendationsEnabled();
+  if (!catalogFirstEnabled && !openai) {
     console.error(
       "PerchPal suggestions attempted without OPENAI_API_KEY configured.",
     );
@@ -258,7 +302,7 @@ export async function POST(request: NextRequest) {
         .limit(5),
       supabase
         .from("recipient_saved_gift_ideas")
-        .select("title, tier")
+        .select("title, tier, product_match")
         .eq("recipient_id", recipientId)
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -282,6 +326,7 @@ export async function POST(request: NextRequest) {
 
     const previouslySavedTitles: string[] = [];
     const recentSuggestionTitles: string[] = [];
+    const historicalProductKeys = new Set<string>();
 
     recentRuns.forEach((run) => {
       const runSuggestions = extractSuggestionPayloads(
@@ -291,6 +336,22 @@ export async function POST(request: NextRequest) {
       runSuggestions.forEach((item) => {
         if (typeof item.title === "string" && item.title.trim().length > 0) {
           recentSuggestionTitles.push(item.title.trim());
+        }
+        const productMatch = normalizeProductMatch(item.productMatch);
+        if (
+          productMatch?.provider === "awin" &&
+          productMatch.advertiserId &&
+          productMatch.locale
+        ) {
+          historicalProductKeys.add(
+            [
+              productMatch.advertiserId,
+              productMatch.locale,
+              productMatch.productId,
+            ]
+              .map(encodeURIComponent)
+              .join(":"),
+          );
         }
       });
     });
@@ -312,6 +373,24 @@ export async function POST(request: NextRequest) {
       }
 
       previouslySavedTitles.push(title);
+      const productMatch = normalizeProductMatch(
+        (row as { product_match?: unknown }).product_match,
+      );
+      if (
+        productMatch?.provider === "awin" &&
+        productMatch.advertiserId &&
+        productMatch.locale
+      ) {
+        historicalProductKeys.add(
+          [
+            productMatch.advertiserId,
+            productMatch.locale,
+            productMatch.productId,
+          ]
+            .map(encodeURIComponent)
+            .join(":"),
+        );
+      }
     });
 
     const uniqueSavedTitles = uniqueTrimmedValues(previouslySavedTitles);
@@ -360,7 +439,102 @@ export async function POST(request: NextRequest) {
       notes_summary,
       interests_summary,
       last_gifts_summary,
+      ...(catalogFirstEnabled
+        ? { recommendation_mode: "catalog_first" as const }
+        : {}),
     };
+
+    const persistSuggestions = async (suggestions: GiftSuggestion[]) => {
+      const { data: inserted, error: insertError } = await supabase
+        .from("gift_suggestions")
+        .insert({
+          user_id: user.id,
+          recipient_id: recipient.id,
+          model:
+            catalogFirstEnabled && !openai
+              ? "catalog-first-deterministic"
+              : SUGGESTION_MODEL,
+          prompt_context: promptContext,
+          suggestions,
+        })
+        .select()
+        .single();
+
+      if (insertError || !inserted) {
+        console.error("Failed to persist gift suggestions", insertError);
+        return NextResponse.json(
+          { error: "Unable to save suggestions" },
+          { status: 500 },
+        );
+      }
+
+      const suggestionsWithFlags = suggestions.map((suggestion) => {
+        const identity = makeIdentity(suggestion.title, suggestion.tier);
+        const canonicalKey = getGiftSuggestionCanonicalKey(suggestion.title);
+        return {
+          ...suggestion,
+          initialSaved:
+            !!savedByIdentity[identity] ||
+            (!!canonicalKey && !!savedByCanonical[canonicalKey]),
+        };
+      });
+
+      return NextResponse.json({
+        suggestionRunId: inserted.id,
+        createdAt: inserted.created_at,
+        suggestions: suggestionsWithFlags,
+        promptContext,
+        ...(catalogFirstEnabled
+          ? getCatalogRecommendationResponseMetadata(suggestions.length)
+          : {}),
+      });
+    };
+
+    if (catalogFirstEnabled) {
+      const catalogContext: CatalogRecommendationContext =
+        buildCatalogRecommendationContext({
+          recipient: {
+            name: recipient.name,
+            notes: recipient.notes,
+            petType: recipient.pet_type,
+          },
+          interests,
+          occasion: structuredContext.occasion,
+          recipientRelationship: structuredContext.recipientRelationship,
+          budgetMin: resolvedBudgetMin,
+          budgetMax: resolvedBudgetMax,
+          requestedCount: numSuggestions,
+          priorGiftTitles: gifts.map((gift) => gift.title),
+          excludedProductKeys: [...historicalProductKeys],
+          excludedProductTitles: [
+            ...cappedPreviousSuggestions,
+            ...uniqueSavedTitles,
+            ...uniqueRecentSuggestionTitles,
+            ...gifts.map((gift) => gift.title),
+          ],
+        });
+      const personalization = openai
+        ? createCatalogAiPersonalization(completeCatalogJson)
+        : null;
+      const catalogResult = await runCatalogFirstRecommendations({
+        context: catalogContext,
+        supabase,
+        planIntents: personalization?.planIntents,
+        selectCandidates: personalization?.selectCandidates,
+      });
+      if (catalogResult.status === "disabled") {
+        throw new Error("Catalog-first generation was disabled during request");
+      }
+      const catalogSuggestions = catalogResultToGiftSuggestions(
+        catalogResult,
+        catalogContext,
+      );
+      return persistSuggestions(catalogSuggestions);
+    }
+
+    if (!openai) {
+      throw new Error("OpenAI is not configured for legacy gift generation");
+    }
 
     const requestSuggestionPass = async (
       requestedCount: number,
@@ -598,43 +772,7 @@ export async function POST(request: NextRequest) {
         searchAmazon: searchAmazonProductForSuggestion,
       });
 
-    const { data: inserted, error: insertError } = await supabase
-      .from("gift_suggestions")
-      .insert({
-        user_id: user.id,
-        recipient_id: recipient.id,
-        model: SUGGESTION_MODEL,
-        prompt_context: promptContext,
-        suggestions: enrichedSuggestions,
-      })
-      .select()
-      .single();
-
-    if (insertError || !inserted) {
-      console.error("Failed to persist gift suggestions", insertError);
-      return NextResponse.json(
-        { error: "Unable to save suggestions" },
-        { status: 500 },
-      );
-    }
-
-    const suggestionsWithFlags = enrichedSuggestions.map((s) => {
-      const identity = makeIdentity(s.title, s.tier);
-      const canonicalKey = getGiftSuggestionCanonicalKey(s.title);
-      return {
-        ...s,
-        initialSaved:
-          !!savedByIdentity[identity] ||
-          (!!canonicalKey && !!savedByCanonical[canonicalKey]),
-      };
-    });
-
-    return NextResponse.json({
-      suggestionRunId: inserted.id,
-      createdAt: inserted.created_at,
-      suggestions: suggestionsWithFlags,
-      promptContext,
-    });
+    return persistSuggestions(enrichedSuggestions);
   } catch (err) {
     console.error("Error generating gift suggestions", err);
     return NextResponse.json(
