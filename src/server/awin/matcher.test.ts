@@ -478,6 +478,12 @@ test("Giftlab rejects explicit occasion and relationship conflicts", () => {
     description: "Category: Kitchen.",
     price: 20,
   });
+  const genericMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "generic-mug",
+    title: "Custom Photo Coffee Mug",
+    description: "Category: Kitchen.",
+    price: 22,
+  });
   const wifeNecklace = advertiserProduct("95201", "Giftlab", {
     externalProductId: "wife-necklace",
     title: "Personalized Anniversary Necklace for Wife",
@@ -490,30 +496,130 @@ test("Giftlab rejects explicit occasion and relationship conflicts", () => {
     description: "Category: Jewelry.",
     price: 35,
   });
+  const sisterNecklace = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "sister-necklace",
+    title: "Personalized Anniversary Necklace for Sister",
+    description: "Category: Jewelry.",
+    price: 40,
+  });
+  const mothersDayMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "mothers-day-mug",
+    title: "Personalized Mother's Day Coffee Mug for Mom",
+    description: "Category: Kitchen.",
+    price: 25,
+  });
+  const fathersDayMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "fathers-day-mug",
+    title: "Personalized Father's Day Coffee Mug for Dad",
+    description: "Category: Kitchen.",
+    price: 25,
+  });
+  const motherMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "mother-mug",
+    title: "Custom Photo Coffee Mug for Mom",
+    description: "Category: Kitchen.",
+    price: 24,
+  });
+  const fatherMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "father-mug",
+    title: "Custom Photo Coffee Mug for Dad",
+    description: "Category: Kitchen.",
+    price: 24,
+  });
 
   assert.equal(
     findBestAwinProductMatch({
       suggestion: {
         title: "Personalized coffee mug",
-        short_description: "A birthday mug for a coffee lover.",
+        short_description: "A custom mug for a parent.",
         tier: "thoughtful",
       },
-      products: [christmasMug, birthdayMug],
+      products: [fatherMug, motherMug],
       advertiserRegistry: registry,
+      recipientRelationship: "Mom",
+    })?.productTitle,
+    motherMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A custom mug for a coffee lover.",
+        tier: "thoughtful",
+      },
+      products: [christmasMug, birthdayMug, genericMug],
+      advertiserRegistry: registry,
+      occasion: "Birthday",
     })?.productTitle,
     birthdayMug.title,
   );
   assert.equal(
     findBestAwinProductMatch({
       suggestion: {
-        title: "Personalized anniversary necklace for wife",
-        short_description: "A custom jewelry gift for his wife.",
+        title: "Personalized anniversary necklace",
+        short_description: "A custom jewelry gift.",
         tier: "thoughtful",
       },
-      products: [daughterNecklace, wifeNecklace],
+      products: [daughterNecklace, sisterNecklace, wifeNecklace],
       advertiserRegistry: registry,
+      occasion: "Anniversary",
+      recipientRelationship: "Wife",
     })?.productTitle,
     wifeNecklace.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A generic custom mug.",
+        tier: "thoughtful",
+      },
+      products: [genericMug],
+      advertiserRegistry: registry,
+      occasion: "Birthday",
+      recipientRelationship: "Friend",
+    })?.productTitle,
+    genericMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A holiday mug for a parent.",
+        tier: "thoughtful",
+      },
+      products: [fathersDayMug, mothersDayMug],
+      advertiserRegistry: registry,
+      occasion: "Mother's Day",
+      recipientRelationship: "Mother",
+    })?.productTitle,
+    mothersDayMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized Christmas coffee mug for sister",
+        short_description: "A Christmas mug for a sister.",
+        tier: "thoughtful",
+      },
+      products: [christmasMug, birthdayMug],
+      advertiserRegistry: registry,
+      occasion: "Birthday",
+      recipientRelationship: "Mother",
+    })?.productTitle,
+    birthdayMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A custom mug for a coffee lover.",
+        tier: "thoughtful",
+      },
+      products: [christmasMug],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    christmasMug.title,
   );
 });
 
@@ -774,6 +880,49 @@ test("uses Amazon as fallback when Awin has no relevant match", async () => {
   assert.equal(result.amazonProduct, amazon);
   assert.equal(result.productMatch?.provider, "amazon");
   assert.equal(result.productMatch?.price, 39.99);
+});
+
+test("structured context reaches enrichment and preserves Amazon fallback", async () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const christmasMug = advertiserProduct("95201", "Giftlab", {
+    title: "Personalized Christmas Coffee Mug for Sister",
+    description: "Category: Kitchen.",
+    price: 19.95,
+  });
+  const amazon: AmazonProduct = {
+    asin: "BIRTHDAYMUG",
+    title: "Personalized Birthday Coffee Mug",
+    imageUrl: "https://images.example.test/birthday-mug.jpg",
+    detailPageUrl:
+      "https://www.amazon.com/dp/BIRTHDAYMUG?tag=giftperch-20",
+    priceDisplay: "$24.99",
+    currency: "USD",
+  };
+  const [result] = await enrichGiftSuggestionsWithProducts({
+    suggestions: [
+      {
+        title: "Personalized coffee mug",
+        short_description: "A custom mug for a coffee lover.",
+        tier: "thoughtful",
+      },
+    ],
+    occasion: "Birthday",
+    recipientRelationship: "Friend",
+    advertiserRegistry: [giftlab],
+    loadAwinProducts: async () => [christmasMug],
+    searchAmazon: async () => amazon,
+  });
+
+  assert.equal(result.productMatch?.provider, "amazon");
+  assert.equal(result.amazonProduct, amazon);
 });
 
 test("Supabase catalog failures degrade to Amazon fallback", async () => {

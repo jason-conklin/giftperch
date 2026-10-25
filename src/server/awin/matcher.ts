@@ -407,6 +407,11 @@ export type RecipientInterestForMatching = {
   category?: string | null;
 };
 
+export type AwinMatchContext = {
+  occasion?: string | null;
+  recipientRelationship?: string | null;
+};
+
 type CatalogRow = {
   provider: unknown;
   advertiser_id: unknown;
@@ -651,10 +656,12 @@ const GIFTLAB_PRODUCT_TYPE_RULES: ReadonlyArray<{
 
 const GIFTLAB_OCCASION_PATTERNS: ReadonlyArray<[string, RegExp]> = [
   ["birthday", /\bbirthdays?\b/i],
-  ["christmas", /\b(?:christmas|xmas)\b/i],
+  ["christmas", /\b(?:christmas|xmas|holidays?)\b/i],
   ["anniversary", /\banniversar(?:y|ies)\b/i],
   ["halloween", /\bhalloween\b/i],
   ["graduation", /\bgraduation\b/i],
+  ["back-to-school", /\bback\s+to\s+school\b/i],
+  ["teacher-appreciation", /\b(?:teacher'?s?\s+day|teacher\s+appreciation)\b/i],
   ["wedding", /\bwedding\b/i],
   ["remembrance", /\b(?:memorial|memoral|remembrance|sympathy)\b/i],
   ["mothers-day", /\b(?:mother's|mothers|moms?)\s+day\b/i],
@@ -673,6 +680,11 @@ const GIFTLAB_RELATIONSHIP_PATTERNS: ReadonlyArray<[string, RegExp]> = [
   ["husband", /\bhusband\b/i],
   ["girlfriend", /\bgirlfriend\b/i],
   ["boyfriend", /\bboyfriend\b/i],
+  ["friend", /\b(?:best\s+friends?|friends?)\b/i],
+  ["partner", /\b(?:partner|spouse)\b/i],
+  ["fiance", /\bfianc(?:e|ee|é|ée)\b/i],
+  ["granddaughter", /\bgranddaughter\b/i],
+  ["grandson", /\bgrandson\b/i],
   ["grandmother", /\b(?:grandma|grandmother)\b/i],
   ["grandfather", /\b(?:grandpa|grandfather)\b/i],
 ];
@@ -687,14 +699,38 @@ function matchingLabels(
 }
 
 function hasConflictingGiftlabLabels(
-  request: string,
+  requestLabels: Set<string>,
   productTitle: string,
   patterns: ReadonlyArray<[string, RegExp]>,
+  compatiblePairs: ReadonlySet<string> = new Set(),
 ): boolean {
-  const requested = matchingLabels(request, patterns);
   const offered = matchingLabels(productTitle, patterns);
-  return requested.size > 0 && offered.size > 0 && intersection(requested, offered).size === 0;
+  return (
+    requestLabels.size > 0 &&
+    offered.size > 0 &&
+    [...offered].some(
+      (offeredLabel) =>
+        ![...requestLabels].some(
+          (requestedLabel) =>
+            requestedLabel === offeredLabel ||
+            compatiblePairs.has(`${requestedLabel}:${offeredLabel}`),
+        ),
+    )
+  );
 }
+
+const GIFTLAB_COMPATIBLE_OCCASION_PAIRS = new Set([
+  "anniversary:wedding",
+  "wedding:anniversary",
+]);
+
+const GIFTLAB_COMPATIBLE_RELATIONSHIP_PAIRS = new Set([
+  "partner:wife",
+  "partner:husband",
+  "partner:girlfriend",
+  "partner:boyfriend",
+  "partner:fiance",
+]);
 
 function isCompatibleGiftlabProductType(
   request: string,
@@ -719,19 +755,36 @@ function hasRequestedGiftlabProductType(request: string): boolean {
 function passesGiftlabCompatibility(
   request: string,
   product: AwinCatalogProduct,
+  context: AwinMatchContext,
 ): boolean {
   if (/\bgift cards?\b/i.test(request)) return false;
   if (!isCompatibleGiftlabProductType(request, product.title)) return false;
+  const structuredOccasion = matchingLabels(
+    context.occasion ?? "",
+    GIFTLAB_OCCASION_PATTERNS,
+  );
+  const structuredRelationship = matchingLabels(
+    context.recipientRelationship ?? "",
+    GIFTLAB_RELATIONSHIP_PATTERNS,
+  );
+  const requestedOccasions = structuredOccasion.size
+    ? structuredOccasion
+    : matchingLabels(request, GIFTLAB_OCCASION_PATTERNS);
+  const requestedRelationships = structuredRelationship.size
+    ? structuredRelationship
+    : matchingLabels(request, GIFTLAB_RELATIONSHIP_PATTERNS);
   if (
     hasConflictingGiftlabLabels(
-      request,
+      requestedOccasions,
       product.title,
       GIFTLAB_OCCASION_PATTERNS,
+      GIFTLAB_COMPATIBLE_OCCASION_PAIRS,
     ) ||
     hasConflictingGiftlabLabels(
-      request,
+      requestedRelationships,
       product.title,
       GIFTLAB_RELATIONSHIP_PATTERNS,
+      GIFTLAB_COMPATIBLE_RELATIONSHIP_PAIRS,
     )
   ) {
     return false;
@@ -1033,6 +1086,8 @@ export function findBestAwinProductMatch(args: {
   budgetMax?: number | null;
   advertiserRegistry?: readonly AwinAdvertiserConfig[];
   excludedProductKeys?: ReadonlySet<string>;
+  occasion?: string | null;
+  recipientRelationship?: string | null;
 }): ProductMatch | null {
   const { suggestion, products } = args;
   if (!suggestion.title.trim() || !isPhysicalProductConcept(suggestion)) {
@@ -1051,7 +1106,7 @@ export function findBestAwinProductMatch(args: {
   const suggestionContext = `${suggestion.title} ${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`;
   const policyIntent = getSuggestionPolicyIntent(suggestion);
   const memorialIntent = intersection(
-    union(titleTokens, detailTokens),
+    union(titleTokens, detailTokens, tokens(args.occasion)),
     MEMORIAL_INTENT_WORDS,
   );
   const budget = effectiveBudget(
@@ -1104,7 +1159,10 @@ export function findBestAwinProductMatch(args: {
     );
     if (
       advertiser.matchingPolicy === "giftlab-personalized" &&
-      !passesGiftlabCompatibility(suggestionContext, product)
+      !passesGiftlabCompatibility(suggestionContext, product, {
+        occasion: args.occasion,
+        recipientRelationship: args.recipientRelationship,
+      })
     ) {
       continue;
     }
@@ -1240,6 +1298,8 @@ export async function enrichGiftSuggestionsWithProducts<
   budgetMin?: number | null;
   budgetMax?: number | null;
   advertiserRegistry?: readonly AwinAdvertiserConfig[];
+  occasion?: string | null;
+  recipientRelationship?: string | null;
   loadAwinProducts: (
     options: AwinCandidateLoadOptions,
   ) => Promise<AwinCatalogProduct[]>;
@@ -1283,6 +1343,8 @@ export async function enrichGiftSuggestionsWithProducts<
         budgetMax: args.budgetMax,
         advertiserRegistry: args.advertiserRegistry,
         excludedProductKeys: selectedProductKeys,
+        occasion: args.occasion,
+        recipientRelationship: args.recipientRelationship,
       });
     } catch {
       console.warn(

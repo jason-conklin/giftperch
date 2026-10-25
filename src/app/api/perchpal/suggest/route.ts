@@ -593,6 +593,8 @@ export async function POST(request: NextRequest) {
         recipientInterests: interests,
         budgetMin: resolvedBudgetMin,
         budgetMax: resolvedBudgetMax,
+        occasion,
+        recipientRelationship: recipient.relationship,
         loadAwinProducts: (options) =>
           loadAwinProductCandidates(supabase, options),
         searchAmazon: searchAmazonProductForSuggestion,
