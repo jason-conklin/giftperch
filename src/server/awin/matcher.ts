@@ -440,6 +440,14 @@ export type AwinCandidateLoadOptions = {
    * the current suggestions. Undefined retains the complete active catalog.
    */
   advertiserIds?: readonly string[];
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  currency?: string;
+  /**
+   * Fails closed when the eligible partition exceeds this size. This avoids
+   * silently dropping potentially relevant products behind an arbitrary cap.
+   */
+  maximumProducts?: number;
 };
 
 export function getCatalogEligibleAwinAdvertiserIds(
@@ -502,6 +510,12 @@ export async function loadAwinProductCandidates(
   options: AwinCandidateLoadOptions = {},
 ): Promise<AwinCatalogProduct[]> {
   const products: AwinCatalogProduct[] = [];
+  const maximumProducts =
+    typeof options.maximumProducts === "number" &&
+    Number.isSafeInteger(options.maximumProducts) &&
+    options.maximumProducts > 0
+      ? options.maximumProducts
+      : null;
   const advertiserIds = getCatalogEligibleAwinAdvertiserIds(
     options.advertiserIds,
   );
@@ -521,22 +535,40 @@ export async function loadAwinProductCandidates(
       .eq("availability", "in_stock");
 
     query = query.in("advertiser_id", advertiserIds);
+    if (options.currency?.trim()) {
+      query = query.eq("currency", options.currency.trim().toUpperCase());
+    }
+    if (typeof options.budgetMin === "number" && Number.isFinite(options.budgetMin)) {
+      query = query.gte("price", options.budgetMin);
+    }
+    if (typeof options.budgetMax === "number" && Number.isFinite(options.budgetMax)) {
+      query = query.lte("price", options.budgetMax);
+    }
+
+    const pageSize = maximumProducts
+      ? Math.min(CATALOG_PAGE_SIZE, maximumProducts - offset + 1)
+      : CATALOG_PAGE_SIZE;
 
     const { data, error } = await query
       .order("id", { ascending: true })
-      .range(offset, offset + CATALOG_PAGE_SIZE - 1);
+      .range(offset, offset + pageSize - 1);
 
     if (error) {
       throw new Error("Unable to read the Awin affiliate product catalog.");
     }
 
     const rows = (data ?? []) as CatalogRow[];
+    if (maximumProducts && offset + rows.length > maximumProducts) {
+      throw new Error(
+        `Awin candidate retrieval exceeded the ${maximumProducts}-product safety limit.`,
+      );
+    }
     for (const row of rows) {
       const product = normalizeCatalogRow(row);
       if (product) products.push(product);
     }
 
-    if (rows.length < CATALOG_PAGE_SIZE) break;
+    if (rows.length < pageSize) break;
   }
 
   return products;
@@ -827,7 +859,7 @@ function passesGiftlabCompatibility(
   return true;
 }
 
-function productDiversityKey(
+export function getAwinProductDiversityKey(
   product: Pick<AwinCatalogProduct, "advertiserId" | "externalProductId" | "title">,
   advertiser: AwinAdvertiserConfig,
 ): string {
@@ -1183,7 +1215,11 @@ export function findBestAwinProductMatch(args: {
       continue;
     }
 
-    if (args.excludedProductKeys?.has(productDiversityKey(product, advertiser))) {
+    if (
+      args.excludedProductKeys?.has(
+        getAwinProductDiversityKey(product, advertiser),
+      )
+    ) {
       continue;
     }
 
@@ -1390,7 +1426,7 @@ export async function enrichGiftSuggestionsWithProducts<
       const advertiser = advertiserById.get(awinMatch.advertiserId ?? "");
       if (advertiser) {
         selectedProductKeys.add(
-          productDiversityKey(
+          getAwinProductDiversityKey(
             {
               advertiserId: awinMatch.advertiserId ?? "",
               externalProductId: awinMatch.productId,
