@@ -299,6 +299,362 @@ test("Giftlab near-identical color variants are not repeated within one suggesti
   assert.equal(results[1]?.productMatch, null);
 });
 
+test("Giftlab enforces concrete product types instead of broad shared words", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const cases = [
+    {
+      title: "Personalized dog Christmas ornament",
+      good: "Custom Dog Photo Christmas Ornament",
+      bad: "Custom Dog Photo Blanket",
+    },
+    {
+      title: "Personalized fishing tackle box",
+      good: "Custom Fishing Tackle Box",
+      bad: "Custom Fishing Mailbox Cover",
+    },
+    {
+      title: "Personalized DIY tool organizer",
+      good: "Custom Tool Storage Organizer",
+      bad: "Personalized Car Backseat Organizer",
+    },
+    {
+      title: "Personalized coffee mug",
+      good: "Custom Photo Coffee Mug",
+      bad: "Personalized Coffee Lover Shirt",
+    },
+    {
+      title: "Personalized reading bookmark",
+      good: "Custom Photo Bookmark",
+      bad: "Personalized Reading Pillow",
+    },
+  ];
+
+  for (const [index, item] of cases.entries()) {
+    const match = findBestAwinProductMatch({
+      suggestion: {
+        title: item.title,
+        short_description: "A custom gift selected for their interests.",
+        tier: "thoughtful",
+        price_max: 100,
+      },
+      products: [
+        advertiserProduct("95201", "Giftlab", {
+          externalProductId: `bad-${index}`,
+          title: item.bad,
+          description: "Category: Personalized.",
+          price: 29,
+        }),
+        advertiserProduct("95201", "Giftlab", {
+          externalProductId: `good-${index}`,
+          title: item.good,
+          description: "Category: Personalized.",
+          price: 39,
+        }),
+      ],
+      advertiserRegistry: registry,
+    });
+    assert.equal(match?.productTitle, item.good, item.title);
+  }
+});
+
+test("Giftlab abstains when no product has the requested concrete type", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const match = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized fishing tackle box",
+      short_description: "A custom tackle organizer for an angler.",
+      tier: "thoughtful",
+    },
+    products: [
+      advertiserProduct("95201", "Giftlab", {
+        title: "Custom Fishing Mailbox Cover",
+        description: "Category: Accessories.",
+      }),
+    ],
+    advertiserRegistry: [giftlab],
+  });
+  assert.equal(match, null);
+});
+
+test("Giftlab applies category safety and memorial typo checks", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const suggestion = {
+    title: "Personalized pet photo keepsake",
+    short_description: "A custom gift for a dog owner.",
+    tier: "thoughtful",
+  };
+  const unsafeProducts = [
+    advertiserProduct("95201", "Giftlab", {
+      title: "Custom Pet Photo Pajamas",
+      description: "Category: Costumes.",
+    }),
+    advertiserProduct("95201", "Giftlab", {
+      title: "Custom Photo Beach Cover Up",
+      description: "Category: Swimming.",
+    }),
+    advertiserProduct("95201", "Giftlab", {
+      title: "Custom Photo Lounge Set",
+      description: "Category: Lingerie.",
+    }),
+    advertiserProduct("95201", "Giftlab", {
+      title: "Custom Pet Memoral Keepsake",
+      description: "Category: Personalized.",
+    }),
+  ];
+
+  for (const unsafe of unsafeProducts) {
+    assert.equal(
+      findBestAwinProductMatch({
+        suggestion,
+        products: [unsafe],
+        advertiserRegistry: registry,
+      }),
+      null,
+      unsafe.title,
+    );
+  }
+
+  const memorial = unsafeProducts.at(-1)!;
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        ...suggestion,
+        title: "Personalized pet memorial keepsake",
+        short_description: "A remembrance gift after the loss of a dog.",
+      },
+      products: [memorial],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    memorial.title,
+  );
+});
+
+test("Giftlab rejects explicit occasion and relationship conflicts", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const birthdayMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "birthday-mug",
+    title: "Custom Photo Birthday Coffee Mug",
+    description: "Category: Kitchen.",
+    price: 25,
+  });
+  const christmasMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "christmas-mug",
+    title: "Custom Photo Christmas Coffee Mug",
+    description: "Category: Kitchen.",
+    price: 20,
+  });
+  const wifeNecklace = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "wife-necklace",
+    title: "Personalized Anniversary Necklace for Wife",
+    description: "Category: Jewelry.",
+    price: 45,
+  });
+  const daughterNecklace = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "daughter-necklace",
+    title: "Personalized Anniversary Necklace for Daughter",
+    description: "Category: Jewelry.",
+    price: 35,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A birthday mug for a coffee lover.",
+        tier: "thoughtful",
+      },
+      products: [christmasMug, birthdayMug],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    birthdayMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized anniversary necklace for wife",
+        short_description: "A custom jewelry gift for his wife.",
+        tier: "thoughtful",
+      },
+      products: [daughterNecklace, wifeNecklace],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    wifeNecklace.title,
+  );
+});
+
+test("Giftlab blocks gift-card substitutions and enforces AirPods compatibility", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const messageCard = advertiserProduct("95201", "Giftlab", {
+    title: "Personalized Necklace with Message Card",
+    description: "Category: Jewelry.",
+  });
+  const phoneCase = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "phone-case",
+    title: "Custom Photo Phone Case",
+    description: "Category: Accessories.",
+  });
+  const airpodsCase = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "airpods-case",
+    title: "Custom Photo AirPods Case",
+    description: "Category: Accessories.",
+  });
+  const pillowCase = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "pillow-case",
+    title: "Custom Photo Pillow Case",
+    description: "Category: Bed/Bath.",
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Custom photo case",
+        short_description: "A personalized case with their photo.",
+        tier: "thoughtful",
+      },
+      products: [pillowCase, phoneCase, airpodsCase],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized gift card",
+        short_description: "A flexible gift card for a friend.",
+        tier: "thoughtful",
+      },
+      products: [messageCard],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized AirPods case",
+        short_description: "A custom case for their AirPods.",
+        tier: "thoughtful",
+      },
+      products: [phoneCase, airpodsCase],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    airpodsCase.title,
+  );
+});
+
+test("Giftlab keeps open-ended personalized gift matching available", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const match = findBestAwinProductMatch({
+    suggestion: {
+      title: "Thoughtful personalized gift",
+      short_description: "A meaningful custom keepsake for a dog owner.",
+      tier: "thoughtful",
+      price_max: 50,
+    },
+    recipientInterests: [{ label: "Dogs", category: "Pets" }],
+    products: [
+      advertiserProduct("95201", "Giftlab", {
+        title: "Custom Dog Photo Keepsake",
+        description: "Category: Personalized.",
+        price: 29,
+      }),
+    ],
+    advertiserRegistry: [giftlab],
+  });
+  assert.equal(match?.productTitle, "Custom Dog Photo Keepsake");
+});
+
+test("Giftlab collapses AirPods color and presentation variants", async () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const variants = ["Blue", "Transparent", "Avatar"].map((variant) =>
+    advertiserProduct("95201", "Giftlab", {
+      externalProductId: `airpods-${variant.toLowerCase()}`,
+      title: `Custom Photo AirPods Case ${variant}`,
+      description: "Category: Accessories.",
+      price: 19.95,
+    }),
+  );
+  const results = await enrichGiftSuggestionsWithProducts({
+    suggestions: [
+      {
+        title: "Personalized AirPods case",
+        short_description: "A custom case for their AirPods.",
+        tier: "thoughtful",
+      },
+      {
+        title: "Personalized AirPods case",
+        short_description: "A custom case for their AirPods.",
+        tier: "thoughtful",
+      },
+    ],
+    advertiserRegistry: [giftlab],
+    loadAwinProducts: async () => variants,
+    searchAmazon: async () => null,
+  });
+  assert.equal(results[0]?.productMatch?.advertiserId, "95201");
+  assert.equal(results[1]?.productMatch, null);
+});
+
 test("broad fishing context alone cannot substitute a different product", () => {
   const match = findBestAwinProductMatch({
     suggestion: {

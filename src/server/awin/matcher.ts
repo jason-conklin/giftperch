@@ -588,9 +588,9 @@ function isLoomySwatch(title: string): boolean {
   return /\bswatch\b/i.test(title);
 }
 
-function isMemorialProduct(title: string): boolean {
-  return /\b(?:memorial|remembrance|in loving memory|sympathy|pet loss|gravestone|funeral|condolence)\b/i.test(
-    title,
+function isMemorialProduct(value: string): boolean {
+  return /\b(?:memorial|memoral|remembrance|in loving memory|sympathy|pet loss|gravestone|funeral|condolence)\b/i.test(
+    value,
   );
 }
 
@@ -600,9 +600,13 @@ function isUnsuitableCoziwowProduct(title: string): boolean {
   );
 }
 
-function isUnsuitableGiftlabProduct(title: string): boolean {
-  return /\b(?:lingerie|pant(?:y|ies)|underwear|bikini|swimsuit|costume)\b/i.test(
-    title,
+function giftlabCategory(product: AwinCatalogProduct): string {
+  return product.description?.match(/^Category:\s*([^.]*)\./i)?.[1]?.trim() ?? "";
+}
+
+function isUnsuitableGiftlabProduct(product: AwinCatalogProduct): boolean {
+  return /\b(?:lingerie|pant(?:y|ies)|underwear|boxer shorts?|briefs?|bikini|swim(?:suit|wear|ming)|costumes?|gift cards?|payment adjustment|price difference)\b/i.test(
+    `${product.title} ${giftlabCategory(product)}`,
   );
 }
 
@@ -612,6 +616,129 @@ function isGiftlabDeviceSpecificProduct(title: string): boolean {
   );
 }
 
+const GIFTLAB_PRODUCT_TYPE_RULES: ReadonlyArray<{
+  request: RegExp;
+  product: RegExp;
+}> = [
+  { request: /\bornaments?\b/i, product: /\bornaments?\b/i },
+  {
+    request: /\b(?:coffee\s+)?mugs?\b/i,
+    product: /\b(?:mugs?|coffee cups?|tumblers?|drinkware)\b/i,
+  },
+  {
+    request: /\btackle\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btackle\b/i,
+    product: /\btackle\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btackle\b/i,
+  },
+  {
+    request: /\btools?\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btools?\b/i,
+    product: /\btools?\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btools?\b/i,
+  },
+  { request: /\bnecklaces?\b/i, product: /\bnecklaces?\b/i },
+  { request: /\bbracelets?\b/i, product: /\bbracelets?\b/i },
+  { request: /\bbookmarks?\b/i, product: /\bbookmarks?\b/i },
+  {
+    request: /\bairpods?\b.*\bcases?\b|\bcases?\b.*\bairpods?\b/i,
+    product: /\bairpods?\b.*\bcases?\b|\bcases?\b.*\bairpods?\b/i,
+  },
+  { request: /\bpillow cases?\b/i, product: /\bpillow cases?\b/i },
+  { request: /\bpencil cases?\b/i, product: /\bpencil cases?\b/i },
+  {
+    request: /\b(?:iphone|phone|samsung)\b.*\bcases?\b|\bcases?\b.*\b(?:iphone|phone|samsung)\b/i,
+    product: /\b(?:iphone|phone|samsung)\b.*\bcases?\b|\bcases?\b.*\b(?:iphone|phone|samsung)\b/i,
+  },
+  { request: /\bcutting boards?\b/i, product: /\bcutting boards?\b/i },
+];
+
+const GIFTLAB_OCCASION_PATTERNS: ReadonlyArray<[string, RegExp]> = [
+  ["birthday", /\bbirthdays?\b/i],
+  ["christmas", /\b(?:christmas|xmas)\b/i],
+  ["anniversary", /\banniversar(?:y|ies)\b/i],
+  ["halloween", /\bhalloween\b/i],
+  ["graduation", /\bgraduation\b/i],
+  ["wedding", /\bwedding\b/i],
+  ["remembrance", /\b(?:memorial|memoral|remembrance|sympathy)\b/i],
+  ["mothers-day", /\b(?:mother's|mothers|moms?)\s+day\b/i],
+  ["fathers-day", /\b(?:father's|fathers|dads?)\s+day\b/i],
+  ["valentines-day", /\bvalentine'?s?\s+day\b/i],
+];
+
+const GIFTLAB_RELATIONSHIP_PATTERNS: ReadonlyArray<[string, RegExp]> = [
+  ["mother", /\b(?:mom|mommy|mother|mama)\b/i],
+  ["father", /\b(?:dad|daddy|father|papa)\b/i],
+  ["daughter", /\bdaughter\b/i],
+  ["son", /\bson\b/i],
+  ["sister", /\bsister\b/i],
+  ["brother", /\bbrother\b/i],
+  ["wife", /\bwife\b/i],
+  ["husband", /\bhusband\b/i],
+  ["girlfriend", /\bgirlfriend\b/i],
+  ["boyfriend", /\bboyfriend\b/i],
+  ["grandmother", /\b(?:grandma|grandmother)\b/i],
+  ["grandfather", /\b(?:grandpa|grandfather)\b/i],
+];
+
+function matchingLabels(
+  value: string,
+  patterns: ReadonlyArray<[string, RegExp]>,
+): Set<string> {
+  return new Set(
+    patterns.filter(([, pattern]) => pattern.test(value)).map(([label]) => label),
+  );
+}
+
+function hasConflictingGiftlabLabels(
+  request: string,
+  productTitle: string,
+  patterns: ReadonlyArray<[string, RegExp]>,
+): boolean {
+  const requested = matchingLabels(request, patterns);
+  const offered = matchingLabels(productTitle, patterns);
+  return requested.size > 0 && offered.size > 0 && intersection(requested, offered).size === 0;
+}
+
+function isCompatibleGiftlabProductType(
+  request: string,
+  productTitle: string,
+): boolean {
+  const requestedRules = GIFTLAB_PRODUCT_TYPE_RULES.filter(({ request: pattern }) =>
+    pattern.test(request),
+  );
+  if (/\bcases?\b/i.test(request) && requestedRules.length === 0) return false;
+  return (
+    requestedRules.length === 0 ||
+    requestedRules.every(({ product }) => product.test(productTitle))
+  );
+}
+
+function hasRequestedGiftlabProductType(request: string): boolean {
+  return GIFTLAB_PRODUCT_TYPE_RULES.some(({ request: pattern }) =>
+    pattern.test(request),
+  );
+}
+
+function passesGiftlabCompatibility(
+  request: string,
+  product: AwinCatalogProduct,
+): boolean {
+  if (/\bgift cards?\b/i.test(request)) return false;
+  if (!isCompatibleGiftlabProductType(request, product.title)) return false;
+  if (
+    hasConflictingGiftlabLabels(
+      request,
+      product.title,
+      GIFTLAB_OCCASION_PATTERNS,
+    ) ||
+    hasConflictingGiftlabLabels(
+      request,
+      product.title,
+      GIFTLAB_RELATIONSHIP_PATTERNS,
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function productDiversityKey(
   product: Pick<AwinCatalogProduct, "advertiserId" | "externalProductId" | "title">,
   advertiser: AwinAdvertiserConfig,
@@ -619,10 +746,15 @@ function productDiversityKey(
   if (advertiser.matchingPolicy !== "giftlab-personalized") {
     return `${product.advertiserId}:${product.externalProductId}`;
   }
+  if (
+    /\bairpods?\b.*\bcases?\b|\bcases?\b.*\bairpods?\b/i.test(product.title)
+  ) {
+    return `${product.advertiserId}:airpods-case`;
+  }
   const baseTitle = product.title
     .normalize("NFKD")
     .toLowerCase()
-    .replace(/\b(?:black|blue|brown|gold|gray|green|grey|large|medium|orange|pink|purple|red|silver|small|white|yellow)\b/g, " ")
+    .replace(/\b(?:avatar|black|blue|brown|clear|gold|gray|green|grey|large|medium|opaque|orange|pink|purple|red|silver|small|transparent|white|yellow)\b/g, " ")
     .replace(/\b(?:xs|xl|xxl|\d+\s*(?:cm|in))\b/g, " ")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -720,8 +852,9 @@ function passesAdvertiserPolicy(args: {
       return (
         args.giftlabPersonalizedIntent.size > 0 &&
         hasAny(args.productTitleTokens, GIFTLAB_PRODUCT_SIGNALS) &&
-        !isUnsuitableGiftlabProduct(product.title) &&
-        (!isMemorialProduct(product.title) || args.memorialIntent.size > 0) &&
+        !isUnsuitableGiftlabProduct(product) &&
+        (!isMemorialProduct(`${product.title} ${giftlabCategory(product)}`) ||
+          args.memorialIntent.size > 0) &&
         (!isGiftlabDeviceSpecificProduct(product.title) ||
           hasAny(args.giftlabDeviceIntent, args.productTitleTokens))
       );
@@ -915,6 +1048,7 @@ export function findBestAwinProductMatch(args: {
       .flatMap((interest) => [interest.label, interest.category ?? ""])
       .join(" "),
   );
+  const suggestionContext = `${suggestion.title} ${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`;
   const policyIntent = getSuggestionPolicyIntent(suggestion);
   const memorialIntent = intersection(
     union(titleTokens, detailTokens),
@@ -969,6 +1103,12 @@ export function findBestAwinProductMatch(args: {
       advertiser,
     );
     if (
+      advertiser.matchingPolicy === "giftlab-personalized" &&
+      !passesGiftlabCompatibility(suggestionContext, product)
+    ) {
+      continue;
+    }
+    if (
       !passesAdvertiserPolicy({
         advertiser,
         product,
@@ -997,11 +1137,16 @@ export function findBestAwinProductMatch(args: {
     const titleDescription = intersection(titleTokens, productDescriptionTokens);
     const detailTitle = intersection(detailTokens, productTitleTokens);
     const interestTitle = intersection(interestTokens, productTitleTokens);
-    if (
-      advertiser.matchingPolicy === "giftlab-personalized" &&
-      ![...titleTitle].some((token) => !GIFTLAB_GENERIC_MATCH_WORDS.has(token))
-    ) {
-      continue;
+    if (advertiser.matchingPolicy === "giftlab-personalized") {
+      const hasSpecificTitleMatch = [...titleTitle].some(
+        (token) => !GIFTLAB_GENERIC_MATCH_WORDS.has(token),
+      );
+      const hasSpecificContextMatch = [...detailTitle, ...interestTitle].some(
+        (token) =>
+          !GIFTLAB_GENERIC_MATCH_WORDS.has(token) &&
+          !GENERIC_MATCH_WORDS.has(token),
+      );
+      if (!hasSpecificTitleMatch && !hasSpecificContextMatch) continue;
     }
     const distinctiveTitleMatch = [...titleTitle].some(
       (token) =>
@@ -1020,7 +1165,11 @@ export function findBestAwinProductMatch(args: {
     const strongAnchor =
       titleTitle.size >= 2 ||
       distinctiveTitleMatch ||
-      (titleTitle.size >= 1 && hasSpecificSupportingMatch);
+      (titleTitle.size >= 1 && hasSpecificSupportingMatch) ||
+      (advertiser.matchingPolicy === "giftlab-personalized" &&
+        !hasRequestedGiftlabProductType(suggestionContext) &&
+        hasSpecificSupportingMatch &&
+        detailTitle.size + interestTitle.size >= 2);
     if (!strongAnchor) continue;
 
     const score =
