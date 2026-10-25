@@ -393,6 +393,157 @@ test("Giftlab abstains when no product has the requested concrete type", () => {
   assert.equal(match, null);
 });
 
+test("Giftlab rejects the three confirmed production product-type mismatches", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const cases = [
+    {
+      suggestion: {
+        title: "Custom Mug Warmer",
+        short_description:
+          "A sleek mug warmer that keeps her coffee at the perfect temperature.",
+        tier: "thoughtful",
+        price_min: 25,
+        price_max: 50,
+      },
+      bad: {
+        externalProductId: "41887622756",
+        title:
+          "Anniversary Gifts Custom Magic Mug Heat Color Changing Coffee Mug",
+        description: "Category: Kitchen.",
+        price: 25.95,
+      },
+      good: {
+        title: "Personalized Electric Mug Warmer USB Heating Plate",
+        description: "Category: Kitchen Appliances.",
+        price: 34.95,
+      },
+    },
+    {
+      suggestion: {
+        title: "Custom Star Map Print",
+        short_description:
+          "A framed print showing the stars' alignment on a significant date.",
+        tier: "thoughtful",
+        price_min: 40,
+        price_max: 80,
+      },
+      bad: {
+        externalProductId: "41887622053",
+        title: "Car Seat Cover Custom Car Seat Print Cute Pets",
+        description: "Category: Accessories.",
+        price: 45.95,
+      },
+      good: {
+        title: "Personalized Constellation Star Map Print",
+        description: "Category: Wall Art.",
+        price: 49.95,
+      },
+    },
+    {
+      suggestion: {
+        title: "Custom Coordinates Necklace",
+        short_description:
+          "A delicate necklace featuring the coordinates of a special place.",
+        tier: "thoughtful",
+        price_min: 30,
+        price_max: 60,
+      },
+      bad: {
+        externalProductId: "41887622793",
+        title: "Valentine's Day Gift Custom Name Necklace",
+        description: "Category: Jewelry.",
+        price: 39.95,
+      },
+      good: {
+        title: "Custom Coordinates Necklace Latitude Longitude Engraving",
+        description: "Category: Jewelry.",
+        price: 44.95,
+      },
+    },
+  ] as const;
+
+  for (const item of cases) {
+    const badProduct = advertiserProduct("95201", "Giftlab", item.bad);
+    assert.equal(
+      findBestAwinProductMatch({
+        suggestion: item.suggestion,
+        products: [badProduct],
+        advertiserRegistry: [giftlab],
+        occasion: "Birthday",
+        recipientRelationship: "Friend",
+      }),
+      null,
+      item.suggestion.title,
+    );
+    assert.equal(
+      findBestAwinProductMatch({
+        suggestion: item.suggestion,
+        products: [badProduct, advertiserProduct("95201", "Giftlab", item.good)],
+        advertiserRegistry: [giftlab],
+        occasion: "Birthday",
+        recipientRelationship: "Friend",
+      })?.productTitle,
+      item.good.title,
+      item.suggestion.title,
+    );
+  }
+});
+
+test("Giftlab keeps generic mug and necklace requests backward-compatible", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const genericMug = advertiserProduct("95201", "Giftlab", {
+    title: "Custom Magic Heat Color Changing Coffee Mug",
+    description: "Category: Kitchen.",
+    price: 25.95,
+  });
+  const nameNecklace = advertiserProduct("95201", "Giftlab", {
+    title: "Custom Name Necklace",
+    description: "Category: Jewelry.",
+    price: 39.95,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A custom mug for their morning coffee.",
+        tier: "thoughtful",
+      },
+      products: [genericMug],
+      advertiserRegistry: [giftlab],
+    })?.productTitle,
+    genericMug.title,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized name necklace",
+        short_description: "A custom necklace with their name.",
+        tier: "thoughtful",
+      },
+      products: [nameNecklace],
+      advertiserRegistry: [giftlab],
+    })?.productTitle,
+    nameNecklace.title,
+  );
+});
+
 test("Giftlab applies category safety and memorial typo checks", () => {
   const giftlab: AwinAdvertiserConfig = {
     key: "giftlab",
@@ -590,7 +741,7 @@ test("Giftlab rejects explicit occasion and relationship conflicts", () => {
       },
       products: [fathersDayMug, mothersDayMug],
       advertiserRegistry: registry,
-      occasion: "Mother's Day",
+      occasion: "mothers_day",
       recipientRelationship: "Mother",
     })?.productTitle,
     mothersDayMug.title,

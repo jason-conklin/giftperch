@@ -14,6 +14,10 @@ import {
   loadAwinProductCandidates,
 } from "@/server/awin/matcher";
 import type { ProductMatch } from "@/lib/affiliateProduct";
+import {
+  parseGiftSuggestionRequestContext,
+  resolveGiftSuggestionStructuredContext,
+} from "@/lib/gifts/giftSuggestionContext";
 
 type SuggestRequestBody = {
   recipientId?: string;
@@ -193,10 +197,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const occasion =
-    typeof body.occasion === "string" && body.occasion.trim().length > 0
-      ? body.occasion.trim()
-      : null;
+  const requestContext = parseGiftSuggestionRequestContext(body);
+  const occasion = requestContext.occasion;
 
   let numSuggestions =
     typeof body.numSuggestions === "number" && !Number.isNaN(body.numSuggestions)
@@ -207,14 +209,6 @@ export async function POST(request: NextRequest) {
     Math.max(MIN_SUGGESTIONS, numSuggestions),
   );
 
-  const requestedBudgetMin =
-    typeof body.budgetMin === "number" && !Number.isNaN(body.budgetMin)
-      ? body.budgetMin
-      : null;
-  const requestedBudgetMax =
-    typeof body.budgetMax === "number" && !Number.isNaN(body.budgetMax)
-      ? body.budgetMax
-      : null;
   const previousSuggestions =
     Array.isArray(body.previousSuggestions) && body.previousSuggestions.length
       ? body.previousSuggestions
@@ -345,17 +339,21 @@ export async function POST(request: NextRequest) {
     const notes_summary = summarizeNotes(recipient);
     const interests_summary = summarizeInterests(interests);
     const last_gifts_summary = summarizeGifts(gifts);
-    const resolvedBudgetMin =
-      requestedBudgetMin ?? recipient.gift_budget_min ?? null;
-    const resolvedBudgetMax =
-      requestedBudgetMax ?? recipient.gift_budget_max ?? null;
+    const structuredContext = resolveGiftSuggestionStructuredContext({
+      request: requestContext,
+      recipientRelationship: recipient.relationship,
+      recipientBudgetMin: recipient.gift_budget_min,
+      recipientBudgetMax: recipient.gift_budget_max,
+    });
+    const resolvedBudgetMin = structuredContext.budgetMin;
+    const resolvedBudgetMax = structuredContext.budgetMax;
     const resolvedAnnualBudget = recipient.annual_budget ?? null;
 
     const promptContext: GiftPromptContext = {
       recipient_id: recipient.id,
       recipient_name: recipient.name,
-      relationship: recipient.relationship,
-      occasion,
+      relationship: structuredContext.recipientRelationship,
+      occasion: structuredContext.occasion,
       budget_min: resolvedBudgetMin,
       budget_max: resolvedBudgetMax,
       annual_budget: resolvedAnnualBudget,
@@ -593,8 +591,8 @@ export async function POST(request: NextRequest) {
         recipientInterests: interests,
         budgetMin: resolvedBudgetMin,
         budgetMax: resolvedBudgetMax,
-        occasion,
-        recipientRelationship: recipient.relationship,
+        occasion: structuredContext.occasion,
+        recipientRelationship: structuredContext.recipientRelationship,
         loadAwinProducts: (options) =>
           loadAwinProductCandidates(supabase, options),
         searchAmazon: searchAmazonProductForSuggestion,

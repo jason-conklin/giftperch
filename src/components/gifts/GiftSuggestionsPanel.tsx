@@ -11,6 +11,7 @@ import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTi
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
 import { resolveGiftProductDestination } from "@/lib/gifts/resolveGiftProductDestination";
+import { buildGiftSuggestionRequestPayload } from "@/lib/gifts/giftSuggestionContext";
 import {
   getSavedGiftProductKey,
   normalizeSavedGiftTitle,
@@ -48,8 +49,8 @@ type RecipientOption = {
   pet_type: string | null;
   avatar_url: string | null;
   avatar_icon: AvatarIconKey | null;
-  budget_per_gift?: number | null;
-  budget_annual?: number | null;
+  gift_budget_min?: number | null;
+  gift_budget_max?: number | null;
 };
 
 const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
@@ -644,8 +645,8 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   );
   const selectedBudgetDisplay = selectedRecipient
     ? formatBudgetRange(
-        selectedRecipient.budget_per_gift,
-        selectedRecipient.budget_annual,
+        selectedRecipient.gift_budget_min,
+        selectedRecipient.gift_budget_max,
       )
     : "Select a recipient";
   const pendingDeleteRun = useMemo(
@@ -664,7 +665,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       const { data, error } = await supabase
         .from("recipient_profiles")
         .select(
-          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self, budget_per_gift, budget_annual",
+          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self, gift_budget_min, gift_budget_max",
         )
         .eq("user_id", user.id)
         .eq("is_self", false)
@@ -1242,28 +1243,13 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
 
-      const budgetPerGift = selectedRecipient?.budget_per_gift;
-      const budgetAnnual = selectedRecipient?.budget_annual;
-      const parsedBudgetMin =
-        typeof budgetPerGift === "number"
-          ? budgetPerGift
-          : budgetPerGift
-          ? Number(budgetPerGift)
-          : null;
-      const parsedBudgetMax =
-        typeof budgetAnnual === "number"
-          ? budgetAnnual
-          : budgetAnnual
-          ? Number(budgetAnnual)
-          : null;
-
-      const payload = {
+      const payload = buildGiftSuggestionRequestPayload({
         recipientId: selectedRecipientId,
-        occasion: occasion.trim() || null,
-        budgetMin: parsedBudgetMin,
-        budgetMax: parsedBudgetMax,
+        occasion,
+        budgetMin: selectedRecipient?.gift_budget_min,
+        budgetMax: selectedRecipient?.gift_budget_max,
         numSuggestions: numSuggestions ? Number(numSuggestions) : undefined,
-      };
+      });
 
       const response = await fetch("/api/perchpal/suggest", {
         method: "POST",
@@ -1303,9 +1289,9 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           recipient_id: selectedRecipientId,
           recipient_name: selectedRecipient?.name ?? "Recipient",
           relationship: selectedRecipient?.relationship ?? null,
-          occasion: occasion || null,
-          budget_min: parsedBudgetMin,
-          budget_max: parsedBudgetMax,
+          occasion: payload.occasion,
+          budget_min: payload.budgetMin,
+          budget_max: payload.budgetMax,
           notes_summary: null,
           interests_summary: null,
           last_gifts_summary: null,

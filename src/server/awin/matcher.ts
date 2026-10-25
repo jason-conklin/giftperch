@@ -625,6 +625,24 @@ const GIFTLAB_PRODUCT_TYPE_RULES: ReadonlyArray<{
   request: RegExp;
   product: RegExp;
 }> = [
+  {
+    request:
+      /\b(?:mugs?|cups?|coffee)\s+(?:warmers?|heaters?|warming devices?)\b|\b(?:warmers?|heaters?)\s+(?:for\s+)?(?:mugs?|cups?|coffee)\b/i,
+    product:
+      /\b(?:mugs?|cups?|coffee)\s+(?:warmers?|heaters?)\b|\b(?:warmers?|heaters?)\s+(?:for\s+)?(?:mugs?|cups?|coffee)\b|\bheating plates?\b/i,
+  },
+  {
+    request:
+      /\bstar\s+maps?\b|\bconstellation\s+(?:maps?|prints?|art(?:work)?)\b|\bnight[ -]sky\s+(?:maps?|prints?|art(?:work)?)\b/i,
+    product:
+      /\bstar\s+maps?\b|\bconstellation\s+(?:maps?|prints?|art(?:work)?)\b|\bnight[ -]sky\s+(?:maps?|prints?|art(?:work)?)\b/i,
+  },
+  {
+    request:
+      /\b(?:coordinates?|latitude|longitude|gps)\b|\blocation[ -]+engraved\b/i,
+    product:
+      /\b(?:coordinates?|latitude|longitude|gps)\b|\blocation[ -]+engraved\b/i,
+  },
   { request: /\bornaments?\b/i, product: /\bornaments?\b/i },
   {
     request: /\b(?:coffee\s+)?mugs?\b/i,
@@ -666,7 +684,7 @@ const GIFTLAB_OCCASION_PATTERNS: ReadonlyArray<[string, RegExp]> = [
   ["remembrance", /\b(?:memorial|memoral|remembrance|sympathy)\b/i],
   ["mothers-day", /\b(?:mother's|mothers|moms?)\s+day\b/i],
   ["fathers-day", /\b(?:father's|fathers|dads?)\s+day\b/i],
-  ["valentines-day", /\bvalentine'?s?\s+day\b/i],
+  ["valentines-day", /\bvalentine'?s?(?:\s+day)?\b/i],
 ];
 
 const GIFTLAB_RELATIONSHIP_PATTERNS: ReadonlyArray<[string, RegExp]> = [
@@ -693,8 +711,11 @@ function matchingLabels(
   value: string,
   patterns: ReadonlyArray<[string, RegExp]>,
 ): Set<string> {
+  const normalized = value.replace(/[_-]+/g, " ");
   return new Set(
-    patterns.filter(([, pattern]) => pattern.test(value)).map(([label]) => label),
+    patterns
+      .filter(([, pattern]) => pattern.test(normalized))
+      .map(([label]) => label),
   );
 }
 
@@ -734,15 +755,29 @@ const GIFTLAB_COMPATIBLE_RELATIONSHIP_PAIRS = new Set([
 
 function isCompatibleGiftlabProductType(
   request: string,
-  productTitle: string,
+  product: AwinCatalogProduct,
 ): boolean {
+  const productEvidence = `${product.title} ${giftlabCategory(product)}`;
+  const requestsMugWarmer =
+    /\b(?:mugs?|cups?|coffee)\s+(?:warmers?|heaters?|warming devices?)\b|\b(?:warmers?|heaters?)\s+(?:for\s+)?(?:mugs?|cups?|coffee)\b/i.test(
+      request,
+    );
+  if (
+    requestsMugWarmer &&
+    (!/\b(?:electric|usb|powered|heating plates?)\b/i.test(productEvidence) ||
+      /\b(?:magic|heat|color)\s+(?:color\s+)?chang(?:e|es|ing)\b/i.test(
+        productEvidence,
+      ))
+  ) {
+    return false;
+  }
   const requestedRules = GIFTLAB_PRODUCT_TYPE_RULES.filter(({ request: pattern }) =>
     pattern.test(request),
   );
   if (/\bcases?\b/i.test(request) && requestedRules.length === 0) return false;
   return (
     requestedRules.length === 0 ||
-    requestedRules.every(({ product }) => product.test(productTitle))
+    requestedRules.every(({ product: pattern }) => pattern.test(productEvidence))
   );
 }
 
@@ -758,7 +793,7 @@ function passesGiftlabCompatibility(
   context: AwinMatchContext,
 ): boolean {
   if (/\bgift cards?\b/i.test(request)) return false;
-  if (!isCompatibleGiftlabProductType(request, product.title)) return false;
+  if (!isCompatibleGiftlabProductType(request, product)) return false;
   const structuredOccasion = matchingLabels(
     context.occasion ?? "",
     GIFTLAB_OCCASION_PATTERNS,
