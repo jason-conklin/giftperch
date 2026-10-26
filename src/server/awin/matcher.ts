@@ -8,6 +8,7 @@ import {
 import {
   AWIN_ADVERTISERS,
   isApprovedAwinAdvertiserId,
+  requiresVerifiedAwinProductDestination,
   type AwinAdvertiserConfig,
 } from "./advertisers";
 
@@ -391,6 +392,8 @@ export type AwinCatalogProduct = {
   currency: string;
   availability: string;
   active: boolean;
+  destinationHealthStatus?: "valid" | "invalid" | "uncertain" | "unchecked";
+  destinationCheckedAt?: string;
 };
 
 export type MatchableGiftSuggestion = {
@@ -426,6 +429,8 @@ type CatalogRow = {
   currency: unknown;
   availability: unknown;
   active: unknown;
+  destination_health_status?: unknown;
+  destination_checked_at?: unknown;
 };
 
 type AmazonSearch = (params: {
@@ -485,6 +490,25 @@ function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
     return null;
   }
 
+  if (requiresVerifiedAwinProductDestination(row.advertiser_id)) {
+    const advertiser = AWIN_ADVERTISERS.find(
+      (candidate) => candidate.advertiserId === row.advertiser_id,
+    ) as AwinAdvertiserConfig | undefined;
+    const checkedAt =
+      typeof row.destination_checked_at === "string"
+        ? Date.parse(row.destination_checked_at)
+        : Number.NaN;
+    const maximumAgeMs =
+      (advertiser?.destinationValidationMaxAgeHours ?? 72) * 60 * 60 * 1_000;
+    if (
+      row.destination_health_status !== "valid" ||
+      !Number.isFinite(checkedAt) ||
+      Date.now() - checkedAt > maximumAgeMs
+    ) {
+      return null;
+    }
+  }
+
   return {
     provider: "awin",
     advertiserId: row.advertiser_id,
@@ -502,6 +526,15 @@ function normalizeCatalogRow(row: CatalogRow): AwinCatalogProduct | null {
     currency: row.currency.trim().toUpperCase(),
     availability: row.availability,
     active: true,
+    ...(typeof row.destination_health_status === "string"
+      ? {
+          destinationHealthStatus:
+            row.destination_health_status as AwinCatalogProduct["destinationHealthStatus"],
+        }
+      : {}),
+    ...(typeof row.destination_checked_at === "string"
+      ? { destinationCheckedAt: row.destination_checked_at }
+      : {}),
   };
 }
 
@@ -528,7 +561,7 @@ export async function loadAwinProductCandidates(
     let query = supabase
       .from("affiliate_products")
       .select(
-        "provider, advertiser_id, locale, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active",
+        "provider, advertiser_id, locale, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active, destination_health_status, destination_checked_at",
       )
       .eq("provider", "awin")
       .eq("active", true)
@@ -1401,6 +1434,12 @@ export function findBestAwinProductMatch(args: {
     price: best.product.price,
     currency: best.product.currency,
     affiliateUrl: best.product.affiliateUrl,
+    ...(best.product.destinationHealthStatus
+      ? { destinationHealthStatus: best.product.destinationHealthStatus }
+      : {}),
+    ...(best.product.destinationCheckedAt
+      ? { destinationCheckedAt: best.product.destinationCheckedAt }
+      : {}),
   };
 }
 

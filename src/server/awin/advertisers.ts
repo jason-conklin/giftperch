@@ -24,6 +24,9 @@ export type AwinAdvertiserConfig = {
   locale: string;
   importEnabled: boolean;
   recommendationEnabled: boolean;
+  requireVerifiedProductDestination?: boolean;
+  destinationValidationMaxAgeHours?: number;
+  destinationValidationHosts?: readonly string[];
   matchingPolicy: AwinMatchingPolicy;
   importSafeguards?: {
     minimumValidProducts?: number;
@@ -63,6 +66,26 @@ const APPROVED_AWIN_ADVERTISER_IDS = new Set<string>(
 
 export function isApprovedAwinAdvertiserId(advertiserId: string): boolean {
   return APPROVED_AWIN_ADVERTISER_IDS.has(advertiserId.trim());
+}
+
+export function requiresVerifiedAwinProductDestination(
+  advertiserId: string | null | undefined,
+): boolean {
+  if (!advertiserId) return false;
+  return Boolean(
+    findAwinAdvertiserById(advertiserId.trim())
+      ?.requireVerifiedProductDestination,
+  );
+}
+
+export function getAwinDestinationValidationMaxAgeHours(
+  advertiserId: string | null | undefined,
+): number | null {
+  if (!advertiserId) return null;
+  const advertiser = findAwinAdvertiserById(advertiserId.trim());
+  return advertiser?.requireVerifiedProductDestination
+    ? (advertiser.destinationValidationMaxAgeHours ?? 72)
+    : null;
 }
 
 export function getConfiguredLegacyAwinFeedId(options: {
@@ -186,6 +209,9 @@ export const AWIN_ADVERTISERS = [
     locale: "en_US",
     importEnabled: true,
     recommendationEnabled: true,
+    requireVerifiedProductDestination: true,
+    destinationValidationMaxAgeHours: 72,
+    destinationValidationHosts: ["giftlab.com"],
     matchingPolicy: "giftlab-personalized",
     importSafeguards: {
       minimumValidProducts: 2000,

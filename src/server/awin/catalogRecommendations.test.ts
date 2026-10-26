@@ -41,6 +41,8 @@ const enabledGiftlab: AwinAdvertiserConfig = {
   locale: "en_US",
   importEnabled: true,
   recommendationEnabled: true,
+  requireVerifiedProductDestination: true,
+  destinationValidationMaxAgeHours: 72,
   matchingPolicy: "giftlab-personalized",
 };
 
@@ -85,6 +87,8 @@ function giftlabProduct(
     imageUrl: `https://images.example.test/${id}.jpg`,
     affiliateUrl: `https://www.awin1.com/cread.php?awinmid=95201&product=${id}`,
     price: 25,
+    destinationHealthStatus: "valid",
+    destinationCheckedAt: new Date().toISOString(),
     ...overrides,
   });
 }
@@ -158,6 +162,15 @@ test("constructs only complete authoritative catalog products", () => {
   );
   assert.equal(
     buildCatalogGroundedProduct(product({ currency: "EUR" }), [piscifun]),
+    null,
+  );
+  assert.equal(
+    buildCatalogGroundedProduct(
+      giftlabProduct("Personalized Mug", "stale", {
+        destinationCheckedAt: new Date(Date.now() - 73 * 60 * 60 * 1_000).toISOString(),
+      }),
+      [enabledGiftlab],
+    ),
     null,
   );
 });
@@ -685,5 +698,82 @@ test("candidate retrieval fails closed instead of truncating at its ceiling", as
         maximumProducts: 2,
       }),
     /exceeded the 2-product safety limit/,
+  );
+});
+
+test("candidate retrieval requires verified destinations only for configured advertisers", async () => {
+  const rows = [
+    {
+      provider: "awin",
+      advertiser_id: "95201",
+      locale: "en_US",
+      merchant_name: "Giftlab",
+      external_product_id: "giftlab-valid",
+      title: "Personalized Photo Mug",
+      description: "A personalized mug.",
+      image_url: "https://images.example.test/giftlab-valid.jpg",
+      affiliate_url: "https://www.awin1.com/pclick.php?p=1&m=95201",
+      price: 25,
+      currency: "USD",
+      availability: "in_stock",
+      active: true,
+      destination_health_status: "valid",
+      destination_checked_at: new Date().toISOString(),
+    },
+    {
+      provider: "awin",
+      advertiser_id: "95201",
+      locale: "en_US",
+      merchant_name: "Giftlab",
+      external_product_id: "giftlab-unchecked",
+      title: "Unchecked Mug",
+      description: "A mug with an unchecked destination.",
+      image_url: "https://images.example.test/giftlab-unchecked.jpg",
+      affiliate_url: "https://www.awin1.com/pclick.php?p=2&m=95201",
+      price: 25,
+      currency: "USD",
+      availability: "in_stock",
+      active: true,
+      destination_health_status: "unchecked",
+      destination_checked_at: null,
+    },
+    {
+      provider: "awin",
+      advertiser_id: "89509",
+      locale: "en_US",
+      merchant_name: "Piscifun",
+      external_product_id: "piscifun-unchecked",
+      title: "Fishing Reel",
+      description: "A fishing reel.",
+      image_url: "https://images.example.test/reel.jpg",
+      affiliate_url: "https://www.awin1.com/pclick.php?p=3&m=89509",
+      price: 50,
+      currency: "USD",
+      availability: "in_stock",
+      active: true,
+      destination_health_status: "unchecked",
+      destination_checked_at: null,
+    },
+  ];
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    in() { return this; },
+    gte() { return this; },
+    lte() { return this; },
+    order() { return this; },
+    range(from: number, to: number) {
+      return Promise.resolve({ data: rows.slice(from, to + 1), error: null });
+    },
+  };
+  const supabase = { from: () => query } as unknown as SupabaseClient;
+  const products = await loadAwinProductCandidates(supabase, {
+    advertiserIds: ["95201", "89509"],
+    currency: "USD",
+  });
+
+  assert.deepEqual(
+    products.map((candidate) => candidate.externalProductId),
+    ["giftlab-valid", "piscifun-unchecked"],
   );
 });

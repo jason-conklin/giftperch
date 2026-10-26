@@ -1,0 +1,41 @@
+name: Validate Awin product destinations
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 7 * * *"
+
+concurrency:
+  group: validate-awin-product-destinations
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  giftlab:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Validate Giftlab destinations
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+        run: >-
+          npm run awin:validate-destinations --
+          --advertiser=giftlab
+          --limit=10000
+          --concurrency=3
+          --confirm-project-ref=xtprcqvzpezaahumuewn
+          --write
+      - name: Surface validator failure
+        if: failure()
+        run: echo "::error::Giftlab destination validation failed; inspect this run before the 72-hour health window expires."

@@ -2,6 +2,7 @@ import {
   getMatchedProductPresentation,
   getSafeExternalUrl,
 } from "@/lib/affiliateProduct";
+import { getAwinDestinationValidationMaxAgeHours } from "@/server/awin/advertisers";
 
 export type GiftProductDestination = {
   href: string;
@@ -43,6 +44,24 @@ export function resolveGiftProductDestination(args: {
     args.amazonProduct,
   );
   if (matchedProduct) {
+    const validationMaxAgeHours =
+      matchedProduct.match.provider === "awin"
+        ? getAwinDestinationValidationMaxAgeHours(
+            matchedProduct.match.advertiserId,
+          )
+        : null;
+    const checkedAt = matchedProduct.match.destinationCheckedAt
+      ? Date.parse(matchedProduct.match.destinationCheckedAt)
+      : Number.NaN;
+    if (
+      matchedProduct.match.destinationHealthStatus === "invalid" ||
+      (validationMaxAgeHours !== null &&
+        (matchedProduct.match.destinationHealthStatus !== "valid" ||
+          !Number.isFinite(checkedAt) ||
+          Date.now() - checkedAt > validationMaxAgeHours * 60 * 60 * 1_000))
+    ) {
+      return null;
+    }
     return {
       href: matchedProduct.match.affiliateUrl,
       label: matchedProduct.shoppingLabel,

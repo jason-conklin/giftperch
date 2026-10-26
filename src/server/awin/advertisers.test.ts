@@ -72,6 +72,9 @@ test("Giftlab is enabled for imports and catalog recommendations", () => {
   assert.equal(giftlab.locale, "en_US");
   assert.equal(giftlab.importEnabled, true);
   assert.equal(giftlab.recommendationEnabled, true);
+  assert.equal(giftlab.requireVerifiedProductDestination, true);
+  assert.equal(giftlab.destinationValidationMaxAgeHours, 72);
+  assert.deepEqual(giftlab.destinationValidationHosts, ["giftlab.com"]);
   assert.equal(
     findRecommendationEnabledAwinAdvertiserById("95201")?.key,
     "giftlab",

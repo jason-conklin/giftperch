@@ -126,5 +126,7 @@ export function productMatchFromCatalogRow(value: unknown): ProductMatch | null 
     price,
     currency: row.currency,
     affiliateUrl: row.affiliate_url,
+    destinationHealthStatus: row.destination_health_status,
+    destinationCheckedAt: row.destination_checked_at,
   });
 }

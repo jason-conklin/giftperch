@@ -8,6 +8,7 @@ import {
   normalizeProductMatch,
 } from "@/lib/affiliateProduct";
 import { buildAmazonAffiliateUrl } from "@/lib/amazonAffiliate";
+import { resolveGiftProductDestination } from "@/lib/gifts/resolveGiftProductDestination";
 
 const awinMatch = {
   provider: "awin",
@@ -72,6 +73,43 @@ test("preserves optional Awin advertiser identity without requiring it for legac
 
 test("returns no matched presentation when product metadata is absent", () => {
   assert.equal(getMatchedProductPresentation(null, null), null);
+});
+
+test("known-invalid historical product snapshots do not expose a shopping destination", () => {
+  assert.equal(
+    resolveGiftProductDestination({
+      productMatch: { ...awinMatch, destinationHealthStatus: "invalid" },
+    }),
+    null,
+  );
+  assert.equal(
+    resolveGiftProductDestination({
+      productMatch: { ...awinMatch, destinationHealthStatus: "valid" },
+    })?.href,
+    awinMatch.affiliateUrl,
+  );
+  assert.equal(
+    resolveGiftProductDestination({
+      productMatch: {
+        ...awinMatch,
+        advertiserId: "95201",
+        locale: "en_US",
+      },
+    }),
+    null,
+  );
+  assert.equal(
+    resolveGiftProductDestination({
+      productMatch: {
+        ...awinMatch,
+        advertiserId: "95201",
+        locale: "en_US",
+        destinationHealthStatus: "valid",
+        destinationCheckedAt: new Date().toISOString(),
+      },
+    })?.href,
+    awinMatch.affiliateUrl,
+  );
 });
 
 test("rejects unsafe and misleading affiliate URLs", () => {

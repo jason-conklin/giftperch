@@ -12,6 +12,11 @@ import {
 } from "@/server/savedGifts/productSnapshot";
 import { findMatchingSavedGift } from "@/server/savedGifts/deduplication";
 import { resolveAwinProductScope } from "@/server/awin/productIdentity";
+import {
+  findAwinAdvertiserById,
+  getAwinDestinationValidationMaxAgeHours,
+} from "@/server/awin/advertisers";
+import { normalizeDestinationHealthStatus } from "@/server/awin/destinationHealth";
 
 type RecipientSavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -100,7 +105,100 @@ export async function GET(
       };
     }) || [];
 
-  return NextResponse.json({ savedGifts: mapped });
+  const awinMatches = mapped.flatMap((row) => {
+    const match = getSuggestionProductMatch({
+      title: row.title,
+      productMatch: row.product_match,
+    });
+    const scope = match?.provider === "awin" ? resolveAwinProductScope(match) : null;
+    return match && scope ? [{ match, scope }] : [];
+  });
+  const healthByProduct = new Map<
+    string,
+    {
+      status: NonNullable<ProductMatch["destinationHealthStatus"]>;
+      checkedAt: string | null;
+    }
+  >();
+  const scopes = new Map<string, typeof awinMatches>();
+  for (const entry of awinMatches) {
+    const key = `${entry.scope.advertiserId}:${entry.scope.locale}`;
+    scopes.set(key, [...(scopes.get(key) ?? []), entry]);
+  }
+  for (const entries of scopes.values()) {
+    const { advertiserId, locale } = entries[0].scope;
+    const ids = [...new Set(entries.map(({ match }) => match.productId))];
+    for (let offset = 0; offset < ids.length; offset += 100) {
+      const { data: healthRows } = await (supabase as SupabaseClient)
+        .from("affiliate_products")
+        .select("external_product_id, destination_health_status, destination_checked_at")
+        .eq("provider", "awin")
+        .eq("advertiser_id", advertiserId)
+        .eq("locale", locale)
+        .eq("active", true)
+        .eq("availability", "in_stock")
+        .in("external_product_id", ids.slice(offset, offset + 100));
+      for (const healthRow of healthRows ?? []) {
+        const status = normalizeDestinationHealthStatus(
+          healthRow.destination_health_status,
+        );
+        if (status) {
+          healthByProduct.set(
+            `${advertiserId}:${String(healthRow.external_product_id)}`,
+            {
+              status,
+              checkedAt:
+                typeof healthRow.destination_checked_at === "string"
+                  ? healthRow.destination_checked_at
+                  : null,
+            },
+          );
+        }
+      }
+    }
+  }
+
+  const safeMapped = mapped.map((row) => {
+    const match = getSuggestionProductMatch({
+      title: row.title,
+      productMatch: row.product_match,
+    });
+    const scope = match?.provider === "awin" ? resolveAwinProductScope(match) : null;
+    if (!match || !scope) return row;
+    const health = healthByProduct.get(`${scope.advertiserId}:${match.productId}`);
+    if (!health) {
+      return getAwinDestinationValidationMaxAgeHours(scope.advertiserId) !== null
+        ? {
+            ...row,
+            product_url: null,
+            product_match: {
+              ...match,
+              destinationHealthStatus: "unchecked",
+            },
+          }
+        : row;
+    }
+    const productMatch = {
+      ...match,
+      destinationHealthStatus: health.status,
+      ...(health.checkedAt ? { destinationCheckedAt: health.checkedAt } : {}),
+    };
+    const maximumAgeHours = getAwinDestinationValidationMaxAgeHours(
+      scope.advertiserId,
+    );
+    const checkedAt = health.checkedAt ? Date.parse(health.checkedAt) : Number.NaN;
+    const destinationUnavailable =
+      health.status === "invalid" ||
+      (maximumAgeHours !== null &&
+        (health.status !== "valid" ||
+          !Number.isFinite(checkedAt) ||
+          Date.now() - checkedAt > maximumAgeHours * 60 * 60 * 1_000));
+    return destinationUnavailable
+      ? { ...row, product_url: null, product_match: productMatch }
+      : { ...row, product_match: productMatch };
+  });
+
+  return NextResponse.json({ savedGifts: safeMapped });
 }
 
 export async function POST(
@@ -204,7 +302,7 @@ export async function POST(
       )
         .from("affiliate_products")
         .select(
-          "advertiser_id, locale, external_product_id, merchant_name, title, image_url, affiliate_url, price, currency",
+          "advertiser_id, locale, external_product_id, merchant_name, title, image_url, affiliate_url, price, currency, destination_health_status, destination_checked_at",
         )
         .eq("provider", "awin")
         .eq("advertiser_id", productScope.advertiserId)
@@ -220,6 +318,13 @@ export async function POST(
       canonicalProductMatch = productMatchFromCatalogRow(catalogRows[0]);
       if (!canonicalProductMatch) {
         return badRequest("Matched product data is invalid");
+      }
+      const advertiser = findAwinAdvertiserById(productScope.advertiserId);
+      if (
+        advertiser?.requireVerifiedProductDestination &&
+        canonicalProductMatch.destinationHealthStatus !== "valid"
+      ) {
+        return badRequest("Matched product destination is not currently available");
       }
     }
   }

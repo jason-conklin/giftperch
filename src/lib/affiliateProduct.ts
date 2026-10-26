@@ -11,6 +11,8 @@ export type ProductMatch = {
   price: number | null;
   currency: string | null;
   affiliateUrl: string;
+  destinationHealthStatus?: "valid" | "invalid" | "uncertain" | "unchecked";
+  destinationCheckedAt?: string;
 };
 
 export type LegacyAmazonProduct = {
@@ -141,6 +143,18 @@ export function normalizeProductMatch(value: unknown): ProductMatch | null {
     value.locale === undefined || value.locale === null
       ? null
       : requiredText(value.locale, 20);
+  const destinationHealthStatus =
+    value.destinationHealthStatus === "valid" ||
+    value.destinationHealthStatus === "invalid" ||
+    value.destinationHealthStatus === "uncertain" ||
+    value.destinationHealthStatus === "unchecked"
+      ? value.destinationHealthStatus
+      : null;
+  const destinationCheckedAt =
+    typeof value.destinationCheckedAt === "string" &&
+    Number.isFinite(Date.parse(value.destinationCheckedAt))
+      ? value.destinationCheckedAt
+      : null;
 
   if (!provider || !productId || !merchant || !productTitle || !affiliateUrl) {
     return null;
@@ -179,6 +193,12 @@ export function normalizeProductMatch(value: unknown): ProductMatch | null {
     price,
     currency,
     affiliateUrl,
+    ...(provider === "awin" && destinationHealthStatus
+      ? { destinationHealthStatus }
+      : {}),
+    ...(provider === "awin" && destinationCheckedAt
+      ? { destinationCheckedAt }
+      : {}),
   };
 }
 

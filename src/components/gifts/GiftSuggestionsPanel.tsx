@@ -26,6 +26,11 @@ import {
 } from "@/lib/affiliateProduct";
 import { getGiftRunEmptyMessage } from "@/lib/gifts/catalogFirst";
 import {
+  applyCurrentAwinDestinationHealth,
+  collectAwinDestinationIdentities,
+  type AwinDestinationHealthRecord,
+} from "@/lib/gifts/catalogDestinationHealth";
+import {
   Check,
   ChevronDown,
   ExternalLink,
@@ -1023,9 +1028,39 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
         setActiveRunId(null);
       } else {
         const fetchedRuns = (data ?? []) as SuggestionRun[];
-        setRuns(fetchedRuns);
-        setActiveRunId(fetchedRuns.length > 0 ? fetchedRuns[0].id : null);
-        if (fetchedRuns.length > 0 && onFirstRunComplete) {
+        const identities = collectAwinDestinationIdentities(
+          fetchedRuns.flatMap((run) => run.suggestions),
+        );
+        let healthRecords: AwinDestinationHealthRecord[] = [];
+        if (identities.length > 0 && authToken) {
+          const response = await fetch("/api/affiliate-products/destination-health", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({ products: identities }),
+          }).catch(() => null);
+          if (response?.ok) {
+            const payload = (await response.json().catch(() => null)) as {
+              products?: AwinDestinationHealthRecord[];
+            } | null;
+            healthRecords = Array.isArray(payload?.products)
+              ? payload.products
+              : [];
+          }
+        }
+        if (!isMounted) return;
+        const hydratedRuns = fetchedRuns.map((run) => ({
+          ...run,
+          suggestions: applyCurrentAwinDestinationHealth(
+            run.suggestions,
+            healthRecords,
+          ),
+        }));
+        setRuns(hydratedRuns);
+        setActiveRunId(hydratedRuns.length > 0 ? hydratedRuns[0].id : null);
+        if (hydratedRuns.length > 0 && onFirstRunComplete) {
           onFirstRunComplete();
         }
       }
@@ -1037,7 +1072,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     return () => {
       isMounted = false;
     };
-  }, [selectedRecipientId, supabase, onFirstRunComplete]);
+  }, [selectedRecipientId, supabase, onFirstRunComplete, authToken]);
 
   const activeRun = useMemo(
     () => runs.find((run) => run.id === activeRunId) ?? null,

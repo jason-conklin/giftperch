@@ -377,6 +377,16 @@ export function buildCatalogGroundedProduct(
   ) {
     return null;
   }
+  if (
+    advertiser.requireVerifiedProductDestination &&
+    (product.destinationHealthStatus !== "valid" ||
+      !product.destinationCheckedAt ||
+      !Number.isFinite(Date.parse(product.destinationCheckedAt)) ||
+      Date.now() - Date.parse(product.destinationCheckedAt) >
+        (advertiser.destinationValidationMaxAgeHours ?? 72) * 60 * 60 * 1_000)
+  ) {
+    return null;
+  }
 
   const normalized = normalizeProductMatch({
     provider: "awin",
@@ -389,6 +399,8 @@ export function buildCatalogGroundedProduct(
     price: product.price,
     currency: product.currency,
     affiliateUrl: product.affiliateUrl,
+    destinationHealthStatus: product.destinationHealthStatus,
+    destinationCheckedAt: product.destinationCheckedAt,
   });
   if (
     !normalized ||
