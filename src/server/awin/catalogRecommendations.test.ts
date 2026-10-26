@@ -398,6 +398,108 @@ test("uses product-type, sensitive-category, occasion, and relationship gates", 
   );
 });
 
+test("keeps audited Giftlab semantic substitutions out of the AI shortlist", async () => {
+  const cases = [
+    {
+      intent: "Personalized name necklace",
+      context: {
+        recipient: { interests: [{ label: "Personalized name jewelry" }] },
+      },
+      products: [
+        giftlabProduct(
+          "Love Knot Necklace With Personalized Custom Message Card",
+          "message-card-only",
+          { description: "Category: Jewelry. Personalized gift." },
+        ),
+        giftlabProduct(
+          "Personalized Custom Nameplate Necklace with Initial",
+          "nameplate-necklace",
+          { description: "Category: Jewelry. Personalized gift." },
+        ),
+      ],
+      expected: "nameplate-necklace",
+      rejected: "message-card-only",
+    },
+    {
+      intent: "Custom pet portrait",
+      context: {
+        recipient: { interests: [{ label: "Dog portraits" }] },
+      },
+      products: [
+        giftlabProduct("Custom Pet Photo Beach Towel", "pet-towel", {
+          description: "Category: Bed/Bath. Personalized gift.",
+        }),
+        giftlabProduct("Custom Dog Portrait Canvas Wall Art", "pet-portrait", {
+          description: "Category: Personalized. Custom portrait artwork.",
+        }),
+      ],
+      expected: "pet-portrait",
+      rejected: "pet-towel",
+    },
+    {
+      intent: "Personalized coffee mug",
+      context: {
+        recipient: { interests: [{ label: "Personalized coffee mugs" }] },
+        occasion: "birthday",
+        recipientRelationship: "friend",
+      },
+      products: [
+        giftlabProduct("Baby Boy Gift Personalized Travel Mug", "baby-mug"),
+        giftlabProduct("Personalized Photo Coffee Mug", "neutral-mug"),
+      ],
+      expected: "neutral-mug",
+      rejected: "baby-mug",
+    },
+  ];
+
+  for (const item of cases) {
+    const candidateIds: string[] = [];
+    const result = await evaluateCatalogFirstRecommendations(
+      context({
+        ...item.context,
+        requestedCount: 3,
+      }),
+      {
+        advertiserRegistry: [enabledGiftlab],
+        loadProducts: async () => item.products,
+        planIntents: async () => ({
+          intents: [{ id: "audit-case", label: item.intent }],
+        }),
+        selectCandidates: async ({ candidates }) => {
+          candidateIds.push(...candidates.map((candidate) => candidate.candidateId));
+          return { selections: [] };
+        },
+      },
+    );
+
+    assert.equal(result.recommendations[0]?.product.productId, item.expected);
+    assert.equal(
+      candidateIds.some((candidateId) => candidateId.endsWith(`:${item.rejected}`)),
+      false,
+      item.intent,
+    );
+  }
+
+  const swimwear = await evaluateCatalogFirstRecommendations(
+    context({
+      recipient: { interests: [{ label: "Personalized swimsuit" }] },
+    }),
+    {
+      advertiserRegistry: [enabledGiftlab],
+      loadProducts: async () => [
+        giftlabProduct("Personalized Photo Beach Towel", "beach-towel", {
+          description: "Category: Bed/Bath. Personalized gift.",
+        }),
+      ],
+      planIntents: async () => ({
+        intents: [{ id: "swimwear", label: "Personalized swimsuit" }],
+      }),
+    },
+  );
+  assert.equal(swimwear.status, "no_results");
+  assert.equal(swimwear.shortlistCount, 0);
+});
+
 test("collapses Giftlab AirPods color variants in the shortlist", async () => {
   const result = await evaluateCatalogFirstRecommendations(
     context({

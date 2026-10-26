@@ -642,7 +642,7 @@ function giftlabCategory(product: AwinCatalogProduct): string {
 }
 
 function isUnsuitableGiftlabProduct(product: AwinCatalogProduct): boolean {
-  return /\b(?:lingerie|pant(?:y|ies)|underwear|boxer shorts?|briefs?|bikini|swim(?:suit|wear|ming)|costumes?|gift cards?|payment adjustment|price difference)\b/i.test(
+  return /\b(?:lingerie|pant(?:y|ies)|underwear|boxer(?:\s+\w+){0,2}\s+shorts?|briefs?|bikini|swim(?:suit|wear|ming)|costumes?|gift cards?|payment adjustment|price difference)\b/i.test(
     `${product.title} ${giftlabCategory(product)}`,
   );
 }
@@ -651,6 +651,29 @@ function isGiftlabDeviceSpecificProduct(title: string): boolean {
   return /\b(?:airpods?|airtag|iphone|ipad|phone case|earphone case|samsung)\b/i.test(
     title,
   );
+}
+
+function hasGiftlabPetEvidence(value: string): boolean {
+  return /\b(?:cat|cats|dog|dogs|kitten|kittens|pet|pets|puppy|puppies)\b/i.test(
+    value,
+  );
+}
+
+function isCompatibleGiftlabPetProduct(
+  request: string,
+  productEvidence: string,
+): boolean {
+  if (!hasGiftlabPetEvidence(request)) return true;
+  if (!hasGiftlabPetEvidence(productEvidence)) return false;
+
+  const requestsDog = /\b(?:dog|dogs|puppy|puppies)\b/i.test(request);
+  const requestsCat = /\b(?:cat|cats|kitten|kittens)\b/i.test(request);
+  const offersDog = /\b(?:dog|dogs|puppy|puppies)\b/i.test(productEvidence);
+  const offersCat = /\b(?:cat|cats|kitten|kittens)\b/i.test(productEvidence);
+
+  if (requestsDog && !requestsCat && offersCat && !offersDog) return false;
+  if (requestsCat && !requestsDog && offersDog && !offersCat) return false;
+  return true;
 }
 
 const GIFTLAB_PRODUCT_TYPE_RULES: ReadonlyArray<{
@@ -680,6 +703,7 @@ const GIFTLAB_PRODUCT_TYPE_RULES: ReadonlyArray<{
     request: /\b(?:coffee\s+)?mugs?\b/i,
     product: /\b(?:mugs?|coffee cups?|tumblers?|drinkware)\b/i,
   },
+  { request: /\btowels?\b/i, product: /\btowels?\b/i },
   {
     request: /\btackle\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btackle\b/i,
     product: /\btackle\b.*\b(?:box|organizer|storage)\b|\b(?:box|organizer|storage)\b.*\btackle\b/i,
@@ -710,9 +734,10 @@ const GIFTLAB_OCCASION_PATTERNS: ReadonlyArray<[string, RegExp]> = [
   ["anniversary", /\banniversar(?:y|ies)\b/i],
   ["halloween", /\bhalloween\b/i],
   ["graduation", /\bgraduation\b/i],
-  ["back-to-school", /\bback\s+to\s+school\b/i],
+  ["back-to-school", /\b(?:back\s+to\s+school|first\s+day\s+of\s+school)\b/i],
   ["teacher-appreciation", /\b(?:teacher'?s?\s+day|teacher\s+appreciation)\b/i],
   ["wedding", /\bwedding\b/i],
+  ["new-baby", /\b(?:baby\s+shower|new\s+baby|newborn)\b/i],
   ["remembrance", /\b(?:memorial|memoral|remembrance|sympathy)\b/i],
   ["mothers-day", /\b(?:mother's|mothers|moms?)\s+day\b/i],
   ["fathers-day", /\b(?:father's|fathers|dads?)\s+day\b/i],
@@ -737,6 +762,7 @@ const GIFTLAB_RELATIONSHIP_PATTERNS: ReadonlyArray<[string, RegExp]> = [
   ["grandson", /\bgrandson\b/i],
   ["grandmother", /\b(?:grandma|grandmother)\b/i],
   ["grandfather", /\b(?:grandpa|grandfather)\b/i],
+  ["child", /\b(?:baby\s+(?:boy|girl)|child|children|kid|newborn|toddler)\b/i],
 ];
 
 function matchingLabels(
@@ -783,6 +809,8 @@ const GIFTLAB_COMPATIBLE_RELATIONSHIP_PAIRS = new Set([
   "partner:girlfriend",
   "partner:boyfriend",
   "partner:fiance",
+  "daughter:child",
+  "son:child",
 ]);
 
 function isCompatibleGiftlabProductType(
@@ -803,6 +831,40 @@ function isCompatibleGiftlabProductType(
   ) {
     return false;
   }
+  const requestsNameNecklace =
+    /\b(?:name|initial|monogram)\b.*\bnecklaces?\b|\bnecklaces?\b.*\b(?:name|initial|monogram)\b/i.test(
+      request,
+    );
+  if (
+    requestsNameNecklace &&
+    !/\b(?:initial|monogram|name|nameplate)\b/i.test(product.title)
+  ) {
+    return false;
+  }
+  const requestsPetPortrait =
+    /\b(?:cat|dog|pet)\b.*\bportraits?\b|\bportraits?\b.*\b(?:cat|dog|pet)\b/i.test(
+      request,
+    );
+  if (requestsPetPortrait) {
+    const hasPortraitArtMedium =
+      /\b(?:art\s+print|artwork|canvas(?:\s+print)?|framed\s+print|illustration|painting|poster|wall\s+art)\b/i.test(
+        productEvidence,
+      );
+    const hasStandalonePortrait =
+      /\bportraits?\b/i.test(productEvidence) &&
+      !/\b(?:aprons?|blankets?|cases?|covers?|hats?|keychains?|laptops?|mailboxes?|mugs?|necklaces?|pillows?|sandals?|shirts?|skins?|slippers?|socks?|stickers?|towels?)\b/i.test(
+        productEvidence,
+      );
+    if (!hasPortraitArtMedium && !hasStandalonePortrait) return false;
+  }
+  const requestsSwimwear = /\b(?:bikini|swimsuits?|swimwear)\b/i.test(request);
+  if (
+    requestsSwimwear &&
+    !/\b(?:bikini|swimsuits?|swimwear)\b/i.test(productEvidence)
+  ) {
+    return false;
+  }
+  if (!isCompatibleGiftlabPetProduct(request, productEvidence)) return false;
   const requestedRules = GIFTLAB_PRODUCT_TYPE_RULES.filter(({ request: pattern }) =>
     pattern.test(request),
   );

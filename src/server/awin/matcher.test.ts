@@ -544,6 +544,271 @@ test("Giftlab keeps generic mug and necklace requests backward-compatible", () =
   );
 });
 
+test("Giftlab enforces name-necklace, pet-portrait, and swimwear specificity", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const cases = [
+    {
+      suggestion: "Personalized name necklace",
+      good: "Personalized Custom Nameplate Necklace with Initial",
+      bad: "Love Knot Necklace With Personalized Custom Message Card",
+    },
+    {
+      suggestion: "Custom pet portrait",
+      good: "Custom Dog Portrait Canvas Wall Art",
+      bad: "Custom Pet Photo Beach Towel",
+    },
+  ];
+
+  for (const [index, item] of cases.entries()) {
+    const match = findBestAwinProductMatch({
+      suggestion: {
+        title: item.suggestion,
+        short_description: "A personalized gift selected for this recipient.",
+        tier: "thoughtful",
+      },
+      products: [
+        advertiserProduct("95201", "Giftlab", {
+          externalProductId: `specificity-bad-${index}`,
+          title: item.bad,
+          description: "Category: Personalized.",
+        }),
+        advertiserProduct("95201", "Giftlab", {
+          externalProductId: `specificity-good-${index}`,
+          title: item.good,
+          description: "Category: Personalized.",
+        }),
+      ],
+      advertiserRegistry: registry,
+    });
+    assert.equal(match?.productTitle, item.good, item.suggestion);
+  }
+
+  for (const [index, title] of [
+    "Personalized Song Code Necklace With Custom Message Card",
+    "Custom Pet Photo Beach Towel",
+    "Custom Dog Portrait Socks Painted Art",
+    "Puppy Custom Photo 3D Portrait Pillow",
+    "Custom Pet Photo Laptop Skin",
+    "Custom Dog Photo Mailbox Cover",
+  ].entries()) {
+    const suggestion = index === 0 ? "Personalized name necklace" : "Custom pet portrait";
+    assert.equal(
+      findBestAwinProductMatch({
+        suggestion: {
+          title: suggestion,
+          short_description: "A personalized gift selected for this recipient.",
+          tier: "thoughtful",
+        },
+        products: [
+          advertiserProduct("95201", "Giftlab", {
+            externalProductId: `specificity-rejected-${index}`,
+            title,
+            description: "Category: Personalized.",
+          }),
+        ],
+        advertiserRegistry: registry,
+      }),
+      null,
+      title,
+    );
+  }
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized swimsuit",
+        short_description: "Custom swimwear for a beach vacation.",
+        tier: "thoughtful",
+      },
+      products: [
+        advertiserProduct("95201", "Giftlab", {
+          title: "Personalized Photo Beach Towel",
+          description: "Category: Bed/Bath.",
+        }),
+      ],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized necklace",
+        short_description: "A custom jewelry gift.",
+        tier: "thoughtful",
+      },
+      products: [
+        advertiserProduct("95201", "Giftlab", {
+          title: "Personalized Song Code Necklace",
+          description: "Category: Jewelry.",
+        }),
+      ],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    "Personalized Song Code Necklace",
+  );
+});
+
+test("Giftlab requires pet evidence and respects explicit dog or cat context", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const neutralPet = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "neutral-pet",
+    title: "Personalized Pet Photo Keychain",
+    description: "Category: Accessories.",
+  });
+  const catHat = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "cat-hat",
+    title: "Custom Cat Photo Hat for Cat Owner",
+    description: "Category: Accessories.",
+  });
+  const dogTag = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "dog-tag",
+    title: "Personalized Dog Bone Pet ID Tag",
+    description: "Category: Pets.",
+  });
+  const unrelated = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "song-necklace",
+    title: "Personalized Song Code Necklace",
+    description: "Category: Jewelry.",
+  });
+  const intimateCatApparel = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "cat-boxer-shorts",
+    title: "Personalized Face Boxer Custom Shorts for Cat Lovers",
+    description: "Category: Mens.",
+  });
+
+  const dogMatch = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized dog gift",
+      short_description: "A custom gift for a dog owner.",
+      tier: "thoughtful",
+    },
+    products: [catHat, unrelated, neutralPet, dogTag],
+    advertiserRegistry: registry,
+  });
+  assert.equal(dogMatch?.productTitle, dogTag.title);
+
+  const catMatch = findBestAwinProductMatch({
+    suggestion: {
+      title: "Personalized cat gift",
+      short_description: "A custom gift for a cat owner.",
+      tier: "thoughtful",
+    },
+    products: [dogTag, unrelated, intimateCatApparel, neutralPet, catHat],
+    advertiserRegistry: registry,
+  });
+  assert.equal(catMatch?.productTitle, catHat.title);
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized pet photo gift",
+        short_description: "A neutral custom gift for a pet owner.",
+        tier: "thoughtful",
+      },
+      products: [unrelated, neutralPet],
+      advertiserRegistry: registry,
+    })?.productTitle,
+    neutralPet.title,
+  );
+});
+
+test("Giftlab rejects incompatible life events and child-directed relationship products", () => {
+  const giftlab: AwinAdvertiserConfig = {
+    key: "giftlab",
+    advertiserId: "95201",
+    displayName: "Giftlab",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "giftlab-personalized",
+  };
+  const registry = [giftlab];
+  const neutralMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "neutral-mug",
+    title: "Personalized Photo Coffee Mug",
+    description: "Category: Kitchen.",
+  });
+  const neutralMothersDayKeepsake = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "neutral-mothers-day-keepsake",
+    title: "Personalized Photo Keepsake for Mom",
+    description: "Category: Personalized.",
+  });
+  const schoolBackpack = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "school-backpack",
+    title: "Personalized Backpack First Day Of School Gift",
+    description: "Category: Accessories.",
+  });
+  const babyMug = advertiserProduct("95201", "Giftlab", {
+    externalProductId: "baby-mug",
+    title: "Baby Boy Gift Personalized Travel Mug",
+    description: "Category: Kitchen.",
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized Mother's Day gift",
+        short_description: "A thoughtful personalized gift for Mom.",
+        tier: "thoughtful",
+      },
+      products: [schoolBackpack, neutralMothersDayKeepsake],
+      advertiserRegistry: registry,
+      occasion: "mothers_day",
+      recipientRelationship: "mother",
+    })?.productTitle,
+    neutralMothersDayKeepsake.title,
+  );
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A birthday mug for an adult friend.",
+        tier: "thoughtful",
+      },
+      products: [babyMug, neutralMug],
+      advertiserRegistry: registry,
+      occasion: "birthday",
+      recipientRelationship: "friend",
+    })?.productTitle,
+    neutralMug.title,
+  );
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Personalized coffee mug",
+        short_description: "A custom mug for a son.",
+        tier: "thoughtful",
+      },
+      products: [babyMug],
+      advertiserRegistry: registry,
+      recipientRelationship: "son",
+    })?.productTitle,
+    babyMug.title,
+  );
+});
+
 test("Giftlab applies category safety and memorial typo checks", () => {
   const giftlab: AwinAdvertiserConfig = {
     key: "giftlab",
