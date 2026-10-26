@@ -1503,7 +1503,11 @@ test("enrichment passes the union of eligible advertisers to the shared catalog 
     searchAmazon: async () => null,
   });
 
-  assert.deepEqual([...requestedAdvertiserIds!].sort(), ["89509", "90759"]);
+  assert.deepEqual([...requestedAdvertiserIds!].sort(), [
+    "89509",
+    "90759",
+    "95201",
+  ]);
   assert.equal(enriched[0].productMatch?.advertiserId, "89509");
   assert.equal(enriched[1].productMatch?.advertiserId, "90759");
 });

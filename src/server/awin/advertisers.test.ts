@@ -66,13 +66,16 @@ test("unjoined advertisers are unavailable to imports and runtime recommendation
   assert.equal(bonheur.recommendationEnabled, true);
 });
 
-test("Giftlab remains import-enabled while production recommendations are disabled", () => {
+test("Giftlab is enabled for imports and catalog recommendations", () => {
   const giftlab = resolveAwinAdvertiser("giftlab");
   assert.equal(giftlab.advertiserId, "95201");
   assert.equal(giftlab.locale, "en_US");
   assert.equal(giftlab.importEnabled, true);
-  assert.equal(giftlab.recommendationEnabled, false);
-  assert.equal(findRecommendationEnabledAwinAdvertiserById("95201"), null);
+  assert.equal(giftlab.recommendationEnabled, true);
+  assert.equal(
+    findRecommendationEnabledAwinAdvertiserById("95201")?.key,
+    "giftlab",
+  );
   assert.equal(giftlab.matchingPolicy, "giftlab-personalized");
   assert.equal(giftlab.importSafeguards?.minimumValidProducts, 2000);
   assert.deepEqual(giftlab.feed, {

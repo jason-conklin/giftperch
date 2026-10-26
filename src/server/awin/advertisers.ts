@@ -185,7 +185,7 @@ export const AWIN_ADVERTISERS = [
     displayName: "Giftlab",
     locale: "en_US",
     importEnabled: true,
-    recommendationEnabled: false,
+    recommendationEnabled: true,
     matchingPolicy: "giftlab-personalized",
     importSafeguards: {
       minimumValidProducts: 2000,
