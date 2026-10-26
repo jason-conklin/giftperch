@@ -2,7 +2,10 @@ import {
   getMatchedProductPresentation,
   getSafeExternalUrl,
 } from "@/lib/affiliateProduct";
-import { getAwinDestinationValidationMaxAgeHours } from "@/server/awin/advertisers";
+import {
+  getAwinDestinationValidationMaxAgeHours,
+  isAwinProductDestinationCurrent,
+} from "@/server/awin/advertisers";
 
 export type GiftProductDestination = {
   href: string;
@@ -50,15 +53,14 @@ export function resolveGiftProductDestination(args: {
             matchedProduct.match.advertiserId,
           )
         : null;
-    const checkedAt = matchedProduct.match.destinationCheckedAt
-      ? Date.parse(matchedProduct.match.destinationCheckedAt)
-      : Number.NaN;
     if (
       matchedProduct.match.destinationHealthStatus === "invalid" ||
       (validationMaxAgeHours !== null &&
-        (matchedProduct.match.destinationHealthStatus !== "valid" ||
-          !Number.isFinite(checkedAt) ||
-          Date.now() - checkedAt > validationMaxAgeHours * 60 * 60 * 1_000))
+        !isAwinProductDestinationCurrent({
+          advertiserId: matchedProduct.match.advertiserId,
+          status: matchedProduct.match.destinationHealthStatus,
+          checkedAt: matchedProduct.match.destinationCheckedAt,
+        }))
     ) {
       return null;
     }

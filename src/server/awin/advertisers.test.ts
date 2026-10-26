@@ -7,6 +7,7 @@ import {
   findAwinAdvertiserById,
   findRecommendationEnabledAwinAdvertiserById,
   getImportEnabledAwinAdvertisers,
+  isAwinProductDestinationCurrent,
   isApprovedAwinAdvertiserId,
   resolveAwinAdvertiser,
   type AwinAdvertiserConfig,
@@ -85,6 +86,58 @@ test("Giftlab is enabled for imports and catalog recommendations", () => {
     format: "legacy-csv-gzip",
     feedId: "105668",
   });
+});
+
+test("Giftlab destination eligibility requires a recent valid catalog verdict", () => {
+  const now = Date.parse("2026-10-26T20:00:00.000Z");
+  const fresh = new Date(now - 71 * 60 * 60 * 1_000).toISOString();
+  const stale = new Date(now - 73 * 60 * 60 * 1_000).toISOString();
+
+  assert.equal(
+    isAwinProductDestinationCurrent({
+      advertiserId: "95201",
+      status: "valid",
+      checkedAt: fresh,
+      now,
+    }),
+    true,
+  );
+  for (const [status, checkedAt] of [
+    ["valid", stale],
+    ["valid", null],
+    ["invalid", fresh],
+    ["uncertain", fresh],
+    ["unchecked", fresh],
+  ] as const) {
+    assert.equal(
+      isAwinProductDestinationCurrent({
+        advertiserId: "95201",
+        status,
+        checkedAt,
+        now,
+      }),
+      false,
+    );
+  }
+
+  assert.equal(
+    isAwinProductDestinationCurrent({
+      advertiserId: "89509",
+      status: "unchecked",
+      checkedAt: null,
+      now,
+    }),
+    true,
+  );
+  assert.equal(
+    isAwinProductDestinationCurrent({
+      advertiserId: "90759",
+      status: "unchecked",
+      checkedAt: null,
+      now,
+    }),
+    true,
+  );
 });
 
 test("unknown and disabled advertiser selections fail closed", () => {

@@ -6,6 +6,7 @@ import type { ProductMatch } from "@/lib/affiliateProduct";
 import {
   buildSavedGiftSnapshot,
   findAuthoritativeSuggestion,
+  getSavedGiftDestinationError,
   getSuggestionProductMatch,
   productMatchFromCatalogRow,
   type AuthoritativeGiftSuggestion,
@@ -13,10 +14,10 @@ import {
 import { findMatchingSavedGift } from "@/server/savedGifts/deduplication";
 import { resolveAwinProductScope } from "@/server/awin/productIdentity";
 import {
-  findAwinAdvertiserById,
-  getAwinDestinationValidationMaxAgeHours,
+  isAwinProductDestinationCurrent,
 } from "@/server/awin/advertisers";
 import { normalizeDestinationHealthStatus } from "@/server/awin/destinationHealth";
+import { resolveGiftCatalogPresentation } from "@/lib/gifts/catalogDestinationHealth";
 
 type RecipientSavedGiftIdea =
   Database["public"]["Tables"]["recipient_saved_gift_ideas"]["Row"];
@@ -165,37 +166,48 @@ export async function GET(
     });
     const scope = match?.provider === "awin" ? resolveAwinProductScope(match) : null;
     if (!match || !scope) return row;
+    const presentation = resolveGiftCatalogPresentation({
+      title: row.title,
+      supportingText: row.rationale,
+      productMatch: match,
+    });
+    const presentedRow = presentation?.usesCatalogIdentity
+      ? {
+          ...row,
+          title: presentation.title,
+          rationale: presentation.supportingText,
+        }
+      : row;
     const health = healthByProduct.get(`${scope.advertiserId}:${match.productId}`);
     if (!health) {
-      return getAwinDestinationValidationMaxAgeHours(scope.advertiserId) !== null
+      return !isAwinProductDestinationCurrent({
+        advertiserId: scope.advertiserId,
+        status: "unchecked",
+        checkedAt: null,
+      })
         ? {
-            ...row,
+            ...presentedRow,
             product_url: null,
             product_match: {
               ...match,
               destinationHealthStatus: "unchecked",
             },
           }
-        : row;
+        : presentedRow;
     }
     const productMatch = {
       ...match,
       destinationHealthStatus: health.status,
       ...(health.checkedAt ? { destinationCheckedAt: health.checkedAt } : {}),
     };
-    const maximumAgeHours = getAwinDestinationValidationMaxAgeHours(
-      scope.advertiserId,
-    );
-    const checkedAt = health.checkedAt ? Date.parse(health.checkedAt) : Number.NaN;
-    const destinationUnavailable =
-      health.status === "invalid" ||
-      (maximumAgeHours !== null &&
-        (health.status !== "valid" ||
-          !Number.isFinite(checkedAt) ||
-          Date.now() - checkedAt > maximumAgeHours * 60 * 60 * 1_000));
+    const destinationUnavailable = !isAwinProductDestinationCurrent({
+      advertiserId: scope.advertiserId,
+      status: health.status,
+      checkedAt: health.checkedAt,
+    });
     return destinationUnavailable
-      ? { ...row, product_url: null, product_match: productMatch }
-      : { ...row, product_match: productMatch };
+      ? { ...presentedRow, product_url: null, product_match: productMatch }
+      : { ...presentedRow, product_match: productMatch };
   });
 
   return NextResponse.json({ savedGifts: safeMapped });
@@ -284,9 +296,12 @@ export async function POST(
       (run as { suggestions?: unknown }).suggestions,
       suggestionItemId,
       requestedTitle,
+      typeof body.product_url === "string" ? body.product_url : null,
     );
     if (!authoritativeSuggestion) {
-      return badRequest("Gift suggestion was not found in the selected run");
+      return badRequest(
+        "Gift suggestion could not be identified unambiguously in the selected run",
+      );
     }
     sourceSuggestion = authoritativeSuggestion;
     suggestionId = suggestionRunId;
@@ -319,14 +334,24 @@ export async function POST(
       if (!canonicalProductMatch) {
         return badRequest("Matched product data is invalid");
       }
-      const advertiser = findAwinAdvertiserById(productScope.advertiserId);
-      if (
-        advertiser?.requireVerifiedProductDestination &&
-        canonicalProductMatch.destinationHealthStatus !== "valid"
-      ) {
-        return badRequest("Matched product destination is not currently available");
-      }
+      const destinationError = getSavedGiftDestinationError(
+        canonicalProductMatch,
+      );
+      if (destinationError) return badRequest(destinationError);
     }
+  }
+
+  const savedPresentation = resolveGiftCatalogPresentation({
+    title: sourceSuggestion.title,
+    supportingText: sourceSuggestion.why_it_fits,
+    productMatch: canonicalProductMatch,
+  });
+  if (savedPresentation?.usesCatalogIdentity) {
+    sourceSuggestion = {
+      ...sourceSuggestion,
+      title: savedPresentation.title,
+      why_it_fits: savedPresentation.supportingText,
+    };
   }
 
   const snapshot = buildSavedGiftSnapshot(

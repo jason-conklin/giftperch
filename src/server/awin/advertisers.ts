@@ -88,6 +88,29 @@ export function getAwinDestinationValidationMaxAgeHours(
     : null;
 }
 
+export function isAwinProductDestinationCurrent(options: {
+  advertiserId: string | null | undefined;
+  status: unknown;
+  checkedAt: unknown;
+  now?: number;
+}): boolean {
+  const maximumAgeHours = getAwinDestinationValidationMaxAgeHours(
+    options.advertiserId,
+  );
+  if (maximumAgeHours === null) return true;
+
+  const checkedAt =
+    typeof options.checkedAt === "string"
+      ? Date.parse(options.checkedAt)
+      : Number.NaN;
+  return (
+    options.status === "valid" &&
+    Number.isFinite(checkedAt) &&
+    (options.now ?? Date.now()) - checkedAt <=
+      maximumAgeHours * 60 * 60 * 1_000
+  );
+}
+
 export function getConfiguredLegacyAwinFeedId(options: {
   advertiserId: string;
   locale: string;

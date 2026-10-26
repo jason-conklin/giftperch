@@ -5,6 +5,10 @@ import {
   productMatchFromAmazonProduct,
   type ProductMatch,
 } from "@/lib/affiliateProduct";
+import { isAwinProductDestinationCurrent } from "@/server/awin/advertisers";
+
+export const SAVED_GIFT_DESTINATION_UNAVAILABLE_MESSAGE =
+  "This product listing is no longer available. Refresh gift ideas and choose another product.";
 
 export type AuthoritativeGiftSuggestion = {
   id?: string | null;
@@ -46,10 +50,21 @@ function optionalPrice(value: unknown): number | null {
     : null;
 }
 
+function uniqueSuggestion(
+  candidates: AuthoritativeGiftSuggestion[],
+): AuthoritativeGiftSuggestion | null {
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
+function normalizedSuggestionTitle(value: string): string {
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function findAuthoritativeSuggestion(
   suggestions: unknown,
   itemId: string | null,
   title: string | null,
+  productUrl?: string | null,
 ): AuthoritativeGiftSuggestion | null {
   if (!Array.isArray(suggestions)) return null;
   const candidates = suggestions.filter(
@@ -57,19 +72,34 @@ export function findAuthoritativeSuggestion(
       typeof item === "object" && item !== null && !Array.isArray(item),
   );
   if (itemId) {
-    const byId = candidates.find(
-      (item) => typeof item.id === "string" && item.id === itemId,
+    return uniqueSuggestion(
+      candidates.filter(
+        (item) => typeof item.id === "string" && item.id === itemId,
+      ),
     );
-    if (byId) return byId;
   }
+
+  const safeProductUrl = getSafeExternalUrl(productUrl);
+  if (safeProductUrl) {
+    return uniqueSuggestion(
+      candidates.filter((item) => {
+        const match = getSuggestionProductMatch(item);
+        return (
+          match?.affiliateUrl === safeProductUrl ||
+          getSafeExternalUrl(item.suggested_url) === safeProductUrl
+        );
+      }),
+    );
+  }
+
   if (title) {
-    const normalizedTitle = title.trim().toLowerCase();
-    return (
-      candidates.find(
+    const normalizedTitle = normalizedSuggestionTitle(title);
+    return uniqueSuggestion(
+      candidates.filter(
         (item) =>
           typeof item.title === "string" &&
-          item.title.trim().toLowerCase() === normalizedTitle,
-      ) ?? null
+          normalizedSuggestionTitle(item.title) === normalizedTitle,
+      ),
     );
   }
   return null;
@@ -82,6 +112,21 @@ export function getSuggestionProductMatch(
     normalizeProductMatch(suggestion.productMatch) ??
     productMatchFromAmazonProduct(suggestion.amazonProduct)
   );
+}
+
+export function getSavedGiftDestinationError(
+  productMatch: ProductMatch | null,
+  now = Date.now(),
+): string | null {
+  if (productMatch?.provider !== "awin") return null;
+  return isAwinProductDestinationCurrent({
+    advertiserId: productMatch.advertiserId,
+    status: productMatch.destinationHealthStatus,
+    checkedAt: productMatch.destinationCheckedAt,
+    now,
+  })
+    ? null
+    : SAVED_GIFT_DESTINATION_UNAVAILABLE_MESSAGE;
 }
 
 export function buildSavedGiftSnapshot(

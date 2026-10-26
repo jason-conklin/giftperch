@@ -26,6 +26,36 @@ test("preserves verified Awin destinations", () => {
   assert.equal(awin?.label, "View at Piscifun");
 });
 
+test("Giftlab destinations require a fresh server-validated timestamp", () => {
+  const base = {
+    ...awinMatch,
+    advertiserId: "95201",
+    locale: "en_US",
+    productId: "giftlab-1",
+    merchant: "Giftlab",
+    destinationHealthStatus: "valid",
+  };
+  const fresh = resolveGiftProductDestination({
+    productMatch: {
+      ...base,
+      destinationCheckedAt: new Date().toISOString(),
+    },
+  });
+  const stale = resolveGiftProductDestination({
+    productMatch: {
+      ...base,
+      destinationCheckedAt: new Date(
+        Date.now() - 73 * 60 * 60 * 1_000,
+      ).toISOString(),
+    },
+  });
+  const missing = resolveGiftProductDestination({ productMatch: base });
+
+  assert.equal(fresh?.label, "View at Giftlab");
+  assert.equal(stale, null);
+  assert.equal(missing, null);
+});
+
 test("preserves verified historical Amazon product snapshots", () => {
   const destination = resolveGiftProductDestination({
     title: "Travel watch case",
