@@ -561,6 +561,11 @@ body {
     padding-block: clamp(2rem, 3.5vh, 3rem) clamp(7.25rem, 12vh, 8rem);
   }
 
+  .gp-landing-scenic-light {
+    display: none;
+    pointer-events: none;
+  }
+
   .gp-landing-scenic-hero .gp-landing-hero-cta {
     margin-top: 0;
   }
@@ -2363,6 +2368,94 @@ body {
   .gp-founder-note-glow > * {
     position: relative;
     z-index: 1;
+  }
+}
+
+/* Match the stationary 1665 x 944 background's cover sizing and 50% 52% crop.
+   Size containment is safe here because the decorative layer is out of flow. */
+@supports (width: 1cqw) {
+  @media (min-width: 981px) and (prefers-reduced-motion: no-preference) {
+    .gp-landing-scenic-light {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      container-type: size;
+    }
+
+    .gp-landing-scenic-light::before,
+    .gp-landing-scenic-light::after,
+    .gp-landing-scenic-ripples {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      width: max(100cqw, 176.377119cqh);
+      height: max(56.696697cqw, 100cqh);
+      transform: translate(-50%, -52%);
+      pointer-events: none;
+    }
+
+    .gp-landing-scenic-light::before {
+      background: radial-gradient(
+        ellipse 6% 9% at 90.7% 57.8%,
+        rgba(255, 242, 200, 0.68),
+        rgba(255, 222, 149, 0.24) 45%,
+        transparent 100%
+      );
+      animation: gp-scenic-sunlight 10s ease-in-out infinite;
+    }
+
+    .gp-landing-scenic-light::after {
+      /* Each feathered ellipse is confined to open water in source-image coordinates.
+         Leave shoreline clearance for the 0.6% total horizontal drift. */
+      background:
+        radial-gradient(ellipse 1.2% 0.18% at 71% 79.6%, rgba(255, 250, 221, 0.9), transparent),
+        radial-gradient(ellipse 0.7% 0.14% at 73% 81.2%, rgba(255, 250, 221, 0.75), transparent),
+        radial-gradient(ellipse 1.5% 0.21% at 70.4% 82.8%, rgba(255, 250, 221, 0.85), transparent),
+        radial-gradient(ellipse 0.9% 0.16% at 68.4% 84.7%, rgba(255, 250, 221, 0.8), transparent),
+        radial-gradient(ellipse 1.4% 0.21% at 66.5% 86.5%, rgba(255, 250, 221, 0.9), transparent),
+        radial-gradient(ellipse 0.8% 0.16% at 67.5% 89.8%, rgba(255, 250, 221, 0.7), transparent),
+        radial-gradient(ellipse 1.5% 0.22% at 68.5% 91.5%, rgba(255, 250, 221, 0.85), transparent),
+        radial-gradient(ellipse 0.9% 0.18% at 72% 93%, rgba(255, 250, 221, 0.8), transparent),
+        radial-gradient(ellipse 1.2% 0.2% at 74% 94.7%, rgba(255, 250, 221, 0.75), transparent);
+      animation: gp-scenic-lake-shimmer 7s ease-in-out infinite;
+    }
+
+    .gp-landing-scenic-ripples {
+      background:
+        radial-gradient(ellipse 0.8% 0.15% at 72.3% 80.2%, rgba(255, 249, 218, 0.8), transparent),
+        radial-gradient(ellipse 1.3% 0.18% at 69.7% 81.8%, rgba(255, 249, 218, 0.85), transparent),
+        radial-gradient(ellipse 0.7% 0.16% at 71.2% 83.4%, rgba(255, 249, 218, 0.75), transparent),
+        radial-gradient(ellipse 1.1% 0.2% at 67.6% 85.5%, rgba(255, 249, 218, 0.9), transparent),
+        radial-gradient(ellipse 0.9% 0.16% at 66.8% 87.8%, rgba(255, 249, 218, 0.8), transparent),
+        radial-gradient(ellipse 1.4% 0.21% at 67% 90.6%, rgba(255, 249, 218, 0.8), transparent),
+        radial-gradient(ellipse 0.7% 0.14% at 70.5% 92.3%, rgba(255, 249, 218, 0.7), transparent),
+        radial-gradient(ellipse 1.3% 0.2% at 73% 94%, rgba(255, 249, 218, 0.85), transparent);
+      animation: gp-scenic-lake-shimmer 8.5s ease-in-out -3s infinite reverse;
+    }
+  }
+}
+
+@keyframes gp-scenic-sunlight {
+  0%,
+  100% { opacity: 0.18; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes gp-scenic-lake-shimmer {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: translate(-50.3%, -52%);
+  }
+  45% {
+    opacity: 0.72;
+    transform: translate(-49.7%, -52%);
+  }
+  75% {
+    opacity: 0.38;
+    transform: translate(-50%, -52%) translateX(0);
   }
 }
 

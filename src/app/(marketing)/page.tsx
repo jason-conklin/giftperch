@@ -670,6 +670,9 @@ export default function MarketingHome() {
   return (
     <div className="gp-landing-page">
       <section className="gp-landing-hero-stage gp-landing-scenic-hero">
+        <div className="gp-landing-scenic-light" aria-hidden="true">
+          <span className="gp-landing-scenic-ripples" />
+        </div>
         <div className="gp-landing-scenic-hero-inner">
           <div className="flex w-full flex-col items-center text-center">
             <GiftPerchHeroIntro />
