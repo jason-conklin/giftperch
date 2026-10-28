@@ -1,13 +1,13 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
-import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
+import { RecipientsOverview } from "./RecipientsOverview";
+import { RecipientProfileModal } from "./RecipientProfileModal";
+import { fetchRecipientSavedCounts, type RecipientOccasion } from "@/lib/recipientOverview";
 
 export type RecipientInterest = {
   id: string;
@@ -16,8 +16,6 @@ export type RecipientInterest = {
   category: string | null;
   created_at: string;
 };
-
-type InterestCategory = "interest" | "vibe" | "personality" | "brand";
 
 export type RecipientProfile = {
   id: string;
@@ -575,16 +573,6 @@ const calculateAge = (birthday: string | null) => {
   return age >= 0 ? age : null;
 };
 
-const findRelationshipOption = (value: string | null) => {
-  if (!value) return null;
-  const normalized = value.toLowerCase();
-  return (
-    RELATIONSHIP_OPTIONS.find(
-      (option) => option.toLowerCase() === normalized,
-    ) ?? null
-  );
-};
-
 const describeRelationship = (recipient: RecipientProfile) => {
   if (!recipient.relationship) return "Relationship TBD";
   if (
@@ -607,29 +595,6 @@ const getInitials = (name: string) => {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-};
-
-const MONTH_ABBREVIATIONS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
-const formatRecipientBirthday = (value: string | null) => {
-  if (!value) return null;
-  const parsed = parseBirthdayParts(value);
-  if (!parsed) return null;
-  const monthLabel = MONTH_ABBREVIATIONS[parsed.month] ?? "";
-  return `${monthLabel} ${parsed.day}`;
 };
 
 const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
@@ -659,26 +624,23 @@ const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
 };
 
 export function RecipientsManager() {
-  const router = useRouter();
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [recipients, setRecipients] = useState<RecipientProfile[]>([]);
   const [interests, setInterests] = useState<RecipientInterest[]>([]);
   const [selectedRecipient, setSelectedRecipient] =
     useState<RecipientProfile | null>(null);
-  const [interestInputs, setInterestInputs] = useState<
-    Record<string, Record<InterestCategory, string>>
-  >({});
-  const [interestSaving, setInterestSaving] = useState<
-    Record<string, Record<InterestCategory, boolean>>
-  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [events, setEvents] = useState<RecipientOccasion[] | null>(null);
+  const [savedCounts, setSavedCounts] = useState<Record<string, number> | null>(null);
+  const [savedRevision, setSavedRevision] = useState(0);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [overviewError, setOverviewError] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formMode, setFormMode] = useState<"create" | "edit">("create");
-  const [activeRecipient, setActiveRecipient] =
-    useState<RecipientProfile | null>(null);
+  const [profileInitialTab, setProfileInitialTab] =
+    useState<"profile" | "saved">("profile");
+  const [profileInitialEditing, setProfileInitialEditing] = useState(false);
   const [formState, setFormState] = useState<FormState>(emptyFormState);
   const [formMessage, setFormMessage] = useState("");
   const [formError, setFormError] = useState("");
@@ -686,76 +648,22 @@ export function RecipientsManager() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isDeletingRecipient, setIsDeletingRecipient] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [savedGiftsRecipient, setSavedGiftsRecipient] =
-    useState<RecipientProfile | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const recipientAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarOptionsVisible, setAvatarOptionsVisible] = useState(false);
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const recipientFormDialogRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (selectedRecipient) {
+  const closeForm = (options?: { preserveMessage?: boolean }) => {
+    setIsFormOpen(false);
+    setFormState(emptyFormState);
+    if (!options?.preserveMessage) {
       setFormMessage("");
     }
-  }, [selectedRecipient]);
-
-  useEffect(() => {
-    if (!selectedRecipient) {
-      document.body.style.overflow = "";
-      return undefined;
-    }
-
-    const previousActiveElement = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = "hidden";
-    const focusableSelectors =
-      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
-
-    const focusDialog = () => {
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        focusableSelectors
-      );
-      if (closeButtonRef.current) {
-        closeButtonRef.current.focus();
-      } else if (focusable && focusable.length > 0) {
-        focusable[0].focus();
-      }
-    };
-    focusDialog();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSelectedRecipient(null);
-        return;
-      }
-      if (event.key === "Tab" && dialogRef.current) {
-        const focusableElements =
-          dialogRef.current.querySelectorAll<HTMLElement>(focusableSelectors);
-        if (focusableElements.length === 0) return;
-        const firstElement = focusableElements[0];
-        const lastElement =
-          focusableElements[focusableElements.length - 1];
-        if (event.shiftKey) {
-          if (document.activeElement === firstElement) {
-            event.preventDefault();
-            lastElement.focus();
-          }
-        } else if (document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement.focus();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", handleKeyDown);
-      previousActiveElement?.focus();
-    };
-  }, [selectedRecipient]);
+    setFormError("");
+    setFormSaving(false);
+    setAvatarOptionsVisible(false);
+  };
 
   useEffect(() => {
     if (!isFormOpen) {
@@ -812,9 +720,12 @@ export function RecipientsManager() {
   }, [supabase, user?.id]);
 
   useEffect(() => {
+    let active = true;
     const fetchInterests = async () => {
+      setPreferencesLoaded(false);
       if (!recipients.length) {
         setInterests([]);
+        setPreferencesLoaded(true);
         return;
       }
       const ids = recipients.map((recipient) => recipient.id);
@@ -822,29 +733,51 @@ export function RecipientsManager() {
         .from("recipient_interests")
         .select("*")
         .in("recipient_id", ids);
+      if (!active) return;
       if (error) {
         setError(error.message);
       } else {
         setInterests(data ?? []);
+        setPreferencesLoaded(true);
       }
     };
 
     fetchInterests();
+    return () => { active = false; };
   }, [recipients, supabase]);
 
-  const filteredRecipients = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return recipients;
-
-    return recipients.filter((recipient) => {
-      const nameMatch = recipient.name.toLowerCase().includes(term);
-      const relationshipMatch =
-        recipient.relationship?.toLowerCase().includes(term) ?? false;
-      const petMatch =
-        recipient.pet_type?.toLowerCase().includes(term) ?? false;
-      return nameMatch || relationshipMatch || petMatch;
-    });
-  }, [recipients, search]);
+  useEffect(() => {
+    let active = true;
+    const loadOverview = async () => {
+      setEvents(null);
+      setSavedCounts(null);
+      setOverviewError("");
+      if (!user?.id || !recipients.length) return;
+      try {
+        const counts = await fetchRecipientSavedCounts(supabase, user.id);
+        if (active) setSavedCounts(counts);
+        const rows: RecipientOccasion[] = [];
+        const ids = recipients.map((recipient) => recipient.id);
+        // Bound URL/filter length and paginate each batch beyond the API row cap.
+        for (let batch = 0; batch < ids.length; batch += 100) {
+          for (let offset = 0; ; offset += 1000) {
+            const { data, error: eventError } = await supabase.from("recipient_events")
+              .select("id, recipient_id, label, event_date, event_type, occurs_every_year")
+              .in("recipient_id", ids.slice(batch, batch + 100))
+              .order("id").range(offset, offset + 999);
+            if (eventError) throw eventError;
+            rows.push(...(data ?? []) as RecipientOccasion[]);
+            if (!data || data.length < 1000) break;
+          }
+        }
+        if (active) setEvents(rows);
+      } catch {
+        if (active) setOverviewError("Some saved gift counts or occasions could not be loaded. You can still open each profile and its saved gifts.");
+      }
+    };
+    void loadOverview();
+    return () => { active = false; };
+  }, [recipients, supabase, user?.id, savedRevision]);
 
   const interestsByRecipient = useMemo(() => {
     return interests.reduce<Record<string, RecipientInterest[]>>(
@@ -870,8 +803,6 @@ export function RecipientsManager() {
   );
 
   const openCreateForm = () => {
-    setFormMode("create");
-    setActiveRecipient(null);
     setFormState(emptyFormState);
     setFormError("");
     setFormMessage("");
@@ -913,61 +844,6 @@ export function RecipientsManager() {
       setAvatarUploading(false);
       if (event.target) event.target.value = "";
     }
-  };
-
-  const openEditForm = (recipient: RecipientProfile) => {
-    setFormMode("edit");
-    setActiveRecipient(recipient);
-    const relationshipValue = recipient.relationship ?? "";
-    const matchedRelationship = findRelationshipOption(relationshipValue);
-    const relationshipOption = matchedRelationship
-      ? matchedRelationship
-      : relationshipValue
-      ? OTHER_RELATIONSHIP
-      : "";
-    const customRelationship =
-      relationshipOption === OTHER_RELATIONSHIP && relationshipValue
-        ? relationshipValue
-        : "";
-    setFormState({
-      name: recipient.name ?? "",
-      relationshipOption,
-      customRelationship,
-      petType:
-        relationshipOption === PET_RELATIONSHIP
-          ? recipient.pet_type ?? ""
-          : "",
-      gender: recipient.gender ?? "",
-      notes: recipient.notes ?? "",
-      annualBudget: recipient.annual_budget
-        ? String(recipient.annual_budget)
-        : "",
-      giftBudgetMin: recipient.gift_budget_min
-        ? String(recipient.gift_budget_min)
-        : "",
-      giftBudgetMax: recipient.gift_budget_max
-        ? String(recipient.gift_budget_max)
-        : "",
-      birthday: recipient.birthday ?? "",
-      avatar_url: recipient.avatar_url ?? "",
-      avatar_icon: (recipient.avatar_icon as AvatarIconKey | "") ?? "",
-    });
-    setFormError("");
-    setFormMessage("");
-    setAvatarOptionsVisible(false);
-    setIsFormOpen(true);
-  };
-
-  const closeForm = (options?: { preserveMessage?: boolean }) => {
-    setIsFormOpen(false);
-    setActiveRecipient(null);
-    setFormState(emptyFormState);
-    if (!options?.preserveMessage) {
-      setFormMessage("");
-    }
-    setFormError("");
-    setFormSaving(false);
-    setAvatarOptionsVisible(false);
   };
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1038,37 +914,15 @@ export function RecipientsManager() {
     };
 
     try {
-      if (formMode === "create") {
-        const { data, error } = await supabase
-          .from("recipient_profiles")
-          .insert({
-            ...payload,
-            user_id: user.id,
-            is_self: false,
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        setRecipients((prev) => [data, ...prev]);
-        setFormMessage("Recipient added successfully.");
-        closeForm({ preserveMessage: true });
-      } else if (formMode === "edit" && activeRecipient) {
-        const { data, error } = await supabase
-          .from("recipient_profiles")
-          .update(payload)
-          .eq("id", activeRecipient.id)
-          .eq("user_id", user.id)
-          .select()
-          .single();
-        if (error) throw error;
-        setRecipients((prev) =>
-          prev.map((recipient) =>
-            recipient.id === data.id ? data : recipient,
-          ),
-        );
-        setFormMessage("Recipient updated successfully.");
-        closeForm({ preserveMessage: true });
-      }
+      const { data, error } = await supabase
+        .from("recipient_profiles")
+        .insert({ ...payload, user_id: user.id, is_self: false })
+        .select()
+        .single();
+      if (error) throw error;
+      setRecipients((prev) => [data, ...prev]);
+      setFormMessage("Recipient added successfully.");
+      closeForm({ preserveMessage: true });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to save recipient.";
@@ -1112,359 +966,41 @@ export function RecipientsManager() {
     }
   };
 
-  const handleInterestInputChange = (
-    recipientId: string,
-    category: InterestCategory,
-    value: string
-  ) => {
-    setInterestInputs((prev) => ({
-      ...prev,
-      [recipientId]: {
-        ...(prev[recipientId] ?? {
-          interest: "",
-          vibe: "",
-          personality: "",
-          brand: "",
-        }),
-        [category]: value,
-      },
-    }));
-  };
-
-  const handleAddInterest = async (
-    recipientId: string,
-    category: InterestCategory
-  ) => {
-    const label =
-      interestInputs[recipientId]?.[category]?.trim() ??
-      "";
-    if (!label) return;
-
-    setInterestSaving((prev) => ({
-      ...prev,
-      [recipientId]: {
-        ...(prev[recipientId] ?? {
-          interest: false,
-          vibe: false,
-          personality: false,
-          brand: false,
-        }),
-        [category]: true,
-      },
-    }));
-
-    try {
-      const { data, error } = await supabase
-        .from("recipient_interests")
-        .insert({
-          recipient_id: recipientId,
-          label,
-          category,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      setInterests((prev) => [...prev, data]);
-      setInterestInputs((prev) => ({
-        ...prev,
-        [recipientId]: {
-          ...(prev[recipientId] ?? {
-            interest: "",
-            vibe: "",
-            personality: "",
-            brand: "",
-          }),
-          [category]: "",
-        },
-      }));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setInterestSaving((prev) => ({
-        ...prev,
-        [recipientId]: {
-          ...(prev[recipientId] ?? {
-            interest: false,
-            vibe: false,
-            personality: false,
-            brand: false,
-          }),
-          [category]: false,
-        },
-      }));
-    }
-  };
-
-  const handleRemoveInterest = async (interestId: string) => {
-    try {
-      const { error } = await supabase
-        .from("recipient_interests")
-        .delete()
-        .eq("id", interestId);
-      if (error) throw error;
-      setInterests((prev) =>
-        prev.filter((interest) => interest.id !== interestId)
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const renderTags = (
-    recipientId: string,
-    category: InterestCategory,
-    label: string
-  ) => {
-    const interestList = interestsByRecipient[recipientId] ?? [];
-    const tags = interestList.filter(
-      (interest) => (interest.category ?? "interest") === category
-    );
-
-    return (
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-          {label}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((interest) => (
-            <span
-              key={interest.id}
-              className="inline-flex items-center gap-2 rounded-full border border-gp-evergreen/20 bg-gp-cream px-3 py-1 text-xs font-medium text-gp-evergreen"
-            >
-              {interest.label}
-              <button
-                type="button"
-                onClick={() => handleRemoveInterest(interest.id)}
-                className="text-[10px] font-semibold uppercase tracking-wide text-gp-evergreen/70 transition hover:text-gp-evergreen"
-                aria-label={`Remove ${interest.label}`}
-              >
-                ×
-              </button>
-
-            </span>
-          ))}
-          {tags.length === 0 && (
-            <span className="text-xs text-gp-evergreen/60">
-              No tags yet.
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor={`${recipientId}-${category}`} className="sr-only">
-            {label}
-          </label>
-          <input
-            id={`${recipientId}-${category}`}
-            type="text"
-            value={interestInputs[recipientId]?.[category] ?? ""}
-            onChange={(event) =>
-              handleInterestInputChange(
-                recipientId,
-                category,
-                event.target.value
-              )
-            }
-            placeholder={`Add ${label.toLowerCase()}`}
-            className="flex-1 rounded-full border border-gp-evergreen/30 bg-transparent px-3 py-1 text-xs text-gp-evergreen focus:border-gp-evergreen focus:outline-none md:flex-none md:w-48"
-          />
-          <button
-            type="button"
-            disabled={interestSaving[recipientId]?.[category]}
-            onClick={() => handleAddInterest(recipientId, category)}
-            className="rounded-full bg-gp-gold px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60"
-          >
-            Add
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-3xl border border-gp-evergreen/15 bg-white/90 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search recipients by name or relationship..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="flex-1 rounded-2xl border border-gp-evergreen/30 bg-transparent px-4 py-2 text-sm text-gp-evergreen focus:border-gp-evergreen focus:outline-none"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="gp-btn gp-btn--primary gp-btn--md px-5 text-sm"
-        >
-          Add Recipient
-        </button>
-      </div>
-
-      {error && (
-        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-      {formMessage && !isFormOpen && (
-        <div className="rounded-2xl border border-green-200 bg-green-100 px-4 py-2 text-sm text-gp-evergreen">
-          {formMessage}
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="flex justify-center">
-          <PerchPalLoader
-            variant="block"
-            size="md"
-            message="PerchPal is organizing your recipient profiles..."
-          />
-        </div>
-      ) : filteredRecipients.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-gp-evergreen/30 bg-gp-cream/70 p-6 text-center text-sm text-gp-evergreen">
-          <p className="text-base font-semibold text-gp-evergreen">
-            No recipient profiles yet
-          </p>
-          <p className="mt-2 text-sm text-gp-evergreen/80">
-            Start by adding the people you shop for most. PerchPal will tailor
-            suggestions once it knows them better.
-          </p>
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="mt-4 rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132]"
-          >
-            Create a new recipient profile
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredRecipients.map((recipient) => (
-            <div
-              key={recipient.id}
-              className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  {(() => {
-                    const avatar = getRecipientAvatarVisual(recipient);
-                    return (
-                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/20 bg-gp-cream/80 text-sm font-semibold text-gp-evergreen">
-                        {avatar.kind === "image" ? (
-                          <Image
-                            src={avatar.src}
-                            alt={avatar.alt}
-                            width={48}
-                            height={48}
-                            className="h-full w-full object-cover"
-                            unoptimized
-                          />
-                        ) : avatar.kind === "preset" ? (
-                          <Image
-                            src={avatar.src}
-                            alt={avatar.alt}
-                            width={40}
-                            height={40}
-                            className="h-10 w-10 object-contain"
-                            unoptimized
-                          />
-                        ) : (
-                          avatar.text
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <div>
-                    <p className="text-lg font-semibold text-gp-evergreen">
-                      {recipient.name}
-                    </p>
-                    <p className="text-sm text-gp-evergreen/70">
-                      {describeRelationship(recipient)}
-                    </p>
-                    <Link
-                      href={`/history?recipient=${recipient.id}`}
-                      className="mt-1 inline-flex text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                    >
-                      View gift history
-                    </Link>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openEditForm(recipient)}
-                    className="rounded-full border border-gp-evergreen/30 px-3 py-1 text-xs font-semibold text-gp-evergreen transition hover:bg-gp-cream/80 cursor-pointer"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => requestDelete(recipient.id)}
-                    className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <dl className="mt-4 space-y-2 text-sm text-gp-evergreen/80">
-                <div className="flex items-center justify-between gap-3">
-                  <dt className="font-semibold">Per-gift range</dt>
-                  <dd className="max-w-[180px] whitespace-nowrap overflow-hidden text-ellipsis text-right">
-                    {formatGiftBudgetRange(
-                      recipient.gift_budget_min,
-                      recipient.gift_budget_max,
-                    )}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="font-semibold">Annual budget</dt>
-                  <dd>
-                    {recipient.annual_budget
-                      ? `$${recipient.annual_budget.toFixed(0)}`
-                      : "Not set"}
-                  </dd>
-                </div>
-                {recipient.birthday && (
-                  <div className="flex justify-between">
-                    <dt className="font-semibold">Birthday</dt>
-                    <dd>{formatRecipientBirthday(recipient.birthday) ?? "—"}</dd>
-                  </div>
-                )}
-              </dl>
-
-              <div className="mt-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRecipient(recipient)}
-                    className="gp-btn gp-btn--secondary gp-btn--sm min-w-[150px] flex-1 text-xs"
-                  >
-                    Show details
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSavedGiftsRecipient(recipient)}
-                    className="gp-btn gp-btn--primary gp-btn--sm min-w-[150px] flex-1 text-xs"
-                  >
-                    View Saved Gifts
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/gifts?recipientId=${recipient.id}`)
-                  }
-                  className="gp-btn gp-btn--gold gp-btn--md w-full"
-                >
-                  Get gift ideas
-                </button>
-              </div>
-
-            </div>
-          ))}
-        </div>
-      )}
+      <RecipientsOverview
+        recipients={recipients}
+        interests={interests}
+        events={!isLoading && !recipients.length ? [] : events}
+        savedCounts={!isLoading && !recipients.length ? {} : savedCounts}
+        preferencesLoaded={preferencesLoaded}
+        loading={isLoading}
+        onCreate={openCreateForm}
+        onView={(recipient) => {
+          setProfileInitialTab("profile");
+          setProfileInitialEditing(false);
+          setSelectedRecipient(recipient);
+        }}
+        onEdit={(recipient) => {
+          setProfileInitialTab("profile");
+          setProfileInitialEditing(true);
+          setSelectedRecipient(recipient);
+        }}
+        onDelete={requestDelete}
+        onSaved={(recipient) => {
+          setProfileInitialTab("saved");
+          setProfileInitialEditing(false);
+          setSelectedRecipient(recipient);
+        }}
+        avatarFor={getRecipientAvatarVisual}
+        relationshipFor={describeRelationship}
+        budgetFor={formatGiftBudgetRange}
+        notices={<>
+          {error && <div role="alert" className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+          {overviewError && <div role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-gp-evergreen">{overviewError}</div>}
+          {formMessage && !isFormOpen && <div role="status" className="rounded-lg border border-green-200 bg-green-100 px-4 py-2 text-sm text-gp-evergreen">{formMessage}</div>}
+        </>}
+      />
 
       {confirmDeleteId ? (() => {
         const target = recipients.find((r) => r.id === confirmDeleteId);
@@ -1513,187 +1049,37 @@ export function RecipientsManager() {
       })() : null}
 
       {selectedRecipient ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setSelectedRecipient(null)}
-          />
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`recipient-details-${selectedRecipient.id}`}
-            className="relative z-10 flex max-h-[80vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-xl"
-          >
-            <div className="flex items-center justify-between gap-4 border-b border-gp-evergreen/10 bg-gp-evergreen px-6 py-4 text-gp-cream">
-              <div className="flex items-center gap-4">
-                {(() => {
-                  const avatar = getRecipientAvatarVisual(selectedRecipient);
-                  return (
-                    <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-gp-cream/30 bg-gp-cream/90 text-base font-semibold text-gp-evergreen">
-                      {avatar.kind === "image" ? (
-                        <Image
-                          src={avatar.src}
-                          alt={avatar.alt}
-                          width={56}
-                          height={56}
-                          className="h-full w-full object-cover"
-                          unoptimized
-                        />
-                      ) : avatar.kind === "preset" ? (
-                        <Image
-                          src={avatar.src}
-                          alt={avatar.alt}
-                          width={48}
-                          height={48}
-                          className="h-12 w-12 object-contain"
-                          unoptimized
-                        />
-                      ) : (
-                        avatar.text
-                      )}
-                    </div>
-                  );
-                })()}
-                <div>
-                  <p
-                    id={`recipient-details-${selectedRecipient.id}`}
-                    className="text-lg font-semibold"
-                  >
-                    {selectedRecipient.name}
-                  </p>
-                  <p className="text-sm text-gp-cream/80">
-                    {describeRelationship(selectedRecipient)}
-                  </p>
-                  <Link
-                    href={`/history?recipient=${selectedRecipient.id}`}
-                    className="mt-1 inline-flex text-xs font-semibold text-gp-cream underline-offset-4 hover:text-gp-gold"
-                  >
-                    View gift history
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    openEditForm(selectedRecipient);
-                    setSelectedRecipient(null);
-                  }}
-                  className="rounded-full border border-gp-cream/30 px-4 py-1.5 text-xs font-semibold text-gp-cream transition hover:bg-white/15 cursor-pointer"
-                >
-                  Edit recipient
-                </button>
-                <button
-                  type="button"
-                  ref={closeButtonRef}
-                  onClick={() => setSelectedRecipient(null)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gp-cream/30 text-gp-cream transition hover:bg-white/15 cursor-pointer"
-                  aria-label="Close recipient details"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                {(
-                  [
-                    { category: "interest", label: "Interests & hobbies" },
-                    { category: "vibe", label: "Vibes & aesthetics" },
-                    { category: "personality", label: "Personality traits" },
-                    { category: "brand", label: "Favorite brands" },
-                  ] as Array<{ category: InterestCategory; label: string }>
-                ).map(({ category, label }) => (
-                  <div
-                    key={category}
-                    className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4"
-                  >
-                    {renderTags(selectedRecipient.id, category, label)}
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                    Budgets overview
-                  </p>
-                  {selectedRecipient.gift_budget_min ||
-                  selectedRecipient.gift_budget_max ||
-                  selectedRecipient.annual_budget ? (
-                    <p className="mt-1">
-                      {formatGiftBudgetRange(
-                        selectedRecipient.gift_budget_min,
-                        selectedRecipient.gift_budget_max,
-                      ) ? (
-                        <>
-                          Typical gift range:{" "}
-                          <span className="font-semibold">
-                            {formatGiftBudgetRange(
-                              selectedRecipient.gift_budget_min,
-                              selectedRecipient.gift_budget_max,
-                            )}
-                          </span>
-                        </>
-                      ) : (
-                        <>Per-gift range not set</>
-                      )}
-                      {selectedRecipient.annual_budget && (
-                        <>
-                          {" "}
-                          (annual target{" "}
-                          <span className="font-semibold">
-                            {formatCurrency(selectedRecipient.annual_budget)}
-                          </span>
-                          )
-                        </>
-                      )}
-                      .
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-gp-evergreen/70">
-                      Budget not set yet.
-                    </p>
-                  )}
-                </div>
-                <div className="rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/70">
-                    Notes
-                  </p>
-                  {selectedRecipient.notes ? (
-                    <p className="mt-2 whitespace-pre-line text-gp-evergreen/80">
-                      {selectedRecipient.notes}
-                    </p>
-                  ) : (
-                    <p className="mt-2 text-gp-evergreen/60">
-                      No notes yet. Add insight via the edit form.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end border-t border-gp-evergreen/10 px-6 py-3">
-              <button
-                type="button"
-                className="gp-secondary-button cursor-pointer"
-                onClick={() => setSelectedRecipient(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <RecipientProfileModal
+          key={`${selectedRecipient.id}-${profileInitialTab}-${profileInitialEditing}`}
+          recipient={selectedRecipient}
+          interests={interestsByRecipient[selectedRecipient.id] ?? []}
+          savedCount={savedCounts?.[selectedRecipient.id] ?? (savedCounts ? 0 : null)}
+          authToken={authToken}
+          initialTab={profileInitialTab}
+          initialEditing={profileInitialEditing}
+          onClose={() => {
+            setSelectedRecipient(null);
+            setSavedRevision((revision) => revision + 1);
+          }}
+          onRecipientUpdated={(updated) => {
+            setRecipients((current) =>
+              current.map((item) => item.id === updated.id ? updated : item),
+            );
+            setSelectedRecipient(updated);
+          }}
+          onInterestsUpdated={(recipientId, nextInterests) => {
+            setInterests((current) => [
+              ...current.filter((item) => item.recipient_id !== recipientId),
+              ...nextInterests,
+            ]);
+          }}
+          onSavedGiftRemoved={(recipientId) =>
+            setSavedCounts((counts) => counts ? {
+              ...counts,
+              [recipientId]: Math.max(0, (counts[recipientId] ?? 0) - 1),
+            } : null)
+          }
+        />
       ) : null}
 
 {isFormOpen ? (
@@ -1711,12 +1097,10 @@ export function RecipientsManager() {
             <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
               <div>
                 <p className="text-sm uppercase tracking-wide text-gp-cream/80">
-                  {formMode === "create" ? "New recipient" : "Edit recipient"}
+                  New recipient
                 </p>
                 <h2 className="text-2xl font-semibold text-gp-cream">
-                  {formMode === "create"
-                    ? "Add a recipient profile"
-                    : `Update ${activeRecipient?.name ?? "recipient"}`}
+                  Add a recipient profile
                 </h2>
               </div>
               <button
@@ -2138,7 +1522,7 @@ export function RecipientsManager() {
                 className="w-full rounded-full bg-gp-gold px-5 py-3 text-sm font-semibold text-gp-evergreen transition hover:bg-[#bda775] disabled:opacity-60 cursor-pointer"
                 disabled={formSaving}
               >
-                {formMode === "create" ? "Save recipient" : "Update recipient"}
+                Save recipient
               </button>
 
               {formSaving && (
@@ -2166,21 +1550,6 @@ export function RecipientsManager() {
         </div>
       ) : null}
 
-      {savedGiftsRecipient ? (
-        <SavedGiftIdeasModal
-          recipientId={savedGiftsRecipient.id}
-          recipientName={savedGiftsRecipient.name}
-          recipientAvatarUrl={savedGiftsRecipient.avatar_url}
-          recipientAvatarIcon={
-            savedGiftsRecipient.avatar_icon
-              ? `/icons/recipients/${savedGiftsRecipient.avatar_icon}_icon.png`
-              : null
-          }
-          isOpen={!!savedGiftsRecipient}
-          onClose={() => setSavedGiftsRecipient(null)}
-          authToken={authToken}
-        />
-      ) : null}
     </div>
   );
 }

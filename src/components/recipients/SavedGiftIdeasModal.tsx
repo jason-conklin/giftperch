@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { Database } from "@/lib/database.types";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
@@ -35,6 +36,7 @@ type Props = {
     recipientId: string,
     gift: Pick<SavedGiftIdea, "id" | "title" | "product_match">,
   ) => void;
+  presentation?: "modal" | "embedded";
 };
 
 type FetchState =
@@ -52,7 +54,9 @@ export function SavedGiftIdeasModal({
   onClose,
   authToken,
   onSavedGiftRemoved,
+  presentation = "modal",
 }: Props) {
+  const embedded = presentation === "embedded";
   const { user } = useSupabaseSession();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [state, setState] = useState<FetchState>({ status: "idle" });
@@ -127,7 +131,7 @@ export function SavedGiftIdeasModal({
   }, [isOpen, recipientId]);
 
   useEffect(() => {
-    if (!isOpen || !user?.id) return;
+    if (!isOpen || !user?.id || embedded) return;
     let active = true;
     const loadRecipients = async () => {
       setIsLoadingRecipients(true);
@@ -175,7 +179,7 @@ export function SavedGiftIdeasModal({
     return () => {
       active = false;
     };
-  }, [fallbackRecipientOption, isOpen, supabase, user?.id]);
+  }, [embedded, fallbackRecipientOption, isOpen, supabase, user?.id]);
 
   useEffect(() => {
     if (isOpen) {
@@ -187,21 +191,21 @@ export function SavedGiftIdeasModal({
       setIsRecipientMenuOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, selectedRecipientId]);
+  }, [embedded, isOpen, selectedRecipientId]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || embedded) return;
     listRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [isOpen, selectedRecipientId]);
+  }, [embedded, isOpen, selectedRecipientId]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || embedded) return;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen]);
+  }, [embedded, isOpen]);
 
   useEffect(() => {
     if (!isOpen || !isRecipientMenuOpen) return;
@@ -217,7 +221,7 @@ export function SavedGiftIdeasModal({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isOpen) {
+      if (event.key === "Escape" && isOpen && !embedded) {
         if (isRecipientMenuOpen) {
           setIsRecipientMenuOpen(false);
           return;
@@ -227,7 +231,7 @@ export function SavedGiftIdeasModal({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, isRecipientMenuOpen, onClose]);
+  }, [embedded, isOpen, isRecipientMenuOpen, onClose]);
 
   useEffect(() => {
     if (isRecipientMenuOpen) {
@@ -280,17 +284,25 @@ export function SavedGiftIdeasModal({
 
   return (
     <div
-      className="fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
+      className={
+        embedded
+          ? "flex min-h-0 flex-1"
+          : "fixed inset-0 z-[190] flex items-center justify-center bg-black/40 p-2 backdrop-blur-sm sm:p-4"
+      }
+      role={embedded ? undefined : "dialog"}
+      aria-modal={embedded ? undefined : true}
+      onClick={embedded ? undefined : onClose}
     >
       <div
         ref={dialogRef}
-        className="flex max-h-[calc(100vh-1rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-2xl sm:max-h-[calc(100vh-2rem)] lg:max-h-[calc(100vh-4rem)]"
+        className={
+          embedded
+            ? "flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-gp-app-ivory"
+            : "flex max-h-[calc(100vh-1rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-gp-cream shadow-2xl sm:max-h-[calc(100vh-2rem)] lg:max-h-[calc(100vh-4rem)]"
+        }
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
+        {!embedded ? <div className="flex items-start justify-between border-b border-gp-evergreen/10 bg-gp-evergreen px-5 py-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gp-cream/80">
               Saved gifts
@@ -461,7 +473,7 @@ export function SavedGiftIdeasModal({
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-        </div>
+        </div> : null}
 
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 border-b border-gp-evergreen/10 px-5 py-4 sm:px-6">
@@ -493,10 +505,22 @@ export function SavedGiftIdeasModal({
               <p className="text-sm text-red-700">{state.message}</p>
             )}
             {state.status === "success" && gifts.length === 0 && (
-              <p className="text-sm text-gp-evergreen/70">
-                No saved gift ideas yet. Save ideas from AI suggestions to see them
-                here.
-              </p>
+              <div className="grid min-h-52 place-items-center rounded-xl border border-dashed border-gp-evergreen/20 bg-white/70 p-6 text-center">
+                <div>
+                  <p className="font-display text-xl font-semibold text-gp-evergreen">
+                    No saved gifts yet
+                  </p>
+                  <p className="mt-2 text-sm text-gp-evergreen/70">
+                    Explore personalized ideas and save the strongest matches here.
+                  </p>
+                  <Link
+                    href={`/gifts?recipientId=${encodeURIComponent(selectedRecipientId)}`}
+                    className="mt-4 inline-flex rounded-lg border border-gp-app-evergreen bg-gp-app-evergreen px-4 py-2 text-sm font-semibold text-white transition hover:bg-gp-app-evergreen-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-gold"
+                  >
+                    Get Gift Ideas
+                  </Link>
+                </div>
+              </div>
             )}
             {state.status === "success" && gifts.length > 0 && (
               <div className="space-y-3">

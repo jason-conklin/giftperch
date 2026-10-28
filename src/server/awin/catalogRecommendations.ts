@@ -32,6 +32,7 @@ export type CatalogRecommendationContext = {
     interests: RecipientInterestForMatching[];
     notes?: string | null;
   };
+  avoidances?: string[];
   occasion?: string | null;
   recipientRelationship?: string | null;
   budgetMin?: number | null;
@@ -149,6 +150,10 @@ function normalizeContext(
         }))
         .filter((interest) => interest.label),
     },
+    avoidances: (context.avoidances ?? [])
+      .map((item) => optionalText(item, 200))
+      .filter((item): item is string => !!item)
+      .slice(0, 25),
     occasion: optionalText(context.occasion, 100),
     recipientRelationship: optionalText(context.recipientRelationship, 100),
     budgetMin,
@@ -203,6 +208,33 @@ function expandBroadInterest(label: string): string[] {
     );
   }
   return expanded;
+}
+
+export function productConflictsWithAvoidances(
+  product: Pick<AwinCatalogProduct, "title" | "description">,
+  avoidances: ReadonlyArray<string>,
+): boolean {
+  const normalizeEvidence = (value: string) =>
+    value
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .map((token) =>
+        token.length > 3 && token.endsWith("s") && !token.endsWith("ss")
+          ? token.slice(0, -1)
+          : token,
+      )
+      .join(" ");
+  const evidence = normalizeEvidence(
+    `${product.title} ${product.description ?? ""}`,
+  );
+  if (!evidence) return false;
+  return avoidances.some((avoidance) => {
+    const phrase = normalizeEvidence(avoidance);
+    return phrase.length >= 3 && ` ${evidence} `.includes(` ${phrase} `);
+  });
 }
 
 function isOverlyBroadPersonalization(label: string): boolean {
@@ -533,6 +565,9 @@ export async function evaluateCatalogFirstRecommendations(
   );
   const products = loadedProducts.filter((product) => {
     if (!buildCatalogGroundedProduct(product, advertiserRegistry)) return false;
+    if (productConflictsWithAvoidances(product, context.avoidances ?? [])) {
+      return false;
+    }
     if (historicalProductKeys.has(getCatalogSourceProductKey(product))) {
       return false;
     }

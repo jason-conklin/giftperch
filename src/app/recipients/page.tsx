@@ -20,10 +20,7 @@ export default function RecipientsPage() {
     >
       <AuthGuard>
         <AppLayout>
-          <PageShell
-            title="Recipient Profiles"
-            subtitle="Understand every person you shop for. Save their preferences, budgets, and key dates so PerchPal can help you find the perfect gift."
-          >
+          <PageShell>
             <RecipientsManager />
           </PageShell>
         </AppLayout>

@@ -37,6 +37,7 @@ export function buildCatalogRecommendationContext(args: {
     petType?: string | null;
   };
   interests: CatalogRecommendationContext["recipient"]["interests"];
+  avoidances?: string[];
   occasion?: string | null;
   recipientRelationship?: string | null;
   budgetMin?: number | null;
@@ -62,6 +63,7 @@ export function buildCatalogRecommendationContext(args: {
       ],
       notes: args.recipient.notes,
     },
+    ...(args.avoidances?.length ? { avoidances: args.avoidances } : {}),
     occasion: args.occasion,
     recipientRelationship: args.recipientRelationship,
     budgetMin: args.budgetMin,

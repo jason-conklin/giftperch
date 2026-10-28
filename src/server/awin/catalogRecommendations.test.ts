@@ -7,6 +7,7 @@ import {
   evaluateCatalogFirstRecommendations,
   getCatalogFreshnessTargetHours,
   isCatalogFirstRecommendationsEnabled,
+  productConflictsWithAvoidances,
   runCatalogFirstRecommendations,
 } from "./catalogRecommendations";
 import {
@@ -173,6 +174,39 @@ test("constructs only complete authoritative catalog products", () => {
     ),
     null,
   );
+});
+
+test("things to avoid are deterministic hard constraints before AI selection", async () => {
+  assert.equal(
+    productConflictsWithAvoidances(
+      product({ title: "Premium Gift Card", description: "Digital delivery" }),
+      ["gift cards"],
+    ),
+    true,
+  );
+  assert.equal(
+    productConflictsWithAvoidances(product(), ["gift card"]),
+    false,
+  );
+
+  const selectorCalls: unknown[] = [];
+  const result = await evaluateCatalogFirstRecommendations(
+    context({
+      avoidances: ["carbon fishing reel"],
+      requestedCount: 1,
+    }),
+    {
+      loadProducts: async () => [product()],
+      advertiserRegistry: [piscifun],
+      selectCandidates: async (args) => {
+        selectorCalls.push(args);
+        return { selections: [] };
+      },
+    },
+  );
+  assert.equal(result.status, "no_results");
+  assert.equal(result.eligibleCandidateCount, 0);
+  assert.equal(selectorCalls.length, 0);
 });
 
 test("excludes disabled advertisers before matching", async () => {

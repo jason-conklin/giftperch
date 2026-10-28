@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { APP_GOLD_ACTION } from "@/components/ui/appActionStyles";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getDefaultUsHolidaysForYear } from "@/lib/holidays";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
@@ -684,7 +685,7 @@ function SummaryCard({
       </div>
       <Link
         href={href}
-        className="mt-auto flex items-center justify-center gap-2 rounded-lg border border-[#d8a628]/70 bg-[linear-gradient(180deg,#f4cf62_0%,#e6b438_100%)] px-3 py-2 text-xs font-semibold text-gp-app-evergreen shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_3px_8px_rgba(154,111,24,0.16)] transition hover:border-[#c68f17] hover:bg-[linear-gradient(180deg,#f7d979_0%,#e9ba42_100%)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_5px_12px_rgba(154,111,24,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-app-evergreen focus-visible:ring-offset-2 active:translate-y-px active:shadow-[inset_0_1px_2px_rgba(128,90,22,0.18)]"
+        className={`${APP_GOLD_ACTION} mt-auto`}
       >
         {action}
         <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />

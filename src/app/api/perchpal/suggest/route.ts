@@ -33,6 +33,7 @@ import {
   type CatalogJsonCompletion,
 } from "@/server/awin/catalogPerchPal";
 import { getCatalogRecommendationResponseMetadata } from "@/lib/gifts/catalogFirst";
+import { splitRecipientRecommendationPreferences } from "@/lib/recipientRecommendationContext";
 
 type SuggestRequestBody = {
   recipientId?: string;
@@ -71,6 +72,7 @@ type GiftPromptContext = {
   annual_budget?: number | null;
   notes_summary?: string | null;
   interests_summary?: string | null;
+  things_to_avoid?: string[];
   last_gifts_summary?: string | null;
   recommendation_mode?: "catalog_first";
 };
@@ -317,7 +319,11 @@ export async function POST(request: NextRequest) {
         .limit(RECENT_RUN_LIMIT),
     ]);
 
-    const interests = (interestsData ?? []) as RecipientInterest[];
+    const preferenceContext = splitRecipientRecommendationPreferences(
+      (interestsData ?? []) as RecipientInterest[],
+    );
+    const interests = preferenceContext.positive as RecipientInterest[];
+    const avoidances = preferenceContext.avoidances;
     const gifts = (giftsData ?? []) as GiftHistoryItem[];
     const recentRuns = (recentRunsData ?? []) as GiftSuggestionRunRow[];
 
@@ -438,6 +444,7 @@ export async function POST(request: NextRequest) {
       annual_budget: resolvedAnnualBudget,
       notes_summary,
       interests_summary,
+      things_to_avoid: avoidances,
       last_gifts_summary,
       ...(catalogFirstEnabled
         ? { recommendation_mode: "catalog_first" as const }
@@ -499,6 +506,7 @@ export async function POST(request: NextRequest) {
             petType: recipient.pet_type,
           },
           interests,
+          avoidances,
           occasion: structuredContext.occasion,
           recipientRelationship: structuredContext.recipientRelationship,
           budgetMin: resolvedBudgetMin,
@@ -547,6 +555,7 @@ export async function POST(request: NextRequest) {
         budget_max: resolvedBudgetMax,
         annual_budget: resolvedAnnualBudget,
         interests,
+        things_to_avoid: avoidances,
         recent_gifts: gifts,
         num_suggestions: requestedCount,
         previously_saved_titles: uniqueSavedTitles.slice(0, 25),
@@ -578,6 +587,7 @@ export async function POST(request: NextRequest) {
                 " - Avoid generic, overused gifts like cozy blanket, spa set, scented candles, or generic gift cards unless the context makes them unusually specific and personalized.",
                 " - You will receive previous gift ideas. Treat them as ALREADY USED. Do not repeat or closely mimic any of them.",
                 " - You will receive a DO NOT SUGGEST canonical list. Do not return any of those ideas, and avoid close variants with different casing, punctuation, or minor phrasing.",
+                " - THINGS TO AVOID are hard recipient constraints, not positive interests. Do not suggest those items or close substitutes.",
                 "You must respond ONLY as JSON, with no extra prose, using this exact TypeScript-like structure:",
                 "",
                 "type GiftSuggestion = {",
