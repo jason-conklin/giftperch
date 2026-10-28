@@ -27,6 +27,7 @@ import {
   type RecipientOccasion,
   type RecipientSort,
 } from "@/lib/recipientOverview";
+import { getRecipientInitialAvatarStyle } from "@/lib/recipientAvatar";
 import type { RecipientInterest, RecipientProfile } from "./RecipientsManager";
 import styles from "./RecipientsOverview.module.css";
 
@@ -241,7 +242,14 @@ export function RecipientsOverview(props: Props) {
                 aria-label={`${recipient.name}'s profile`}
               >
                 <div className={styles.cardTop}>
-                  <div className={styles.avatar}>
+                  <div
+                    className={styles.avatar}
+                    style={
+                      avatar.kind === "initials"
+                        ? getRecipientInitialAvatarStyle(recipient.gender)
+                        : undefined
+                    }
+                  >
                     {avatar.kind === "initials" ? (
                       avatar.text
                     ) : (

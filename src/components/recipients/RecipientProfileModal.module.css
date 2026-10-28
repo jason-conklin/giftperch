@@ -78,6 +78,20 @@
 .cancel { min-height: 44px; border: 1px solid #c9d0cb; border-radius: 8px; padding: 8px 15px; color: #335b5c; font-size: 13px; font-weight: 600; cursor: pointer; }
 .cancel:hover { background: #f4f1e8; }
 .cancel:focus-visible { outline: 2px solid #9a6f18; outline-offset: 2px; }
+.createDialog { height: min(92vh, 940px); }
+.createForm { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.createBody { flex: 1; }
+.createAvatarRow { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.createAvatar { display: grid; width: 72px; height: 72px; flex-shrink: 0; place-items: center; overflow: hidden; border: 3px solid white; border-radius: 50%; background: #f3efe3; color: #4b6967; font-size: 22px; font-weight: 600; box-shadow: 0 5px 16px rgb(15 61 62 / .14); }
+.createAvatar img { width: 100%; height: 100%; object-fit: cover; }
+.createAvatar img.preset { object-fit: contain; padding: 6px; }
+.createAvatarActions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+.createAvatarActions button { min-height: 40px; cursor: pointer; }
+.removeAvatar { border: 0; padding: 7px 4px; color: #a13f37; font-size: 12px; font-weight: 600; cursor: pointer; }
+.removeAvatar:hover { color: #7f2f29; text-decoration: underline; text-underline-offset: 3px; }
+.removeAvatar:focus-visible { outline: 2px solid #9a6f18; outline-offset: 2px; }
+.createFooter { margin-top: 18px; }
+.createAction { min-width: 180px; min-height: 48px; padding: 11px 18px; font-size: 14px; }
 @media (max-width: 1100px) {
   .intro { grid-template-columns: 132px 1fr auto; }
   .avatar { width: 108px; height: 108px; }
@@ -88,6 +102,7 @@
 @media (max-width: 680px) {
   .backdrop { padding: 0; }
   .dialog { width: 100%; height: 100dvh; max-height: none; border: 0; border-radius: 0; }
+  .createDialog { height: 100dvh; }
   .header { min-height: 74px; padding: 14px 16px; }
   .header h1 { font-size: 28px; }
   .header button { width: 42px; height: 42px; }
@@ -108,6 +123,7 @@
   .full { grid-column: auto; }
   .footer { margin-inline: -12px; padding-inline: 12px; }
   .footer > * { min-width: 0; flex: 1; }
+  .createAvatarRow { align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dialog * { scroll-behavior: auto !important; transition: none !important; }

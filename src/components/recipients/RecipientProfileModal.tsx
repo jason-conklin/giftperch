@@ -24,6 +24,7 @@ import { SavedGiftIdeasModal } from "./SavedGiftIdeasModal";
 import type { RecipientInterest, RecipientProfile } from "./RecipientsManager";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
+import { getRecipientInitialAvatarStyle } from "@/lib/recipientAvatar";
 import {
   buildRecipientPreferenceChanges,
   normalizePreferenceLabel,
@@ -33,9 +34,15 @@ import {
   validateRecipientBudgets,
 } from "@/lib/recipientRecommendationContext";
 import styles from "./RecipientProfileModal.module.css";
+import {
+  RECIPIENT_AVATARS,
+  RECIPIENT_PET_TYPES,
+  RECIPIENT_RELATIONSHIPS,
+  SUGGESTED_RECIPIENT_INTERESTS,
+  type RecipientAvatarIcon,
+} from "./recipientFormOptions";
 
 type Tab = "profile" | "saved";
-type AvatarIcon = "babyboy" | "babygirl" | "boy" | "girl" | "man" | "woman" | "dog" | "cat";
 type Draft = {
   name: string;
   relationship: string;
@@ -48,23 +55,10 @@ type Draft = {
   budgetMax: string;
   notes: string;
   avatarUrl: string;
-  avatarIcon: AvatarIcon | "";
+  avatarIcon: RecipientAvatarIcon | "";
   interests: string[];
   avoidances: string;
 };
-
-const RELATIONSHIPS = ["Mother", "Father", "Sister", "Brother", "Cousin", "Aunt", "Uncle", "Daughter", "Son", "Boyfriend", "Girlfriend", "Fiance", "Spouse", "Friend", "Coworker", "Grandparent", "Pet"];
-const SUGGESTED_INTERESTS = ["Outdoors", "Fishing", "Cooking", "Reading", "Coffee", "Gardening", "Gaming", "Sports", "Travel", "Music", "Art", "Jewelry", "Technology", "Fitness", "Pets", "Home decor"];
-const AVATARS: Array<{ key: AvatarIcon; label: string; src: string }> = [
-  { key: "babyboy", label: "Baby boy", src: "/babyboy_icon.png" },
-  { key: "babygirl", label: "Baby girl", src: "/babygirl_icon.png" },
-  { key: "boy", label: "Boy", src: "/boy_icon.png" },
-  { key: "girl", label: "Girl", src: "/girl_icon.png" },
-  { key: "man", label: "Man", src: "/man_icon.png" },
-  { key: "woman", label: "Woman", src: "/woman_icon.png" },
-  { key: "dog", label: "Dog", src: "/dog_icon.png" },
-  { key: "cat", label: "Cat", src: "/cat_icon.png" },
-];
 
 type Props = {
   recipient: RecipientProfile;
@@ -85,8 +79,8 @@ function numberText(value: number | null) {
 
 function relationshipDraft(recipient: RecipientProfile) {
   const value = recipient.relationship?.trim() ?? "";
-  const standard = RELATIONSHIPS.some((item) => item.toLowerCase() === value.toLowerCase());
-  return { relationship: standard ? RELATIONSHIPS.find((item) => item.toLowerCase() === value.toLowerCase()) ?? value : value ? "Other" : "", customRelationship: standard ? "" : value };
+  const standard = RECIPIENT_RELATIONSHIPS.some((item) => item.toLowerCase() === value.toLowerCase());
+  return { relationship: standard ? RECIPIENT_RELATIONSHIPS.find((item) => item.toLowerCase() === value.toLowerCase()) ?? value : value ? "Other" : "", customRelationship: standard ? "" : value };
 }
 
 function makeDraft(recipient: RecipientProfile, entries: RecipientInterest[]): Draft {
@@ -102,7 +96,7 @@ function makeDraft(recipient: RecipientProfile, entries: RecipientInterest[]): D
     budgetMax: numberText(recipient.gift_budget_max),
     notes: recipient.notes ?? "",
     avatarUrl: recipient.avatar_url ?? "",
-    avatarIcon: (recipient.avatar_icon as AvatarIcon | null) ?? "",
+    avatarIcon: (recipient.avatar_icon as RecipientAvatarIcon | null) ?? "",
     interests: preferences.positive.map((item) => item.label),
     avoidances: preferences.avoidances.join(", "),
   };
@@ -155,7 +149,7 @@ export function RecipientProfileModal({
   );
   const interestChoices = useMemo(() => {
     const map = new Map<string, string>();
-    [...SUGGESTED_INTERESTS, ...draft.interests].forEach((label) => {
+    [...SUGGESTED_RECIPIENT_INTERESTS, ...draft.interests].forEach((label) => {
       const normalized = normalizePreferenceLabel(label);
       if (normalized) map.set(preferenceKey(normalized), normalized);
     });
@@ -325,8 +319,8 @@ export function RecipientProfileModal({
 
   const avatar = draft.avatarUrl
     ? { src: draft.avatarUrl, alt: `${draft.name || recipient.name} avatar`, custom: true }
-    : AVATARS.find((item) => item.key === draft.avatarIcon)
-      ? { src: AVATARS.find((item) => item.key === draft.avatarIcon)!.src, alt: AVATARS.find((item) => item.key === draft.avatarIcon)!.label, custom: false }
+    : RECIPIENT_AVATARS.find((item) => item.key === draft.avatarIcon)
+      ? { src: RECIPIENT_AVATARS.find((item) => item.key === draft.avatarIcon)!.src, alt: RECIPIENT_AVATARS.find((item) => item.key === draft.avatarIcon)!.label, custom: false }
       : null;
   const summary = recipient.notes?.trim();
 
@@ -339,7 +333,7 @@ export function RecipientProfileModal({
         </header>
         <div className={styles.intro}>
           <div className={styles.avatarWrap}>
-            <span className={styles.avatar}>{avatar ? <Image src={avatar.src} alt={avatar.alt} width={108} height={108} unoptimized className={avatar.custom ? undefined : styles.preset} /> : initials(draft.name)}</span>
+            <span className={styles.avatar} style={avatar ? undefined : getRecipientInitialAvatarStyle(draft.gender)}>{avatar ? <Image src={avatar.src} alt={avatar.alt} width={108} height={108} unoptimized className={avatar.custom ? undefined : styles.preset} /> : initials(draft.name)}</span>
             {editing ? <><input ref={uploadRef} type="file" accept="image/*" hidden onChange={(event) => void uploadAvatar(event.target.files?.[0])} /><button type="button" className={styles.camera} onClick={() => uploadRef.current?.click()} disabled={uploading} aria-label="Upload recipient photo"><Camera aria-hidden="true" /></button></> : null}
           </div>
           <div className={styles.identity}><h2>{draft.name || recipient.name}</h2><p>{draft.relationship === "Other" ? draft.customRelationship : draft.relationship || "Relationship TBD"}</p>{summary ? <span>{summary}</span> : null}</div>
@@ -362,12 +356,12 @@ export function RecipientProfileModal({
                   <div className={styles.sectionTitle}><span><UserRound aria-hidden="true" /></span><h3>Basic information</h3></div>
                   {editing ? <div className={styles.fields}>
                     <label className={styles.full}>Name *<input maxLength={80} value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
-                    <label>Relationship<select value={draft.relationship} onChange={(event) => setDraft({ ...draft, relationship: event.target.value, customRelationship: event.target.value === "Other" ? draft.customRelationship : "", petType: event.target.value === "Pet" ? draft.petType : "" })}><option value="">Not set</option>{RELATIONSHIPS.map((item) => <option key={item}>{item}</option>)}<option>Other</option></select></label>
+                    <label>Relationship<select value={draft.relationship} onChange={(event) => setDraft({ ...draft, relationship: event.target.value, customRelationship: event.target.value === "Other" ? draft.customRelationship : "", petType: event.target.value === "Pet" ? draft.petType : "" })}><option value="">Not set</option>{RECIPIENT_RELATIONSHIPS.map((item) => <option key={item}>{item}</option>)}<option>Other</option></select></label>
                     <label>Gender<select value={draft.gender} onChange={(event) => setDraft({ ...draft, gender: event.target.value })}><option value="">Prefer not to say</option><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></select></label>
                     {draft.relationship === "Other" && <label className={styles.full}>Custom relationship<input value={draft.customRelationship} onChange={(event) => setDraft({ ...draft, customRelationship: event.target.value })} /></label>}
-                    {draft.relationship === "Pet" && <label className={styles.full}>Pet type<select value={draft.petType} onChange={(event) => setDraft({ ...draft, petType: event.target.value })}><option value="">Select pet type</option>{["Dog", "Cat", "Bird", "Small animal", "Other"].map((item) => <option key={item}>{item}</option>)}</select></label>}
+                    {draft.relationship === "Pet" && <label className={styles.full}>Pet type<select value={draft.petType} onChange={(event) => setDraft({ ...draft, petType: event.target.value })}><option value="">Select pet type</option>{RECIPIENT_PET_TYPES.map((item) => <option key={item}>{item}</option>)}</select></label>}
                     <label className={styles.full}>Birthday<input type="date" value={draft.birthday} max={new Date().toISOString().slice(0, 10)} onChange={(event) => setDraft({ ...draft, birthday: event.target.value })} /></label>
-                    <div className={`${styles.full} ${styles.avatarChoices}`}><span>Avatar</span>{AVATARS.map((item) => <button key={item.key} type="button" aria-pressed={draft.avatarIcon === item.key} title={item.label} onClick={() => setDraft({ ...draft, avatarIcon: item.key, avatarUrl: "" })}><Image src={item.src} alt="" width={34} height={34} unoptimized /></button>)}</div>
+                    <div className={`${styles.full} ${styles.avatarChoices}`}><span>Avatar</span>{RECIPIENT_AVATARS.map((item) => <button key={item.key} type="button" aria-pressed={draft.avatarIcon === item.key} title={item.label} onClick={() => setDraft({ ...draft, avatarIcon: item.key, avatarUrl: "" })}><Image src={item.src} alt="" width={34} height={34} unoptimized /></button>)}</div>
                   </div> : <dl className={styles.readGrid}><div><dt>Name</dt><dd>{recipient.name}</dd></div><div><dt>Relationship</dt><dd>{recipient.relationship || "Not set"}</dd></div><div><dt>Gender</dt><dd>{recipient.gender ? recipient.gender[0].toUpperCase() + recipient.gender.slice(1) : "Not set"}</dd></div><div><dt>Birthday</dt><dd>{recipient.birthday ? new Date(`${recipient.birthday}T12:00:00`).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "Not set"}</dd></div></dl>}
                 </section>
                 <section className={styles.section}>
