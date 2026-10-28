@@ -333,7 +333,7 @@ export function RecipientProfileModal({
         </header>
         <div className={styles.intro}>
           <div className={styles.avatarWrap}>
-            <span className={styles.avatar} style={avatar ? undefined : getRecipientInitialAvatarStyle(draft.gender)}>{avatar ? <Image src={avatar.src} alt={avatar.alt} width={108} height={108} unoptimized className={avatar.custom ? undefined : styles.preset} /> : initials(draft.name)}</span>
+            <span className={styles.avatar} style={avatar ? undefined : getRecipientInitialAvatarStyle(draft.gender)}>{avatar ? <Image src={avatar.src} alt={avatar.alt} fill sizes="(max-width: 680px) 72px, (max-width: 1100px) 108px, 132px" unoptimized className={avatar.custom ? styles.photo : styles.preset} /> : initials(draft.name)}</span>
             {editing ? <><input ref={uploadRef} type="file" accept="image/*" hidden onChange={(event) => void uploadAvatar(event.target.files?.[0])} /><button type="button" className={styles.camera} onClick={() => uploadRef.current?.click()} disabled={uploading} aria-label="Upload recipient photo"><Camera aria-hidden="true" /></button></> : null}
           </div>
           <div className={styles.identity}><h2>{draft.name || recipient.name}</h2><p>{draft.relationship === "Other" ? draft.customRelationship : draft.relationship || "Relationship TBD"}</p>{summary ? <span>{summary}</span> : null}</div>

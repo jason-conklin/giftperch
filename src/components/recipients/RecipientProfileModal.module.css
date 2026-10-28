@@ -8,9 +8,9 @@
 .header button:focus-visible { outline: 2px solid #f3d98f; outline-offset: 3px; }
 .intro { position: relative; display: grid; grid-template-columns: 170px minmax(180px, 1fr) auto auto; flex-shrink: 0; align-items: center; gap: 18px; min-height: 160px; padding: 18px 26px; border-bottom: 1px solid #e7dfcf; background: linear-gradient(90deg, #fffdf7, #fffaf0); }
 .avatarWrap { position: relative; align-self: start; margin-top: -4px; }
-.avatar { display: grid; width: 132px; height: 132px; place-items: center; overflow: hidden; border: 4px solid white; border-radius: 50%; background: #f3efe3; color: #4b6967; font-size: 34px; font-weight: 600; box-shadow: 0 7px 22px rgb(15 61 62 / .16); }
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
-.avatar img.preset { object-fit: contain; padding: 10px; }
+.avatar { position: relative; display: grid; width: 132px; height: 132px; aspect-ratio: 1; place-items: center; overflow: hidden; border: 4px solid white; border-radius: 50%; background: #f3efe3; color: #4b6967; font-size: 34px; font-weight: 600; box-shadow: 0 7px 22px rgb(15 61 62 / .16); }
+.avatar img.photo { object-fit: cover; object-position: 50% 50%; }
+.avatar img.preset { object-fit: contain; object-position: 50% 50%; padding: 10px; }
 .camera { position: absolute; right: 28px; bottom: -8px; display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid #bfcac6; border-radius: 50%; background: white; color: #8a6116; box-shadow: 0 4px 12px rgb(15 61 62 / .16); cursor: pointer; }
 .camera svg { width: 20px; }
 .identity { min-width: 0; overflow: hidden; }
