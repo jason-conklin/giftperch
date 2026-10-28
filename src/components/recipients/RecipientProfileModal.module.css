@@ -1,22 +1,22 @@
 .backdrop { position: fixed; inset: 0; z-index: 190; display: grid; place-items: center; padding: 16px; background: rgb(5 30 31 / .58); backdrop-filter: blur(5px); }
 .dialog { display: flex; width: min(1260px, 100%); max-height: min(92vh, 940px); flex-direction: column; overflow: hidden; border: 1px solid rgb(255 255 255 / .25); border-radius: 18px; background: var(--color-gp-app-ivory); box-shadow: 0 28px 80px rgb(4 31 32 / .34); }
-.header { display: flex; min-height: 91px; align-items: center; justify-content: space-between; padding: 18px 28px; color: white; background: linear-gradient(135deg, #0f5150, #073839); }
+.header { display: flex; min-height: 91px; flex-shrink: 0; align-items: center; justify-content: space-between; padding: 18px 28px; color: white; background: linear-gradient(135deg, #0f5150, #073839); }
 .header p { color: #f3d98f; font-size: 12px; font-weight: 600; letter-spacing: .14em; }
 .header h1 { margin-top: 2px; font-family: var(--font-display); font-size: 36px; line-height: 1; font-weight: 600; overflow-wrap: anywhere; }
 .header button { display: grid; width: 46px; height: 46px; flex-shrink: 0; place-items: center; border: 1px solid rgb(255 255 255 / .4); border-radius: 50%; cursor: pointer; transition: background .16s ease; }
 .header button:hover { background: rgb(255 255 255 / .12); }
 .header button:focus-visible { outline: 2px solid #f3d98f; outline-offset: 3px; }
-.intro { position: relative; display: grid; grid-template-columns: 170px minmax(180px, 1fr) auto auto; align-items: center; gap: 18px; min-height: 160px; padding: 18px 26px; border-bottom: 1px solid #e7dfcf; background: linear-gradient(90deg, #fffdf7, #fffaf0); }
+.intro { position: relative; display: grid; grid-template-columns: 170px minmax(180px, 1fr) auto auto; flex-shrink: 0; align-items: center; gap: 18px; min-height: 160px; padding: 18px 26px; border-bottom: 1px solid #e7dfcf; background: linear-gradient(90deg, #fffdf7, #fffaf0); }
 .avatarWrap { position: relative; align-self: start; margin-top: -4px; }
 .avatar { display: grid; width: 132px; height: 132px; place-items: center; overflow: hidden; border: 4px solid white; border-radius: 50%; background: #f3efe3; color: #4b6967; font-size: 34px; font-weight: 600; box-shadow: 0 7px 22px rgb(15 61 62 / .16); }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .avatar img.preset { object-fit: contain; padding: 10px; }
 .camera { position: absolute; right: 28px; bottom: -8px; display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid #bfcac6; border-radius: 50%; background: white; color: #8a6116; box-shadow: 0 4px 12px rgb(15 61 62 / .16); cursor: pointer; }
 .camera svg { width: 20px; }
-.identity { min-width: 0; }
+.identity { min-width: 0; overflow: hidden; }
 .identity h2 { font-family: var(--font-display); font-size: 32px; line-height: 1.05; font-weight: 600; overflow-wrap: anywhere; }
-.identity p { margin-top: 3px; color: var(--color-gp-app-muted); font-size: 15px; }
-.identity span { display: block; max-width: 480px; margin-top: 8px; color: var(--color-gp-app-muted); font-size: 13px; line-height: 1.5; }
+.identity p { margin-top: 3px; color: var(--color-gp-app-muted); font-size: 15px; overflow-wrap: anywhere; }
+.identity span { display: -webkit-box; max-width: 480px; margin-top: 8px; overflow: hidden; color: var(--color-gp-app-muted); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .tabs { display: flex; min-width: 390px; align-items: stretch; overflow: hidden; border: 1px solid #e2dccd; border-radius: 8px; background: #faf8f1; }
 .tabs > * { display: flex; min-height: 52px; flex: 1; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-right: 1px solid #e2dccd; color: #365b5d; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .tabs > *:last-child { border-right: 0; }
@@ -73,6 +73,8 @@
 .message { border: 1px solid #bbdec8; background: #effaf2; color: #17653a; }
 .footer { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 10px; margin: 18px -22px 0; border-top: 1px solid #e7dfcf; background: rgb(255 252 245 / .96); padding: 13px 22px; backdrop-filter: blur(5px); }
 .footer > * { min-width: 140px; cursor: pointer; }
+.giftIdeasAction { min-width: 190px; min-height: 48px; padding: 11px 18px; font-size: 14px; }
+.giftIdeasAction svg { width: 16px; height: 16px; flex-shrink: 0; }
 .cancel { min-height: 44px; border: 1px solid #c9d0cb; border-radius: 8px; padding: 8px 15px; color: #335b5c; font-size: 13px; font-weight: 600; cursor: pointer; }
 .cancel:hover { background: #f4f1e8; }
 .cancel:focus-visible { outline: 2px solid #9a6f18; outline-offset: 2px; }

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ArrowRight,
   Ban,
   Bookmark,
   CalendarDays,
@@ -327,7 +328,7 @@ export function RecipientProfileModal({
     : AVATARS.find((item) => item.key === draft.avatarIcon)
       ? { src: AVATARS.find((item) => item.key === draft.avatarIcon)!.src, alt: AVATARS.find((item) => item.key === draft.avatarIcon)!.label, custom: false }
       : null;
-  const summary = recipient.notes?.trim() || (draft.interests.length ? `Enjoys ${draft.interests.slice(0, 3).join(", ")}.` : "Add interests and details to improve personalized recommendations.");
+  const summary = recipient.notes?.trim();
 
   return (
     <div className={styles.backdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
@@ -341,7 +342,7 @@ export function RecipientProfileModal({
             <span className={styles.avatar}>{avatar ? <Image src={avatar.src} alt={avatar.alt} width={108} height={108} unoptimized className={avatar.custom ? undefined : styles.preset} /> : initials(draft.name)}</span>
             {editing ? <><input ref={uploadRef} type="file" accept="image/*" hidden onChange={(event) => void uploadAvatar(event.target.files?.[0])} /><button type="button" className={styles.camera} onClick={() => uploadRef.current?.click()} disabled={uploading} aria-label="Upload recipient photo"><Camera aria-hidden="true" /></button></> : null}
           </div>
-          <div className={styles.identity}><h2>{draft.name || recipient.name}</h2><p>{draft.relationship === "Other" ? draft.customRelationship : draft.relationship || "Relationship TBD"}</p><span>{summary}</span></div>
+          <div className={styles.identity}><h2>{draft.name || recipient.name}</h2><p>{draft.relationship === "Other" ? draft.customRelationship : draft.relationship || "Relationship TBD"}</p>{summary ? <span>{summary}</span> : null}</div>
           <nav className={styles.tabs} aria-label="Recipient profile sections">
             <button type="button" aria-current={tab === "profile" ? "page" : undefined} onClick={() => changeTab("profile")}><UserRound aria-hidden="true" />Profile</button>
             <button type="button" aria-current={tab === "saved" ? "page" : undefined} onClick={() => changeTab("saved")}><Bookmark aria-hidden="true" />Saved Gifts{savedCount !== null ? ` (${savedCount})` : ""}</button>
@@ -390,7 +391,7 @@ export function RecipientProfileModal({
                 </section>
               </div>
             </div>
-            <footer className={styles.footer}>{editing ? <button type="button" className={styles.cancel} onClick={cancelEditing}>Cancel Editing</button> : <Link className={APP_EVERGREEN_ACTION} href={`/gifts?recipientId=${encodeURIComponent(recipient.id)}`}>Get Gift Ideas</Link>}</footer>
+            <footer className={styles.footer}>{editing ? <button type="button" className={styles.cancel} onClick={cancelEditing}>Cancel Editing</button> : <Link className={`${APP_EVERGREEN_ACTION} ${styles.giftIdeasAction}`} href={`/gifts?recipientId=${encodeURIComponent(recipient.id)}`}>Get Gift Ideas<ArrowRight aria-hidden="true" /></Link>}</footer>
           </div>
         )}
       </div>
