@@ -5,6 +5,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
+import { RecipientSelector } from "@/components/recipients/RecipientSelector";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
@@ -19,7 +20,6 @@ import {
   Search,
   ShoppingBag,
   Trash2,
-  Users,
 } from "lucide-react";
 import { AFFILIATE_LINK_REL } from "@/lib/affiliateProduct";
 import {
@@ -51,6 +51,7 @@ export type RecipientSummary = {
   id: string;
   name: string;
   relationship: string | null;
+  gender?: string | null;
   is_self?: boolean;
   avatar_url?: string | null;
   avatar_icon?: string | null;
@@ -712,7 +713,7 @@ export function GiftHistoryTable() {
       const [recipientsRes, giftsRes] = await Promise.all([
         supabase
           .from("recipient_profiles")
-          .select("id, name, relationship, is_self, avatar_url, avatar_icon")
+          .select("id, name, relationship, gender, is_self, avatar_url, avatar_icon")
           .eq("user_id", userId)
           .order("name", { ascending: true }),
         supabase
@@ -1122,26 +1123,13 @@ export function GiftHistoryTable() {
       {activeTab === "history" ? (
         <div className="rounded-2xl border border-gp-app-evergreen/8 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.04)]">
           <div className="grid gap-3 lg:grid-cols-[minmax(14rem,0.85fr)_minmax(18rem,1.5fr)_minmax(13rem,0.65fr)]">
-            <label className="relative block min-w-0">
-              <span className="sr-only">Recipient</span>
-              <Users
-                aria-hidden="true"
-                className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
-              />
-              <select
-                value={recipientFilter}
-                onChange={(event) => setRecipientFilter(event.target.value)}
-                className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
-              >
-                <option value="all">All recipients</option>
-                {recipients.map((recipient) => (
-                  <option key={recipient.id} value={recipient.id}>
-                    {recipient.name}
-                    {recipient.relationship ? ` (${recipient.relationship})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <RecipientSelector
+              recipients={recipients}
+              value={recipientFilter}
+              onChange={setRecipientFilter}
+              allowAll
+              ariaLabel="Filter gift history by recipient"
+            />
 
             <label className="relative block min-w-0">
               <span className="sr-only">Search gift history</span>
@@ -1266,30 +1254,13 @@ export function GiftHistoryTable() {
           ) : null}
           <div className="rounded-2xl border border-gp-app-evergreen/8 bg-white/95 p-3 shadow-[0_7px_22px_rgba(15,61,62,0.04)]">
             <div className="grid gap-3 lg:grid-cols-[minmax(14rem,0.85fr)_minmax(18rem,1.5fr)_minmax(13rem,0.65fr)]">
-              <label className="relative block min-w-0">
-                <span className="sr-only">Recipient</span>
-                <Users
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gp-app-evergreen/70"
-                />
-                <select
-                  value={savedRecipientFilter}
-                  onChange={(event) =>
-                    setSavedRecipientFilter(event.target.value)
-                  }
-                  className="gp-input h-12 w-full cursor-pointer bg-white pl-10"
-                >
-                  <option value="all">All recipients</option>
-                  {recipients.map((recipient) => (
-                    <option key={recipient.id} value={recipient.id}>
-                      {recipient.name}
-                      {recipient.relationship
-                        ? ` (${recipient.relationship})`
-                        : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <RecipientSelector
+                recipients={recipients}
+                value={savedRecipientFilter}
+                onChange={setSavedRecipientFilter}
+                allowAll
+                ariaLabel="Filter saved ideas by recipient"
+              />
 
               <label className="relative block min-w-0">
                 <span className="sr-only">Search saved ideas</span>

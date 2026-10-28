@@ -1,12 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import { SavedGiftIdeasModal } from "@/components/recipients/SavedGiftIdeasModal";
+import {
+  RecipientSelector,
+  type RecipientSelectorRecipient,
+} from "@/components/recipients/RecipientSelector";
 import { FirstSuggestionsTipBanner } from "@/components/gifts/FirstSuggestionsTipBanner";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import { resolveGiftPreviewSource } from "@/lib/gifts/getGiftPreviewIcon";
@@ -37,33 +40,16 @@ import {
   Heart,
   Trash2,
 } from "lucide-react";
-import {
-  getRecipientAvatarVisual,
-  getRecipientInitialAvatarStyle,
-  type RecipientAvatarIcon,
-} from "@/lib/recipientAvatar";
-
-type RecipientOption = {
+type RecipientOption = RecipientSelectorRecipient & {
   id: string;
   name: string;
   relationship: string | null;
   pet_type: string | null;
   gender: string | null;
   avatar_url: string | null;
-  avatar_icon: RecipientAvatarIcon | null;
+  avatar_icon: string | null;
   gift_budget_min?: number | null;
   gift_budget_max?: number | null;
-};
-
-const describeRecipientRelationship = (recipient: RecipientOption) => {
-  if (!recipient.relationship) return "Relationship TBD";
-  if (
-    recipient.relationship.toLowerCase() === "pet" &&
-    recipient.pet_type?.trim()
-  ) {
-    return `Pet (${recipient.pet_type})`;
-  }
-  return recipient.relationship;
 };
 
 export type GiftSuggestion = {
@@ -593,9 +579,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
   const [prefilledRecipientId, setPrefilledRecipientId] = useState<string | null>(
     null,
   );
-  const [recipientMenuOpen, setRecipientMenuOpen] = useState(false);
-  const summaryButtonRef = useRef<HTMLButtonElement | null>(null);
-  const recipientMenuRef = useRef<HTMLDivElement | null>(null);
   const [savedGiftsRecipientId, setSavedGiftsRecipientId] = useState<
     string | null
   >(null);
@@ -706,22 +689,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       setPrefilledRecipientId(null);
     }
   }, [selectedRecipientId, prefilledRecipientId]);
-
-  useEffect(() => {
-    if (!recipientMenuOpen) return;
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target as Node;
-      const inButton = summaryButtonRef.current?.contains(target);
-      const inMenu = recipientMenuRef.current?.contains(target);
-      if (!inButton && !inMenu) {
-        setRecipientMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-    };
-  }, [recipientMenuOpen]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -1353,10 +1320,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
 
   const showPrefilledHint =
     !!selectedRecipient && prefilledRecipientId === selectedRecipient.id;
-  const selectedRelationshipLabel = selectedRecipient
-    ? describeRecipientRelationship(selectedRecipient)
-    : "";
-
   return (
     <section
       ref={suggestionsCardRef}
@@ -1392,145 +1355,13 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 >
                   Recipient
                 </label>
-                <div className="relative" id="recipient-summary">
-                  <button
-                    type="button"
-                    ref={summaryButtonRef}
-                    onClick={() =>
-                      setRecipientMenuOpen((previous) => !previous)
-                    }
-                    className="flex min-h-13 w-full items-center gap-3 rounded-xl border border-gp-evergreen/15 bg-white px-3 py-1.5 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
-                  >
-                    {(() => {
-                      const avatar = getRecipientAvatarVisual(selectedRecipient);
-                      return (
-                        <div
-                          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-white text-sm font-semibold text-gp-evergreen"
-                          style={
-                            avatar.kind === "initials"
-                              ? getRecipientInitialAvatarStyle(
-                                  selectedRecipient.gender,
-                                )
-                              : undefined
-                          }
-                        >
-                          {avatar.kind === "image" ? (
-                            <Image
-                              src={avatar.src}
-                              alt={avatar.alt}
-                              width={40}
-                              height={40}
-                              className="h-full w-full object-cover"
-                              unoptimized
-                            />
-                          ) : avatar.kind === "preset" ? (
-                            <Image
-                              src={avatar.src}
-                              alt={avatar.alt}
-                              width={34}
-                              height={34}
-                              className="h-8.5 w-8.5 object-contain"
-                              unoptimized
-                            />
-                          ) : (
-                            avatar.text
-                          )}
-                        </div>
-                      );
-                    })()}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gp-evergreen">
-                        {selectedRecipient.name}
-                      </p>
-                      <p className="text-xs text-gp-evergreen/70">
-                        {selectedRelationshipLabel}
-                      </p>
-                    </div>
-                    <svg
-                      viewBox="0 0 24 24"
-                      className={`h-5 w-5 text-gp-evergreen/70 transition-transform ${
-                        recipientMenuOpen ? "rotate-180" : ""
-                      }`}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-
-                  {recipientMenuOpen ? (
-                    <div
-                      ref={recipientMenuRef}
-                      className="absolute left-0 right-0 z-20 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-gp-evergreen/15 bg-white shadow-lg"
-                    >
-                      <ul className="divide-y divide-gp-evergreen/10">
-                        {recipients.map((recipient) => {
-                          const avatar = getRecipientAvatarVisual(recipient);
-                          const isActive = recipient.id === selectedRecipientId;
-                          return (
-                            <li key={recipient.id}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedRecipientId(recipient.id);
-                                  setRecipientMenuOpen(false);
-                                }}
-                                className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition ${
-                                  isActive
-                                    ? "bg-gp-cream/70 text-gp-evergreen font-semibold"
-                                    : "text-gp-evergreen hover:bg-gp-cream/60"
-                                }`}
-                              >
-                                <span
-                                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold"
-                                  style={
-                                    avatar.kind === "initials"
-                                      ? getRecipientInitialAvatarStyle(recipient.gender)
-                                      : undefined
-                                  }
-                                >
-                                  {avatar.kind === "image" ? (
-                                    <Image
-                                      src={avatar.src}
-                                      alt={avatar.alt}
-                                      width={40}
-                                      height={40}
-                                      className="h-full w-full object-cover"
-                                      unoptimized
-                                    />
-                                  ) : avatar.kind === "preset" ? (
-                                    <Image
-                                      src={avatar.src}
-                                      alt={avatar.alt}
-                                      width={32}
-                                      height={32}
-                                      className="h-8 w-8 object-contain"
-                                      unoptimized
-                                    />
-                                  ) : (
-                                    avatar.text
-                                  )}
-                                </span>
-                                <span className="min-w-0">
-                                  <span className="block truncate">
-                                    {recipient.name}
-                                  </span>
-                                  <span className="text-xs text-gp-evergreen/70">
-                                    {describeRecipientRelationship(recipient)}
-                                  </span>
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
+                <RecipientSelector
+                  id="recipient-summary"
+                  recipients={recipients}
+                  value={selectedRecipientId}
+                  onChange={setSelectedRecipientId}
+                  ariaLabel="Select gift recipient"
+                />
                 {showPrefilledHint ? (
                   <p className="gp-gift-generator-note mt-1.5 text-xs leading-4 text-gp-evergreen/55">
                     Ready to generate ideas for {selectedRecipient.name}. Adjust
