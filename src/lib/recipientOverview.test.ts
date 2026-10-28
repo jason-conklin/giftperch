@@ -4,9 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   fetchRecipientSavedCounts,
   filterAndSortRecipients,
-  hasSavedPreferences,
   recipientOccasions,
-  upcomingOccasionCount,
   type OverviewRecipient,
   type RecipientOccasion,
 } from "./recipientOverview";
@@ -40,33 +38,6 @@ const event = (
 });
 const today = new Date(2026, 9, 28, 12);
 
-test("preferences use persisted notes, all interest categories and budgets, not demographics", () => {
-  assert.equal(
-    hasSavedPreferences(
-      recipient({ notes: "   ", birthday: "2000-10-31" }),
-      [],
-    ),
-    false,
-  );
-  assert.equal(hasSavedPreferences(recipient(), [{ label: "  " }]), false);
-  assert.equal(
-    hasSavedPreferences(recipient(), [{ label: "Gardening" }]),
-    true,
-  );
-  assert.equal(
-    hasSavedPreferences(recipient({ notes: "Likes practical gifts" }), []),
-    true,
-  );
-  assert.equal(
-    hasSavedPreferences(recipient({ gift_budget_min: 0 }), []),
-    true,
-  );
-  assert.equal(
-    hasSavedPreferences(recipient({ annual_budget: 100 }), []),
-    true,
-  );
-});
-
 test("recipient occasions reuse annual recurrence, include today, omit past one-offs and unrelated events", () => {
   const rows = recipientOccasions(
     [recipient({ birthday: "1990-10-28" })],
@@ -82,17 +53,15 @@ test("recipient occasions reuse annual recurrence, include today, omit past one-
   assert.equal(rows[0].label, "Birthday");
   assert.equal(rows[0].date.getDate(), 28);
   assert.equal(rows[1].date.getFullYear(), 2026);
-  assert.equal(upcomingOccasionCount(rows, today), 2);
   const nextYear = recipientOccasions(
     [recipient({ birthday: "1990-10-20" })],
     [],
     today,
   );
   assert.equal(nextYear[0].date.getFullYear(), 2027);
-  assert.equal(upcomingOccasionCount(nextYear, today), 0);
 });
 
-test("30-day summary excludes later dates and duplicate stored birthdays", () => {
+test("recipient occasions preserve distinct labels and omit empty profiles", () => {
   const rows = recipientOccasions(
     [recipient({ birthday: "1990-10-31" })],
     [
@@ -106,7 +75,6 @@ test("30-day summary excludes later dates and duplicate stored birthdays", () =>
     today,
   );
   assert.equal(rows.length, 2);
-  assert.equal(upcomingOccasionCount(rows, today), 1);
   assert.deepEqual(recipientOccasions([recipient()], [], today), []);
 });
 

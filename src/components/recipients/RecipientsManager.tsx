@@ -635,7 +635,6 @@ export function RecipientsManager() {
   const [events, setEvents] = useState<RecipientOccasion[] | null>(null);
   const [savedCounts, setSavedCounts] = useState<Record<string, number> | null>(null);
   const [savedRevision, setSavedRevision] = useState(0);
-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [overviewError, setOverviewError] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [profileInitialTab, setProfileInitialTab] =
@@ -722,10 +721,8 @@ export function RecipientsManager() {
   useEffect(() => {
     let active = true;
     const fetchInterests = async () => {
-      setPreferencesLoaded(false);
       if (!recipients.length) {
         setInterests([]);
-        setPreferencesLoaded(true);
         return;
       }
       const ids = recipients.map((recipient) => recipient.id);
@@ -738,7 +735,6 @@ export function RecipientsManager() {
         setError(error.message);
       } else {
         setInterests(data ?? []);
-        setPreferencesLoaded(true);
       }
     };
 
@@ -973,7 +969,6 @@ export function RecipientsManager() {
         interests={interests}
         events={!isLoading && !recipients.length ? [] : events}
         savedCounts={!isLoading && !recipients.length ? {} : savedCounts}
-        preferencesLoaded={preferencesLoaded}
         loading={isLoading}
         onCreate={openCreateForm}
         onView={(recipient) => {

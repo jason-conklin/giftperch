@@ -91,76 +91,6 @@
   outline: none;
   cursor: pointer;
 }
-.summaries {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.25fr);
-  gap: 12px;
-}
-.summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid #eee7d7;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #fff, #fffcf5);
-  box-shadow: 0 3px 8px #6c54200a;
-}
-.summary > div {
-  min-width: 0;
-}
-.summary strong {
-  display: block;
-  font-size: 26px;
-  line-height: 1.2;
-  font-weight: 600;
-}
-.summary div > span {
-  display: block;
-  margin-top: 5px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--color-gp-app-muted);
-}
-.summary small {
-  display: block;
-  color: var(--color-gp-app-muted);
-  font-size: 11px;
-}
-.summaryIcon {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: #fbf3da;
-  color: #825b16;
-  overflow: hidden;
-}
-.summaryIcon svg {
-  width: 26px;
-  height: 26px;
-  stroke-width: 1.8;
-}
-.mascot {
-  object-fit: contain;
-  transform: scale(1.2);
-}
-.help b {
-  font-size: 15px;
-}
-.help > svg {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.help:hover {
-  border-color: #d9c189;
-  background: #fffcf3;
-}
-.help:focus-visible,
 .iconButton:focus-visible,
 .saved:focus-visible,
 .menuItems :focus-visible {
@@ -395,9 +325,6 @@
   font-size: 14px;
 }
 @container gp-page (max-width: 1050px) {
-  .summaries {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -445,29 +372,8 @@
     min-width: 40px;
     padding-inline: 6px;
   }
-  .summary {
-    gap: 9px;
-    padding: 12px;
-  }
-  .summaryIcon {
-    width: 34px;
-    height: 34px;
-  }
-  .summaryIcon svg {
-    width: 21px;
-    height: 21px;
-  }
-  .help > svg {
-    display: none;
-  }
-  .summary strong {
-    font-size: 23px;
-  }
 }
 @container gp-page (max-width: 340px) {
-  .summaries {
-    grid-template-columns: 1fr;
-  }
   .actions {
     grid-template-columns: 1fr;
   }

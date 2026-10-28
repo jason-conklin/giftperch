@@ -29,19 +29,6 @@ export type NextRecipientOccasion = {
 };
 export type RecipientSort = "newest" | "updated" | "name" | "occasion";
 
-export function hasSavedPreferences(
-  recipient: OverviewRecipient,
-  interests: ReadonlyArray<{ label: string }>,
-) {
-  return Boolean(
-    recipient.notes?.trim() ||
-    interests.some((item) => item.label.trim()) ||
-    recipient.gift_budget_min != null ||
-    recipient.gift_budget_max != null ||
-    recipient.annual_budget != null,
-  );
-}
-
 // Same local-calendar recurrence as Occasions: birthdays and explicitly annual
 // events recur; one-off past dates do not. Global holidays aren't recipient dates.
 export function recipientOccasions(
@@ -95,16 +82,6 @@ export function recipientOccasions(
       );
   }
   return result.sort((a, b) => a.date.getTime() - b.date.getTime());
-}
-
-export function upcomingOccasionCount(
-  occasions: ReadonlyArray<NextRecipientOccasion>,
-  now = new Date(),
-) {
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const end = new Date(start);
-  end.setDate(end.getDate() + 30);
-  return occasions.filter(({ date }) => date >= start && date < end).length;
 }
 
 export function filterAndSortRecipients<T extends OverviewRecipient>(

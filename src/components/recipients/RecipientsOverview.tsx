@@ -7,8 +7,6 @@ import {
   ArrowRight,
   Bookmark,
   CalendarDays,
-  ChevronRight,
-  Heart,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -25,9 +23,7 @@ import {
 import { PerchPalLoader } from "@/components/perchpal/PerchPalLoader";
 import {
   filterAndSortRecipients,
-  hasSavedPreferences,
   recipientOccasions,
-  upcomingOccasionCount,
   type RecipientOccasion,
   type RecipientSort,
 } from "@/lib/recipientOverview";
@@ -39,7 +35,6 @@ type Props = {
   interests: RecipientInterest[];
   events: RecipientOccasion[] | null;
   savedCounts: Record<string, number> | null;
-  preferencesLoaded: boolean;
   loading: boolean;
   notices?: ReactNode;
   onCreate: () => void;
@@ -123,7 +118,6 @@ export function RecipientsOverview(props: Props) {
     interests,
     events,
     savedCounts,
-    preferencesLoaded,
     loading,
   } = props;
   const [search, setSearch] = useState("");
@@ -142,13 +136,6 @@ export function RecipientsOverview(props: Props) {
       map.set(item.recipient_id, [...(map.get(item.recipient_id) ?? []), item]);
     return map;
   }, [interests]);
-  const preferences = recipients.filter((recipient) =>
-    hasSavedPreferences(
-      recipient,
-      interestsByRecipient.get(recipient.id) ?? [],
-    ),
-  ).length;
-
   return (
     <div className={styles.overview}>
       <header className={styles.header}>
@@ -200,65 +187,6 @@ export function RecipientsOverview(props: Props) {
             </select>
           </span>
         </label>
-      </div>
-
-      <div className={styles.summaries}>
-        <div className={styles.summary}>
-          <span className={styles.summaryIcon}>
-            <Users aria-hidden="true" />
-          </span>
-          <div>
-            <strong>{loading ? "—" : recipients.length}</strong>
-            <span>Total Recipients</span>
-          </div>
-        </div>
-        <div
-          className={styles.summary}
-          title="Profiles with saved notes, interests, vibes, personality traits, brands, or budgets"
-        >
-          <span className={styles.summaryIcon}>
-            <Heart aria-hidden="true" />
-          </span>
-          <div>
-            <strong>{loading || !preferencesLoaded ? "—" : preferences}</strong>
-            <span>With Saved Preferences</span>
-          </div>
-        </div>
-        <div
-          className={styles.summary}
-          title="Recipient birthdays and saved occasions in the next 30 days"
-        >
-          <span className={styles.summaryIcon}>
-            <CalendarDays aria-hidden="true" />
-          </span>
-          <div>
-            <strong>
-              {loading || events === null
-                ? "—"
-                : upcomingOccasionCount(occasions)}
-            </strong>
-            <span>Upcoming Occasions</span>
-            <small>Next 30 days</small>
-          </div>
-        </div>
-        <Link href="/gifts" className={`${styles.summary} ${styles.help}`}>
-          <span className={styles.summaryIcon}>
-            <Image
-              src="/giftperch_perchpal_front.png"
-              alt=""
-              fill
-              sizes="58px"
-              className={styles.mascot}
-              aria-hidden="true"
-              unoptimized
-            />
-          </span>
-          <div>
-            <b>Let PerchPal Help</b>
-            <span>Find a thoughtful gift.</span>
-          </div>
-          <ChevronRight size={20} aria-hidden="true" />
-        </Link>
       </div>
 
       {props.notices}
