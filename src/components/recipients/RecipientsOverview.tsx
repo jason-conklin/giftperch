@@ -14,7 +14,6 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
-  Sparkles,
   Tag,
   Trash2,
   Users,
@@ -244,7 +243,15 @@ export function RecipientsOverview(props: Props) {
         </div>
         <Link href="/gifts" className={`${styles.summary} ${styles.help}`}>
           <span className={styles.summaryIcon}>
-            <Sparkles aria-hidden="true" />
+            <Image
+              src="/giftperch_perchpal_front.png"
+              alt=""
+              fill
+              sizes="58px"
+              className={styles.mascot}
+              aria-hidden="true"
+              unoptimized
+            />
           </span>
           <div>
             <b>Let PerchPal Help</b>
@@ -322,6 +329,10 @@ export function RecipientsOverview(props: Props) {
                       />
                     )}
                   </div>
+                  <div className={styles.identity}>
+                    <h2>{recipient.name}</h2>
+                    <p>{props.relationshipFor(recipient)}</p>
+                  </div>
                   <div className={styles.cardTools}>
                     <button
                       type="button"
@@ -339,10 +350,6 @@ export function RecipientsOverview(props: Props) {
                       onDelete={props.onDelete}
                     />
                   </div>
-                </div>
-                <div className={styles.identity}>
-                  <h2>{recipient.name}</h2>
-                  <p>{props.relationshipFor(recipient)}</p>
                 </div>
                 {recipient.notes?.trim() ? (
                   <p className={styles.description}>{recipient.notes.trim()}</p>

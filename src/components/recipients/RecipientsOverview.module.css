@@ -129,6 +129,7 @@
   font-size: 11px;
 }
 .summaryIcon {
+  position: relative;
   width: 48px;
   height: 48px;
   display: grid;
@@ -137,11 +138,16 @@
   border-radius: 50%;
   background: #fbf3da;
   color: #825b16;
+  overflow: hidden;
 }
 .summaryIcon svg {
   width: 26px;
   height: 26px;
   stroke-width: 1.8;
+}
+.mascot {
+  object-fit: contain;
+  transform: scale(1.2);
 }
 .help b {
   font-size: 15px;
@@ -178,16 +184,13 @@
   box-shadow: 0 3px 9px #57471d0a;
 }
 .cardTop {
-  display: flex;
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: flex-end;
   gap: 12px;
-  min-height: 40px;
+  min-height: 68px;
 }
 .avatar {
-  position: absolute;
-  top: 16px;
-  left: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,6 +217,7 @@
 .cardTools {
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 3px;
 }
 .iconButton,
@@ -279,14 +283,15 @@
   color: #b42318;
 }
 .identity {
-  margin-left: 84px;
-  margin-top: 0;
+  min-width: 0;
+  padding-top: 1px;
 }
 .identity h2 {
   font-size: 19px;
   line-height: 1.3;
   font-weight: 600;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 .identity p {
   margin-top: 3px;
@@ -298,8 +303,7 @@
   font-size: 13px;
   line-height: 1.55;
   color: var(--color-gp-app-muted);
-  margin-top: 10px;
-  margin-left: 84px;
+  margin-top: 12px;
   overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -311,7 +315,6 @@
   flex-wrap: wrap;
   gap: 6px;
   margin: 12px 0 16px;
-  margin-left: 84px;
 }
 .tags li {
   font-size: 11px;
@@ -427,6 +430,20 @@
   }
   .grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .identity h2 {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+  .cardTop {
+    gap: 8px;
+  }
+  .cardTools {
+    gap: 1px;
+  }
+  .saved {
+    min-width: 40px;
+    padding-inline: 6px;
   }
   .summary {
     gap: 9px;
