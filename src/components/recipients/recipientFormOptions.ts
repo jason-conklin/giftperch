@@ -1,12 +1,9 @@
-export type RecipientAvatarIcon =
-  | "babyboy"
-  | "babygirl"
-  | "boy"
-  | "girl"
-  | "man"
-  | "woman"
-  | "dog"
-  | "cat";
+import {
+  RECIPIENT_AVATAR_OPTIONS,
+  type RecipientAvatarIcon,
+} from "@/lib/recipientAvatar";
+
+export type { RecipientAvatarIcon };
 
 export const RECIPIENT_RELATIONSHIPS = [
   "Mother",
@@ -55,17 +52,4 @@ export const SUGGESTED_RECIPIENT_INTERESTS = [
   "Home decor",
 ] as const;
 
-export const RECIPIENT_AVATARS: ReadonlyArray<{
-  key: RecipientAvatarIcon;
-  label: string;
-  src: string;
-}> = [
-  { key: "babyboy", label: "Baby boy", src: "/babyboy_icon.png" },
-  { key: "babygirl", label: "Baby girl", src: "/babygirl_icon.png" },
-  { key: "boy", label: "Boy", src: "/boy_icon.png" },
-  { key: "girl", label: "Girl", src: "/girl_icon.png" },
-  { key: "man", label: "Man", src: "/man_icon.png" },
-  { key: "woman", label: "Woman", src: "/woman_icon.png" },
-  { key: "dog", label: "Dog", src: "/dog_icon.png" },
-  { key: "cat", label: "Cat", src: "/cat_icon.png" },
-];
+export const RECIPIENT_AVATARS = RECIPIENT_AVATAR_OPTIONS;

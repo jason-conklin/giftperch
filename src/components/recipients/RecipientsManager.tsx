@@ -7,7 +7,7 @@ import { AddRecipientModal } from "./AddRecipientModal";
 import { RecipientsOverview } from "./RecipientsOverview";
 import { RecipientProfileModal } from "./RecipientProfileModal";
 import { fetchRecipientSavedCounts, type RecipientOccasion } from "@/lib/recipientOverview";
-import { RECIPIENT_AVATARS } from "./recipientFormOptions";
+import { getRecipientAvatarVisual } from "@/lib/recipientAvatar";
 
 export type RecipientInterest = {
   id: string;
@@ -65,43 +65,6 @@ const describeRelationship = (recipient: RecipientProfile) => {
     return `Pet (${recipient.pet_type})`;
   }
   return recipient.relationship;
-};
-
-const getInitials = (name: string) => {
-  const safe = name.trim();
-  if (!safe) return "GP";
-  return safe
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-};
-
-const getRecipientAvatarVisual = (recipient: RecipientProfile) => {
-  if (recipient.avatar_url) {
-    return {
-      kind: "image" as const,
-      src: recipient.avatar_url,
-      alt: `${recipient.name} avatar`,
-    };
-  }
-  if (recipient.avatar_icon) {
-    const preset = RECIPIENT_AVATARS.find(
-      (option) => option.key === recipient.avatar_icon
-    );
-    if (preset) {
-      return {
-        kind: "preset" as const,
-        src: preset.src,
-        alt: preset.label,
-      };
-    }
-  }
-  return {
-    kind: "initials" as const,
-    text: getInitials(recipient.name),
-  };
 };
 
 export function RecipientsManager() {

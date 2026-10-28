@@ -1,5 +1,9 @@
 import { getSafeImageUrl } from "@/lib/affiliateProduct";
 import {
+  getRecipientInitials,
+  RECIPIENT_AVATAR_OPTIONS,
+} from "@/lib/recipientAvatar";
+import {
   resolveGiftPreviewSource,
   type GiftPreviewMetadata,
   type GiftPreviewSource,
@@ -7,20 +11,10 @@ import {
 
 export const DASHBOARD_PREVIEW_LIMIT = 10;
 
-const RECIPIENT_AVATARS: Record<string, string> = {
-  babyboy: "/babyboy_icon.png",
-  babygirl: "/babygirl_icon.png",
-  boy: "/boy_icon.png",
-  girl: "/girl_icon.png",
-  man: "/man_icon.png",
-  woman: "/woman_icon.png",
-  dog: "/dog_icon.png",
-  cat: "/cat_icon.png",
-};
-
 export type DashboardRecipientPreview = {
   id: string;
   name: string;
+  gender: string | null;
   avatar_url: string | null;
   avatar_icon: string | null;
 };
@@ -42,11 +36,13 @@ export type DashboardSuggestionRunPreview = {
 };
 
 export type DashboardPreviewImage = {
-  src: string;
+  src: string | null;
   alt: string;
   kind: "recipient" | "gift";
   fallbackSrc?: string;
   previewSource?: GiftPreviewSource;
+  initials?: string;
+  gender?: string | null;
 };
 
 export type DashboardPreviewGroup = {
@@ -77,19 +73,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function getRecipientAvatar(
   recipient: DashboardRecipientPreview,
-): DashboardPreviewImage | null {
-  const preset = recipient.avatar_icon
-    ? RECIPIENT_AVATARS[recipient.avatar_icon]
-    : undefined;
+): DashboardPreviewImage {
+  const preset = RECIPIENT_AVATAR_OPTIONS.find(
+    (option) => option.key === recipient.avatar_icon,
+  )?.src;
   const custom = getSafeImageUrl(recipient.avatar_url);
   const src = custom ?? preset;
-  if (!src) return null;
 
   return {
-    src,
+    src: src ?? null,
     alt: `${recipient.name} avatar`,
     kind: "recipient",
     fallbackSrc: custom ? preset : undefined,
+    initials: getRecipientInitials(recipient.name),
+    gender: recipient.gender,
   };
 }
 
@@ -128,8 +125,7 @@ export function buildRecipientPreviewGroups(
 ): DashboardPreviewGroup[] {
   const images = recipients
     .slice(0, limit)
-    .map(getRecipientAvatar)
-    .filter((image): image is DashboardPreviewImage => image !== null);
+    .map(getRecipientAvatar);
 
   if (!images.length) return [];
   if (images.length <= 3) return [{ id: "recipients", images }];
@@ -150,8 +146,8 @@ export function buildSavedGiftPreviewGroups(
 ): DashboardPreviewGroup[] {
   return gifts.slice(0, limit).flatMap((gift) => {
     const recipient = recipients.get(gift.recipient_id);
-    const avatar = recipient ? getRecipientAvatar(recipient) : null;
-    if (!avatar) return [];
+    if (!recipient) return [];
+    const avatar = getRecipientAvatar(recipient);
 
     const previewSource = resolveGiftPreviewSource({
       metadata: {
@@ -188,8 +184,8 @@ export function buildSuggestionRunPreviewGroups(
 ): DashboardPreviewGroup[] {
   return runs.slice(0, limit).flatMap((run) => {
     const recipient = recipients.get(run.recipient_id);
-    const avatar = recipient ? getRecipientAvatar(recipient) : null;
-    if (!avatar || !Array.isArray(run.suggestions)) return [];
+    if (!recipient || !Array.isArray(run.suggestions)) return [];
+    const avatar = getRecipientAvatar(recipient);
 
     const suggestions = run.suggestions.filter(isRecord) as SuggestionRecord[];
     const suggestion =

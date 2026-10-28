@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Gift, Users } from "lucide-react";
+import { Gift } from "lucide-react";
 import { GiftPreviewImage } from "@/components/gifts/GiftPreviewImage";
 import type {
   DashboardPreviewGroup,
   DashboardPreviewImage,
 } from "@/lib/dashboardPreviews";
+import { getRecipientInitialAvatarStyle } from "@/lib/recipientAvatar";
 
 export const DASHBOARD_PREVIEW_ROTATION_INTERVAL_MS = 3000;
 const PREVIEW_IMAGE_SIZE_PX = 48;
@@ -16,16 +17,29 @@ const PREVIEW_IMAGE_OVERLAP_PX = 12;
 function PreviewImage({ image }: { image: DashboardPreviewImage }) {
   const [src, setSrc] = useState(image.src);
   const [failed, setFailed] = useState(false);
+  const showRecipientInitials =
+    image.kind === "recipient" && (!src || failed);
 
   return (
-    <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white bg-[#f4f0e5] shadow-[0_3px_10px_rgba(15,61,62,0.16)]">
-      {failed ? (
+    <span
+      className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white bg-[#f4f0e5] text-gp-app-evergreen shadow-[0_3px_10px_rgba(15,61,62,0.16)]"
+      style={
+        showRecipientInitials
+          ? getRecipientInitialAvatarStyle(image.gender)
+          : undefined
+      }
+    >
+      {showRecipientInitials ? (
+        <span className="flex h-full w-full items-center justify-center text-sm font-semibold">
+          {image.initials ?? "GP"}
+        </span>
+      ) : failed ? (
         <span className="flex h-full w-full items-center justify-center text-gp-app-evergreen/70">
-          {image.kind === "recipient" ? (
-            <Users aria-hidden="true" className="h-5 w-5" />
-          ) : (
-            <Gift aria-hidden="true" className="h-5 w-5" />
-          )}
+          <Gift aria-hidden="true" className="h-5 w-5" />
+        </span>
+      ) : !src ? (
+        <span className="flex h-full w-full items-center justify-center text-gp-app-evergreen/70">
+          <Gift aria-hidden="true" className="h-5 w-5" />
         </span>
       ) : image.kind === "gift" && image.previewSource ? (
         <GiftPreviewImage
@@ -123,7 +137,7 @@ export function RotatingImageStack({
         >
           {group.images.map((image, imageIndex) => (
             <PreviewImage
-              key={`${group.id}-${image.src}-${imageIndex}`}
+              key={`${group.id}-${image.src ?? image.initials ?? "preview"}-${imageIndex}`}
               image={image}
             />
           ))}

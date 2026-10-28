@@ -11,12 +11,14 @@ const recipients: DashboardRecipientPreview[] = [
   {
     id: "recipient-1",
     name: "Maya",
+    gender: "female",
     avatar_url: "https://images.example.com/maya.jpg",
     avatar_icon: null,
   },
   {
     id: "recipient-2",
     name: "Dad",
+    gender: "male",
     avatar_url: null,
     avatar_icon: "man",
   },
@@ -35,6 +37,89 @@ test("recipient previews handle empty, single, and multiple image pools", () => 
   const groups = buildRecipientPreviewGroups(largerPool);
   assert.equal(groups.length, 5);
   assert.ok(groups.every((group) => group.images.length === 3));
+});
+
+test("recipient previews retain gender-aware initials when no image is saved", () => {
+  const initialRecipients: DashboardRecipientPreview[] = [
+    {
+      id: "recipient-3",
+      name: "Alex Morgan",
+      gender: "male",
+      avatar_url: null,
+      avatar_icon: null,
+    },
+    {
+      id: "recipient-4",
+      name: "Emma",
+      gender: "female",
+      avatar_url: null,
+      avatar_icon: null,
+    },
+    {
+      id: "recipient-5",
+      name: "Sam",
+      gender: null,
+      avatar_url: null,
+      avatar_icon: null,
+    },
+  ];
+
+  const images = buildRecipientPreviewGroups(initialRecipients)[0]?.images;
+  assert.deepEqual(
+    images?.map(({ src, initials, gender }) => ({ src, initials, gender })),
+    [
+      { src: null, initials: "AM", gender: "male" },
+      { src: null, initials: "E", gender: "female" },
+      { src: null, initials: "S", gender: null },
+    ],
+  );
+});
+
+test("saved gift and run previews preserve product imagery with initials avatars", () => {
+  const recipient: DashboardRecipientPreview = {
+    id: "recipient-initials",
+    name: "Alex",
+    gender: "male",
+    avatar_url: null,
+    avatar_icon: null,
+  };
+  const recipientMap = new Map([[recipient.id, recipient]]);
+  const saved = buildSavedGiftPreviewGroups(
+    [
+      {
+        id: "gift-initials",
+        recipient_id: recipient.id,
+        title: "Travel mug",
+        image_url: "https://images.example.com/travel-mug.jpg",
+        product_match: null,
+      },
+    ],
+    recipientMap,
+  );
+  const runs = buildSuggestionRunPreviewGroups(
+    [
+      {
+        id: "run-initials",
+        recipient_id: recipient.id,
+        suggestions: [
+          {
+            title: "Fishing reel",
+            image_url: "https://images.example.com/reel.jpg",
+          },
+        ],
+      },
+    ],
+    recipientMap,
+  );
+
+  assert.equal(saved[0]?.images[0]?.initials, "A");
+  assert.equal(saved[0]?.images[0]?.gender, "male");
+  assert.equal(
+    saved[0]?.images[1]?.src,
+    "https://images.example.com/travel-mug.jpg",
+  );
+  assert.equal(runs[0]?.images[0]?.initials, "A");
+  assert.equal(runs[0]?.images[1]?.src, "https://images.example.com/reel.jpg");
 });
 
 test("saved gift previews preserve recipient and product association", () => {

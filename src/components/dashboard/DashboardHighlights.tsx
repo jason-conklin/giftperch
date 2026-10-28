@@ -40,6 +40,7 @@ type RecipientSummary = {
   id: string;
   name: string;
   birthday: string | null;
+  gender: string | null;
   avatar_url: string | null;
   avatar_icon: string | null;
 };
@@ -224,7 +225,7 @@ export function DashboardHighlights() {
         ] = await Promise.all([
             supabase
               .from("recipient_profiles")
-              .select("id, name, birthday, avatar_url, avatar_icon")
+              .select("id, name, birthday, gender, avatar_url, avatar_icon")
               .eq("user_id", user.id)
               .eq("is_self", false)
               .order("created_at", { ascending: true }),

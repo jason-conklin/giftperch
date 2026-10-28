@@ -37,57 +37,22 @@ import {
   Heart,
   Trash2,
 } from "lucide-react";
-
-type AvatarIconKey =
-  | "babyboy"
-  | "babygirl"
-  | "boy"
-  | "girl"
-  | "man"
-  | "woman"
-  | "dog"
-  | "cat";
+import {
+  getRecipientAvatarVisual,
+  getRecipientInitialAvatarStyle,
+  type RecipientAvatarIcon,
+} from "@/lib/recipientAvatar";
 
 type RecipientOption = {
   id: string;
   name: string;
   relationship: string | null;
   pet_type: string | null;
+  gender: string | null;
   avatar_url: string | null;
-  avatar_icon: AvatarIconKey | null;
+  avatar_icon: RecipientAvatarIcon | null;
   gift_budget_min?: number | null;
   gift_budget_max?: number | null;
-};
-
-const PRESET_AVATAR_OPTIONS: ReadonlyArray<{
-  key: AvatarIconKey;
-  label: string;
-  image: string;
-}> = [
-  { key: "babyboy", label: "Baby boy", image: "/babyboy_icon.png" },
-  { key: "babygirl", label: "Baby girl", image: "/babygirl_icon.png" },
-  { key: "boy", label: "Boy", image: "/boy_icon.png" },
-  { key: "girl", label: "Girl", image: "/girl_icon.png" },
-  { key: "man", label: "Man", image: "/man_icon.png" },
-  { key: "woman", label: "Woman", image: "/woman_icon.png" },
-  { key: "dog", label: "Dog", image: "/dog_icon.png" },
-  { key: "cat", label: "Cat", image: "/cat_icon.png" },
-];
-
-type RecipientAvatarVisual =
-  | { kind: "image"; src: string; alt: string }
-  | { kind: "preset"; src: string; alt: string }
-  | { kind: "initials"; text: string };
-
-const getInitials = (name: string) => {
-  const safe = name.trim();
-  if (!safe) return "GP";
-  return safe
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 };
 
 const describeRecipientRelationship = (recipient: RecipientOption) => {
@@ -99,27 +64,6 @@ const describeRecipientRelationship = (recipient: RecipientOption) => {
     return `Pet (${recipient.pet_type})`;
   }
   return recipient.relationship;
-};
-
-const getRecipientAvatarVisual = (
-  recipient: RecipientOption,
-): RecipientAvatarVisual => {
-  if (recipient.avatar_url) {
-    return {
-      kind: "image",
-      src: recipient.avatar_url,
-      alt: `${recipient.name} avatar`,
-    };
-  }
-  if (recipient.avatar_icon) {
-    const preset = PRESET_AVATAR_OPTIONS.find(
-      (option) => option.key === recipient.avatar_icon,
-    );
-    if (preset) {
-      return { kind: "preset", src: preset.image, alt: preset.label };
-    }
-  }
-  return { kind: "initials", text: getInitials(recipient.name) };
 };
 
 export type GiftSuggestion = {
@@ -699,7 +643,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
       const { data, error } = await supabase
         .from("recipient_profiles")
         .select(
-          "id, name, relationship, pet_type, avatar_url, avatar_icon, is_self, gift_budget_min, gift_budget_max",
+          "id, name, relationship, pet_type, gender, avatar_url, avatar_icon, is_self, gift_budget_min, gift_budget_max",
         )
         .eq("user_id", user.id)
         .eq("is_self", false)
@@ -1457,11 +1401,20 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                     }
                     className="flex min-h-13 w-full items-center gap-3 rounded-xl border border-gp-evergreen/15 bg-white px-3 py-1.5 text-left transition hover:border-gp-evergreen/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gp-gold/70 cursor-pointer"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-white text-sm font-semibold text-gp-evergreen">
-                      {(() => {
-                        const avatar = getRecipientAvatarVisual(selectedRecipient);
-                        if (avatar.kind === "image") {
-                          return (
+                    {(() => {
+                      const avatar = getRecipientAvatarVisual(selectedRecipient);
+                      return (
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-white text-sm font-semibold text-gp-evergreen"
+                          style={
+                            avatar.kind === "initials"
+                              ? getRecipientInitialAvatarStyle(
+                                  selectedRecipient.gender,
+                                )
+                              : undefined
+                          }
+                        >
+                          {avatar.kind === "image" ? (
                             <Image
                               src={avatar.src}
                               alt={avatar.alt}
@@ -1470,10 +1423,7 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                               className="h-full w-full object-cover"
                               unoptimized
                             />
-                          );
-                        }
-                        if (avatar.kind === "preset") {
-                          return (
+                          ) : avatar.kind === "preset" ? (
                             <Image
                               src={avatar.src}
                               alt={avatar.alt}
@@ -1482,11 +1432,12 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                               className="h-8.5 w-8.5 object-contain"
                               unoptimized
                             />
-                          );
-                        }
-                        return avatar.text;
-                      })()}
-                    </div>
+                          ) : (
+                            avatar.text
+                          )}
+                        </div>
+                      );
+                    })()}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gp-evergreen">
                         {selectedRecipient.name}
@@ -1534,7 +1485,14 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                                     : "text-gp-evergreen hover:bg-gp-cream/60"
                                 }`}
                               >
-                                <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold">
+                                <span
+                                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-gp-evergreen/15 bg-gp-cream text-xs font-semibold"
+                                  style={
+                                    avatar.kind === "initials"
+                                      ? getRecipientInitialAvatarStyle(recipient.gender)
+                                      : undefined
+                                  }
+                                >
                                   {avatar.kind === "image" ? (
                                     <Image
                                       src={avatar.src}
