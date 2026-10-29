@@ -23,9 +23,9 @@ const featureHighlights = [
       "Track birthdays, anniversaries, and seasonal events so reminders hit before shipping deadlines do.",
   },
   {
-    title: "Wishlists & sharing",
+    title: "Profile sharing",
     description:
-      "Optional public wishlists let you curate your own favorites or share guides with friends and family.",
+      "Share your recipient preferences so friends and family can import the details that make gifts more personal.",
   },
 ] as const;
 

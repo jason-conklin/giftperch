@@ -35,7 +35,7 @@ const posts = {
         heading: "Close the loop with gift history",
         paragraphs: [
           "Log what you actually purchased and how it landed. That feedback feeds directly into future PerchPal prompts so it never suggests the same dud twice.",
-          "Move any standout idea into your wishlist to resurface or share when someone asks what to buy them.",
+          "Save any standout idea to resurface when someone asks what to buy them.",
         ],
       },
     ],

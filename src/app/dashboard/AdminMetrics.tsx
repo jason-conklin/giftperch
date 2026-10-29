@@ -10,7 +10,6 @@ type Metrics = {
   registeredUserEmails: string[];
   recipientProfiles: number;
   giftSuggestions: number;
-  wishlistItems: number;
 };
 
 const ADMIN_EMAILS = new Set(["giftperch@gmail.com", "jasonconklin64@gmail.com"]);
@@ -90,7 +89,6 @@ export function AdminMetrics() {
             <Stat label="Registered users" value={metrics.users} />
             <Stat label="Recipient profiles" value={metrics.recipientProfiles} />
             <Stat label="Gift suggestions Runs" value={metrics.giftSuggestions} />
-            <Stat label="Wishlist items" value={metrics.wishlistItems} />
           </div>
           <RegisteredUserEmails emails={metrics.registeredUserEmails} />
         </div>

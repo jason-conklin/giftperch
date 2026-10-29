@@ -19,7 +19,7 @@ export default function TermsPage() {
           Using GiftPerch
         </h2>
         <p className="text-sm text-gp-evergreen/80">
-          GiftPerch helps you manage recipient profiles, wishlists, occasions, and AI gift
+          GiftPerch helps you manage recipient profiles, occasions, and AI gift
           ideas. Please use it respectfully—do not attempt to break, abuse, or misuse the
           service or its data.
         </p>

@@ -604,12 +604,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
     () => recipients.find((r) => r.id === selectedRecipientId) ?? null,
     [recipients, selectedRecipientId],
   );
-  const selectedBudgetDisplay = selectedRecipient
-    ? formatBudgetRange(
-        selectedRecipient.gift_budget_min,
-        selectedRecipient.gift_budget_max,
-      )
-    : "Select a recipient";
   const pendingDeleteRun = useMemo(
     () => runs.find((run) => run.id === pendingDeleteRunId) ?? null,
     [pendingDeleteRunId, runs],
@@ -1405,15 +1399,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
                 </select>
               </div>
 
-              <div className="gp-gift-generator-budget min-w-0">
-                <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-gp-evergreen/60">
-                  Recipient profile budget
-                </span>
-                <div className="flex min-h-13 items-center rounded-xl border border-gp-evergreen/15 bg-white px-3.5 text-sm font-semibold text-gp-evergreen">
-                  {selectedBudgetDisplay}
-                </div>
-              </div>
-
               <div className="gp-gift-generator-count min-w-0">
                 <label
                   htmlFor="num-suggestions-input"
@@ -1617,17 +1602,6 @@ export function GiftSuggestionsPanel({ onFirstRunComplete }: GiftSuggestionsPane
           </div>
         </>
       )}
-      <p className="text-center text-xs text-gp-evergreen/70">
-        Want to browse Amazon directly?{" "}
-        <a
-          href="https://www.amazon.com/?tag=giftperch-20"
-          target="_blank"
-          rel="sponsored noopener noreferrer"
-          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
-        >
-          Shop Amazon’s full catalog »
-        </a>
-      </p>
       {savedGiftsRecipientId ? (
         <SavedGiftIdeasModal
           recipientId={savedGiftsRecipientId}

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   const userId = user.id;
 
   try {
-    // Gather recipient and wishlist ids for cascading deletes.
+    // Gather recipient ids for dependent application records.
     const { data: recipientRows, error: recipientFetchError } = await supabase
       .from("recipient_profiles")
       .select("id")
@@ -45,26 +45,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const { data: wishlistRows, error: wishlistFetchError } = await supabase
-      .from("wishlists")
-      .select("id")
-      .eq("user_id", userId);
-    if (wishlistFetchError) throw wishlistFetchError;
-    const wishlistIds = (wishlistRows ?? []).map((w) => w.id);
-    if (wishlistIds.length) {
-      const { error } = await supabase
-        .from("wishlist_items")
-        .delete()
-        .in("wishlist_id", wishlistIds);
-      if (error) throw error;
-    }
-
     const deletions = [
       supabase.from("gift_guides").delete().eq("user_id", userId),
       supabase.from("ai_interactions").delete().eq("user_id", userId),
       supabase.from("gift_history").delete().eq("user_id", userId),
       supabase.from("gift_suggestions").delete().eq("user_id", userId),
-      supabase.from("wishlists").delete().eq("user_id", userId),
       supabase.from("recipient_profiles").delete().eq("user_id", userId),
       supabase.from("user_settings").delete().eq("user_id", userId),
       supabase.from("profiles").delete().eq("id", userId),

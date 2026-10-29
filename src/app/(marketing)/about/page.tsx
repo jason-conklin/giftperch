@@ -117,7 +117,7 @@ export default function AboutPage() {
         </div>
         <div className="gp-card space-y-4 text-base text-gp-evergreen/80">
           <p className="max-w-3xl">
-            GiftPerch keeps recipient profiles, PerchPal AI, wishlists, and gift
+            GiftPerch keeps recipient profiles, PerchPal AI, saved gift ideas, and gift
             history in a single workspace. Add the people you shop for, log
             budgets, interests, and what makes them smile, then ask PerchPal for
             context-rich recommendations.
@@ -253,18 +253,6 @@ export default function AboutPage() {
         >
           GiftPerch Journal.
         </Link>
-      </section>
-
-      <section className="text-sm text-gp-evergreen text-center">
-        Want to browse on your own?{" "}
-        <a
-          href="https://www.amazon.com/?tag=giftperch-20"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-gp-evergreen underline underline-offset-4 transition hover:text-gp-gold"
-        >
-          Explore Amazon’s gift categories »
-        </a>
       </section>
 
     </div>

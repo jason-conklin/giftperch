@@ -232,7 +232,7 @@ function AddGiftModal({
             <input
               type="text"
               inputMode="url"
-              placeholder="https://www.amazon.com or www.amazon.com"
+              placeholder="https://store.example/product"
               value={formState.url}
               onChange={(event) =>
                 onChange((prev) => ({ ...prev, url: event.target.value }))

@@ -1,11 +1,26 @@
 ﻿"use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSupabaseSession } from "@/lib/hooks/useSupabaseSession";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Ban, Camera, Check, Heart, Plus, Tag, UserRound } from "lucide-react";
+import { APP_GOLD_ACTION } from "@/components/ui/appActionStyles";
+import {
+  RECIPIENT_AVATARS,
+  SUGGESTED_RECIPIENT_INTERESTS,
+  type RecipientAvatarIcon,
+} from "@/components/recipients/recipientFormOptions";
+import styles from "@/components/recipients/RecipientProfileModal.module.css";
+import {
+  buildRecipientPreferenceChanges,
+  normalizePreferenceLabel,
+  parseRecipientPreferenceList,
+  preferenceKey,
+  splitRecipientRecommendationPreferences,
+} from "@/lib/recipientRecommendationContext";
+import { getRecipientInitials } from "@/lib/recipientAvatar";
 
 type Profile = {
   display_name: string | null;
@@ -22,31 +37,38 @@ type UserSettings = {
 type SelfProfileRow = {
   id: string;
   name: string;
-  relationship: string | null;
   notes: string | null;
-  annual_budget: number | null;
-  gift_budget_min: number | null;
-  gift_budget_max: number | null;
+  birthday: string | null;
+  avatar_url: string | null;
+  avatar_icon: string | null;
   self_slug: string | null;
 };
 
 type SelfProfile = {
   id: string;
   name: string;
-  relationship: string | null;
   notes: string | null;
-  annual_budget: number | null;
-  gift_budget_min: number | null;
-  gift_budget_max: number | null;
+  birthday: string | null;
+  avatar_url: string | null;
+  avatar_icon: string | null;
   self_slug: string | null;
 };
 
 type SelfProfileFormState = {
   name: string;
   notes: string;
-  annualBudget: string;
-  giftBudgetMin: string;
-  giftBudgetMax: string;
+  birthday: string;
+  avatarUrl: string;
+  avatarIcon: RecipientAvatarIcon | "";
+  interests: string[];
+  avoidances: string;
+};
+
+type SelfInterestRow = {
+  id: string;
+  recipient_id: string;
+  label: string;
+  category: string | null;
 };
 
 const defaultSettings: UserSettings = {
@@ -58,17 +80,11 @@ const defaultSettings: UserSettings = {
 const emptySelfProfileForm: SelfProfileFormState = {
   name: "",
   notes: "",
-  annualBudget: "",
-  giftBudgetMin: "",
-  giftBudgetMax: "",
-};
-
-const amountOrNull = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const numeric = Number(trimmed);
-  if (!Number.isFinite(numeric) || numeric < 0) return null;
-  return numeric;
+  birthday: "",
+  avatarUrl: "",
+  avatarIcon: "",
+  interests: [],
+  avoidances: "",
 };
 
 const generateShareSlug = () => {
@@ -79,9 +95,10 @@ const generateShareSlug = () => {
 };
 
 const SELF_PROFILE_COLUMNS =
-  "id, name, relationship, notes, annual_budget, gift_budget_min, gift_budget_max, self_slug";
+  "id, name, notes, birthday, avatar_url, avatar_icon, self_slug";
 
 const USER_AVATAR_BUCKET = "avatars";
+const RECIPIENT_AVATAR_BUCKET = "recipient-avatars";
 
 export function SettingsPanel() {
   const { status, user } = useSupabaseSession();
@@ -105,13 +122,17 @@ export function SettingsPanel() {
   const [feedback, setFeedback] = useState("");
   const [profileFeedback, setProfileFeedback] = useState("");
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const selfAvatarInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [selfProfile, setSelfProfile] = useState<SelfProfile | null>(null);
   const [selfProfileForm, setSelfProfileForm] = useState<SelfProfileFormState>(
     emptySelfProfileForm
   );
+  const [selfInterests, setSelfInterests] = useState<SelfInterestRow[]>([]);
+  const [customSelfInterest, setCustomSelfInterest] = useState("");
   const [selfFormOpen, setSelfFormOpen] = useState(false);
   const [selfSaving, setSelfSaving] = useState(false);
+  const [selfAvatarUploading, setSelfAvatarUploading] = useState(false);
   const [selfFeedback, setSelfFeedback] = useState("");
   const [shareOrigin, setShareOrigin] = useState("");
   const [regeneratingSlug, setRegeneratingSlug] = useState(false);
@@ -156,6 +177,13 @@ export function SettingsPanel() {
           .maybeSingle(),
       ]);
 
+      const selfInterestRows = selfData
+        ? await supabase
+            .from("recipient_interests")
+            .select("id, recipient_id, label, category")
+            .eq("recipient_id", selfData.id)
+        : { data: [], error: null };
+
       if (!isMounted) return;
 
       if (profileData) {
@@ -183,31 +211,33 @@ export function SettingsPanel() {
         const normalized: SelfProfile = {
           id: selfData.id,
           name: selfData.name,
-          relationship: selfData.relationship,
           notes: selfData.notes,
-          annual_budget: selfData.annual_budget,
-          gift_budget_min: selfData.gift_budget_min,
-          gift_budget_max: selfData.gift_budget_max,
+          birthday: selfData.birthday,
+          avatar_url: selfData.avatar_url,
+          avatar_icon: selfData.avatar_icon,
           self_slug: selfData.self_slug,
         };
+        const preferenceRows = (selfInterestRows.data ?? []) as SelfInterestRow[];
+        const preferences = splitRecipientRecommendationPreferences(preferenceRows);
         setSelfProfile(normalized);
         setSelfProfileForm({
           name: normalized.name ?? "",
           notes: normalized.notes ?? "",
-          annualBudget: normalized.annual_budget
-            ? String(normalized.annual_budget)
-            : "",
-          giftBudgetMin: normalized.gift_budget_min
-            ? String(normalized.gift_budget_min)
-            : "",
-          giftBudgetMax: normalized.gift_budget_max
-            ? String(normalized.gift_budget_max)
-            : "",
+          birthday: normalized.birthday ?? "",
+          avatarUrl: normalized.avatar_url ?? "",
+          avatarIcon: (normalized.avatar_icon as RecipientAvatarIcon | null) ?? "",
+          interests: preferences.positive.map((entry) => entry.label),
+          avoidances: preferences.avoidances.join(", "),
         });
+        setSelfInterests(preferenceRows);
         setSelfFormOpen(true);
+        if (selfInterestRows.error) {
+          setSelfFeedback("Your preferences could not be loaded. Refresh before making changes.");
+        }
       } else {
         setSelfProfile(null);
         setSelfProfileForm(emptySelfProfileForm);
+        setSelfInterests([]);
         setSelfFormOpen(false);
       }
 
@@ -330,13 +360,80 @@ export function SettingsPanel() {
   const mapSelfProfileRow = (row: SelfProfileRow): SelfProfile => ({
     id: row.id,
     name: row.name,
-    relationship: row.relationship,
     notes: row.notes,
-    annual_budget: row.annual_budget,
-    gift_budget_min: row.gift_budget_min,
-    gift_budget_max: row.gift_budget_max,
+    birthday: row.birthday,
+    avatar_url: row.avatar_url,
+    avatar_icon: row.avatar_icon,
     self_slug: row.self_slug,
   });
+
+  const selfInterestChoices = useMemo(() => {
+    const choices = new Map<string, string>();
+    [...SUGGESTED_RECIPIENT_INTERESTS, ...selfProfileForm.interests].forEach((label) => {
+      const normalized = normalizePreferenceLabel(label);
+      if (normalized) choices.set(preferenceKey(normalized), normalized);
+    });
+    return [...choices.values()];
+  }, [selfProfileForm.interests]);
+
+  const selectedSelfInterestKeys = useMemo(
+    () => new Set(selfProfileForm.interests.map(preferenceKey)),
+    [selfProfileForm.interests],
+  );
+
+  const toggleSelfInterest = (label: string) => {
+    const normalized = normalizePreferenceLabel(label);
+    const key = preferenceKey(normalized);
+    setSelfProfileForm((current) => ({
+      ...current,
+      interests: selectedSelfInterestKeys.has(key)
+        ? current.interests.filter((item) => preferenceKey(item) !== key)
+        : [...current.interests, normalized],
+    }));
+  };
+
+  const addCustomSelfInterest = () => {
+    const normalized = normalizePreferenceLabel(customSelfInterest);
+    if (!normalized) return;
+    if (!selectedSelfInterestKeys.has(preferenceKey(normalized))) {
+      setSelfProfileForm((current) => ({
+        ...current,
+        interests: [...current.interests, normalized],
+      }));
+    }
+    setCustomSelfInterest("");
+  };
+
+  const handleSelfAvatarUpload = async (file: File | undefined) => {
+    if (!file || !user?.id) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      setSelfFeedback("Choose an image smaller than 5 MB.");
+      return;
+    }
+    setSelfAvatarUploading(true);
+    setSelfFeedback("");
+    try {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const fileName = `${user.id}/self-${Date.now()}.${extension}`;
+      const { error } = await supabase.storage
+        .from(RECIPIENT_AVATAR_BUCKET)
+        .upload(fileName, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage
+        .from(RECIPIENT_AVATAR_BUCKET)
+        .getPublicUrl(fileName);
+      setSelfProfileForm((current) => ({
+        ...current,
+        avatarUrl: data.publicUrl,
+        avatarIcon: "",
+      }));
+    } catch (error) {
+      setSelfFeedback(error instanceof Error ? error.message : "Unable to upload photo.");
+    } finally {
+      setSelfAvatarUploading(false);
+      if (selfAvatarInputRef.current) selfAvatarInputRef.current.value = "";
+    }
+  };
 
   const handleSelfProfileSave = async (
     event: React.FormEvent<HTMLFormElement>
@@ -351,10 +448,12 @@ export function SettingsPanel() {
       setSelfFeedback("Name is required.");
       return;
     }
-    const min = amountOrNull(selfProfileForm.giftBudgetMin);
-    const max = amountOrNull(selfProfileForm.giftBudgetMax);
-    if (min !== null && max !== null && min > max) {
-      setSelfFeedback("Per-gift minimum cannot exceed the maximum.");
+    if (name.length > 80) {
+      setSelfFeedback("Name must be 80 characters or fewer.");
+      return;
+    }
+    if (selfProfileForm.notes.length > 2000) {
+      setSelfFeedback("Additional details must be 2,000 characters or fewer.");
       return;
     }
 
@@ -363,16 +462,18 @@ export function SettingsPanel() {
 
     const payload = {
       name,
-      relationship: "Me",
+      relationship: null,
+      pet_type: null,
       notes: selfProfileForm.notes.trim() || null,
-      annual_budget: amountOrNull(selfProfileForm.annualBudget),
-      gift_budget_min: min,
-      gift_budget_max: max,
+      birthday: selfProfileForm.birthday || null,
+      avatar_url: selfProfileForm.avatarUrl || null,
+      avatar_icon: selfProfileForm.avatarIcon || null,
       is_self: true,
       self_slug: selfProfile?.self_slug ?? generateShareSlug(),
     };
 
     try {
+      let next: SelfProfile;
       if (selfProfile) {
         const { data, error } = await supabase
           .from("recipient_profiles")
@@ -382,16 +483,7 @@ export function SettingsPanel() {
           .select(SELF_PROFILE_COLUMNS)
           .single();
         if (error) throw error;
-        const next = mapSelfProfileRow(data);
-        setSelfProfile(next);
-        setSelfProfileForm({
-          name: next.name ?? "",
-          notes: next.notes ?? "",
-          annualBudget: next.annual_budget ? String(next.annual_budget) : "",
-          giftBudgetMin: next.gift_budget_min ? String(next.gift_budget_min) : "",
-          giftBudgetMax: next.gift_budget_max ? String(next.gift_budget_max) : "",
-        });
-        setSelfFeedback("Profile updated.");
+        next = mapSelfProfileRow(data);
       } else {
         const { data, error } = await supabase
           .from("recipient_profiles")
@@ -402,18 +494,53 @@ export function SettingsPanel() {
           .select(SELF_PROFILE_COLUMNS)
           .single();
         if (error) throw error;
-        const next = mapSelfProfileRow(data);
-        setSelfProfile(next);
-        setSelfProfileForm({
-          name: next.name ?? "",
-          notes: next.notes ?? "",
-          annualBudget: next.annual_budget ? String(next.annual_budget) : "",
-          giftBudgetMin: next.gift_budget_min ? String(next.gift_budget_min) : "",
-          giftBudgetMax: next.gift_budget_max ? String(next.gift_budget_max) : "",
-        });
-        setSelfFormOpen(true);
-        setSelfFeedback("Profile created.");
+        next = mapSelfProfileRow(data);
       }
+
+      // Keep the new profile identity so a preference retry updates it instead of duplicating it.
+      setSelfProfile(next);
+      const changes = buildRecipientPreferenceChanges(
+        selfInterests,
+        selfProfileForm.interests,
+        parseRecipientPreferenceList(selfProfileForm.avoidances),
+      );
+      if (changes.deleteIds.length) {
+        const { error } = await supabase
+          .from("recipient_interests")
+          .delete()
+          .eq("recipient_id", next.id)
+          .in("id", changes.deleteIds);
+        if (error) throw error;
+      }
+      if (changes.inserts.length) {
+        const { error } = await supabase
+          .from("recipient_interests")
+          .insert(changes.inserts.map((entry) => ({ recipient_id: next.id, ...entry })));
+        if (error) throw error;
+      }
+      const { data: refreshedPreferences, error: preferenceError } = await supabase
+        .from("recipient_interests")
+        .select("id, recipient_id, label, category")
+        .eq("recipient_id", next.id);
+      if (preferenceError) throw preferenceError;
+
+      const preferences = splitRecipientRecommendationPreferences(
+        (refreshedPreferences ?? []) as SelfInterestRow[],
+      );
+      setSelfProfile(next);
+      setSelfInterests((refreshedPreferences ?? []) as SelfInterestRow[]);
+      setSelfProfileForm((current) => ({
+        ...current,
+        name: next.name,
+        notes: next.notes ?? "",
+        birthday: next.birthday ?? "",
+        avatarUrl: next.avatar_url ?? "",
+        avatarIcon: (next.avatar_icon as RecipientAvatarIcon | null) ?? "",
+        interests: preferences.positive.map((entry) => entry.label),
+        avoidances: preferences.avoidances.join(", "),
+      }));
+      setSelfFormOpen(true);
+      setSelfFeedback(selfProfile ? "Profile updated." : "Profile created.");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to save your profile.";
@@ -464,6 +591,9 @@ export function SettingsPanel() {
   const resolvedOrigin =
     shareOrigin || (typeof window !== "undefined" ? window.location.origin : "");
   const shareUrl = selfProfile?.self_slug ? `${resolvedOrigin}/profile/${selfProfile.self_slug}` : "";
+  const selectedSelfAvatar = RECIPIENT_AVATARS.find(
+    (avatar) => avatar.key === selfProfileForm.avatarIcon,
+  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -617,200 +747,63 @@ export function SettingsPanel() {
         </form>
       </section>
 
-      <section className="gp-card flex flex-col gap-4">
-        <header>
-          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-              Your recipient profile
-          </p>
-          <p className="mt-3 text-sm text-gp-evergreen/70">
-            Share a recipient profile of yourself so friends can import you directly
-            into their recipients list. Totally optional, but very handy.
-          </p>
+      <section className="gp-card space-y-5">
+        <header className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gp-evergreen/60">Your recipient profile</p>
+          <h2 className="mt-2 font-display text-2xl font-semibold text-gp-evergreen">Share the details that make gifts feel personal</h2>
+          <p className="mt-2 text-sm leading-6 text-gp-evergreen/70">Friends and family can import this profile into their own recipient list. They choose their relationship to you and their gift budget; you share only your preferences.</p>
         </header>
 
         {!selfFormOpen ? (
-          <div className="rounded-2xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-5 text-sm text-gp-evergreen/80">
-            <p>
-              Let PerchPal know your style, budgets, and interests. When you share
-              the link, people can add you to their GiftPerch recipients with a single click.
-            </p>
-            <button
-              type="button"
-              className="gp-primary-button mt-4 w-full sm:w-auto cursor-pointer"
-              onClick={() => setSelfFormOpen(true)}
-            >
-              Set up my recipient profile
-            </button>
+          <div className="rounded-xl border border-dashed border-gp-evergreen/30 bg-gp-cream/60 p-5 text-sm text-gp-evergreen/80">
+            <p>Add the interests, helpful details, and things you would rather avoid so people can give with more confidence.</p>
+            <button type="button" className={`${APP_GOLD_ACTION} mt-4`} onClick={() => setSelfFormOpen(true)}>Set up my recipient profile</button>
           </div>
         ) : (
           <form className="space-y-4" onSubmit={handleSelfProfileSave}>
-            <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-              Name*
-              <input
-                className="gp-input"
-                value={selfProfileForm.name}
-                onChange={(event) =>
-                  setSelfProfileForm((prev) => ({
-                    ...prev,
-                    name: event.target.value,
-                  }))
-                }
-                placeholder="Jason Conklin"
-                required
-              />
-            </label>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-                Yearly budget (optional)
-                <input
-                  className="gp-input"
-                  type="number"
-                  min="0"
-                  value={selfProfileForm.annualBudget}
-                  onChange={(event) =>
-                    setSelfProfileForm((prev) => ({
-                      ...prev,
-                      annualBudget: event.target.value,
-                    }))
-                  }
-                  placeholder="400"
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-                Per-gift min
-                <input
-                  className="gp-input"
-                  type="number"
-                  min="0"
-                  value={selfProfileForm.giftBudgetMin}
-                  onChange={(event) =>
-                    setSelfProfileForm((prev) => ({
-                      ...prev,
-                      giftBudgetMin: event.target.value,
-                    }))
-                  }
-                  placeholder="25"
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-                Per-gift max
-                <input
-                  className="gp-input"
-                  type="number"
-                  min="0"
-                  value={selfProfileForm.giftBudgetMax}
-                  onChange={(event) =>
-                    setSelfProfileForm((prev) => ({
-                      ...prev,
-                      giftBudgetMax: event.target.value,
-                    }))
-                  }
-                  placeholder="75"
-                />
-              </label>
-            </div>
-
-            <label className="flex flex-col gap-2 text-sm font-semibold text-gp-evergreen">
-              Notes for friends
-              <textarea
-                className="gp-input min-h-[120px] resize-none"
-                value={selfProfileForm.notes}
-                onChange={(event) =>
-                  setSelfProfileForm((prev) => ({
-                    ...prev,
-                    notes: event.target.value,
-                  }))
-                }
-                placeholder="Likes: cozy reading, experiences. Dislikes: clutter or gag gifts."
-              />
-            </label>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="submit"
-                className="gp-primary-button cursor-pointer disabled:cursor-not-allowed"
-                disabled={selfSaving}
-              >
-                {selfProfile ? "Update profile" : "Create profile"}
-              </button>
-              <button
-                type="button"
-                className="gp-secondary-button cursor-pointer"
-                onClick={() => setSelfFormOpen(false)}
-              >
-                {selfProfile ? "Hide form" : "Skip for now"}
-              </button>
-            </div>
-
-            {selfProfile ? (
-              <div className="space-y-2 rounded-2xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">
-                  Share link
-                </p>
-                {shareUrl ? (
-                  <>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <input
-                        className="gp-input flex-1"
-                        readOnly
-                        value={shareUrl}
-                      />
-                      <button
-                        type="button"
-                        className="gp-secondary-button shrink-0"
-                        onClick={handleCopyShareLink}
-                      >
-                        Copy link
-                      </button>
+            <div className={styles.columns}>
+              <div className={styles.column}>
+                <section className={styles.section}>
+                  <div className={styles.sectionTitle}><span><UserRound aria-hidden="true" /></span><div><h3>Basic information</h3><p>Only your name and optional birthday are shared.</p></div></div>
+                  <div className={styles.createAvatarRow}>
+                    <span className={styles.createAvatar}>{selfProfileForm.avatarUrl ? <Image src={selfProfileForm.avatarUrl} alt={`${selfProfileForm.name || "Profile"} avatar`} width={72} height={72} unoptimized /> : selectedSelfAvatar ? <Image src={selectedSelfAvatar.src} alt={selectedSelfAvatar.label} width={58} height={58} unoptimized className={styles.preset} /> : getRecipientInitials(selfProfileForm.name)}</span>
+                    <div className={styles.createAvatarActions}>
+                      <input ref={selfAvatarInputRef} type="file" accept="image/*" hidden onChange={(event) => void handleSelfAvatarUpload(event.target.files?.[0])} />
+                      <button type="button" className={APP_GOLD_ACTION} onClick={() => selfAvatarInputRef.current?.click()} disabled={selfAvatarUploading}><Camera aria-hidden="true" />{selfAvatarUploading ? "Uploading..." : "Upload photo"}</button>
+                      {(selfProfileForm.avatarUrl || selfProfileForm.avatarIcon) ? <button type="button" className={styles.removeAvatar} onClick={() => setSelfProfileForm((current) => ({ ...current, avatarUrl: "", avatarIcon: "" }))}>Remove avatar</button> : null}
                     </div>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline"
-                      onClick={handleRegenerateSlug}
-                      disabled={regeneratingSlug}
-                    >
-                      {regeneratingSlug ? "Refreshing..." : "Refresh link"}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="gp-secondary-button"
-                    onClick={handleRegenerateSlug}
-                    disabled={regeneratingSlug}
-                  >
-                    {regeneratingSlug ? "Generating..." : "Generate link"}
-                  </button>
-                )}
+                  </div>
+                  <div className={styles.fields}>
+                    <label className={styles.full}>Name *<input autoFocus required maxLength={80} value={selfProfileForm.name} onChange={(event) => setSelfProfileForm((current) => ({ ...current, name: event.target.value }))} placeholder="Your name" /></label>
+                    <label className={styles.full}>Birthday <small>(optional)</small><input type="date" value={selfProfileForm.birthday} max={new Date().toISOString().slice(0, 10)} onChange={(event) => setSelfProfileForm((current) => ({ ...current, birthday: event.target.value }))} /></label>
+                    <div className={`${styles.full} ${styles.avatarChoices}`}><span>Preset avatar</span>{RECIPIENT_AVATARS.map((avatar) => <button key={avatar.key} type="button" aria-pressed={selfProfileForm.avatarIcon === avatar.key} title={avatar.label} onClick={() => setSelfProfileForm((current) => ({ ...current, avatarIcon: current.avatarIcon === avatar.key ? "" : avatar.key, avatarUrl: "" }))}><Image src={avatar.src} alt="" width={34} height={34} unoptimized /></button>)}</div>
+                  </div>
+                </section>
               </div>
-            ) : null}
+              <div className={styles.column}>
+                <section className={styles.section}>
+                  <div className={styles.sectionTitle}><span><Heart aria-hidden="true" /></span><div><h3>Interests &amp; hobbies</h3><p>Select a few interests to help people choose a gift you will enjoy.</p></div></div>
+                  <div className={styles.addInterest}><input value={customSelfInterest} maxLength={80} placeholder="Add an interest" onChange={(event) => setCustomSelfInterest(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomSelfInterest(); } }} /><button type="button" className={APP_GOLD_ACTION} onClick={addCustomSelfInterest}><Plus aria-hidden="true" />Add</button></div>
+                  <div className={styles.chips}>{selfInterestChoices.map((label) => { const selected = selectedSelfInterestKeys.has(preferenceKey(label)); return <button key={preferenceKey(label)} type="button" aria-pressed={selected} className={selected ? styles.selectedChip : styles.chip} onClick={() => toggleSelfInterest(label)}>{label}{selected ? <Check aria-hidden="true" /> : null}</button>; })}</div>
+                </section>
+                <section className={styles.section}>
+                  <div className={styles.sectionTitle}><span><Tag aria-hidden="true" /></span><div><h3>Additional details</h3><p>Describe your personality, preferences, or anything else that may help PerchPal.</p></div></div>
+                  <label className={styles.textarea}><span className="sr-only">Additional details</span><textarea rows={5} maxLength={2000} value={selfProfileForm.notes} onChange={(event) => setSelfProfileForm((current) => ({ ...current, notes: event.target.value }))} /><small>{selfProfileForm.notes.length}/2000</small></label>
+                </section>
+                <section className={styles.section}>
+                  <div className={styles.sectionTitle}><span><Ban aria-hidden="true" /></span><div><h3>Things to avoid <small>(optional)</small></h3><p>Add unsuitable categories, disliked items, or gifts you already own.</p></div></div>
+                  <label className={styles.textarea}><span className="sr-only">Things to avoid</span><textarea rows={3} maxLength={500} placeholder="e.g. clothing, gift cards, duplicate mugs" value={selfProfileForm.avoidances} onChange={(event) => setSelfProfileForm((current) => ({ ...current, avoidances: event.target.value }))} /><small>{selfProfileForm.avoidances.length}/500</small></label>
+                </section>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 border-t border-gp-evergreen/10 pt-4">
+              <button type="submit" className={APP_GOLD_ACTION} disabled={selfSaving}>{selfSaving ? "Saving..." : selfProfile ? "Update profile" : "Create profile"}</button>
+              <button type="button" className="gp-secondary-button cursor-pointer" onClick={() => setSelfFormOpen(false)}>{selfProfile ? "Hide form" : "Skip for now"}</button>
+            </div>
+            {selfProfile ? <div className="space-y-2 rounded-xl border border-gp-evergreen/15 bg-white/90 p-4 text-sm text-gp-evergreen"><p className="text-xs font-semibold uppercase tracking-wide text-gp-evergreen/60">Share link</p>{shareUrl ? <><div className="flex flex-col gap-2 sm:flex-row"><input className="gp-input flex-1" readOnly value={shareUrl} /><button type="button" className="gp-secondary-button shrink-0" onClick={handleCopyShareLink}>Copy link</button></div><button type="button" className="text-xs font-semibold text-gp-evergreen underline-offset-4 hover:underline" onClick={handleRegenerateSlug} disabled={regeneratingSlug}>{regeneratingSlug ? "Refreshing..." : "Refresh link"}</button></> : <button type="button" className="gp-secondary-button" onClick={handleRegenerateSlug} disabled={regeneratingSlug}>{regeneratingSlug ? "Generating..." : "Generate link"}</button>}</div> : null}
           </form>
         )}
-
-        {selfFeedback ? (
-          <p className="rounded-2xl bg-gp-cream/80 px-4 py-2 text-sm text-gp-evergreen/80">
-            {selfFeedback}
-          </p>
-        ) : null}
-      </section>
-
-      <section className="gp-card flex flex-col gap-3">
-        <header>
-          <p className="text-xs uppercase tracking-[0.2em] text-gp-evergreen/60">
-            Optional extras
-          </p>
-          <p className="mt-3 text-sm text-gp-evergreen/70">
-            Wishlists live off to the side. Use them only if you want a personal
-            registry for friends and family.
-          </p>
-        </header>
-        <Link
-          href="/wishlist"
-          className="inline-flex w-full items-center justify-center rounded-full bg-gp-evergreen px-5 py-2 text-sm font-semibold text-gp-cream transition hover:bg-[#0c3132] sm:w-auto"
-        >
-          Open my wishlists
-        </Link>
+        {selfFeedback ? <p role="status" className="rounded-lg bg-gp-cream/80 px-4 py-2 text-sm text-gp-evergreen/80">{selfFeedback}</p> : null}
       </section>
 
       <section className="gp-card flex flex-col gap-4">
@@ -932,8 +925,8 @@ export function SettingsPanel() {
             </h2>
             <div className="space-y-2 text-sm text-gp-evergreen/80">
               <p>
-                This will permanently delete your account, recipient profiles, wishlists,
-                occasions, gift history, and settings.
+                This will permanently delete your account, recipient profiles, occasions,
+                saved gifts, gift history, and settings.
               </p>
               <p className="font-semibold text-red-700">
                 This action cannot be undone.

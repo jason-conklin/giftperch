@@ -229,12 +229,6 @@ export default function MarketingLayout({
             <p className="text-xs text-gp-evergreen/70">
               As an Amazon Associate, I earn from qualifying purchases.
             </p>
-            <Link
-              href="/recommended-amazon-gifts"
-              className="text-xs text-gp-evergreen/70 hover:text-gp-evergreen hover:underline"
-            >
-              Curated Amazon gift ideas
-            </Link>
           </div>
         </footer>
       </div>

@@ -6,8 +6,7 @@ with const as (
   select
     '11111111-1111-1111-1111-111111111111'::uuid as demo_user_id,
     'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'::uuid as mom_id,
-    'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb'::uuid as friend_id,
-    'cccccccc-cccc-4ccc-cccc-cccccccccccc'::uuid as wishlist_id
+    'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb'::uuid as friend_id
 )
 insert into public.profiles (id, display_name, avatar_url, bio)
 select demo_user_id, 'Demo User', null, 'Loves thoughtful gifting and testing PerchPal.'
@@ -71,17 +70,6 @@ values
   (gen_random_uuid(), 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', 'birthday', 'Mom Birthday', '1965-05-12', 'Plan something relaxing.'),
   (gen_random_uuid(), 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', 'holiday', 'Christmas', null, 'Family gathering.'),
   (gen_random_uuid(), 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb', 'birthday', 'Best Friend Birthday', '1996-09-03', 'Find something locally made.');
-
-insert into public.wishlists (id, user_id, title, description, is_public)
-select wishlist_id, demo_user_id, 'Demo Wishlist', 'What others can buy for our demo user.', true
-from const
-on conflict (id) do nothing;
-
-insert into public.wishlist_items (id, wishlist_id, title, url, price_estimate, notes, priority)
-values
-  (gen_random_uuid(), 'cccccccc-cccc-4ccc-cccc-cccccccccccc', 'Evergreen throw blanket', 'https://example.com/blanket', 120, 'Matches living room palette.', 1),
-  (gen_random_uuid(), 'cccccccc-cccc-4ccc-cccc-cccccccccccc', 'Handmade ceramic mug duo', 'https://example.com/mugs', 60, 'Support small makers.', 2),
-  (gen_random_uuid(), 'cccccccc-cccc-4ccc-cccc-cccccccccccc', 'Bookstore gift card', 'https://example.com/gift-card', 40, 'Can be used locally.', 3);
 
 insert into public.gift_history (id, user_id, recipient_id, title, url, price, purchased_at, notes)
 values

@@ -79,8 +79,6 @@ export async function GET(request: Request) {
   try {
     const { users, registeredUserEmails } = await listUsersAdmin(supabase);
     const recipientProfiles = await countTable(supabase, "recipient_profiles");
-    const wishlistItems = await countTable(supabase, "wishlist_items");
-
     const suggestionTables = ["gift_suggestions", "ai_interactions", "ai_interaction_logs"];
     let giftSuggestions: number | null = null;
     for (const table of suggestionTables) {
@@ -97,7 +95,6 @@ export async function GET(request: Request) {
       registeredUserEmails,
       recipientProfiles,
       giftSuggestions: giftSuggestions ?? 0,
-      wishlistItems,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load metrics";

@@ -18,7 +18,7 @@ An AI Gift Assistant (PerchPal) that generates thoughtful suggestions
 
 Occasion tracking with calendar navigation
 
-User wishlists and identity profiles
+Self-profile sharing and recipient preferences
 
 Affiliate-ready gift links (Amazon Associates integration)
 

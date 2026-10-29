@@ -5,7 +5,7 @@ import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 
 const title = "GiftPerch";
 const description =
-  "GiftPerch helps you build reusable recipient profiles and lean on PerchPal, an AI gifting assistant, to find thoughtful, Amazon-ready present ideas.";
+  "GiftPerch helps you build reusable recipient profiles and lean on PerchPal, an AI gifting assistant, to find thoughtful, purchasable gift ideas.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://giftperch.com"),
@@ -80,12 +80,6 @@ export default function RootLayout({
               <p className="text-xs text-gp-evergreen/70">
                 As an Amazon Associate, I earn from qualifying purchases.
               </p>
-              <Link
-                href="/recommended-amazon-gifts"
-                className="text-xs text-gp-evergreen/70 hover:text-gp-evergreen hover:underline"
-              >
-                Curated Amazon gift ideas
-              </Link>
             </div>
           </footer>
         </SupabaseProvider>

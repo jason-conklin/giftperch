@@ -264,6 +264,10 @@ body {
     .gp-gift-generator-recipient {
       grid-column: 1 / -1;
     }
+
+    .gp-gift-generator-action {
+      grid-column: 1 / -1;
+    }
   }
 
   @container gp-page (min-width: 52rem) {
@@ -289,15 +293,11 @@ body {
     }
 
     .gp-gift-generator-recipient {
-      grid-column: 1 / span 3;
+      grid-column: 1 / span 4;
     }
 
     .gp-gift-generator-occasion {
-      grid-column: 4 / span 3;
-    }
-
-    .gp-gift-generator-budget {
-      grid-column: 7 / span 2;
+      grid-column: 5 / span 4;
     }
 
     .gp-gift-generator-count {
@@ -310,7 +310,6 @@ body {
 
     .gp-gift-generator-recipient,
     .gp-gift-generator-occasion,
-    .gp-gift-generator-budget,
     .gp-gift-generator-count,
     .gp-gift-generator-action {
       grid-row: 2;

@@ -10,7 +10,6 @@ const disallowedRoutes = [
   "/gift-guides",
   "/settings",
   "/profile",
-  "/wishlist",
 ];
 
 export function GET() {
