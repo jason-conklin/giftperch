@@ -285,6 +285,7 @@ export function normalizeAwinLegacyProduct(
     locale: string;
     importedAt: string;
     expectedLegacyFeedId?: string;
+    imagePreference?: "aw-first" | "merchant-first";
   },
 ): NormalizeResult {
   if (
@@ -315,10 +316,21 @@ export function normalizeAwinLegacyProduct(
   const price = currency
     ? normalizeAwinPrice(`${legacyRecord.search_price.trim()} ${currency}`)
     : null;
-  const imageUrl =
-    normalizeHttpsUrl(legacyRecord.aw_image_url) ??
-    normalizeHttpsUrl(legacyRecord.merchant_image_url) ??
-    normalizeHttpsUrl(legacyRecord.large_image);
+  const imageUrls =
+    options.imagePreference === "merchant-first"
+      ? [
+          legacyRecord.merchant_image_url,
+          legacyRecord.aw_image_url,
+          legacyRecord.large_image,
+        ]
+      : [
+          legacyRecord.aw_image_url,
+          legacyRecord.merchant_image_url,
+          legacyRecord.large_image,
+        ];
+  const imageUrl = imageUrls
+    .map(normalizeHttpsUrl)
+    .find((value): value is string => value !== null);
   const destinationUrl = normalizeHttpsUrl(legacyRecord.merchant_deep_link);
   const availability = normalizeLegacyAvailability(legacyRecord);
 

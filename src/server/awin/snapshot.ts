@@ -22,6 +22,7 @@ import {
 } from "./feed";
 import {
   getConfiguredLegacyAwinFeedId,
+  getConfiguredLegacyAwinImagePreference,
 } from "./advertisers";
 import {
   normalizeAwinLegacyProduct,
@@ -64,12 +65,14 @@ function snapshotFormat(metadata: AwinSnapshotMetadata): AwinSnapshotFormat {
 function normalizerForSnapshotFormat(
   format: AwinSnapshotFormat,
   legacyFeedId?: string,
+  imagePreference?: "aw-first" | "merchant-first",
 ): AwinProductNormalizer | undefined {
   if (format !== "legacy-csv-gzip") return undefined;
   return (record, options) =>
     normalizeAwinLegacyProduct(record, {
       ...options,
       expectedLegacyFeedId: legacyFeedId,
+      imagePreference,
     });
 }
 
@@ -79,6 +82,10 @@ export function getAwinSnapshotNormalizer(
   return normalizerForSnapshotFormat(
     snapshotFormat(metadata),
     metadata.legacyFeedId,
+    getConfiguredLegacyAwinImagePreference({
+      advertiserId: metadata.advertiserId,
+      locale: metadata.locale,
+    }),
   );
 }
 
@@ -261,6 +268,7 @@ export async function createAndValidateAwinLegacySnapshot(options: {
   now?: Date;
 }): Promise<AwinSnapshotMetadata> {
   const legacyFeedId = requiredLegacyFeedId(options.context);
+  const imagePreference = getConfiguredLegacyAwinImagePreference(options.context);
   const sourcePath = assertSnapshotOutsideWorkspace(
     options.sourcePath,
     options.workspace,
@@ -313,7 +321,11 @@ export async function createAndValidateAwinLegacySnapshot(options: {
         records: parseAwinLegacyCsvGzipStream(fileWebStream(sourcePath), {
           expectedFeedId: legacyFeedId,
         }),
-        normalizeProduct: normalizeAwinLegacyProduct,
+        normalizeProduct: (record, context) =>
+          normalizeAwinLegacyProduct(record, {
+            ...context,
+            imagePreference,
+          }),
         expectedLegacyFeedId: legacyFeedId,
       }),
     ]);
@@ -495,6 +507,10 @@ export async function validateAwinSnapshot(options: {
     format === "legacy-csv-gzip"
       ? requiredLegacyFeedId(options.expectedContext)
       : undefined;
+  const imagePreference =
+    format === "legacy-csv-gzip"
+      ? getConfiguredLegacyAwinImagePreference(options.expectedContext)
+      : undefined;
   if (
     expectedLegacyFeedId &&
     metadata.legacyFeedId !== expectedLegacyFeedId
@@ -509,7 +525,11 @@ export async function validateAwinSnapshot(options: {
       format,
       expectedLegacyFeedId,
     ),
-    normalizeProduct: normalizerForSnapshotFormat(format, expectedLegacyFeedId),
+    normalizeProduct: normalizerForSnapshotFormat(
+      format,
+      expectedLegacyFeedId,
+      imagePreference,
+    ),
     expectedLegacyFeedId,
   });
   if (!isDeepStrictEqual(inspection, metadata.inspection)) {

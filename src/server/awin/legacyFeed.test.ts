@@ -203,6 +203,68 @@ test("normalizes Legacy identity, price, availability, and optional descriptions
   );
 });
 
+test("uses merchant image preference only when configured", () => {
+  const imageFields = record({
+    merchant_id: "96879",
+    merchant_image_url: "https://merchant.example.test/product.jpg",
+    aw_image_url: "https://awin-images.example.test/product.jpg",
+  });
+
+  const loveIsARose = normalizeAwinLegacyProduct(imageFields, {
+    advertiserId: "96879",
+    locale: "en_US",
+    importedAt: "2026-10-24T00:00:00.000Z",
+    imagePreference: "merchant-first",
+  });
+  assert.equal(loveIsARose.ok, true);
+  if (loveIsARose.ok) {
+    assert.equal(
+      loveIsARose.product.imageUrl,
+      "https://merchant.example.test/product.jpg",
+    );
+  }
+
+  const giftlab = normalizeAwinLegacyProduct(
+    record({
+      merchant_image_url: "https://merchant.example.test/product.jpg",
+      aw_image_url: "https://awin-images.example.test/product.jpg",
+    }),
+    {
+      advertiserId: "95201",
+      locale: "en_US",
+      importedAt: "2026-10-24T00:00:00.000Z",
+    },
+  );
+  assert.equal(giftlab.ok, true);
+  if (giftlab.ok) {
+    assert.equal(
+      giftlab.product.imageUrl,
+      "https://awin-images.example.test/product.jpg",
+    );
+  }
+
+  const fallback = normalizeAwinLegacyProduct(
+    record({
+      merchant_id: "96879",
+      merchant_image_url: "not-a-url",
+      aw_image_url: "https://awin-images.example.test/product.jpg",
+    }),
+    {
+      advertiserId: "96879",
+      locale: "en_US",
+      importedAt: "2026-10-24T00:00:00.000Z",
+      imagePreference: "merchant-first",
+    },
+  );
+  assert.equal(fallback.ok, true);
+  if (fallback.ok) {
+    assert.equal(
+      fallback.product.imageUrl,
+      "https://awin-images.example.test/product.jpg",
+    );
+  }
+});
+
 test("Legacy inspection reports duplicate product IDs and rejected records", async () => {
   const source = [
     headers.join(","),

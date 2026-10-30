@@ -7,6 +7,7 @@ import {
   findAwinAdvertiserById,
   findRecommendationEnabledAwinAdvertiserById,
   getConfiguredLegacyAwinFeedId,
+  getConfiguredLegacyAwinImagePreference,
   getImportEnabledAwinAdvertisers,
   isAwinProductDestinationCurrent,
   isApprovedAwinAdvertiserId,
@@ -62,6 +63,7 @@ test("LoveIsARose is approved for legacy-feed imports and catalog recommendation
   assert.deepEqual(loveIsARose.feed, {
     format: "legacy-csv-gzip",
     feedId: "113072",
+    imagePreference: "merchant-first",
   });
   assert.equal(
     getConfiguredLegacyAwinFeedId({
@@ -69,6 +71,13 @@ test("LoveIsARose is approved for legacy-feed imports and catalog recommendation
       locale: loveIsARose.locale,
     }),
     "113072",
+  );
+  assert.equal(
+    getConfiguredLegacyAwinImagePreference({
+      advertiserId: loveIsARose.advertiserId,
+      locale: loveIsARose.locale,
+    }),
+    "merchant-first",
   );
   assert.equal(
     getImportEnabledAwinAdvertisers().some(
@@ -121,6 +130,13 @@ test("Giftlab is enabled for imports and catalog recommendations", () => {
     format: "legacy-csv-gzip",
     feedId: "105668",
   });
+  assert.equal(
+    getConfiguredLegacyAwinImagePreference({
+      advertiserId: giftlab.advertiserId,
+      locale: giftlab.locale,
+    }),
+    "aw-first",
+  );
 });
 
 test("Giftlab destination eligibility requires a recent valid catalog verdict", () => {

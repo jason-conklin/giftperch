@@ -35,6 +35,7 @@ export type AwinAdvertiserConfig = {
   feed?: {
     format: "enhanced-jsonl" | "legacy-csv-gzip";
     feedId?: string;
+    imagePreference?: "aw-first" | "merchant-first";
   };
 };
 
@@ -131,6 +132,19 @@ export function getConfiguredLegacyAwinFeedId(options: {
     );
   }
   return feedId;
+}
+
+export function getConfiguredLegacyAwinImagePreference(options: {
+  advertiserId: string;
+  locale: string;
+}): "aw-first" | "merchant-first" {
+  const advertiser: AwinAdvertiserConfig | undefined = AWIN_ADVERTISERS.find(
+    (candidate) =>
+      candidate.advertiserId === options.advertiserId &&
+      candidate.locale === options.locale,
+  );
+  if (advertiser?.feed?.format !== "legacy-csv-gzip") return "aw-first";
+  return advertiser.feed.imagePreference ?? "aw-first";
 }
 
 export const AWIN_ADVERTISERS = [
@@ -260,6 +274,7 @@ export const AWIN_ADVERTISERS = [
     feed: {
       format: "legacy-csv-gzip",
       feedId: "113072",
+      imagePreference: "merchant-first",
     },
   },
   {
