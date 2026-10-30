@@ -5,6 +5,7 @@ import {
   enrichGiftSuggestionsWithProducts,
   findBestAwinProductMatch,
   getCatalogEligibleAwinAdvertiserIds,
+  getAwinProductDiversityKey,
   getRelevantAwinAdvertiserIds,
   type AwinCatalogProduct,
 } from "./matcher";
@@ -71,6 +72,30 @@ function advertiserProduct(
     imageUrl: `https://images.example.test/${advertiserId}.jpg`,
     affiliateUrl: `https://www.awin1.com/cread.php?awinmid=${advertiserId}&product=${advertiserId}-product-1`,
     price: 49.99,
+    ...overrides,
+  });
+}
+
+const loveIsARose: AwinAdvertiserConfig = {
+  key: "love-is-a-rose",
+  advertiserId: "96879",
+  displayName: "LoveIsARose.com",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "love-is-a-rose",
+};
+
+function loveIsARoseProduct(
+  title: string,
+  id: string,
+  overrides: Partial<AwinCatalogProduct> = {},
+): AwinCatalogProduct {
+  return advertiserProduct("96879", "LoveIsARose.com", {
+    externalProductId: id,
+    title,
+    description: "A preserved rose gift.",
+    affiliateUrl: `https://www.awin1.com/cread.php?awinmid=96879&product=${id}`,
     ...overrides,
   });
 }
@@ -165,6 +190,237 @@ test("BONHEUR matches jewelry gifts without opening unrelated accessories", () =
 
   assert.equal(match?.advertiserId, "90759");
   assert.equal(unrelated, null);
+});
+
+test("LoveIsARose requires specific romantic or sentimental gift context", () => {
+  const registry = [loveIsARose];
+  const anniversary = loveIsARoseProduct(
+    "20th Anniversary Bouquet",
+    "anniversary",
+    { price: 149.95 },
+  );
+  const valentine = loveIsARoseProduct(
+    "Valentine's Day Rose and Engraved Heart",
+    "valentine",
+    { price: 89.95 },
+  );
+  const wedding = loveIsARoseProduct(
+    "Wedding Bells Rose Personalized Anniversary Gift: 11in",
+    "wedding",
+    { price: 129.95 },
+  );
+  const personalized = loveIsARoseProduct(
+    "24kt Gold Rose Bloom in Personalized Walnut Vase",
+    "personalized",
+    { price: 139.95 },
+  );
+  const engraved = loveIsARoseProduct(
+    "Engraved Wedding Invitation Keepsake Gift Box",
+    "engraved",
+    { price: 99.95 },
+  );
+  const preserved = loveIsARoseProduct(
+    "Garnet Preserved Rose in Keepsake Case",
+    "preserved",
+    { price: 79.95 },
+  );
+  const christmas = loveIsARoseProduct(
+    "Personalized Christmas Rose Gift and Engraved Heart",
+    "christmas",
+    { price: 99.95 },
+  );
+  const mothersDay = loveIsARoseProduct(
+    "A Mother's Light 11\" Personalized 24k Gold Rose Gift",
+    "mothers-day",
+    { price: 116.95 },
+  );
+
+  const cases = [
+    {
+      title: "Anniversary rose keepsake",
+      occasion: "anniversary",
+      recipientRelationship: "spouse",
+      product: anniversary,
+    },
+    {
+      title: "Valentine's Day rose gift",
+      occasion: "Valentine's Day",
+      recipientRelationship: "partner",
+      product: valentine,
+    },
+    {
+      title: "Wedding rose keepsake",
+      occasion: "wedding",
+      recipientRelationship: "friend",
+      product: wedding,
+    },
+    {
+      title: "Personalized romantic rose keepsake",
+      recipientRelationship: "wife",
+      product: personalized,
+    },
+    {
+      title: "Engraved romantic keepsake",
+      occasion: "wedding",
+      recipientRelationship: "husband",
+      product: engraved,
+    },
+    {
+      title: "Preserved rose gift",
+      recipientRelationship: "partner",
+      product: preserved,
+    },
+  ];
+
+  for (const item of cases) {
+    const match = findBestAwinProductMatch({
+      suggestion: { title: item.title, price_max: 150 },
+      products: [item.product],
+      advertiserRegistry: registry,
+      occasion: item.occasion,
+      recipientRelationship: item.recipientRelationship,
+    });
+    assert.equal(match?.productId, item.product.externalProductId);
+  }
+
+  for (const title of [
+    "Birthday gift idea",
+    "Thoughtful gift",
+    "Fresh flowers for spring",
+    "Personalized gift",
+    "Fishing enthusiast gift",
+  ]) {
+    assert.equal(
+      findBestAwinProductMatch({
+        suggestion: { title, price_max: 150 },
+        products: [anniversary],
+        advertiserRegistry: registry,
+      }),
+      null,
+    );
+  }
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Anniversary rose keepsake", price_max: 150 },
+      products: [anniversary],
+      advertiserRegistry: registry,
+      occasion: "work anniversary",
+      recipientRelationship: "spouse",
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Personalized romantic rose keepsake", price_max: 150 },
+      products: [christmas],
+      advertiserRegistry: registry,
+      recipientRelationship: "wife",
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Personalized romantic rose keepsake", price_max: 150 },
+      products: [mothersDay],
+      advertiserRegistry: registry,
+      recipientRelationship: "wife",
+    }),
+    null,
+  );
+});
+
+test("LoveIsARose honors budgets and only collapses the audited color variants", () => {
+  const registry = [loveIsARose];
+  const red = loveIsARoseProduct(
+    '24k Gold Trimmed Rose: 11" Red Rose',
+    "gold-red",
+    { price: 49.95 },
+  );
+  const blue = loveIsARoseProduct(
+    '24k Gold Trimmed Rose: 11" Blue Rose',
+    "gold-blue",
+    { price: 49.95 },
+  );
+  const silver = loveIsARoseProduct(
+    "Silver Dipped Rose: 11in",
+    "silver",
+    { price: 79.95 },
+  );
+  const premiumGold = loveIsARoseProduct(
+    '24k Gold Trimmed Rose: 11" Walnut Base',
+    "premium-gold",
+    { price: 149.95 },
+  );
+  const premiumPlatinum = loveIsARoseProduct(
+    "Platinum Dipped Rose: 11in Illuminated Case",
+    "premium-platinum",
+    { price: 249.95 },
+  );
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Gold trimmed rose", price_max: 25 },
+      products: [red],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.notEqual(
+    findBestAwinProductMatch({
+      suggestion: { title: "Gold trimmed rose", price_max: 50 },
+      products: [red],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Gold trimmed rose", price_max: 100 },
+      products: [silver],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.notEqual(
+    findBestAwinProductMatch({
+      suggestion: { title: "Gold trimmed rose", price_max: 150 },
+      products: [premiumGold],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.notEqual(
+    findBestAwinProductMatch({
+      suggestion: { title: "Platinum dipped rose", price_max: 250 },
+      products: [premiumPlatinum],
+      advertiserRegistry: registry,
+    }),
+    null,
+  );
+  assert.equal(getAwinProductDiversityKey(red, loveIsARose), getAwinProductDiversityKey(blue, loveIsARose));
+  assert.notEqual(getAwinProductDiversityKey(red, loveIsARose), getAwinProductDiversityKey(silver, loveIsARose));
+});
+
+test("PerchPal loads and matches LoveIsARose with the same romantic context", async () => {
+  let requestedAdvertiserIds: readonly string[] | undefined;
+  const rose = loveIsARoseProduct("20th Anniversary Bouquet", "perchpal", {
+    price: 149.95,
+  });
+  const [result] = await enrichGiftSuggestionsWithProducts({
+    suggestions: [{ title: "Anniversary rose keepsake", price_max: 150 }],
+    occasion: "anniversary",
+    recipientRelationship: "spouse",
+    advertiserRegistry: [loveIsARose],
+    loadAwinProducts: async ({ advertiserIds }) => {
+      requestedAdvertiserIds = advertiserIds;
+      return [rose];
+    },
+    searchAmazon: async () => null,
+  });
+
+  assert.deepEqual(requestedAdvertiserIds, ["96879"]);
+  assert.equal(result.productMatch?.advertiserId, "96879");
+  assert.equal(result.amazonProduct, null);
 });
 
 test("Giftlab requires personalized context and excludes sensitive or incompatible products", () => {

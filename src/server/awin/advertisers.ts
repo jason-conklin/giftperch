@@ -11,6 +11,7 @@ export type AwinMatchingPolicy =
   | "bonheur-jewelry"
   | "fan-ink"
   | "beyond-memories"
+  | "love-is-a-rose"
   | "magicshine-cycling"
   | "hula-daddy-coffee"
   | "coziwow-pets"
@@ -54,6 +55,7 @@ export const AWIN_APPROVED_ADVERTISERS = [
   { advertiserId: "130555", displayName: "Primeful" },
   { advertiserId: "125856", displayName: "Nexbie" },
   { advertiserId: "95201", displayName: "Giftlab" },
+  { advertiserId: "96879", displayName: "LoveIsARose.com" },
   { advertiserId: "131404", displayName: "Chart Origin" },
   { advertiserId: "129093", displayName: "brkox" },
   { advertiserId: "78182", displayName: "TideWe" },
@@ -242,6 +244,22 @@ export const AWIN_ADVERTISERS = [
     feed: {
       format: "legacy-csv-gzip",
       feedId: "105668",
+    },
+  },
+  {
+    key: "love-is-a-rose",
+    advertiserId: "96879",
+    displayName: "LoveIsARose.com",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "love-is-a-rose",
+    importSafeguards: {
+      minimumValidProducts: 400,
+    },
+    feed: {
+      format: "legacy-csv-gzip",
+      feedId: "113072",
     },
   },
   {

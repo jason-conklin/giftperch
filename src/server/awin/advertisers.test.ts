@@ -6,6 +6,7 @@ import {
   createAwinImportContext,
   findAwinAdvertiserById,
   findRecommendationEnabledAwinAdvertiserById,
+  getConfiguredLegacyAwinFeedId,
   getImportEnabledAwinAdvertisers,
   isAwinProductDestinationCurrent,
   isApprovedAwinAdvertiserId,
@@ -38,13 +39,47 @@ test("Piscifun remains the default enabled Awin advertiser", () => {
 });
 
 test("the Joined-program allowlist permits only the authoritative advertiser IDs", () => {
-  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 18);
+  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 19);
   for (const advertiser of AWIN_APPROVED_ADVERTISERS) {
     assert.equal(isApprovedAwinAdvertiserId(advertiser.advertiserId), true);
   }
 
   assert.equal(isApprovedAwinAdvertiserId("119395"), false);
   assert.equal(isApprovedAwinAdvertiserId("unknown"), false);
+});
+
+test("LoveIsARose is approved for legacy-feed imports and catalog recommendations", () => {
+  const loveIsARose = resolveAwinAdvertiser("love-is-a-rose");
+
+  assert.equal(isApprovedAwinAdvertiserId("96879"), true);
+  assert.equal(loveIsARose.advertiserId, "96879");
+  assert.equal(loveIsARose.displayName, "LoveIsARose.com");
+  assert.equal(loveIsARose.locale, "en_US");
+  assert.equal(loveIsARose.importEnabled, true);
+  assert.equal(loveIsARose.recommendationEnabled, true);
+  assert.equal(loveIsARose.matchingPolicy, "love-is-a-rose");
+  assert.equal(loveIsARose.importSafeguards?.minimumValidProducts, 400);
+  assert.deepEqual(loveIsARose.feed, {
+    format: "legacy-csv-gzip",
+    feedId: "113072",
+  });
+  assert.equal(
+    getConfiguredLegacyAwinFeedId({
+      advertiserId: loveIsARose.advertiserId,
+      locale: loveIsARose.locale,
+    }),
+    "113072",
+  );
+  assert.equal(
+    getImportEnabledAwinAdvertisers().some(
+      (advertiser) => advertiser.advertiserId === "96879",
+    ),
+    true,
+  );
+  assert.equal(
+    findRecommendationEnabledAwinAdvertiserById("96879")?.key,
+    "love-is-a-rose",
+  );
 });
 
 test("unjoined advertisers are unavailable to imports and runtime recommendations", () => {

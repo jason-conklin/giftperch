@@ -251,6 +251,22 @@ const BEYOND_MEMORIES_INTENT_WORDS = new Set([
   "wedding",
 ]);
 
+const LOVE_IS_A_ROSE_ROMANTIC_RELATIONSHIP =
+  /\b(?:spouse|partner|wife|husband|girlfriend|boyfriend|fianc(?:e|ee|é|ée))\b/i;
+const LOVE_IS_A_ROSE_WORK_ANNIVERSARY =
+  /\b(?:work|company|employee|employment|service|professional|career|coworker|colleague)\b[^.]{0,40}\banniversar(?:y|ies)\b|\banniversar(?:y|ies)\b[^.]{0,40}\b(?:work|company|employee|employment|service|professional|career|coworker|colleague)\b/i;
+const LOVE_IS_A_ROSE_ROSE_PRODUCT = /\broses?\b|\bbouquets?\b/i;
+const LOVE_IS_A_ROSE_CUSTOM_PRODUCT = /\b(?:personalized|engraved)\b/i;
+const LOVE_IS_A_ROSE_OCCASION_PATTERNS: ReadonlyArray<[string, RegExp]> = [
+  ["anniversary", /\banniversar(?:y|ies)\b/i],
+  ["birthday", /\bbirthday\b/i],
+  ["christmas", /\b(?:christmas|xmas|mistletoe)\b/i],
+  ["fathers-day", /\b(?:father'?s|dad'?s)\b/i],
+  ["mothers-day", /\b(?:mother'?s|mom'?s)\b/i],
+  ["valentines-day", /\bvalentine'?s?(?:\s+day)?\b/i],
+  ["wedding", /\bwedding\b/i],
+];
+
 const MEMORIAL_INTENT_WORDS = new Set(["memorial", "remembrance"]);
 
 const MAGICSHINE_CYCLING_INTENT_WORDS = new Set([
@@ -664,6 +680,102 @@ function isMemorialProduct(value: string): boolean {
   );
 }
 
+function isLoveIsARoseWorkAnniversary(value: string): boolean {
+  return LOVE_IS_A_ROSE_WORK_ANNIVERSARY.test(value);
+}
+
+function loveIsARoseOccasionLabels(value: string): Set<string> {
+  return new Set(
+    LOVE_IS_A_ROSE_OCCASION_PATTERNS.filter(([, pattern]) => pattern.test(value))
+      .map(([label]) => label),
+  );
+}
+
+function hasConflictingLoveIsARoseOccasion(
+  request: string,
+  productTitle: string,
+): boolean {
+  const requested = loveIsARoseOccasionLabels(request);
+  const offered = loveIsARoseOccasionLabels(productTitle);
+  if (offered.size === 0) return false;
+  if (requested.size === 0) return true;
+  return [...offered].some(
+    (label) =>
+      !requested.has(label) &&
+      !(
+        (label === "wedding" && requested.has("anniversary")) ||
+        (label === "anniversary" && requested.has("wedding"))
+      ),
+  );
+}
+
+export function getLoveIsARoseContextualIntentLabels(
+  context: AwinMatchContext,
+): string[] {
+  const occasion = context.occasion ?? "";
+  const relationship = context.recipientRelationship ?? "";
+  const combined = `${occasion} ${relationship}`;
+  if (isLoveIsARoseWorkAnniversary(combined)) return [];
+
+  const labels: string[] = [];
+  if (/\bvalentine'?s?(?:\s+day)?\b/i.test(occasion)) {
+    labels.push("Valentine's Day rose gift");
+  }
+  if (/\bwedding\b/i.test(occasion)) {
+    labels.push("wedding rose keepsake");
+  }
+  if (
+    /\banniversar(?:y|ies)\b/i.test(occasion) &&
+    LOVE_IS_A_ROSE_ROMANTIC_RELATIONSHIP.test(relationship)
+  ) {
+    labels.push("anniversary rose keepsake");
+  }
+  return labels;
+}
+
+function getLoveIsARoseIntent(
+  suggestion: MatchableGiftSuggestion,
+  context: AwinMatchContext = {},
+): Set<string> {
+  const suggestionText = `${suggestion.title} ${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`;
+  const contextualLabels = getLoveIsARoseContextualIntentLabels(context);
+  const request = `${suggestionText} ${contextualLabels.join(" ")}`;
+  const relationship = context.recipientRelationship ?? "";
+  const intent = new Set<string>();
+
+  if (/\b(?:preserved|dipped|trimmed)\s+roses?\b|\broses?\s+(?:bouquet|arrangement)\b/i.test(suggestionText)) {
+    intent.add("rose");
+  }
+  if (/\bvalentine'?s?(?:\s+day)?\b/i.test(request)) {
+    intent.add("valentine");
+  }
+  if (/\bwedding\b/i.test(request)) {
+    intent.add("wedding");
+  }
+  if (
+    /\banniversar(?:y|ies)\b/i.test(request) &&
+    LOVE_IS_A_ROSE_ROMANTIC_RELATIONSHIP.test(relationship)
+  ) {
+    intent.add("anniversary");
+  }
+  if (
+    /\b(?:romantic|romance|love)\b/i.test(suggestionText) &&
+    (LOVE_IS_A_ROSE_ROMANTIC_RELATIONSHIP.test(relationship) ||
+      LOVE_IS_A_ROSE_ROSE_PRODUCT.test(suggestionText))
+  ) {
+    intent.add("romantic");
+  }
+  if (
+    LOVE_IS_A_ROSE_CUSTOM_PRODUCT.test(suggestionText) &&
+    /\b(?:romantic|romance|love|sentimental|keepsake|anniversar(?:y|ies)|valentine|wedding|rose)\b/i.test(
+      request,
+    )
+  ) {
+    intent.add("personalized");
+  }
+  return intent;
+}
+
 function isUnsuitableCoziwowProduct(title: string): boolean {
   return /\b(?:air purifier|dryer box|food maker|heated|heating pad|medical|nebulization|treadmill)\b/i.test(
     title,
@@ -954,10 +1066,86 @@ function passesGiftlabCompatibility(
   return true;
 }
 
+function passesLoveIsARoseCompatibility(
+  request: string,
+  product: AwinCatalogProduct,
+  context: AwinMatchContext,
+): boolean {
+  const contextText = `${context.occasion ?? ""} ${context.recipientRelationship ?? ""}`;
+  if (isLoveIsARoseWorkAnniversary(`${request} ${contextText}`)) return false;
+  if (isMemorialProduct(product.title)) return false;
+
+  const productTitle = product.title;
+  const requestText = `${request} ${contextText}`;
+  const requestsPreservedRose = /\bpreserved\s+roses?\b/i.test(requestText);
+  const requestsDippedRose = /\b(?:gold|silver|platinum)\s+dipped\s+roses?\b|\bdipped\s+roses?\b/i.test(
+    requestText,
+  );
+  const requestsGold = /\bgold(?:\s+dipped|\s+trimmed)?\s+roses?\b/i.test(
+    requestText,
+  );
+  const requestsSilver = /\bsilver(?:\s+dipped|\s+trimmed)?\s+roses?\b/i.test(
+    requestText,
+  );
+  const requestsPlatinum = /\bplatinum(?:\s+dipped|\s+trimmed)?\s+roses?\b/i.test(
+    requestText,
+  );
+  const requestsRose = /\broses?\b|\bbouquets?\b/i.test(requestText);
+  const requestsWedding = /\bwedding\b/i.test(requestText);
+  const requestsValentine = /\bvalentine'?s?(?:\s+day)?\b/i.test(requestText);
+  const requestsAnniversary = /\banniversar(?:y|ies)\b/i.test(requestText);
+  const requestsCustom = LOVE_IS_A_ROSE_CUSTOM_PRODUCT.test(requestText);
+
+  const productRose = LOVE_IS_A_ROSE_ROSE_PRODUCT.test(productTitle);
+  const productWedding = /\bwedding\b/i.test(productTitle);
+  const productValentine = /\bvalentine'?s?(?:\s+day)?\b/i.test(productTitle);
+  const productAnniversary = /\banniversar(?:y|ies)\b/i.test(productTitle);
+
+  if (hasConflictingLoveIsARoseOccasion(requestText, productTitle)) {
+    return false;
+  }
+
+  if (requestsPreservedRose && !/\bpreserved\s+roses?\b/i.test(productTitle)) {
+    return false;
+  }
+  if (requestsDippedRose && !/\b(?:gold|silver|platinum)\s+(?:dipped|trimmed)\s+roses?\b/i.test(productTitle)) {
+    return false;
+  }
+  if (requestsGold && !/\b(?:24k\s+)?gold\s+(?:dipped|trimmed)\s+roses?\b/i.test(productTitle)) {
+    return false;
+  }
+  if (requestsSilver && !/\bsilver\s+(?:dipped|trimmed)\s+roses?\b/i.test(productTitle)) {
+    return false;
+  }
+  if (requestsPlatinum && !/\bplatinum\s+dipped\s+roses?\b/i.test(productTitle)) {
+    return false;
+  }
+  if (requestsCustom && !LOVE_IS_A_ROSE_CUSTOM_PRODUCT.test(productTitle)) {
+    return false;
+  }
+  if (requestsWedding && !productWedding) return false;
+  if (requestsValentine && !(productValentine || productRose)) return false;
+  if (requestsAnniversary && !(productAnniversary || productRose)) return false;
+  return !requestsRose || productRose;
+}
+
 export function getAwinProductDiversityKey(
   product: Pick<AwinCatalogProduct, "advertiserId" | "externalProductId" | "title">,
   advertiser: AwinAdvertiserConfig,
 ): string {
+  if (advertiser.matchingPolicy === "love-is-a-rose") {
+    const colorVariant = product.title.match(
+      /^(24k\s+gold\s+trimmed\s+rose:\s*11\"\s+)(?:black|blue|brown|burgundy|cream|dark\s+blue|dark\s+green|green|light\s+blue|light\s+green|orange|peach|pink(?:\s+and\s+cream)?|purple(?:\s+cream)?|red(?:\s+and\s+cream)?|teal|white|yellow)(\s+rose)$/i,
+    );
+    if (colorVariant) {
+      return `${product.advertiserId}:${`${colorVariant[1]}${colorVariant[2]}`
+        .normalize("NFKD")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim()}`;
+    }
+    return `${product.advertiserId}:${product.externalProductId}`;
+  }
   if (advertiser.matchingPolicy !== "giftlab-personalized") {
     return `${product.advertiserId}:${product.externalProductId}`;
   }
@@ -1014,6 +1202,7 @@ function passesAdvertiserPolicy(args: {
   coziwowPetIntent: Set<string>;
   giftlabPersonalizedIntent: Set<string>;
   giftlabDeviceIntent: Set<string>;
+  loveIsARoseIntent: Set<string>;
   memorialIntent: Set<string>;
   teamContextTokens: Set<string>;
   productTitleTokens: Set<string>;
@@ -1054,6 +1243,8 @@ function passesAdvertiserPolicy(args: {
         args.beyondMemoriesIntent.size > 0 &&
         (!isMemorialProduct(product.title) || args.memorialIntent.size > 0)
       );
+    case "love-is-a-rose":
+      return args.loveIsARoseIntent.size > 0;
     case "magicshine-cycling":
       return args.magicshineCyclingIntent.size > 0;
     case "hula-daddy-coffee":
@@ -1124,10 +1315,12 @@ type SuggestionPolicyIntent = {
   coziwowPets: Set<string>;
   giftlabPersonalized: Set<string>;
   giftlabDevice: Set<string>;
+  loveIsARose: Set<string>;
 };
 
 function getSuggestionPolicyIntent(
   suggestion: MatchableGiftSuggestion,
+  context: AwinMatchContext = {},
 ): SuggestionPolicyIntent {
   const suggestionIntentTokens = union(
     tokens(suggestion.title),
@@ -1171,6 +1364,7 @@ function getSuggestionPolicyIntent(
       GIFTLAB_PERSONALIZED_INTENT_WORDS,
     ),
     giftlabDevice: intersection(suggestionIntentTokens, GIFTLAB_DEVICE_WORDS),
+    loveIsARose: getLoveIsARoseIntent(suggestion, context),
   };
 }
 
@@ -1199,6 +1393,8 @@ function policyCanMatchSuggestion(
       return intent.fanInk.size > 0;
     case "beyond-memories":
       return intent.beyondMemories.size > 0;
+    case "love-is-a-rose":
+      return intent.loveIsARose.size > 0;
     case "magicshine-cycling":
       return intent.magicshineCycling.size > 0;
     case "hula-daddy-coffee":
@@ -1219,13 +1415,14 @@ function policyCanMatchSuggestion(
 export function getRelevantAwinAdvertiserIds(
   suggestions: readonly MatchableGiftSuggestion[],
   advertiserRegistry: readonly AwinAdvertiserConfig[] = AWIN_ADVERTISERS,
+  context: AwinMatchContext = {},
 ): string[] {
   const relevantAdvertisers = new Set<string>();
 
   for (const suggestion of suggestions) {
     if (!isPhysicalProductConcept(suggestion)) continue;
 
-    const intent = getSuggestionPolicyIntent(suggestion);
+    const intent = getSuggestionPolicyIntent(suggestion, context);
     for (const advertiser of advertiserRegistry) {
       if (
         advertiser.recommendationEnabled &&
@@ -1266,7 +1463,10 @@ export function findBestAwinProductMatch(args: {
       .join(" "),
   );
   const suggestionContext = `${suggestion.title} ${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`;
-  const policyIntent = getSuggestionPolicyIntent(suggestion);
+  const policyIntent = getSuggestionPolicyIntent(suggestion, {
+    occasion: args.occasion,
+    recipientRelationship: args.recipientRelationship,
+  });
   const memorialIntent = intersection(
     union(titleTokens, detailTokens, tokens(args.occasion)),
     MEMORIAL_INTENT_WORDS,
@@ -1333,6 +1533,15 @@ export function findBestAwinProductMatch(args: {
       continue;
     }
     if (
+      advertiser.matchingPolicy === "love-is-a-rose" &&
+      !passesLoveIsARoseCompatibility(suggestionContext, product, {
+        occasion: args.occasion,
+        recipientRelationship: args.recipientRelationship,
+      })
+    ) {
+      continue;
+    }
+    if (
       !passesAdvertiserPolicy({
         advertiser,
         product,
@@ -1351,6 +1560,7 @@ export function findBestAwinProductMatch(args: {
         coziwowPetIntent: policyIntent.coziwowPets,
         giftlabPersonalizedIntent: policyIntent.giftlabPersonalized,
         giftlabDeviceIntent: policyIntent.giftlabDevice,
+        loveIsARoseIntent: policyIntent.loveIsARose,
         memorialIntent,
         teamContextTokens: union(titleTokens, interestTokens),
         productTitleTokens,
@@ -1390,6 +1600,9 @@ export function findBestAwinProductMatch(args: {
       titleTitle.size >= 2 ||
       distinctiveTitleMatch ||
       (titleTitle.size >= 1 && hasSpecificSupportingMatch) ||
+      (advertiser.matchingPolicy === "love-is-a-rose" &&
+        policyIntent.loveIsARose.size > 0 &&
+        titleTitle.size >= 1) ||
       (advertiser.matchingPolicy === "giftlab-personalized" &&
         !hasRequestedGiftlabProductType(suggestionContext) &&
         hasSpecificSupportingMatch &&
@@ -1401,7 +1614,8 @@ export function findBestAwinProductMatch(args: {
       titleDescription.size * 2 +
       detailTitle.size * 2 +
       interestTitle.size * 3 +
-      (policyIntent.fishing.size > 0 ? 4 : 0);
+      (policyIntent.fishing.size > 0 ? 4 : 0) +
+      (policyIntent.loveIsARose.size > 0 ? 4 : 0);
     if (score < MINIMUM_MATCH_SCORE) continue;
 
     const budgetMidpoint =
@@ -1483,6 +1697,10 @@ export async function enrichGiftSuggestionsWithProducts<
       advertiserIds: getRelevantAwinAdvertiserIds(
         args.suggestions,
         args.advertiserRegistry,
+        {
+          occasion: args.occasion,
+          recipientRelationship: args.recipientRelationship,
+        },
       ),
     });
   } catch {

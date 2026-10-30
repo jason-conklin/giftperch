@@ -11,6 +11,7 @@ import {
 } from "./advertisers";
 import {
   findBestAwinProductMatch,
+  getLoveIsARoseContextualIntentLabels,
   getAwinProductDiversityKey,
   getRelevantAwinAdvertiserIds,
   loadAwinProductCandidates,
@@ -266,6 +267,18 @@ export function deriveDeterministicCatalogIntents(
 
   const seen = new Set<string>();
   const intents: CatalogGiftIntent[] = [];
+  for (const label of getLoveIsARoseContextualIntentLabels({
+    occasion: context.occasion,
+    recipientRelationship: context.recipientRelationship,
+  })) {
+    const key = label.toLowerCase();
+    seen.add(key);
+    intents.push({
+      id: `intent-${intents.length + 1}`,
+      label,
+      description: null,
+    });
+  }
   for (const source of sources) {
     const label = optionalText(source.label, 200);
     if (!label || isOverlyBroadPersonalization(label)) continue;
@@ -377,7 +390,10 @@ function catalogProductFamilyKey(
   product: AwinCatalogProduct,
   advertiser: AwinAdvertiserConfig,
 ): string {
-  if (advertiser.matchingPolicy === "giftlab-personalized") {
+  if (
+    advertiser.matchingPolicy === "giftlab-personalized" ||
+    advertiser.matchingPolicy === "love-is-a-rose"
+  ) {
     return getAwinProductDiversityKey(product, advertiser);
   }
   const baseTitle = product.title
@@ -537,6 +553,10 @@ export async function evaluateCatalogFirstRecommendations(
   const advertiserIds = getRelevantAwinAdvertiserIds(
     suggestions,
     advertiserRegistry,
+    {
+      occasion: context.occasion,
+      recipientRelationship: context.recipientRelationship,
+    },
   );
   if (advertiserIds.length === 0) {
     return {

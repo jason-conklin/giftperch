@@ -52,6 +52,16 @@ const disabledGiftlab = {
   recommendationEnabled: false,
 };
 
+const loveIsARose: AwinAdvertiserConfig = {
+  key: "love-is-a-rose",
+  advertiserId: "96879",
+  displayName: "LoveIsARose.com",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "love-is-a-rose",
+};
+
 function product(
   overrides: Partial<AwinCatalogProduct> = {},
 ): AwinCatalogProduct {
@@ -108,6 +118,22 @@ function bonheurProduct(
     imageUrl: `https://images.example.test/${id}.jpg`,
     affiliateUrl: `https://www.awin1.com/cread.php?awinmid=90759&product=${id}`,
     price: 75,
+    ...overrides,
+  });
+}
+
+function loveIsARoseProduct(
+  title: string,
+  id: string,
+  overrides: Partial<AwinCatalogProduct> = {},
+): AwinCatalogProduct {
+  return product({
+    advertiserId: "96879",
+    merchantName: "LoveIsARose.com",
+    externalProductId: id,
+    title,
+    description: "A preserved rose gift.",
+    affiliateUrl: `https://www.awin1.com/cread.php?awinmid=96879&product=${id}`,
     ...overrides,
   });
 }
@@ -568,6 +594,80 @@ test("collapses Giftlab AirPods color variants in the shortlist", async () => {
 
   assert.equal(result.recommendations.length, 1);
   assert.equal(result.shortlistCount, 1);
+});
+
+test("catalog-first applies LoveIsARose context, budget, and conservative color diversity", async () => {
+  const red = loveIsARoseProduct('24k Gold Trimmed Rose: 11" Red Rose', "red", {
+    price: 49.95,
+  });
+  const blue = loveIsARoseProduct('24k Gold Trimmed Rose: 11" Blue Rose', "blue", {
+    price: 49.95,
+  });
+  const silver = loveIsARoseProduct("Silver Dipped Rose: 11in", "silver", {
+    price: 79.95,
+  });
+  const anniversary = loveIsARoseProduct("20th Anniversary Bouquet", "anniversary", {
+    price: 149.95,
+  });
+  const overBudget = loveIsARoseProduct("25th Anniversary Bouquet", "over-budget", {
+    price: 299.95,
+  });
+
+  const result = await evaluateCatalogFirstRecommendations(
+    context({
+      recipient: { interests: [{ label: "Cooking" }] },
+      occasion: "anniversary",
+      recipientRelationship: "spouse",
+      budgetMax: 150,
+      requestedCount: 4,
+    }),
+    {
+      advertiserRegistry: [loveIsARose],
+      loadProducts: async (options) => {
+        assert.deepEqual(options.advertiserIds, ["96879"]);
+        assert.equal(options.budgetMax, 150);
+        return [red, blue, silver, anniversary, overBudget];
+      },
+    },
+  );
+
+  assert.equal(result.status, "success");
+  assert.equal(
+    result.recommendations.filter(
+      (item) => item.product.productId === "red" || item.product.productId === "blue",
+    ).length,
+    1,
+  );
+  assert.equal(result.recommendations.some((item) => item.product.productId === "over-budget"), false);
+  assert.equal(result.recommendations.some((item) => item.product.productId === "silver"), true);
+  assert.equal(result.recommendations.some((item) => item.product.productId === "anniversary"), true);
+  assert.equal(result.recommendations.every((item) => item.product.price <= 150), true);
+});
+
+test("catalog-first excludes LoveIsARose for generic birthdays and work anniversaries", async () => {
+  for (const input of [
+    context({
+      recipient: { interests: [{ label: "Gaming" }] },
+      occasion: "birthday",
+      recipientRelationship: "friend",
+    }),
+    context({
+      recipient: { interests: [{ label: "Gaming" }] },
+      occasion: "work anniversary",
+      recipientRelationship: "coworker",
+    }),
+  ]) {
+    let loaded = false;
+    const result = await evaluateCatalogFirstRecommendations(input, {
+      advertiserRegistry: [loveIsARose],
+      loadProducts: async () => {
+        loaded = true;
+        return [];
+      },
+    });
+    assert.equal(loaded, false);
+    assert.equal(result.status, "no_results");
+  }
 });
 
 test("requires requested customization evidence and collapses merchant variants", async () => {
