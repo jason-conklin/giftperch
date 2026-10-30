@@ -254,6 +254,28 @@ function isOverlyBroadPersonalization(label: string): boolean {
   return !specificTerms;
 }
 
+function boundedNoteIntentLabels(note: string): string[] {
+  const text = optionalText(note, 1_000);
+  if (!text) return [];
+
+  const labels = text
+    .split(/[.;!?]+|\n+|,(?=\s)/)
+    .map((clause) =>
+      clause
+        .trim()
+        .replace(/^(?:and|or|especially)\s+/i, "")
+        .replace(/^(?:(?:[A-Z][a-z]+)\s+)?(?:specifically\s+)?(?:loves?|likes?|enjoys?|prefers?)\s+/i, ""),
+    )
+    .map((clause) => {
+      if (clause.length <= 200) return clause;
+      const boundary = clause.lastIndexOf(" ", 200);
+      return clause.slice(0, boundary > 80 ? boundary : 200).trim();
+    })
+    .filter(Boolean);
+
+  return labels.length > 0 ? labels.slice(0, MAX_INTENTS) : [text.slice(0, 200)];
+}
+
 export function deriveDeterministicCatalogIntents(
   context: CatalogRecommendationContext,
 ): CatalogGiftIntent[] {
@@ -262,7 +284,12 @@ export function deriveDeterministicCatalogIntents(
     description: interest.category ?? null,
   }));
   if (sources.length === 0 && context.recipient.notes) {
-    sources.push({ label: context.recipient.notes, description: null });
+    sources.push(
+      ...boundedNoteIntentLabels(context.recipient.notes).map((label) => ({
+        label,
+        description: null,
+      })),
+    );
   }
 
   const seen = new Set<string>();

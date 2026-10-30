@@ -1067,16 +1067,16 @@ function passesGiftlabCompatibility(
 }
 
 function passesLoveIsARoseCompatibility(
-  request: string,
+  productRequirementText: string,
   product: AwinCatalogProduct,
   context: AwinMatchContext,
 ): boolean {
   const contextText = `${context.occasion ?? ""} ${context.recipientRelationship ?? ""}`;
-  if (isLoveIsARoseWorkAnniversary(`${request} ${contextText}`)) return false;
+  if (isLoveIsARoseWorkAnniversary(`${productRequirementText} ${contextText}`)) return false;
   if (isMemorialProduct(product.title)) return false;
 
   const productTitle = product.title;
-  const requestText = `${request} ${contextText}`;
+  const requestText = `${productRequirementText} ${contextText}`;
   const requestsPreservedRose = /\bpreserved\s+roses?\b/i.test(requestText);
   const requestsDippedRose = /\b(?:gold|silver|platinum)\s+dipped\s+roses?\b|\bdipped\s+roses?\b/i.test(
     requestText,
@@ -1463,6 +1463,7 @@ export function findBestAwinProductMatch(args: {
       .join(" "),
   );
   const suggestionContext = `${suggestion.title} ${suggestion.short_description ?? ""} ${suggestion.why_it_fits ?? ""}`;
+  const loveIsARoseProductRequirements = `${suggestion.title} ${suggestion.short_description ?? ""}`;
   const policyIntent = getSuggestionPolicyIntent(suggestion, {
     occasion: args.occasion,
     recipientRelationship: args.recipientRelationship,
@@ -1534,7 +1535,7 @@ export function findBestAwinProductMatch(args: {
     }
     if (
       advertiser.matchingPolicy === "love-is-a-rose" &&
-      !passesLoveIsARoseCompatibility(suggestionContext, product, {
+      !passesLoveIsARoseCompatibility(loveIsARoseProductRequirements, product, {
         occasion: args.occasion,
         recipientRelationship: args.recipientRelationship,
       })

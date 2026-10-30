@@ -329,6 +329,79 @@ test("LoveIsARose requires specific romantic or sentimental gift context", () =>
   );
 });
 
+test("LoveIsARose keeps planned product requirements separate from broad recipient preferences", () => {
+  const registry = [loveIsARose];
+  const goldAnniversaryRose = loveIsARoseProduct(
+    "20th Anniversary 24k Gold Dipped Rose",
+    "gold-anniversary",
+    { price: 199.95 },
+  );
+  const preservedRose = loveIsARoseProduct(
+    "Preserved Rose in Keepsake Case",
+    "preserved-rose",
+    { price: 199.95 },
+  );
+  const personalizedRose = loveIsARoseProduct(
+    "Personalized Gold Rose in Walnut Vase",
+    "personalized-rose",
+    { price: 199.95 },
+  );
+  const broadPreferences =
+    "Loves preserved roses, gold-dipped roses, gold-trimmed roses, and personalized anniversary rose gifts.";
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Anniversary rose keepsake",
+        short_description: "A romantic anniversary rose gift.",
+        why_it_fits: broadPreferences,
+        price_max: 250,
+      },
+      products: [goldAnniversaryRose],
+      advertiserRegistry: registry,
+      occasion: "anniversary",
+      recipientRelationship: "spouse",
+    })?.productId,
+    "gold-anniversary",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Preserved rose gift", price_max: 250 },
+      products: [goldAnniversaryRose],
+      advertiserRegistry: registry,
+      recipientRelationship: "spouse",
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Gold dipped rose gift", price_max: 250 },
+      products: [preservedRose],
+      advertiserRegistry: registry,
+      recipientRelationship: "spouse",
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Personalized rose gift", price_max: 250 },
+      products: [goldAnniversaryRose],
+      advertiserRegistry: registry,
+      recipientRelationship: "spouse",
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Personalized rose gift", price_max: 250 },
+      products: [personalizedRose],
+      advertiserRegistry: registry,
+      recipientRelationship: "spouse",
+    })?.productId,
+    "personalized-rose",
+  );
+});
+
 test("LoveIsARose honors budgets and only collapses the audited color variants", () => {
   const registry = [loveIsARose];
   const red = loveIsARoseProduct(

@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AwinAdvertiserConfig } from "./advertisers";
 import {
   buildCatalogGroundedProduct,
+  deriveDeterministicCatalogIntents,
   evaluateCatalogFirstRecommendations,
   getCatalogFreshnessTargetHours,
   isCatalogFirstRecommendationsEnabled,
@@ -668,6 +669,62 @@ test("catalog-first excludes LoveIsARose for generic birthdays and work annivers
     assert.equal(loaded, false);
     assert.equal(result.status, "no_results");
   }
+});
+
+test("catalog-first keeps a planned LoveIsARose intent from overconstraining broad notes", async () => {
+  const product = loveIsARoseProduct(
+    "20th Anniversary 24k Gold Dipped Rose",
+    "gold-anniversary",
+    { price: 199.95 },
+  );
+  const result = await evaluateCatalogFirstRecommendations(
+    context({
+      recipient: {
+        notes:
+          "Loves preserved roses, gold-dipped roses, gold-trimmed roses, and personalized anniversary rose gifts.",
+        interests: [],
+      },
+      occasion: "anniversary",
+      recipientRelationship: "spouse",
+      budgetMin: 150,
+      budgetMax: 250,
+      requestedCount: 1,
+    }),
+    {
+      advertiserRegistry: [loveIsARose],
+      planIntents: async () => ({
+        intents: [{ id: "anniversary", label: "Anniversary rose keepsake" }],
+      }),
+      loadProducts: async () => [product],
+    },
+  );
+
+  assert.equal(result.status, "success");
+  assert.equal(result.recommendations[0]?.product.productId, "gold-anniversary");
+});
+
+test("catalog-first derives bounded granular fallback intents from long notes", () => {
+  const note = [
+    "Sarah loves romantic keepsakes, preserved roses, 24K gold-dipped roses, gold-trimmed roses, and personalized anniversary rose gifts.",
+    "She prefers elegant romantic keepsakes made from real roses rather than generic gift boxes, novelty gifts, or ordinary flower arrangements.",
+  ].join(" ");
+  assert.ok(note.length > 200);
+
+  const intents = deriveDeterministicCatalogIntents(
+    context({ recipient: { notes: note, interests: [] } }),
+  );
+  const labels = intents.map((intent) => intent.label.toLowerCase());
+
+  assert.ok(labels.includes("preserved roses"));
+  assert.ok(labels.includes("24k gold-dipped roses"));
+  assert.ok(labels.includes("gold-trimmed roses"));
+  assert.ok(
+    labels.some((label) =>
+      label.startsWith("personalized anniversary rose gifts"),
+    ),
+  );
+  assert.equal(labels.includes(note.toLowerCase()), false);
+  assert.equal(intents.every((intent) => intent.label.length <= 200), true);
 });
 
 test("requires requested customization evidence and collapses merchant variants", async () => {
