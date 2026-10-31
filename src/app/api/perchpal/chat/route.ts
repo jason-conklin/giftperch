@@ -9,9 +9,13 @@ import {
   isRecipientProfileQuestion,
   mentionsRecipientLookup,
   resolvePerchPalRecipientReference,
-  type PerchPalRecipientIndexEntry,
   type PerchPalRecipientProfile,
 } from "@/server/perchpal/recipientContext";
+import {
+  getAuthenticatedPerchPalUser,
+  loadAuthorizedPerchPalRecipient,
+  loadPerchPalRecipientIndex,
+} from "@/server/perchpal/recipientAccess";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -23,21 +27,6 @@ type ChatRequestBody = {
   history?: unknown;
   activeRecipientId?: unknown;
 };
-
-type RecipientRow = {
-  id: string;
-  name: string;
-  relationship: string | null;
-  pet_type: string | null;
-  gender: string | null;
-  birthday: string | null;
-  annual_budget: number | null;
-  gift_budget_min: number | null;
-  gift_budget_max: number | null;
-  notes: string | null;
-};
-
-type InterestRow = { label: string; category: string | null };
 
 const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL?.trim() || "gpt-4o-mini";
 const openai = process.env.OPENAI_API_KEY
@@ -68,33 +57,6 @@ function parseHistory(value: unknown): ChatMessage[] {
     }))
     .filter((entry) => entry.content)
     .slice(-MAX_HISTORY_MESSAGES);
-}
-
-function toRecipientIndex(rows: RecipientRow[]): PerchPalRecipientIndexEntry[] {
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    relationship: row.relationship,
-  }));
-}
-
-function toRecipientProfile(
-  row: RecipientRow,
-  interests: InterestRow[],
-): PerchPalRecipientProfile {
-  return {
-    id: row.id,
-    name: row.name,
-    relationship: row.relationship,
-    petType: row.pet_type,
-    gender: row.gender,
-    birthday: row.birthday,
-    annualBudget: row.annual_budget,
-    budgetMin: row.gift_budget_min,
-    budgetMax: row.gift_budget_max,
-    notes: row.notes,
-    interests,
-  };
 }
 
 async function persistConversation(args: {
@@ -129,15 +91,11 @@ async function persistConversation(args: {
 export async function POST(request: NextRequest) {
   try {
     const supabase = getSupabaseServerClient();
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.split(" ")[1];
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-    if (userError || !user) {
+    const user = await getAuthenticatedPerchPalUser(
+      supabase,
+      request.headers.get("authorization"),
+    );
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -148,17 +106,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Message is too long" }, { status: 400 });
     }
 
-    const { data: recipientRows, error: recipientError } = await supabase
-      .from("recipient_profiles")
-      .select("id, name, relationship, pet_type, gender, birthday, annual_budget, gift_budget_min, gift_budget_max, notes")
-      .eq("user_id", user.id)
-      .or("is_self.eq.false,is_self.is.null")
-      .order("name", { ascending: true })
-      .limit(50);
-    if (recipientError) throw recipientError;
-
-    const recipients = (recipientRows ?? []) as RecipientRow[];
-    const index = toRecipientIndex(recipients);
+    const index = await loadPerchPalRecipientIndex(supabase, user.id);
     const resolution = resolvePerchPalRecipientReference({
       message,
       recipients: index,
@@ -187,27 +135,14 @@ export async function POST(request: NextRequest) {
 
     let selectedRecipient: PerchPalRecipientProfile | null = null;
     if (resolution.kind === "resolved") {
-      const { data: ownedRecipient, error: ownedRecipientError } = await supabase
-        .from("recipient_profiles")
-        .select("id, name, relationship, pet_type, gender, birthday, annual_budget, gift_budget_min, gift_budget_max, notes")
-        .eq("id", resolution.recipientId)
-        .eq("user_id", user.id)
-        .or("is_self.eq.false,is_self.is.null")
-        .maybeSingle();
-      if (ownedRecipientError) throw ownedRecipientError;
-      if (!ownedRecipient) {
+      selectedRecipient = await loadAuthorizedPerchPalRecipient(
+        supabase,
+        user.id,
+        resolution.recipientId,
+      );
+      if (!selectedRecipient) {
         return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
       }
-      const { data: interestRows, error: interestError } = await supabase
-        .from("recipient_interests")
-        .select("label, category")
-        .eq("recipient_id", ownedRecipient.id)
-        .order("created_at", { ascending: true });
-      if (interestError) throw interestError;
-      selectedRecipient = toRecipientProfile(
-        ownedRecipient as RecipientRow,
-        (interestRows ?? []) as InterestRow[],
-      );
     }
 
     if (selectedRecipient && isRecipientProfileQuestion(message)) {
