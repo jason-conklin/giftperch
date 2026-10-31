@@ -54,6 +54,7 @@ export function PerchPalChat({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeRecipientId, setActiveRecipientId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -99,6 +100,10 @@ export function PerchPalChat({
       isMounted = false;
     };
   }, [status, supabase, user?.id]);
+
+  useEffect(() => {
+    setActiveRecipientId(null);
+  }, [user?.id]);
 
   useEffect(() => {
     const wrapper = isExpanded
@@ -172,6 +177,7 @@ export function PerchPalChat({
         body: JSON.stringify({
           message: trimmed,
           history: historyPayload,
+          activeRecipientId,
         }),
       });
 
@@ -185,6 +191,13 @@ export function PerchPalChat({
       }
 
       const data = json ?? {};
+      const resolvedRecipientId =
+        typeof data.recipient === "object" &&
+        data.recipient !== null &&
+        typeof (data.recipient as { id?: unknown }).id === "string"
+          ? (data.recipient as { id: string }).id
+          : null;
+      setActiveRecipientId(resolvedRecipientId);
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
