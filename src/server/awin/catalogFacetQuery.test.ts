@@ -1,0 +1,38 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  catalogRetrievalSelectionSeed,
+  deriveCatalogRetrievalFacets,
+} from "./catalogFacetQuery";
+
+test("derives concrete fishing facets from natural recipient language", () => {
+  assert.deepEqual(
+    deriveCatalogRetrievalFacets(["A thoughtful gift for an avid angler"]),
+    ["fishing", "reel", "rod", "tackle"],
+  );
+});
+
+test("keeps primary categories out of facet retrieval while preserving cross-category interests", () => {
+  const facets = deriveCatalogRetrievalFacets([
+    "Personalized fishing mug for a partner",
+  ]);
+  assert.ok(facets.includes("personalized"));
+  assert.ok(facets.includes("drinkware"));
+  assert.ok(facets.includes("fishing"));
+  assert.ok(facets.includes("reel"));
+});
+
+test("derives preserved-rose retrieval for romantic language without generic gift expansion", () => {
+  assert.ok(
+    deriveCatalogRetrievalFacets(["Anniversary gift for my spouse"])
+      .includes("preserved_rose"),
+  );
+  assert.deepEqual(deriveCatalogRetrievalFacets(["A nice gift"]), []);
+});
+
+test("uses a bounded stable retrieval seed", () => {
+  const facets = deriveCatalogRetrievalFacets(["Fishing reel"]);
+  const first = catalogRetrievalSelectionSeed(["Fishing reel"], facets);
+  assert.equal(first, catalogRetrievalSelectionSeed(["Fishing reel"], facets));
+  assert.ok(first.length < 2_000);
+});

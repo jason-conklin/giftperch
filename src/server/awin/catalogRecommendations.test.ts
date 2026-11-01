@@ -281,7 +281,8 @@ test("applies budget bounds and forwards bounded database filters", async () => 
     budgetMin: 20,
     budgetMax: 80,
     currency: "USD",
-    maximumProducts: 5000,
+    facets: ["fishing", "reel", "rod", "tackle"],
+    selectionSeed: "fishing,reel,rod,tackle|Fishing fishing reel|Outdoors|Fishing fishing rod|Outdoors|Fishing tackle box organizer|Outdoors|Fishing|birthday",
   });
 });
 
@@ -967,4 +968,133 @@ test("candidate retrieval requires verified destinations only for configured adv
     products.map((candidate) => candidate.externalProductId),
     ["giftlab-valid", "piscifun-unchecked"],
   );
+});
+
+test("candidate retrieval uses one bounded facet RPC for a simulated 100,000-product catalog", async () => {
+  const rows = Array.from({ length: 144 }, (_, index) => ({
+    provider: "awin",
+    advertiser_id: index % 2 === 0 ? "89509" : "90759",
+    locale: "en_US",
+    merchant_name: index % 2 === 0 ? "Piscifun" : "BONHEUR JEWELRY",
+    external_product_id: `catalog-${index}`,
+    title: index % 2 === 0 ? `Fishing Reel ${index}` : `Fishing Necklace ${index}`,
+    description: "Synthetic ranked result.",
+    image_url: `https://images.example.test/catalog-${index}.jpg`,
+    affiliate_url: `https://www.awin1.com/cread.php?product=catalog-${index}`,
+    price: 50,
+    currency: "USD",
+    availability: "in_stock",
+    active: true,
+  }));
+  const rpcCalls: Array<{ name: string; params: Record<string, unknown> }> = [];
+  const supabase = {
+    rpc(name: string, params: Record<string, unknown>) {
+      rpcCalls.push({ name, params });
+      return Promise.resolve({ data: rows, error: null });
+    },
+    from() {
+      throw new Error("facet retrieval must not paginate affiliate_products");
+    },
+  } as unknown as SupabaseClient;
+
+  const products = await loadAwinProductCandidates(supabase, {
+    advertiserIds: ["89509", "90759"],
+    budgetMin: 20,
+    budgetMax: 80,
+    currency: "USD",
+    facets: ["fishing", "reel", "necklace"],
+    selectionSeed: "fishing,reel,necklace|fishing reel|fishing necklace",
+    maximumProducts: 5_000,
+  });
+
+  assert.equal(products.length, 144);
+  assert.deepEqual(
+    new Set(products.map((item) => item.advertiserId)),
+    new Set(["89509", "90759"]),
+  );
+  assert.deepEqual(rpcCalls, [
+    {
+      name: "search_awin_catalog_candidates_by_facets",
+      params: {
+        p_advertiser_ids: ["89509", "90759"],
+        p_currency: "USD",
+        p_budget_min: 20,
+        p_budget_max: 80,
+        p_facets: ["fishing", "reel", "necklace"],
+        p_selection_seed: "fishing,reel,necklace|fishing reel|fishing necklace",
+        p_per_advertiser_limit: 72,
+        p_total_limit: 288,
+      },
+    },
+  ]);
+});
+
+test("facet candidate retrieval keeps request payloads bounded for 10k, 50k, and 100k catalogs", async () => {
+  for (const catalogSize of [10_000, 50_000, 100_000]) {
+    let requestCount = 0;
+    const supabase = {
+      rpc(_name: string, params: { p_total_limit: number; p_per_advertiser_limit: number }) {
+        requestCount += 1;
+        assert.equal(params.p_total_limit, 288);
+        assert.equal(params.p_per_advertiser_limit, 72);
+        return Promise.resolve({ data: [], error: null });
+      },
+      from() {
+        throw new Error(`full scan attempted for ${catalogSize} catalog products`);
+      },
+    } as unknown as SupabaseClient;
+
+    const results = await loadAwinProductCandidates(supabase, {
+      advertiserIds: ["89509"],
+      facets: ["fishing", "reel"],
+      selectionSeed: "fishing,reel|fishing reel",
+      currency: "USD",
+    });
+    assert.deepEqual(results, []);
+    assert.equal(requestCount, 1);
+  }
+});
+
+test("facet candidate query failures do not fall back to an unbounded catalog scan", async () => {
+  const supabase = {
+    rpc() {
+      return Promise.resolve({ data: null, error: new Error("database unavailable") });
+    },
+    from() {
+      throw new Error("unexpected unbounded fallback");
+    },
+  } as unknown as SupabaseClient;
+
+  await assert.rejects(
+    () =>
+      loadAwinProductCandidates(supabase, {
+        advertiserIds: ["89509"],
+        facets: ["fishing", "reel"],
+        currency: "USD",
+      }),
+    /Unable to retrieve Awin affiliate product candidates/,
+  );
+});
+
+test("empty facet requests use only the bounded low-confidence fallback", async () => {
+  let rpcCalls = 0;
+  const supabase = {
+    rpc() {
+      rpcCalls += 1;
+      return Promise.resolve({ data: [], error: null });
+    },
+    from() {
+      throw new Error("an empty search must not scan affiliate_products");
+    },
+  } as unknown as SupabaseClient;
+
+  const results = await loadAwinProductCandidates(supabase, {
+    advertiserIds: ["89509"],
+    currency: "USD",
+    facets: [],
+    selectionSeed: "generic-request",
+  });
+
+  assert.deepEqual(results, []);
+  assert.equal(rpcCalls, 1);
 });

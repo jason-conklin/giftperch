@@ -11,9 +11,18 @@ import {
   requiresVerifiedAwinProductDestination,
   type AwinAdvertiserConfig,
 } from "./advertisers";
+import {
+  catalogRetrievalSelectionSeed,
+  deriveCatalogRetrievalFacets,
+} from "./catalogFacetQuery";
+import { PRODUCT_FACETS, type ProductFacet } from "./productClassification";
 
 const CATALOG_PAGE_SIZE = 1_000;
 const MINIMUM_MATCH_SCORE = 10;
+const MAX_CATALOG_RETRIEVAL_FACETS = 12;
+const MAX_CATALOG_RETRIEVAL_SEED_LENGTH = 2_000;
+const DEFAULT_CATALOG_RETRIEVAL_PER_ADVERTISER_LIMIT = 72;
+const DEFAULT_CATALOG_RETRIEVAL_TOTAL_LIMIT = 288;
 
 const STOP_WORDS = new Set([
   "a",
@@ -465,11 +474,36 @@ export type AwinCandidateLoadOptions = {
   budgetMax?: number | null;
   currency?: string;
   /**
+   * Concrete product facets derived from the current request. When provided,
+   * PostgreSQL reads bounded indexed facet ranges before product records reach
+   * application memory.
+   */
+  facets?: readonly ProductFacet[];
+  /** A deterministic request seed rotates bounded catalog buckets fairly. */
+  selectionSeed?: string;
+  /**
    * Fails closed when the eligible partition exceeds this size. This avoids
    * silently dropping potentially relevant products behind an arbitrary cap.
    */
   maximumProducts?: number;
 };
+
+function normalizeCatalogRetrievalFacets(
+  facets: readonly ProductFacet[] | undefined,
+): ProductFacet[] {
+  if (!facets) return [];
+  const supported = new Set<string>(PRODUCT_FACETS);
+  return [...new Set(facets.filter((facet) => supported.has(facet)))].slice(
+    0,
+    MAX_CATALOG_RETRIEVAL_FACETS,
+  );
+}
+
+function normalizeCatalogRetrievalSeed(value: string | undefined): string {
+  return typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ").slice(0, MAX_CATALOG_RETRIEVAL_SEED_LENGTH)
+    : "";
+}
 
 export function getCatalogEligibleAwinAdvertiserIds(
   requestedAdvertiserIds?: readonly string[],
@@ -570,6 +604,40 @@ export async function loadAwinProductCandidates(
   );
 
   if (advertiserIds.length === 0) {
+    return products;
+  }
+
+  const facets = normalizeCatalogRetrievalFacets(options.facets);
+  if (options.facets !== undefined) {
+    const selectionSeed = normalizeCatalogRetrievalSeed(options.selectionSeed);
+
+    const { data, error } = await supabase.rpc(
+      "search_awin_catalog_candidates_by_facets",
+      {
+        p_advertiser_ids: advertiserIds,
+        p_currency: options.currency?.trim().toUpperCase() || "USD",
+        p_budget_min:
+          typeof options.budgetMin === "number" && Number.isFinite(options.budgetMin)
+            ? options.budgetMin
+            : null,
+        p_budget_max:
+          typeof options.budgetMax === "number" && Number.isFinite(options.budgetMax)
+            ? options.budgetMax
+            : null,
+        p_facets: facets,
+        p_selection_seed: selectionSeed,
+        p_per_advertiser_limit:
+          DEFAULT_CATALOG_RETRIEVAL_PER_ADVERTISER_LIMIT,
+        p_total_limit: DEFAULT_CATALOG_RETRIEVAL_TOTAL_LIMIT,
+      },
+    );
+    if (error) {
+      throw new Error("Unable to retrieve Awin affiliate product candidates.");
+    }
+    for (const row of (data ?? []) as CatalogRow[]) {
+      const product = normalizeCatalogRow(row);
+      if (product) products.push(product);
+    }
     return products;
   }
 
@@ -1693,6 +1761,11 @@ export async function enrichGiftSuggestionsWithProducts<
   searchAmazon: AmazonSearch;
 }): Promise<Array<T & { productMatch: ProductMatch | null; amazonProduct: AmazonProduct | null }>> {
   let awinProducts: AwinCatalogProduct[] = [];
+  const retrievalTexts = args.suggestions.flatMap((suggestion) => [
+    suggestion.title,
+    suggestion.short_description,
+  ]);
+  const retrievalFacets = deriveCatalogRetrievalFacets(retrievalTexts);
   try {
     awinProducts = await args.loadAwinProducts({
       advertiserIds: getRelevantAwinAdvertiserIds(
@@ -1702,6 +1775,14 @@ export async function enrichGiftSuggestionsWithProducts<
           occasion: args.occasion,
           recipientRelationship: args.recipientRelationship,
         },
+      ),
+      budgetMin: args.budgetMin,
+      budgetMax: args.budgetMax,
+      currency: "USD",
+      facets: retrievalFacets,
+      selectionSeed: catalogRetrievalSelectionSeed(
+        retrievalTexts,
+        retrievalFacets,
       ),
     });
   } catch {

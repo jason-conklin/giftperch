@@ -20,11 +20,14 @@ import {
   type MatchableGiftSuggestion,
   type RecipientInterestForMatching,
 } from "./matcher";
+import {
+  catalogRetrievalSelectionSeed,
+  deriveCatalogRetrievalFacets,
+} from "./catalogFacetQuery";
 
 const DEFAULT_FRESHNESS_TARGET_HOURS = 72;
 const MAX_REQUESTED_PRODUCTS = 12;
 const MAX_SHORTLIST_PRODUCTS = 24;
-const MAX_CATALOG_CANDIDATES = 5_000;
 const MAX_INTENTS = 12;
 
 export type CatalogRecommendationContext = {
@@ -371,6 +374,17 @@ function intentSuggestion(
   };
 }
 
+function catalogRetrievalTexts(
+  context: CatalogRecommendationContext,
+  intents: readonly CatalogGiftIntent[],
+): string[] {
+  return [
+    ...intents.flatMap((intent) => [intent.label, intent.description]),
+    ...context.recipient.interests.map((interest) => interest.label),
+    context.occasion,
+  ].filter((value): value is string => Boolean(value?.trim()));
+}
+
 const EXPLICIT_PRODUCT_TYPE_PATTERNS: ReadonlyArray<RegExp> = [
   /\bnecklaces?\b/i,
   /\bbracelets?\b/i,
@@ -597,12 +611,18 @@ export async function evaluateCatalogFirstRecommendations(
     };
   }
 
+  const retrievalTexts = catalogRetrievalTexts(context, intents);
+  const retrievalFacets = deriveCatalogRetrievalFacets(retrievalTexts);
   const loadedProducts = await dependencies.loadProducts({
     advertiserIds,
     budgetMin: context.budgetMin,
     budgetMax: context.budgetMax,
     currency: "USD",
-    maximumProducts: MAX_CATALOG_CANDIDATES,
+    facets: retrievalFacets,
+    selectionSeed: catalogRetrievalSelectionSeed(
+      retrievalTexts,
+      retrievalFacets,
+    ),
   });
   const historicalProductKeys = new Set(context.excludedProductKeys ?? []);
   const excludedProductTitles = new Set(
