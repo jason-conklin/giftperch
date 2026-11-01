@@ -163,6 +163,11 @@ test("normalizes Legacy identity, price, availability, and optional descriptions
     assert.equal(normalized.product.currency, "USD");
     assert.equal(normalized.product.availability, "in_stock");
     assert.match(normalized.product.description ?? "", /^Category: Jewelry\./);
+    assert.equal(normalized.product.sourceCategory, "Jewelry");
+    assert.equal(
+      normalized.product.classification?.primaryCategory,
+      "jewelry_accessories",
+    );
   }
 
   assert.deepEqual(

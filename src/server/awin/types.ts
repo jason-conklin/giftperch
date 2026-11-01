@@ -1,3 +1,5 @@
+import type { ProductClassification } from "./productClassification";
+
 export const AWIN_PROVIDER = "awin";
 
 export type AffiliateProduct = {
@@ -15,6 +17,8 @@ export type AffiliateProduct = {
   currency: string;
   availability: string;
   importedAt: string;
+  sourceCategory?: string | null;
+  classification?: ProductClassification;
 };
 
 export type NormalizeResult =

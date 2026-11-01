@@ -14,6 +14,7 @@
     "awin:import-snapshot": "tsx scripts/import-awin-products.ts --write",
     "awin:verify": "tsx scripts/verify-awin-products.ts",
     "awin:audit": "tsx scripts/audit-awin-catalog.ts",
+    "awin:backfill-classifications": "tsx scripts/backfill-awin-product-classifications.ts",
     "awin:validate-destinations": "tsx scripts/validate-awin-destinations.ts"
   },
   "dependencies": {

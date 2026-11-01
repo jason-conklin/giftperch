@@ -3,6 +3,7 @@ import { Readable } from "node:stream";
 import { isExpectedAwinTrackingUrl } from "@/lib/affiliateProduct";
 import { AwinFeedError, normalizeAwinPrice } from "./feed";
 import { AWIN_PROVIDER, type NormalizeResult } from "./types";
+import { classifyAffiliateProduct } from "./productClassification";
 
 export const LEGACY_AWIN_REQUIRED_COLUMNS = [
   "aw_deep_link",
@@ -333,6 +334,8 @@ export function normalizeAwinLegacyProduct(
     .find((value): value is string => value !== null);
   const destinationUrl = normalizeHttpsUrl(legacyRecord.merchant_deep_link);
   const availability = normalizeLegacyAvailability(legacyRecord);
+  const sourceCategory = normalizeRequiredText(legacyRecord.merchant_category);
+  const description = legacyDescription(legacyRecord);
 
   if (!externalProductId) return { ok: false, reason: "missing_product_id" };
   if (!title) return { ok: false, reason: "missing_title" };
@@ -354,7 +357,7 @@ export function normalizeAwinLegacyProduct(
       externalProductId,
       locale: options.locale,
       title,
-      description: legacyDescription(legacyRecord),
+      description,
       imageUrl,
       destinationUrl,
       affiliateUrl: legacyRecord.aw_deep_link.trim(),
@@ -362,6 +365,14 @@ export function normalizeAwinLegacyProduct(
       currency: price.currency,
       availability,
       importedAt: options.importedAt,
+      sourceCategory,
+      classification: classifyAffiliateProduct({
+        title,
+        description,
+        rawMerchantCategory: sourceCategory,
+        advertiserId: options.advertiserId,
+        merchantName,
+      }),
     },
   };
 }

@@ -105,6 +105,8 @@ test("normalizes a valid product and rejects malformed affiliate URLs", () => {
     assert.equal(normalized.product.price, "31.99");
     assert.equal(normalized.product.currency, "USD");
     assert.equal(normalized.product.provider, AWIN_PROVIDER);
+    assert.equal(normalized.product.sourceCategory, null);
+    assert.equal(normalized.product.classification?.primaryCategory, "sports_outdoors");
   }
 
   const malformed = normalizeAwinProduct(
@@ -125,6 +127,26 @@ test("normalizes a valid product and rejects malformed affiliate URLs", () => {
     isExpectedAwinTrackingUrl("https://www.awin1.com:444/cread.php"),
     false,
   );
+});
+
+test("preserves supported Enhanced feed source categories for classification", () => {
+  const normalized = normalizeAwinProduct(
+    validRecord({
+      title: "Custom Photo Mug",
+      product_type: "Personalized > Drinkware",
+      meta: { advertiser_id: 95201, advertiser_name: "Giftlab" },
+    }),
+    {
+      advertiserId: "95201",
+      locale: "en_US",
+      importedAt: "2026-11-01T00:00:00.000Z",
+    },
+  );
+  assert.equal(normalized.ok, true);
+  if (normalized.ok) {
+    assert.equal(normalized.product.sourceCategory, "Personalized > Drinkware");
+    assert.equal(normalized.product.classification?.primaryCategory, "personalized_gifts");
+  }
 });
 
 test("failed streams never finalize staged products", async () => {
@@ -239,6 +261,57 @@ test("an invalid safety threshold is rejected before an import begins", async ()
     /positive integer/,
   );
   assert.equal(began, false);
+});
+
+test("an import fails closed when a custom normalizer omits classification metadata", async () => {
+  let finalized = false;
+  const repository: AffiliateProductImportRepository = {
+    async beginImport() {
+      return "import-missing-classification";
+    },
+    async stageProducts() {},
+    async finalizeImport() {
+      finalized = true;
+      return 0;
+    },
+    async failImport() {},
+  };
+
+  await assert.rejects(
+    runAwinProductImport({
+      context: {
+        provider: AWIN_PROVIDER,
+        publisherId: "2673864",
+        advertiserId: "89509",
+        locale: "en_US",
+      },
+      records: (async function* () {
+        yield validRecord();
+      })(),
+      repository,
+      normalizeProduct: () => ({
+        ok: true,
+        product: {
+          provider: AWIN_PROVIDER,
+          advertiserId: "89509",
+          merchantName: "Piscifun",
+          externalProductId: "missing-classification",
+          locale: "en_US",
+          title: "Unclassified product",
+          description: null,
+          imageUrl: "https://cdn.example.test/image.jpg",
+          destinationUrl: "https://merchant.example.test/product",
+          affiliateUrl: "https://www.awin1.com/cread.php?awinmid=89509",
+          price: "10.00",
+          currency: "USD",
+          availability: "in_stock",
+          importedAt: "2026-11-01T00:00:00.000Z",
+        },
+      }),
+    }),
+    /did not produce classification metadata/,
+  );
+  assert.equal(finalized, false);
 });
 
 test("feed inspection reports uniqueness, links, and catalog breakdowns", async () => {

@@ -98,6 +98,11 @@ export async function runAwinProductImport(options: {
         stats.skippedProducts += 1;
         continue;
       }
+      if (!normalized.product.classification) {
+        throw new Error(
+          "Awin product normalization did not produce classification metadata.",
+        );
+      }
 
       batch.push(normalized.product);
       stats.validProducts += 1;

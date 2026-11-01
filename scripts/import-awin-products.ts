@@ -20,6 +20,7 @@ import {
   createAwinImportContext,
   resolveAwinAdvertiser,
 } from "../src/server/awin/advertisers";
+import { classificationStagingFields } from "../src/server/awin/classificationPersistence";
 
 const REQUEST_TIMEOUT_MS = 120_000;
 
@@ -108,6 +109,7 @@ class SupabaseImportRepository implements AffiliateProductImportRepository {
       currency: product.currency,
       availability: product.availability,
       imported_at: product.importedAt,
+      ...classificationStagingFields(product),
     }));
     const { error } = await this.supabase
       .from("affiliate_product_staging")

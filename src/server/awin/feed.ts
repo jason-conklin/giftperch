@@ -3,6 +3,7 @@ import {
   type AffiliateProduct,
   type NormalizeResult,
 } from "./types";
+import { classifyAffiliateProduct } from "./productClassification";
 import { isExpectedAwinTrackingUrl } from "@/lib/affiliateProduct";
 
 export { isExpectedAwinTrackingUrl } from "@/lib/affiliateProduct";
@@ -55,6 +56,21 @@ export type AwinFeedResponse = {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sourceCategoryFromEnhancedRecord(
+  record: Record<string, unknown>,
+): string | null {
+  for (const key of [
+    "merchant_category",
+    "product_type",
+    "google_product_category",
+    "category",
+  ]) {
+    const value = normalizeRequiredText(record[key]);
+    if (value) return value;
+  }
+  return null;
 }
 
 function isTerminalError(value: unknown): value is Record<string, unknown> {
@@ -334,6 +350,7 @@ export function normalizeAwinProduct(
   }
 
   const description = normalizeRequiredText(record.description);
+  const sourceCategory = sourceCategoryFromEnhancedRecord(record);
   const product: AffiliateProduct = {
     provider: AWIN_PROVIDER,
     advertiserId: options.advertiserId,
@@ -349,6 +366,14 @@ export function normalizeAwinProduct(
     currency: price.currency,
     availability,
     importedAt: options.importedAt,
+    sourceCategory,
+    classification: classifyAffiliateProduct({
+      title,
+      description,
+      rawMerchantCategory: sourceCategory,
+      advertiserId: options.advertiserId,
+      merchantName,
+    }),
   };
 
   return { ok: true, product };
