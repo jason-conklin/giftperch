@@ -100,6 +100,28 @@ test("classifies LoveIsARose preserved roses and occasion facets from product ev
   assert.equal(result.confidence, "high");
 });
 
+test("classifies office furniture and sleep products from concrete title evidence", () => {
+  const chair = classifyAffiliateProduct({
+    advertiserId: "122512",
+    title: "Resistance Color Ergonomic Office Chair - Green",
+  });
+  const pillowcase = classifyAffiliateProduct({
+    advertiserId: "100833",
+    title: "Mulberry Silk Pillowcase - Queen / Champagne",
+  });
+  const puzzle = classifyAffiliateProduct({
+    advertiserId: "125856",
+    title: "Mechanical Wooden Jigsaw Puzzle - Dragon",
+  });
+
+  assert.equal(chair.primaryCategory, "home_kitchen");
+  assert.deepEqual(chair.facets, ["home_decor"]);
+  assert.equal(pillowcase.primaryCategory, "home_kitchen");
+  assert.deepEqual(pillowcase.facets, ["bedding"]);
+  assert.equal(puzzle.primaryCategory, "hobbies_entertainment");
+  assert.deepEqual(puzzle.facets, ["gaming"]);
+});
+
 test("classifies real gold-trimmed rose and jewelry-title variants from title evidence", () => {
   const rose = classifyAffiliateProduct({
     advertiserId: "96879",

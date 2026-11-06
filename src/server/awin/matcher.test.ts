@@ -106,6 +106,26 @@ const sunaofe: AwinAdvertiserConfig = {
   matchingPolicy: "sunaofe-office",
 };
 
+const nexbie: AwinAdvertiserConfig = {
+  key: "nexbie",
+  advertiserId: "125856",
+  displayName: "Nexbie",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "nexbie-hobbies",
+};
+
+const promeed: AwinAdvertiserConfig = {
+  key: "promeed",
+  advertiserId: "100833",
+  displayName: "Promeed",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "promeed-bedding",
+};
+
 function loveIsARoseProduct(
   title: string,
   id: string,
@@ -609,6 +629,80 @@ test("matches Sunaofe only for explicit office-furniture concepts", () => {
       [sunaofe],
     ),
     ["122512"],
+  );
+});
+
+test("matches Nexbie only for explicit puzzle or figurine interests", () => {
+  const puzzle = advertiserProduct("125856", "Nexbie", {
+    title: "Mechanical Wooden Dragon Puzzle",
+    description: "A detailed jigsaw puzzle for collectors.",
+    price: 29.99,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Mechanical dragon puzzle", tier: "thoughtful", price_max: 50 },
+      products: [puzzle],
+      advertiserRegistry: [nexbie],
+    })?.advertiserId,
+    "125856",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Fishing tackle organizer", tier: "thoughtful" },
+      products: [puzzle],
+      advertiserRegistry: [nexbie],
+    }),
+    null,
+  );
+});
+
+test("matches Promeed only for explicit bedding intent and suppresses gift cards", () => {
+  const queen = advertiserProduct("100833", "Promeed", {
+    externalProductId: "promeed-queen",
+    title: "Mulberry Silk Pillowcase - Queen / Champagne",
+    description: "A soft silk pillowcase for sleep.",
+    price: 75.99,
+  });
+  const standard = advertiserProduct("100833", "Promeed", {
+    externalProductId: "promeed-standard",
+    title: "Mulberry Silk Pillowcase - Standard / Navy",
+    description: "A soft silk pillowcase for sleep.",
+    price: 69.99,
+  });
+  const giftCard = advertiserProduct("100833", "Promeed", {
+    title: "Promeed Gift Card",
+    description: "A gift card.",
+    price: 50,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Silk pillowcase for better sleep", tier: "thoughtful", price_max: 100 },
+      products: [queen],
+      advertiserRegistry: [promeed],
+    })?.advertiserId,
+    "100833",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "A thoughtful birthday present", tier: "thoughtful" },
+      products: [queen],
+      advertiserRegistry: [promeed],
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Silk pillowcase for better sleep", tier: "thoughtful" },
+      products: [giftCard],
+      advertiserRegistry: [promeed],
+    }),
+    null,
+  );
+  assert.equal(
+    getAwinProductDiversityKey(queen, promeed),
+    getAwinProductDiversityKey(standard, promeed),
   );
 });
 

@@ -21,8 +21,11 @@ const REQUEST_FACET_RULES: readonly RequestFacetRule[] = [
   { pattern: /\b(?:angler|angling|fish|fishing)\b/i, facets: ["fishing", "reel", "rod", "tackle"] },
   { pattern: /\b(?:jewellery|jewelry)\b/i, facets: ["necklace", "bracelet", "ring", "earrings"] },
   { pattern: /\b(?:coffee|tea)\b/i, facets: ["drinkware"] },
+  { pattern: /\b(?:sleep|sleeping|pillowcases?|bedding|silk pillow)\b/i, facets: ["bedding"] },
+  { pattern: /\b(?:ergonomic|(?:office )?chairs?|standing desks?|sit[- ]stand|monitor arms?)\b/i, facets: ["home_decor"] },
   { pattern: /\b(?:reading|reader|books?)\b/i, facets: ["reading"] },
   { pattern: /\b(?:gaming|gamer)\b/i, facets: ["gaming"] },
+  { pattern: /\b(?:jigsaw|mechanical)?\s*puzzles?\b/i, facets: ["gaming"] },
   { pattern: /\b(?:technology|tech|phone|computer)\b/i, facets: ["tech_accessory"] },
 ];
 

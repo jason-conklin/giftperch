@@ -67,6 +67,31 @@ test("Crown and Paw and Sunaofe are enabled only for their specific gift context
   assert.equal(sunaofe.importSafeguards?.minimumValidProducts, 100);
 });
 
+test("Nexbie and Promeed are enabled only through their narrow matching policies", () => {
+  const nexbie = resolveAwinAdvertiser("nexbie");
+  const promeed = resolveAwinAdvertiser("promeed");
+
+  assert.equal(nexbie.advertiserId, "125856");
+  assert.equal(nexbie.importEnabled, true);
+  assert.equal(nexbie.recommendationEnabled, true);
+  assert.equal(nexbie.matchingPolicy, "nexbie-hobbies");
+  assert.equal(nexbie.importSafeguards?.minimumValidProducts, 60);
+
+  assert.equal(promeed.advertiserId, "100833");
+  assert.equal(promeed.importEnabled, true);
+  assert.equal(promeed.recommendationEnabled, true);
+  assert.equal(promeed.matchingPolicy, "promeed-bedding");
+  assert.equal(promeed.importSafeguards?.minimumValidProducts, 600);
+  assert.equal(
+    findRecommendationEnabledAwinAdvertiserById("125856")?.key,
+    "nexbie",
+  );
+  assert.equal(
+    findRecommendationEnabledAwinAdvertiserById("100833")?.key,
+    "promeed",
+  );
+});
+
 test("LoveIsARose is approved for legacy-feed imports and catalog recommendations", () => {
   const loveIsARose = resolveAwinAdvertiser("love-is-a-rose");
 

@@ -14,6 +14,8 @@ export type AwinMatchingPolicy =
   | "love-is-a-rose"
   | "crown-and-paw-pets"
   | "sunaofe-office"
+  | "nexbie-hobbies"
+  | "promeed-bedding"
   | "magicshine-cycling"
   | "hula-daddy-coffee"
   | "coziwow-pets"
@@ -302,6 +304,30 @@ export const AWIN_ADVERTISERS = [
     matchingPolicy: "sunaofe-office",
     importSafeguards: {
       minimumValidProducts: 100,
+    },
+  },
+  {
+    key: "nexbie",
+    advertiserId: "125856",
+    displayName: "Nexbie",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "nexbie-hobbies",
+    importSafeguards: {
+      minimumValidProducts: 60,
+    },
+  },
+  {
+    key: "promeed",
+    advertiserId: "100833",
+    displayName: "Promeed",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "promeed-bedding",
+    importSafeguards: {
+      minimumValidProducts: 600,
     },
   },
   {

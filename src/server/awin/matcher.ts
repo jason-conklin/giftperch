@@ -332,6 +332,23 @@ const SUNAOFE_OFFICE_INTENT_WORDS = new Set([
   "standing",
 ]);
 
+const NEXBIE_HOBBY_INTENT_WORDS = new Set([
+  "dragon",
+  "dragons",
+  "figurine",
+  "figurines",
+  "puzzle",
+  "puzzles",
+]);
+
+const PROMEED_BEDDING_INTENT_WORDS = new Set([
+  "bedding",
+  "pillow",
+  "pillowcase",
+  "sleep",
+  "sleeping",
+]);
+
 const GIFTLAB_PERSONALIZED_INTENT_WORDS = new Set([
   "anniversary",
   "birthday",
@@ -873,6 +890,10 @@ function isUnsuitableSunaofeProduct(title: string): boolean {
   return /\b(?:deposit|pre[ -]?order)\b/i.test(title);
 }
 
+function isUnsuitablePromeedProduct(title: string): boolean {
+  return /\bgift cards?\b/i.test(title);
+}
+
 function giftlabCategory(product: AwinCatalogProduct): string {
   return product.description?.match(/^Category:\s*([^.]*)\./i)?.[1]?.trim() ?? "";
 }
@@ -1236,6 +1257,15 @@ export function getAwinProductDiversityKey(
       .trim();
     return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
   }
+  if (advertiser.matchingPolicy === "promeed-bedding") {
+    const baseTitle = product.title
+      .replace(/\s+-\s+(?:standard|queen|king|twin|california king)\s*\/.*$/i, "")
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
+  }
   if (advertiser.matchingPolicy === "love-is-a-rose") {
     const colorVariant = product.title.match(
       /^(24k\s+gold\s+trimmed\s+rose:\s*11\"\s+)(?:black|blue|brown|burgundy|cream|dark\s+blue|dark\s+green|green|light\s+blue|light\s+green|orange|peach|pink(?:\s+and\s+cream)?|purple(?:\s+cream)?|red(?:\s+and\s+cream)?|teal|white|yellow)(\s+rose)$/i,
@@ -1305,6 +1335,8 @@ function passesAdvertiserPolicy(args: {
   coziwowPetIntent: Set<string>;
   crownAndPawPetIntent: Set<string>;
   sunaofeOfficeIntent: Set<string>;
+  nexbieHobbyIntent: Set<string>;
+  promeedBeddingIntent: Set<string>;
   giftlabPersonalizedIntent: Set<string>;
   giftlabDeviceIntent: Set<string>;
   loveIsARoseIntent: Set<string>;
@@ -1365,6 +1397,13 @@ function passesAdvertiserPolicy(args: {
       return (
         args.sunaofeOfficeIntent.size > 0 &&
         !isUnsuitableSunaofeProduct(product.title)
+      );
+    case "nexbie-hobbies":
+      return args.nexbieHobbyIntent.size > 0;
+    case "promeed-bedding":
+      return (
+        args.promeedBeddingIntent.size > 0 &&
+        !isUnsuitablePromeedProduct(product.title)
       );
     case "giftlab-personalized":
       return (
@@ -1427,6 +1466,8 @@ type SuggestionPolicyIntent = {
   coziwowPets: Set<string>;
   crownAndPawPets: Set<string>;
   sunaofeOffice: Set<string>;
+  nexbieHobbies: Set<string>;
+  promeedBedding: Set<string>;
   giftlabPersonalized: Set<string>;
   giftlabDevice: Set<string>;
   loveIsARose: Set<string>;
@@ -1481,6 +1522,14 @@ function getSuggestionPolicyIntent(
       suggestionIntentTokens,
       SUNAOFE_OFFICE_INTENT_WORDS,
     ),
+    nexbieHobbies: intersection(
+      suggestionIntentTokens,
+      NEXBIE_HOBBY_INTENT_WORDS,
+    ),
+    promeedBedding: intersection(
+      suggestionIntentTokens,
+      PROMEED_BEDDING_INTENT_WORDS,
+    ),
     giftlabPersonalized: intersection(
       suggestionIntentTokens,
       GIFTLAB_PERSONALIZED_INTENT_WORDS,
@@ -1527,6 +1576,10 @@ function policyCanMatchSuggestion(
       return intent.crownAndPawPets.size > 0;
     case "sunaofe-office":
       return intent.sunaofeOffice.size > 0;
+    case "nexbie-hobbies":
+      return intent.nexbieHobbies.size > 0;
+    case "promeed-bedding":
+      return intent.promeedBedding.size > 0;
     case "giftlab-personalized":
       return intent.giftlabPersonalized.size > 0;
     case "standard":
@@ -1687,6 +1740,8 @@ export function findBestAwinProductMatch(args: {
         coziwowPetIntent: policyIntent.coziwowPets,
         crownAndPawPetIntent: policyIntent.crownAndPawPets,
         sunaofeOfficeIntent: policyIntent.sunaofeOffice,
+        nexbieHobbyIntent: policyIntent.nexbieHobbies,
+        promeedBeddingIntent: policyIntent.promeedBedding,
         giftlabPersonalizedIntent: policyIntent.giftlabPersonalized,
         giftlabDeviceIntent: policyIntent.giftlabDevice,
         loveIsARoseIntent: policyIntent.loveIsARose,

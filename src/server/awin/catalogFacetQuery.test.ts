@@ -36,6 +36,21 @@ test("retrieves personalized photo gifts for pet-owner language", () => {
   assert.ok(facets.includes("personalized"));
 });
 
+test("derives bounded bedding, office, and puzzle facets from explicit requests", () => {
+  assert.ok(
+    deriveCatalogRetrievalFacets(["A silk pillowcase for better sleep"])
+      .includes("bedding"),
+  );
+  assert.ok(
+    deriveCatalogRetrievalFacets(["An ergonomic office chair"])
+      .includes("home_decor"),
+  );
+  assert.ok(
+    deriveCatalogRetrievalFacets(["A mechanical dragon puzzle"])
+      .includes("gaming"),
+  );
+});
+
 test("uses a bounded stable retrieval seed", () => {
   const facets = deriveCatalogRetrievalFacets(["Fishing reel"]);
   const first = catalogRetrievalSelectionSeed(["Fishing reel"], facets);
