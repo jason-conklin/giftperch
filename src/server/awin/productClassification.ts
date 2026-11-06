@@ -106,6 +106,7 @@ const TITLE_RULES: readonly Rule[] = [
   { facet: "tackle", category: "sports_outdoors", pattern: /\b(?:tackle|lures?|bait)\b/i, weight: 7 },
   { facet: "fishing", category: "sports_outdoors", pattern: /\bfish lip gripper\b/i, weight: 7 },
   { facet: "pet_grooming", category: "pets", pattern: /\b(?:pet|dog|cat)\s+(?:grooming|brush|comb|deshedding)\b/i, weight: 8 },
+  { facet: "photo_gift", category: "pets", pattern: /\b(?:custom\s+)?pet\s+(?:portrait|poster|canvas)\b/i, weight: 8 },
   { facet: "drinkware", category: "home_kitchen", pattern: /\b(?:mug|tumbler|travel cup|water bottle)\b/i, weight: 7 },
   { facet: "kitchen_tool", category: "home_kitchen", pattern: /\b(?:kitchen|chef|cookware|cutlery|skillet|knife)\b/i, weight: 7 },
   { facet: "home_decor", category: "home_kitchen", pattern: /\b(?:home decor|wall art|throw pillow|cushion|planter)\b/i, weight: 7 },

@@ -17,7 +17,7 @@ type RequestFacetRule = {
 // responsible for deciding whether a returned product is actually suitable.
 const REQUEST_FACET_RULES: readonly RequestFacetRule[] = [
   { pattern: /\b(?:romantic|romance|spouse|partner|wife|husband|girlfriend|boyfriend|fianc)/i, facets: ["preserved_rose", "bouquet", "personalized"] },
-  { pattern: /\b(?:cat|dog|pet)\b/i, facets: ["pet_grooming"] },
+  { pattern: /\b(?:cat|dog|pet)\b/i, facets: ["pet_grooming", "photo_gift", "personalized"] },
   { pattern: /\b(?:angler|angling|fish|fishing)\b/i, facets: ["fishing", "reel", "rod", "tackle"] },
   { pattern: /\b(?:jewellery|jewelry)\b/i, facets: ["necklace", "bracelet", "ring", "earrings"] },
   { pattern: /\b(?:coffee|tea)\b/i, facets: ["drinkware"] },

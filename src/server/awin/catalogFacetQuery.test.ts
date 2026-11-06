@@ -30,6 +30,12 @@ test("derives preserved-rose retrieval for romantic language without generic gif
   assert.deepEqual(deriveCatalogRetrievalFacets(["A nice gift"]), []);
 });
 
+test("retrieves personalized photo gifts for pet-owner language", () => {
+  const facets = deriveCatalogRetrievalFacets(["A custom portrait for a dog owner"]);
+  assert.ok(facets.includes("photo_gift"));
+  assert.ok(facets.includes("personalized"));
+});
+
 test("uses a bounded stable retrieval seed", () => {
   const facets = deriveCatalogRetrievalFacets(["Fishing reel"]);
   const first = catalogRetrievalSelectionSeed(["Fishing reel"], facets);

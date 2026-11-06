@@ -131,7 +131,7 @@ export async function GET(
     const ids = [...new Set(entries.map(({ match }) => match.productId))];
     for (let offset = 0; offset < ids.length; offset += 100) {
       const { data: healthRows } = await (supabase as SupabaseClient)
-        .from("affiliate_products")
+        .from("affiliate_catalog_products")
         .select("external_product_id, destination_health_status, destination_checked_at")
         .eq("provider", "awin")
         .eq("advertiser_id", advertiserId)
@@ -315,7 +315,7 @@ export async function POST(
       const { data: catalogRows, error: catalogError } = await (
         supabase as SupabaseClient
       )
-        .from("affiliate_products")
+        .from("affiliate_catalog_products")
         .select(
           "advertiser_id, locale, external_product_id, merchant_name, title, image_url, affiliate_url, price, currency, destination_health_status, destination_checked_at",
         )

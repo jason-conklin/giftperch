@@ -21,8 +21,15 @@ import {
   resolveAwinAdvertiser,
 } from "../src/server/awin/advertisers";
 import { classificationStagingFields } from "../src/server/awin/classificationPersistence";
+import { finalizeChunkedAwinImport } from "../src/server/awin/chunkedImportFinalization";
 
 const REQUEST_TIMEOUT_MS = 120_000;
+const PREPARE_BATCH_SIZE = 500;
+const CLEANUP_BATCH_SIZE = 1_000;
+
+type ResumableImportRepository = AffiliateProductImportRepository & {
+  resumeImport(importId: string, context: AwinImportContext): Promise<ImportStats>;
+};
 
 loadEnvConfig(process.cwd());
 
@@ -126,15 +133,96 @@ class SupabaseImportRepository implements AffiliateProductImportRepository {
         skipped_count: stats.skippedProducts,
       })
       .eq("id", importId)
-      .eq("status", "staging");
+      .in("status", ["staging", "preparing"]);
     if (statsError) throw new Error(statsError.message);
 
+    return finalizeChunkedAwinImport({
+      prepareChunk: async () => {
+        const { data, error } = await this.supabase.rpc(
+          "prepare_affiliate_product_import_chunk",
+          { p_import_id: importId, p_batch_size: PREPARE_BATCH_SIZE },
+        );
+        if (error) throw new Error(error.message);
+        return Number(data ?? 0);
+      },
+      activate: async () => {
+        const { data, error } = await this.supabase.rpc(
+          "activate_prepared_affiliate_product_import",
+          { p_import_id: importId },
+        );
+        if (error) throw new Error(error.message);
+        return Number(data ?? 0);
+      },
+      cleanupPreparedChunk: async () => {
+        const { data, error } = await this.supabase.rpc(
+          "cleanup_prepared_affiliate_product_import_chunk",
+          { p_import_id: importId, p_batch_size: CLEANUP_BATCH_SIZE },
+        );
+        if (error) throw new Error(error.message);
+        return Number(data ?? 0);
+      },
+      cleanupInactiveSnapshots: () => this.cleanupInactiveSnapshots(importId),
+    });
+  }
+
+  async resumeImport(importId: string, context: AwinImportContext): Promise<ImportStats> {
     const { data, error } = await this.supabase.rpc(
-      "finalize_affiliate_product_import",
+      "resume_affiliate_product_import",
       { p_import_id: importId },
     );
-    if (error) throw new Error(error.message);
-    return typeof data === "number" ? data : Number(data ?? 0);
+    if (error || !Array.isArray(data) || data.length !== 1) {
+      throw new Error(error?.message || "Could not resume the staged import.");
+    }
+    const resumed = data[0] as Record<string, unknown>;
+    if (
+      resumed.provider !== context.provider ||
+      resumed.advertiser_id !== context.advertiserId ||
+      resumed.locale !== context.locale
+    ) {
+      throw new Error("The requested import does not match the selected advertiser scope.");
+    }
+    const recordsRead = Number(resumed.record_count);
+    const validProducts = Number(resumed.valid_count);
+    const skippedProducts = Number(resumed.skipped_count);
+    if (
+      ![recordsRead, validProducts, skippedProducts].every(
+        (value) => Number.isInteger(value) && value >= 0,
+      )
+    ) {
+      throw new Error("The resumed import has invalid recorded statistics.");
+    }
+    return { recordsRead, validProducts, skippedProducts };
+  }
+
+  private async cleanupInactiveSnapshots(importId: string): Promise<void> {
+    const { data: current, error: currentError } = await this.supabase
+      .from("affiliate_product_imports")
+      .select("provider, advertiser_id, locale")
+      .eq("id", importId)
+      .single();
+    if (currentError || !current) throw new Error("Could not read the activated import scope.");
+
+    const { data: inactiveImports, error: inactiveError } = await this.supabase
+      .from("affiliate_product_imports")
+      .select("id")
+      .eq("provider", current.provider)
+      .eq("advertiser_id", current.advertiser_id)
+      .eq("locale", current.locale)
+      .eq("status", "completed")
+      .eq("catalog_active", false);
+    if (inactiveError) throw new Error(inactiveError.message);
+
+    for (const inactiveImport of inactiveImports ?? []) {
+      const inactiveImportId = String(inactiveImport.id);
+      while (true) {
+        const { data, error } = await this.supabase.rpc(
+          "cleanup_inactive_affiliate_catalog_chunk",
+          { p_import_id: inactiveImportId, p_batch_size: PREPARE_BATCH_SIZE },
+        );
+        if (error) throw new Error(error.message);
+        if (Number(data ?? 0) === 0) break;
+      }
+    }
   }
 
   async failImport(
@@ -153,7 +241,7 @@ class SupabaseImportRepository implements AffiliateProductImportRepository {
         error_message: errorMessage,
       })
       .eq("id", importId)
-      .eq("status", "staging");
+      .in("status", ["staging", "preparing"]);
     if (error) {
       console.error("Could not record the failed import status.");
     }
@@ -163,6 +251,7 @@ class SupabaseImportRepository implements AffiliateProductImportRepository {
 async function main() {
   const writeMode = process.argv.includes("--write");
   const snapshotPath = argumentValue("snapshot");
+  const resumeImportId = argumentValue("resume-import");
   const minimumProductsArgument = argumentValue("minimum-products");
   const minimumValidProducts = minimumProductsArgument
     ? Number(minimumProductsArgument)
@@ -173,15 +262,18 @@ async function main() {
   );
   const context = createAwinImportContext(publisherId, advertiser);
 
-  let repository: AffiliateProductImportRepository | null = null;
+  let repository: ResumableImportRepository | null = null;
   let validatedSnapshot:
     | Awaited<ReturnType<typeof validateAwinSnapshot>>
     | null = null;
   if (writeMode) {
-    if (!snapshotPath) {
+    if (!snapshotPath && !resumeImportId) {
       throw new Error(
-        "Write mode requires --snapshot=<validated-snapshot-path>. No database writes were attempted.",
+        "Write mode requires --snapshot=<validated-snapshot-path> or --resume-import=<import-id>. No database writes were attempted.",
       );
+    }
+    if (snapshotPath && resumeImportId) {
+      throw new Error("--snapshot and --resume-import cannot be used together.");
     }
     if (
       minimumValidProducts === null ||
@@ -206,18 +298,22 @@ async function main() {
       );
     }
 
-    validatedSnapshot = await validateAwinSnapshot({
-      snapshotPath,
-      expectedContext: context,
-    });
-    if (validatedSnapshot.inspection.uniqueProducts < minimumValidProducts) {
-      throw new Error(
-        `Validated snapshot contains ${validatedSnapshot.inspection.uniqueProducts} unique products; at least ${minimumValidProducts} are required. No database writes were attempted.`,
-      );
+    if (snapshotPath) {
+      validatedSnapshot = await validateAwinSnapshot({
+        snapshotPath,
+        expectedContext: context,
+      });
+      if (validatedSnapshot.inspection.uniqueProducts < minimumValidProducts) {
+        throw new Error(
+          `Validated snapshot contains ${validatedSnapshot.inspection.uniqueProducts} unique products; at least ${minimumValidProducts} are required. No database writes were attempted.`,
+        );
+      }
     }
 
     console.log(`Target Supabase project: ${projectRef}`);
-    console.log(`Validated snapshot SHA-256: ${validatedSnapshot.sha256}`);
+    if (validatedSnapshot) {
+      console.log(`Validated snapshot SHA-256: ${validatedSnapshot.sha256}`);
+    }
     console.log("Mode: staged database import");
     const supabase = createClient(
       supabaseUrl,
@@ -248,6 +344,19 @@ async function main() {
           snapshotSha256: validatedSnapshot.sha256,
           ...result.stats,
         },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
+  if (repository && resumeImportId) {
+    const stats = await repository.resumeImport(resumeImportId, context);
+    const activatedProducts = await repository.finalizeImport(resumeImportId, stats);
+    console.log(
+      JSON.stringify(
+        { importId: resumeImportId, activatedProducts, resumed: true, ...stats },
         null,
         2,
       ),

@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   for (const scope of scopes.values()) {
     const first = scope[0];
     const { data, error } = await supabase
-      .from("affiliate_products")
+      .from("affiliate_catalog_products")
       .select("external_product_id, destination_health_status, destination_checked_at")
       .eq("provider", "awin")
       .eq("advertiser_id", first.advertiserId)

@@ -40,13 +40,31 @@ test("Piscifun remains the default enabled Awin advertiser", () => {
 });
 
 test("the Joined-program allowlist permits only the authoritative advertiser IDs", () => {
-  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 19);
+  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 20);
   for (const advertiser of AWIN_APPROVED_ADVERTISERS) {
     assert.equal(isApprovedAwinAdvertiserId(advertiser.advertiserId), true);
   }
 
   assert.equal(isApprovedAwinAdvertiserId("119395"), false);
   assert.equal(isApprovedAwinAdvertiserId("unknown"), false);
+});
+
+test("Crown and Paw and Sunaofe are enabled only for their specific gift contexts", () => {
+  const crownAndPaw = resolveAwinAdvertiser("crown-and-paw");
+  const sunaofe = resolveAwinAdvertiser("sunaofe-us");
+
+  assert.equal(crownAndPaw.advertiserId, "57823");
+  assert.equal(crownAndPaw.importEnabled, true);
+  assert.equal(crownAndPaw.recommendationEnabled, true);
+  assert.equal(crownAndPaw.matchingPolicy, "crown-and-paw-pets");
+  assert.equal(crownAndPaw.importSafeguards?.minimumValidProducts, 15_000);
+
+  assert.equal(isApprovedAwinAdvertiserId("122512"), true);
+  assert.equal(sunaofe.advertiserId, "122512");
+  assert.equal(sunaofe.importEnabled, true);
+  assert.equal(sunaofe.recommendationEnabled, true);
+  assert.equal(sunaofe.matchingPolicy, "sunaofe-office");
+  assert.equal(sunaofe.importSafeguards?.minimumValidProducts, 100);
 });
 
 test("LoveIsARose is approved for legacy-feed imports and catalog recommendations", () => {

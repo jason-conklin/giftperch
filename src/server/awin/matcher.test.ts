@@ -86,6 +86,26 @@ const loveIsARose: AwinAdvertiserConfig = {
   matchingPolicy: "love-is-a-rose",
 };
 
+const crownAndPaw: AwinAdvertiserConfig = {
+  key: "crown-and-paw",
+  advertiserId: "57823",
+  displayName: "Crown and Paw",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "crown-and-paw-pets",
+};
+
+const sunaofe: AwinAdvertiserConfig = {
+  key: "sunaofe-us",
+  advertiserId: "122512",
+  displayName: "Sunaofe US",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "sunaofe-office",
+};
+
 function loveIsARoseProduct(
   title: string,
   id: string,
@@ -494,6 +514,102 @@ test("PerchPal loads and matches LoveIsARose with the same romantic context", as
   assert.deepEqual(requestedAdvertiserIds, ["96879"]);
   assert.equal(result.productMatch?.advertiserId, "96879");
   assert.equal(result.amazonProduct, null);
+});
+
+test("matches Crown and Paw only for pet-owner gifts and groups size variants", () => {
+  const small = advertiserProduct("57823", "Crown and Paw", {
+    externalProductId: "cowboy-small",
+    title: "The Cowboy - Custom Pet Poster - 8 x 10 / Unframed",
+    description: "A custom portrait made from a pet photo.",
+    price: 39.95,
+  });
+  const large = advertiserProduct("57823", "Crown and Paw", {
+    externalProductId: "cowboy-large",
+    title: "The Cowboy - Custom Pet Poster - 18 x 24 / Unframed",
+    description: "A custom portrait made from a pet photo.",
+    price: 59.95,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Custom pet portrait for a dog owner",
+        short_description: "Turn a favorite pet photo into a keepsake.",
+        tier: "thoughtful",
+        price_max: 75,
+      },
+      products: [small],
+      advertiserRegistry: [crownAndPaw],
+    })?.advertiserId,
+    "57823",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Fishing tackle organizer", tier: "thoughtful" },
+      products: [small],
+      advertiserRegistry: [crownAndPaw],
+    }),
+    null,
+  );
+  assert.equal(
+    getAwinProductDiversityKey(small, crownAndPaw),
+    getAwinProductDiversityKey(large, crownAndPaw),
+  );
+});
+
+test("matches Sunaofe only for explicit office-furniture concepts", () => {
+  const chair = advertiserProduct("122512", "Sunaofe US", {
+    title: "Resistance Color Ergonomic Office Chair - Green",
+    description: "An ergonomic chair with adjustable support.",
+    price: 199.99,
+  });
+  const deposit = advertiserProduct("122512", "Sunaofe US", {
+    title: "Ergonomic Office Chair (Deposit) - Green",
+    description: "A reservation payment for an ergonomic chair.",
+    price: 19.99,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Ergonomic office chair",
+        short_description: "An adjustable chair for a comfortable desk setup.",
+        tier: "thoughtful",
+        price_max: 250,
+      },
+      products: [chair],
+      advertiserRegistry: [sunaofe],
+    })?.advertiserId,
+    "122512",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Wireless earbuds", tier: "thoughtful" },
+      products: [chair],
+      advertiserRegistry: [sunaofe],
+    }),
+    null,
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: {
+        title: "Ergonomic office chair",
+        short_description: "An adjustable chair for a comfortable desk setup.",
+        tier: "thoughtful",
+        price_max: 250,
+      },
+      products: [deposit],
+      advertiserRegistry: [sunaofe],
+    }),
+    null,
+  );
+  assert.deepEqual(
+    getRelevantAwinAdvertiserIds(
+      [{ title: "Ergonomic office chair", tier: "thoughtful" }],
+      [sunaofe],
+    ),
+    ["122512"],
+  );
 });
 
 test("Giftlab requires personalized context and excludes sensitive or incompatible products", () => {

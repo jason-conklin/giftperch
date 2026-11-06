@@ -315,6 +315,23 @@ const COZIWOW_PET_INTENT_WORDS = new Set([
   "rabbit",
 ]);
 
+const CROWN_AND_PAW_PET_INTENT_WORDS = new Set([
+  "cat",
+  "dog",
+  "kitten",
+  "pet",
+  "portrait",
+  "puppy",
+]);
+
+const SUNAOFE_OFFICE_INTENT_WORDS = new Set([
+  "chair",
+  "desk",
+  "ergonomic",
+  "monitor",
+  "standing",
+]);
+
 const GIFTLAB_PERSONALIZED_INTENT_WORDS = new Set([
   "anniversary",
   "birthday",
@@ -643,7 +660,7 @@ export async function loadAwinProductCandidates(
 
   for (let offset = 0; ; offset += CATALOG_PAGE_SIZE) {
     let query = supabase
-      .from("affiliate_products")
+      .from("affiliate_catalog_products")
       .select(
         "provider, advertiser_id, locale, merchant_name, external_product_id, title, description, image_url, affiliate_url, price, currency, availability, active, destination_health_status, destination_checked_at",
       )
@@ -848,6 +865,12 @@ function isUnsuitableCoziwowProduct(title: string): boolean {
   return /\b(?:air purifier|dryer box|food maker|heated|heating pad|medical|nebulization|treadmill)\b/i.test(
     title,
   );
+}
+
+function isUnsuitableSunaofeProduct(title: string): boolean {
+  // The feed marks reservation payments as in-stock products. They are not
+  // purchasable office furniture and must not be presented as gift ideas.
+  return /\b(?:deposit|pre[ -]?order)\b/i.test(title);
 }
 
 function giftlabCategory(product: AwinCatalogProduct): string {
@@ -1201,6 +1224,18 @@ export function getAwinProductDiversityKey(
   product: Pick<AwinCatalogProduct, "advertiserId" | "externalProductId" | "title">,
   advertiser: AwinAdvertiserConfig,
 ): string {
+  if (advertiser.matchingPolicy === "crown-and-paw-pets") {
+    const baseTitle = product.title
+      .replace(
+        /\s+-\s+(?:digital\s+download|\d+[”\"]?\s*x\s*\d+[”\"]?(?:\s*\/.*)?|(?:xs|s|m|l|xl|xxl|2xl|3xl|4xl|5xl)\s*\/.*)$/i,
+        "",
+      )
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
+  }
   if (advertiser.matchingPolicy === "love-is-a-rose") {
     const colorVariant = product.title.match(
       /^(24k\s+gold\s+trimmed\s+rose:\s*11\"\s+)(?:black|blue|brown|burgundy|cream|dark\s+blue|dark\s+green|green|light\s+blue|light\s+green|orange|peach|pink(?:\s+and\s+cream)?|purple(?:\s+cream)?|red(?:\s+and\s+cream)?|teal|white|yellow)(\s+rose)$/i,
@@ -1268,6 +1303,8 @@ function passesAdvertiserPolicy(args: {
   magicshineCyclingIntent: Set<string>;
   hulaDaddyCoffeeIntent: Set<string>;
   coziwowPetIntent: Set<string>;
+  crownAndPawPetIntent: Set<string>;
+  sunaofeOfficeIntent: Set<string>;
   giftlabPersonalizedIntent: Set<string>;
   giftlabDeviceIntent: Set<string>;
   loveIsARoseIntent: Set<string>;
@@ -1321,6 +1358,13 @@ function passesAdvertiserPolicy(args: {
       return (
         args.coziwowPetIntent.size > 0 &&
         !isUnsuitableCoziwowProduct(product.title)
+      );
+    case "crown-and-paw-pets":
+      return args.crownAndPawPetIntent.size > 0;
+    case "sunaofe-office":
+      return (
+        args.sunaofeOfficeIntent.size > 0 &&
+        !isUnsuitableSunaofeProduct(product.title)
       );
     case "giftlab-personalized":
       return (
@@ -1381,6 +1425,8 @@ type SuggestionPolicyIntent = {
   magicshineCycling: Set<string>;
   hulaDaddyCoffee: Set<string>;
   coziwowPets: Set<string>;
+  crownAndPawPets: Set<string>;
+  sunaofeOffice: Set<string>;
   giftlabPersonalized: Set<string>;
   giftlabDevice: Set<string>;
   loveIsARose: Set<string>;
@@ -1427,6 +1473,14 @@ function getSuggestionPolicyIntent(
       HULA_DADDY_COFFEE_INTENT_WORDS,
     ),
     coziwowPets: intersection(suggestionIntentTokens, COZIWOW_PET_INTENT_WORDS),
+    crownAndPawPets: intersection(
+      suggestionIntentTokens,
+      CROWN_AND_PAW_PET_INTENT_WORDS,
+    ),
+    sunaofeOffice: intersection(
+      suggestionIntentTokens,
+      SUNAOFE_OFFICE_INTENT_WORDS,
+    ),
     giftlabPersonalized: intersection(
       suggestionIntentTokens,
       GIFTLAB_PERSONALIZED_INTENT_WORDS,
@@ -1469,6 +1523,10 @@ function policyCanMatchSuggestion(
       return intent.hulaDaddyCoffee.size > 0;
     case "coziwow-pets":
       return intent.coziwowPets.size > 0;
+    case "crown-and-paw-pets":
+      return intent.crownAndPawPets.size > 0;
+    case "sunaofe-office":
+      return intent.sunaofeOffice.size > 0;
     case "giftlab-personalized":
       return intent.giftlabPersonalized.size > 0;
     case "standard":
@@ -1627,6 +1685,8 @@ export function findBestAwinProductMatch(args: {
         magicshineCyclingIntent: policyIntent.magicshineCycling,
         hulaDaddyCoffeeIntent: policyIntent.hulaDaddyCoffee,
         coziwowPetIntent: policyIntent.coziwowPets,
+        crownAndPawPetIntent: policyIntent.crownAndPawPets,
+        sunaofeOfficeIntent: policyIntent.sunaofeOffice,
         giftlabPersonalizedIntent: policyIntent.giftlabPersonalized,
         giftlabDeviceIntent: policyIntent.giftlabDevice,
         loveIsARoseIntent: policyIntent.loveIsARose,
@@ -1665,10 +1725,15 @@ export function findBestAwinProductMatch(args: {
         !BROAD_FISHING_CONTEXT_WORDS.has(token) &&
         !GENERIC_MATCH_WORDS.has(token),
     );
+    const crownAndPawPetMatch =
+      advertiser.matchingPolicy === "crown-and-paw-pets" &&
+      policyIntent.crownAndPawPets.size > 0 &&
+      /\bpet\b/i.test(product.title);
     const strongAnchor =
       titleTitle.size >= 2 ||
       distinctiveTitleMatch ||
       (titleTitle.size >= 1 && hasSpecificSupportingMatch) ||
+      crownAndPawPetMatch ||
       (advertiser.matchingPolicy === "love-is-a-rose" &&
         policyIntent.loveIsARose.size > 0 &&
         titleTitle.size >= 1) ||
@@ -1684,6 +1749,7 @@ export function findBestAwinProductMatch(args: {
       detailTitle.size * 2 +
       interestTitle.size * 3 +
       (policyIntent.fishing.size > 0 ? 4 : 0) +
+      (crownAndPawPetMatch ? 4 : 0) +
       (policyIntent.loveIsARose.size > 0 ? 4 : 0);
     if (score < MINIMUM_MATCH_SCORE) continue;
 

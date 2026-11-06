@@ -63,6 +63,18 @@ test("does not classify a generic marketing fishing reference as a fishing produ
   assert.deepEqual(result.facets, ["drinkware"]);
 });
 
+test("classifies Crown and Paw pet portraits from concrete title evidence", () => {
+  const result = classifyAffiliateProduct({
+    advertiserId: "57823",
+    title: "The Cowboy - Custom Pet Poster - 12 x 16 / Unframed",
+    description: "Upload a pet photo for a custom portrait.",
+  });
+
+  assert.equal(result.primaryCategory, "pets");
+  assert.deepEqual(result.facets, ["personalized", "photo_gift"]);
+  assert.equal(result.confidence, "high");
+});
+
 test("classifies BONHEUR jewelry types independently of the merchant", () => {
   const result = classifyAffiliateProduct({
     advertiserId: "90759",

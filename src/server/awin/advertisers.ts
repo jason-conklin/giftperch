@@ -12,6 +12,8 @@ export type AwinMatchingPolicy =
   | "fan-ink"
   | "beyond-memories"
   | "love-is-a-rose"
+  | "crown-and-paw-pets"
+  | "sunaofe-office"
   | "magicshine-cycling"
   | "hula-daddy-coffee"
   | "coziwow-pets"
@@ -61,6 +63,7 @@ export const AWIN_APPROVED_ADVERTISERS = [
   { advertiserId: "129093", displayName: "brkox" },
   { advertiserId: "78182", displayName: "TideWe" },
   { advertiserId: "129497", displayName: "GRABO" },
+  { advertiserId: "122512", displayName: "Sunaofe US" },
 ] as const;
 
 const APPROVED_AWIN_ADVERTISER_IDS = new Set<string>(
@@ -275,6 +278,30 @@ export const AWIN_ADVERTISERS = [
       format: "legacy-csv-gzip",
       feedId: "113072",
       imagePreference: "merchant-first",
+    },
+  },
+  {
+    key: "crown-and-paw",
+    advertiserId: "57823",
+    displayName: "Crown and Paw",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "crown-and-paw-pets",
+    importSafeguards: {
+      minimumValidProducts: 15_000,
+    },
+  },
+  {
+    key: "sunaofe-us",
+    advertiserId: "122512",
+    displayName: "Sunaofe US",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "sunaofe-office",
+    importSafeguards: {
+      minimumValidProducts: 100,
     },
   },
   {
