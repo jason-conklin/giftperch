@@ -40,13 +40,28 @@ test("Piscifun remains the default enabled Awin advertiser", () => {
 });
 
 test("the Joined-program allowlist permits only the authoritative advertiser IDs", () => {
-  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 20);
+  assert.equal(AWIN_APPROVED_ADVERTISERS.length, 21);
   for (const advertiser of AWIN_APPROVED_ADVERTISERS) {
     assert.equal(isApprovedAwinAdvertiserId(advertiser.advertiserId), true);
   }
 
   assert.equal(isApprovedAwinAdvertiserId("119395"), false);
   assert.equal(isApprovedAwinAdvertiserId("unknown"), false);
+});
+
+test("brkox and ROCKBROS are enabled only for model-display and cycling contexts", () => {
+  const brkox = resolveAwinAdvertiser("brkox");
+  const rockbros = resolveAwinAdvertiser("rockbros");
+
+  assert.equal(brkox.advertiserId, "129093");
+  assert.equal(brkox.matchingPolicy, "brkox-model-display");
+  assert.equal(brkox.importSafeguards?.minimumValidProducts, 700);
+  assert.equal(rockbros.advertiserId, "58007");
+  assert.equal(rockbros.matchingPolicy, "magicshine-cycling");
+  assert.equal(rockbros.importSafeguards?.minimumValidProducts, 6_000);
+  assert.equal(isApprovedAwinAdvertiserId("58007"), true);
+  assert.equal(findRecommendationEnabledAwinAdvertiserById("129093")?.key, "brkox");
+  assert.equal(findRecommendationEnabledAwinAdvertiserById("58007")?.key, "rockbros");
 });
 
 test("Crown and Paw and Sunaofe are enabled only for their specific gift contexts", () => {

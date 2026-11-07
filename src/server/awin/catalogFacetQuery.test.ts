@@ -51,6 +51,17 @@ test("derives bounded bedding, office, and puzzle facets from explicit requests"
   );
 });
 
+test("derives cycling and model-display facets only from explicit hobby language", () => {
+  assert.ok(
+    deriveCatalogRetrievalFacets(["A practical bike commuting accessory"])
+      .includes("cycling"),
+  );
+  const lego = deriveCatalogRetrievalFacets(["A LEGO display frame"]);
+  assert.ok(lego.includes("model_building"));
+  assert.ok(lego.includes("display_accessory"));
+  assert.equal(deriveCatalogRetrievalFacets(["A general toy gift"]).includes("model_building"), false);
+});
+
 test("uses a bounded stable retrieval seed", () => {
   const facets = deriveCatalogRetrievalFacets(["Fishing reel"]);
   const first = catalogRetrievalSelectionSeed(["Fishing reel"], facets);

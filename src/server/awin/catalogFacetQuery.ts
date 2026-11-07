@@ -26,6 +26,9 @@ const REQUEST_FACET_RULES: readonly RequestFacetRule[] = [
   { pattern: /\b(?:reading|reader|books?)\b/i, facets: ["reading"] },
   { pattern: /\b(?:gaming|gamer)\b/i, facets: ["gaming"] },
   { pattern: /\b(?:jigsaw|mechanical)?\s*puzzles?\b/i, facets: ["gaming"] },
+  { pattern: /\b(?:bike|bicycle|cycling|cyclist|e-?bike|bike commuting|mtb|road bike)\b/i, facets: ["cycling"] },
+  { pattern: /\b(?:lego|building blocks?|brick(?:s)?|model building|model making|technic)\b/i, facets: ["model_building"] },
+  { pattern: /\b(?:display frame|display case|display stand|wall display|acrylic display)\b/i, facets: ["display_accessory"] },
   { pattern: /\b(?:technology|tech|phone|computer)\b/i, facets: ["tech_accessory"] },
 ];
 

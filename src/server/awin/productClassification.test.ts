@@ -122,6 +122,22 @@ test("classifies office furniture and sleep products from concrete title evidenc
   assert.deepEqual(puzzle.facets, ["gaming"]);
 });
 
+test("classifies cycling and model-display accessories from concrete title evidence", () => {
+  const cycling = classifyAffiliateProduct({
+    advertiserId: "58007",
+    title: "ROCKBROS Mini Bike Tire Pump 150PSI",
+  });
+  const display = classifyAffiliateProduct({
+    advertiserId: "129093",
+    title: "Wall Display Frame Compatible with LEGO Technic Racing Set",
+  });
+
+  assert.equal(cycling.primaryCategory, "sports_outdoors");
+  assert.deepEqual(cycling.facets, ["cycling"]);
+  assert.equal(display.primaryCategory, "hobbies_entertainment");
+  assert.deepEqual(display.facets, ["display_accessory", "model_building"]);
+});
+
 test("classifies real gold-trimmed rose and jewelry-title variants from title evidence", () => {
   const rose = classifyAffiliateProduct({
     advertiserId: "96879",

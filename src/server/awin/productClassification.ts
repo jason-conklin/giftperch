@@ -51,6 +51,9 @@ export const PRODUCT_FACETS = [
   "wedding",
   "mothers_day",
   "memorial",
+  "cycling",
+  "model_building",
+  "display_accessory",
 ] as const;
 
 export type ProductFacet = (typeof PRODUCT_FACETS)[number];
@@ -105,6 +108,8 @@ const TITLE_RULES: readonly Rule[] = [
   { facet: "fishing", category: "sports_outdoors", pattern: /\bfishing\b/i, weight: 5 },
   { facet: "tackle", category: "sports_outdoors", pattern: /\b(?:tackle|lures?|bait)\b/i, weight: 7 },
   { facet: "fishing", category: "sports_outdoors", pattern: /\bfish lip gripper\b/i, weight: 7 },
+  { facet: "cycling", category: "sports_outdoors", pattern: /\b(?:bicycle|bike|cycling|cyclist|e-?bike|mtb|road bike)\b/i, weight: 8 },
+  { facet: "cycling", category: "sports_outdoors", pattern: /\b(?:bike|bicycle)\s+(?:helmet|pump|lock|rack|bag|light|mount|jersey|gloves?)\b/i, weight: 8 },
   { facet: "pet_grooming", category: "pets", pattern: /\b(?:pet|dog|cat)\s+(?:grooming|brush|comb|deshedding)\b/i, weight: 8 },
   { facet: "photo_gift", category: "pets", pattern: /\b(?:custom\s+)?pet\s+(?:portrait|poster|canvas)\b/i, weight: 8 },
   { facet: "drinkware", category: "home_kitchen", pattern: /\b(?:mug|tumbler|travel cup|water bottle)\b/i, weight: 7 },
@@ -118,6 +123,8 @@ const TITLE_RULES: readonly Rule[] = [
   { facet: "music", category: "hobbies_entertainment", pattern: /\b(?:kalimba|guitar|turntable|vinyl|musical instrument)\b/i, weight: 7 },
   { facet: "gaming", category: "hobbies_entertainment", pattern: /\b(?:gaming|gamer|game controller)\b/i, weight: 7 },
   { facet: "gaming", category: "hobbies_entertainment", pattern: /\b(?:jigsaw|mechanical)\s+puzzles?\b|\bpuzzles?\b/i, weight: 7 },
+  { facet: "model_building", category: "hobbies_entertainment", pattern: /\b(?:model building|model making|building blocks?|interlocking blocks?|lego(?:-compatible)?|technic)\b/i, weight: 8 },
+  { facet: "display_accessory", category: "hobbies_entertainment", pattern: /\b(?:display frame|display case|display stand|wall display|acrylic display)\b/i, weight: 8 },
   { facet: "tech_accessory", category: "tech_gadgets", pattern: /\b(?:airpods?|earphone case|phone case|charging)\b/i, weight: 7 },
   { facet: "apparel", category: "clothing_accessories", pattern: /\b(?:t-?shirt|hoodie|swimsuit|bikini|slippers?|shoes?)\b/i, weight: 7 },
   { facet: "baby", category: "kids_baby", pattern: /\b(?:baby|infant|newborn|toddler)\b/i, weight: 7 },

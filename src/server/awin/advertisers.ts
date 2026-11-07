@@ -16,6 +16,7 @@ export type AwinMatchingPolicy =
   | "sunaofe-office"
   | "nexbie-hobbies"
   | "promeed-bedding"
+  | "brkox-model-display"
   | "magicshine-cycling"
   | "hula-daddy-coffee"
   | "coziwow-pets"
@@ -52,6 +53,7 @@ export const AWIN_APPROVED_ADVERTISERS = [
   { advertiserId: "117209", displayName: "Janet Howard" },
   { advertiserId: "130667", displayName: "marblefordecor" },
   { advertiserId: "57823", displayName: "Crown and Paw" },
+  { advertiserId: "58007", displayName: "Yiwu Rock Sports Goods Co., Ltd." },
   { advertiserId: "111366", displayName: "Sparkle GmbH / Hey Happiness" },
   { advertiserId: "127139", displayName: "Vivid Customs Affiliate Program" },
   { advertiserId: "82455", displayName: "PortraitFlip LLC" },
@@ -328,6 +330,30 @@ export const AWIN_ADVERTISERS = [
     matchingPolicy: "promeed-bedding",
     importSafeguards: {
       minimumValidProducts: 600,
+    },
+  },
+  {
+    key: "brkox",
+    advertiserId: "129093",
+    displayName: "brkox",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "brkox-model-display",
+    importSafeguards: {
+      minimumValidProducts: 700,
+    },
+  },
+  {
+    key: "rockbros",
+    advertiserId: "58007",
+    displayName: "ROCKBROS",
+    locale: "en_US",
+    importEnabled: true,
+    recommendationEnabled: true,
+    matchingPolicy: "magicshine-cycling",
+    importSafeguards: {
+      minimumValidProducts: 6_000,
     },
   },
   {

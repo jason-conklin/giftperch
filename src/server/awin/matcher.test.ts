@@ -126,6 +126,26 @@ const promeed: AwinAdvertiserConfig = {
   matchingPolicy: "promeed-bedding",
 };
 
+const brkox: AwinAdvertiserConfig = {
+  key: "brkox",
+  advertiserId: "129093",
+  displayName: "brkox",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "brkox-model-display",
+};
+
+const rockbros: AwinAdvertiserConfig = {
+  key: "rockbros",
+  advertiserId: "58007",
+  displayName: "ROCKBROS",
+  locale: "en_US",
+  importEnabled: true,
+  recommendationEnabled: true,
+  matchingPolicy: "magicshine-cycling",
+};
+
 function loveIsARoseProduct(
   title: string,
   id: string,
@@ -703,6 +723,102 @@ test("matches Promeed only for explicit bedding intent and suppresses gift cards
   assert.equal(
     getAwinProductDiversityKey(queen, promeed),
     getAwinProductDiversityKey(standard, promeed),
+  );
+});
+
+test("matches brkox display accessories without representing them as building sets", () => {
+  const frame = advertiserProduct("129093", "brkox", {
+    externalProductId: "brkox-frame",
+    title: "Wall Display Frame Compatible with LEGO Technic Racing Set - Standard Display Edition",
+    description: "A wall-mounted display frame for an existing model.",
+    price: 99,
+  });
+  const set = advertiserProduct("129093", "brkox", {
+    externalProductId: "brkox-set",
+    title: "Racing Car Building Block Set",
+    description: "An interlocking brick construction set.",
+    price: 49,
+  });
+  const ledVariant = advertiserProduct("129093", "brkox", {
+    externalProductId: "brkox-frame-led",
+    title: "Wall Display Frame Compatible with LEGO Technic Racing Set - LED Display Edition",
+    price: 149,
+  });
+
+  const displayMatch = findBestAwinProductMatch({
+    suggestion: {
+      title: "LEGO display frame",
+      tier: "thoughtful",
+      price_max: 120,
+    },
+    products: [frame, set],
+    advertiserRegistry: [brkox],
+  });
+  assert.equal(displayMatch?.productId, "brkox-frame");
+  const buildingSetMatch = findBestAwinProductMatch({
+    suggestion: {
+      title: "LEGO building block set",
+      tier: "thoughtful",
+      price_max: 120,
+    },
+    products: [frame, set],
+    advertiserRegistry: [brkox],
+  });
+  assert.equal(buildingSetMatch?.productId, "brkox-set");
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "General toy gift", tier: "thoughtful" },
+      products: [frame, set],
+      advertiserRegistry: [brkox],
+    }),
+    null,
+  );
+  assert.equal(
+    getAwinProductDiversityKey(frame, brkox),
+    getAwinProductDiversityKey(ledVariant, brkox),
+  );
+});
+
+test("matches ROCKBROS only for explicit cycling context and collapses color variants", () => {
+  const black = advertiserProduct("58007", "ROCKBROS", {
+    externalProductId: "rockbros-black",
+    title: "ROCKBROS Bicycle Lock Cable Combination Bike Lock - Black",
+    description: "A portable anti-theft bicycle lock.",
+    price: 19.99,
+  });
+  const blue = advertiserProduct("58007", "ROCKBROS", {
+    externalProductId: "rockbros-blue",
+    title: "ROCKBROS Bicycle Lock Cable Combination Bike Lock - Blue",
+    price: 19.99,
+  });
+
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Bike commuting lock", tier: "thoughtful", price_max: 50 },
+      products: [black],
+      advertiserRegistry: [rockbros],
+    })?.advertiserId,
+    "58007",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Bike commuting accessory", tier: "thoughtful", price_max: 50 },
+      products: [black],
+      advertiserRegistry: [rockbros],
+    })?.advertiserId,
+    "58007",
+  );
+  assert.equal(
+    findBestAwinProductMatch({
+      suggestion: { title: "Fishing tackle organizer", tier: "thoughtful" },
+      products: [black],
+      advertiserRegistry: [rockbros],
+    }),
+    null,
+  );
+  assert.equal(
+    getAwinProductDiversityKey(black, rockbros),
+    getAwinProductDiversityKey(blue, rockbros),
   );
 });
 
@@ -1942,7 +2058,7 @@ test("preselects only advertiser policies that can pass the current suggestion i
     },
   ]).sort();
 
-  assert.deepEqual(ids, []);
+  assert.deepEqual(ids, ["58007"]);
   assert.deepEqual(
     getRelevantAwinAdvertiserIds([
       {

@@ -281,6 +281,9 @@ const MEMORIAL_INTENT_WORDS = new Set(["memorial", "remembrance"]);
 const MAGICSHINE_CYCLING_INTENT_WORDS = new Set([
   "bicycle",
   "bike",
+  "biking",
+  "commute",
+  "commuting",
   "cycling",
   "cyclist",
   "ebike",
@@ -347,6 +350,36 @@ const PROMEED_BEDDING_INTENT_WORDS = new Set([
   "pillowcase",
   "sleep",
   "sleeping",
+]);
+
+const BRKOX_MODEL_INTENT_WORDS = new Set([
+  "block",
+  "blocks",
+  "brick",
+  "bricks",
+  "display",
+  "frame",
+  "lego",
+  "model",
+  "technic",
+]);
+
+const BRKOX_DISPLAY_INTENT_WORDS = new Set([
+  "case",
+  "display",
+  "frame",
+  "stand",
+  "wall",
+]);
+
+const BRKOX_BUILDING_SET_INTENT_WORDS = new Set([
+  "block",
+  "blocks",
+  "brick",
+  "bricks",
+  "build",
+  "building",
+  "set",
 ]);
 
 const GIFTLAB_PERSONALIZED_INTENT_WORDS = new Set([
@@ -427,7 +460,8 @@ const TOKEN_ALIASES: Record<string, string> = {
   reels: "reel",
   rods: "rod",
   speakers: "speaker",
-  bicycles: "bicycle",
+  bicycle: "bike",
+  bicycles: "bike",
   bikes: "bike",
   cats: "cat",
   dogs: "dog",
@@ -894,6 +928,14 @@ function isUnsuitablePromeedProduct(title: string): boolean {
   return /\bgift cards?\b/i.test(title);
 }
 
+function isBrkoxDisplayAccessory(title: string): boolean {
+  return /\b(?:display frame|display case|display stand|wall display|acrylic display)\b/i.test(title);
+}
+
+function isBrkoxBuildingSet(title: string): boolean {
+  return /\b(?:building blocks?|brick(?:s)?|construction set|model kit)\b/i.test(title);
+}
+
 function giftlabCategory(product: AwinCatalogProduct): string {
   return product.description?.match(/^Category:\s*([^.]*)\./i)?.[1]?.trim() ?? "";
 }
@@ -1266,6 +1308,26 @@ export function getAwinProductDiversityKey(
       .trim();
     return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
   }
+  if (advertiser.matchingPolicy === "brkox-model-display") {
+    const baseTitle = product.title
+      .replace(/\s+-\s+(?:[a-z0-9]+\s*\/\s*)?(?:standard|led)?\s*display edition.*$/i, "")
+      .replace(/\s+-\s+[a-z0-9]+\s*\/\s*(?:standard|led)\s*display edition.*$/i, "")
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
+  }
+  if (advertiser.advertiserId === "58007") {
+    const baseTitle = product.title
+      .replace(/\s+-\s+(?:black|blue|brown|green|grey|gray|orange|pink|purple|red|white|yellow)(?:\s*\/.*)?$/i, "")
+      .replace(/\s*\/\s*(?:xs|s|m|l|xl|xxl|xxxl|small|medium|large|black|blue|brown|green|grey|gray|orange|pink|purple|red|white|yellow)\b.*$/i, "")
+      .normalize("NFKD")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return `${product.advertiserId}:${baseTitle || product.externalProductId}`;
+  }
   if (advertiser.matchingPolicy === "love-is-a-rose") {
     const colorVariant = product.title.match(
       /^(24k\s+gold\s+trimmed\s+rose:\s*11\"\s+)(?:black|blue|brown|burgundy|cream|dark\s+blue|dark\s+green|green|light\s+blue|light\s+green|orange|peach|pink(?:\s+and\s+cream)?|purple(?:\s+cream)?|red(?:\s+and\s+cream)?|teal|white|yellow)(\s+rose)$/i,
@@ -1337,6 +1399,9 @@ function passesAdvertiserPolicy(args: {
   sunaofeOfficeIntent: Set<string>;
   nexbieHobbyIntent: Set<string>;
   promeedBeddingIntent: Set<string>;
+  brkoxModelIntent: Set<string>;
+  brkoxDisplayIntent: Set<string>;
+  brkoxBuildingSetIntent: Set<string>;
   giftlabPersonalizedIntent: Set<string>;
   giftlabDeviceIntent: Set<string>;
   loveIsARoseIntent: Set<string>;
@@ -1405,6 +1470,15 @@ function passesAdvertiserPolicy(args: {
         args.promeedBeddingIntent.size > 0 &&
         !isUnsuitablePromeedProduct(product.title)
       );
+    case "brkox-model-display":
+      if (args.brkoxModelIntent.size === 0) return false;
+      if (args.brkoxDisplayIntent.size > 0) {
+        return isBrkoxDisplayAccessory(product.title);
+      }
+      if (args.brkoxBuildingSetIntent.size > 0) {
+        return isBrkoxBuildingSet(product.title);
+      }
+      return true;
     case "giftlab-personalized":
       return (
         args.giftlabPersonalizedIntent.size > 0 &&
@@ -1468,6 +1542,9 @@ type SuggestionPolicyIntent = {
   sunaofeOffice: Set<string>;
   nexbieHobbies: Set<string>;
   promeedBedding: Set<string>;
+  brkoxModel: Set<string>;
+  brkoxDisplay: Set<string>;
+  brkoxBuildingSet: Set<string>;
   giftlabPersonalized: Set<string>;
   giftlabDevice: Set<string>;
   loveIsARose: Set<string>;
@@ -1530,6 +1607,12 @@ function getSuggestionPolicyIntent(
       suggestionIntentTokens,
       PROMEED_BEDDING_INTENT_WORDS,
     ),
+    brkoxModel: intersection(suggestionIntentTokens, BRKOX_MODEL_INTENT_WORDS),
+    brkoxDisplay: intersection(suggestionIntentTokens, BRKOX_DISPLAY_INTENT_WORDS),
+    brkoxBuildingSet: intersection(
+      suggestionIntentTokens,
+      BRKOX_BUILDING_SET_INTENT_WORDS,
+    ),
     giftlabPersonalized: intersection(
       suggestionIntentTokens,
       GIFTLAB_PERSONALIZED_INTENT_WORDS,
@@ -1580,6 +1663,8 @@ function policyCanMatchSuggestion(
       return intent.nexbieHobbies.size > 0;
     case "promeed-bedding":
       return intent.promeedBedding.size > 0;
+    case "brkox-model-display":
+      return intent.brkoxModel.size > 0;
     case "giftlab-personalized":
       return intent.giftlabPersonalized.size > 0;
     case "standard":
@@ -1742,6 +1827,9 @@ export function findBestAwinProductMatch(args: {
         sunaofeOfficeIntent: policyIntent.sunaofeOffice,
         nexbieHobbyIntent: policyIntent.nexbieHobbies,
         promeedBeddingIntent: policyIntent.promeedBedding,
+        brkoxModelIntent: policyIntent.brkoxModel,
+        brkoxDisplayIntent: policyIntent.brkoxDisplay,
+        brkoxBuildingSetIntent: policyIntent.brkoxBuildingSet,
         giftlabPersonalizedIntent: policyIntent.giftlabPersonalized,
         giftlabDeviceIntent: policyIntent.giftlabDevice,
         loveIsARoseIntent: policyIntent.loveIsARose,
@@ -1784,11 +1872,19 @@ export function findBestAwinProductMatch(args: {
       advertiser.matchingPolicy === "crown-and-paw-pets" &&
       policyIntent.crownAndPawPets.size > 0 &&
       /\bpet\b/i.test(product.title);
+    const cyclingTitleMatch =
+      advertiser.matchingPolicy === "magicshine-cycling" &&
+      policyIntent.magicshineCycling.size > 0 &&
+      hasAny(
+        titleTitle,
+        new Set(["bike", "bicycle", "cycling", "cyclist", "ebike"]),
+      );
     const strongAnchor =
       titleTitle.size >= 2 ||
       distinctiveTitleMatch ||
       (titleTitle.size >= 1 && hasSpecificSupportingMatch) ||
       crownAndPawPetMatch ||
+      cyclingTitleMatch ||
       (advertiser.matchingPolicy === "love-is-a-rose" &&
         policyIntent.loveIsARose.size > 0 &&
         titleTitle.size >= 1) ||
@@ -1805,6 +1901,7 @@ export function findBestAwinProductMatch(args: {
       interestTitle.size * 3 +
       (policyIntent.fishing.size > 0 ? 4 : 0) +
       (crownAndPawPetMatch ? 4 : 0) +
+      (cyclingTitleMatch ? 4 : 0) +
       (policyIntent.loveIsARose.size > 0 ? 4 : 0);
     if (score < MINIMUM_MATCH_SCORE) continue;
 
